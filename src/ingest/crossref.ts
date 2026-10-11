@@ -43,6 +43,8 @@ export function buildItemIndex(
         appearsInStructures: [],
         spawnDeposits: [],
         spawnBlockPatches: [],
+        spawnTrees: [],
+        spawnFruitTrees: [],
       };
       items.set(k, entry);
     }

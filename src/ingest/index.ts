@@ -11,6 +11,7 @@ import { extractDecorCatalog } from "./models/decor.js";
 import { extractLoreBooks } from "./models/lore.js";
 import { extractDeposits } from "./models/deposits.js";
 import { extractBlockPatchSpawns } from "./models/blockpatches.js";
+import { extractTrees, extractFruitTrees } from "./models/trees.js";
 import { buildBlockCodeToSchematicIndex, buildSchematicToStructureIndex, findStructuresContaining } from "./structureContents.js";
 import { buildLangResolver } from "./lang.js";
 import { buildItemIndex } from "./crossref.js";
@@ -82,35 +83,35 @@ function main(): void {
   const loot = extractLoot(index, lang);
   console.log(`  ${loot.length} loot entries`);
 
-  const lootBySourceMap = new Map<
-    string,
-    {
-      sourceDomain: string;
-      sourceCode: string;
-      sourceDisplayName: string;
-      sourceKind: string;
-      sourceMod: string;
-      entityStats: (typeof loot)[number]["entityStats"];
-      entries: typeof loot;
+  // Groups the flat loot entries by their source block/entity -- one row per thing that drops
+  // something. Split in two: "creatures" (entity sources, kept as their own page since they also
+  // carry stats/spawn-condition info) and "blockDrops" (block sources, folded directly onto that
+  // block's own /items/ page instead of a separate listing -- see ensureSpawnTarget below).
+  function groupLoot(entries: typeof loot): import("./types.js").LootSourceGroup[] {
+    const byKey = new Map<string, import("./types.js").LootSourceGroup>();
+    for (const entry of entries) {
+      const id = `${entry.sourceDomain}:${entry.sourceCode}`;
+      const group =
+        byKey.get(id) ??
+        {
+          id,
+          sourceDomain: entry.sourceDomain,
+          sourceCode: entry.sourceCode,
+          sourceDisplayName: entry.sourceDisplayName,
+          sourceKind: entry.sourceKind,
+          sourceMod: entry.sourceMod,
+          entityStats: entry.entityStats,
+          entries: [],
+        };
+      group.entries.push(entry);
+      byKey.set(id, group);
     }
-  >();
-  for (const entry of loot) {
-    const k = `${entry.sourceDomain}:${entry.sourceCode}`;
-    const group =
-      lootBySourceMap.get(k) ??
-      {
-        sourceDomain: entry.sourceDomain,
-        sourceCode: entry.sourceCode,
-        sourceDisplayName: entry.sourceDisplayName,
-        sourceKind: entry.sourceKind,
-        sourceMod: entry.sourceMod,
-        entityStats: entry.entityStats,
-        entries: [],
-      };
-    group.entries.push(entry);
-    lootBySourceMap.set(k, group);
+    return [...byKey.values()];
   }
-  const lootBySource = [...lootBySourceMap.values()];
+  const lootGroups = groupLoot(loot);
+  const creatures = lootGroups.filter((g) => g.sourceKind === "entity");
+  const blockDrops = lootGroups.filter((g) => g.sourceKind === "block");
+  const blockDropsById = Object.fromEntries(blockDrops.map((g) => [g.id, g]));
 
   console.log("== Extracting structures ==");
   const structures = extractStructures(index, schematicsByDomain);
@@ -151,24 +152,32 @@ function main(): void {
   const { patches: blockPatches, codeToPatchIds } = extractBlockPatchSpawns(index);
   console.log(`  ${blockPatches.length} patches, covering ${codeToPatchIds.size} concrete block codes`);
 
+  console.log("== Extracting tree/shrub species spawn data ==");
+  const { trees, codeToTreeIds } = extractTrees(index);
+  console.log(`  ${trees.length} species climate bands, covering ${codeToTreeIds.size} concrete block codes`);
+
+  console.log("== Extracting fruit tree variety spawn data ==");
+  const { fruitTrees, codeToFruitTreeIds } = extractFruitTrees(index);
+  console.log(`  ${fruitTrees.length} fruit tree varieties, covering ${codeToFruitTreeIds.size} concrete item codes`);
+
   console.log("== Building item index ==");
   const itemIndex = buildItemIndex(recipes, loot, lang);
   console.log(`  ${itemIndex.size} distinct items/blocks referenced`);
 
-  // Ore/gem/rock and crop/flower/etc. spawn data is keyed by block code regardless of whether
-  // that block is reachable from a recipe or drop table -- this is one of the few deliberate
-  // exceptions to the "only what a recipe/loot references" rule (see README), since "where does
-  // this spawn" is exactly the kind of question that needs a page even for a block nothing else
-  // currently points to.
-  function ensureSpawnTarget(domain: string, code: string): import("./types.js").ItemIndexEntry {
+  // Ore/gem/rock, crop/flower/etc., tree, and block-drop data is keyed by block code regardless
+  // of whether that block is reachable from a recipe or drop table -- this is one of the few
+  // deliberate exceptions to the "only what a recipe/loot references" rule (see README), since
+  // "where does this spawn"/"what does this drop" are exactly the kind of question that needs a
+  // page even for a block nothing else currently points to.
+  function ensureSpawnTarget(domain: string, code: string, kind: "item" | "block" = "block"): import("./types.js").ItemIndexEntry {
     const key = `${domain}:${code}`;
     let entry = itemIndex.get(key);
     if (!entry) {
-      const { name, missing } = lang.displayName("block", domain, code);
+      const { name, missing } = lang.displayName(kind, domain, code);
       entry = {
         domain,
         code,
-        kind: "block",
+        kind,
         displayName: name,
         missingTranslation: missing,
         sourceMod: "game",
@@ -178,6 +187,8 @@ function main(): void {
         appearsInStructures: [],
         spawnDeposits: [],
         spawnBlockPatches: [],
+        spawnTrees: [],
+        spawnFruitTrees: [],
       };
       itemIndex.set(key, entry);
     }
@@ -192,7 +203,24 @@ function main(): void {
     const [domain, code] = key.split(/:(.+)/) as [string, string];
     ensureSpawnTarget(domain, code).spawnBlockPatches.push(...patchIds);
   }
+  for (const [key, treeIds] of codeToTreeIds) {
+    const [domain, code] = key.split(/:(.+)/) as [string, string];
+    ensureSpawnTarget(domain, code).spawnTrees.push(...treeIds);
+  }
+  for (const [key, fruitTreeIds] of codeToFruitTreeIds) {
+    const [domain, code] = key.split(/:(.+)/) as [string, string];
+    ensureSpawnTarget(domain, code, "item").spawnFruitTrees.push(...fruitTreeIds);
+  }
   console.log(`  item index grown to ${itemIndex.size} after adding spawn-only blocks`);
+
+  // A block that drops something when broken/interacted with is, likewise, a fact about that
+  // block worth a page even if nothing else (recipe, worldgen) references it -- folds the old
+  // per-source /loot/ block pages directly onto /items/ instead (see site/items/items.njk's
+  // "Drops" section, looked up live via blockDropsById rather than a stored id list).
+  for (const group of blockDrops) {
+    ensureSpawnTarget(group.sourceDomain, group.sourceCode);
+  }
+  console.log(`  item index grown to ${itemIndex.size} after adding block-drop-only blocks`);
 
   const modSummaries: ModSummary[] = [
     { modid: "game", name: "Vintage Story (vanilla)", version: manifest.serverVersion, side: "Universal", hasCompiledCode: false, isVanilla: true },
@@ -202,12 +230,16 @@ function main(): void {
   const recipesById = Object.fromEntries(recipes.map((r) => [r.id, r]));
   const depositsById = Object.fromEntries(deposits.map((d) => [d.id, d]));
   const blockPatchesById = Object.fromEntries(blockPatches.map((p) => [p.id, p]));
+  const treesById = Object.fromEntries(trees.map((t) => [t.id, t]));
+  const fruitTreesById = Object.fromEntries(fruitTrees.map((t) => [t.id, t]));
 
   console.log("== Writing generated data ==");
   writeGenerated("recipes", recipes);
   writeGenerated("recipesById", recipesById);
   writeGenerated("loot", loot);
-  writeGenerated("lootBySource", lootBySource);
+  writeGenerated("creatures", creatures);
+  writeGenerated("blockDrops", blockDrops);
+  writeGenerated("blockDropsById", blockDropsById);
   writeGenerated("structures", structures);
   writeGenerated("decor", decorCatalog);
   writeGenerated("lore", loreBooks);
@@ -215,6 +247,10 @@ function main(): void {
   writeGenerated("depositsById", depositsById);
   writeGenerated("blockPatches", blockPatches);
   writeGenerated("blockPatchesById", blockPatchesById);
+  writeGenerated("trees", trees);
+  writeGenerated("treesById", treesById);
+  writeGenerated("fruitTrees", fruitTrees);
+  writeGenerated("fruitTreesById", fruitTreesById);
   writeGenerated("items", [...itemIndex.values()]);
   writeGenerated("mods", modSummaries);
 

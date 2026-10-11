@@ -1,0 +1,39 @@
+---
+title: Deposits - Vintage Story Wiki
+layout: layouts/base.njk
+permalink: "{{ lang }}/deposits/index.html"
+---
+{% import "macros/datatable.njk" as dt %}
+<h1>Deposits</h1>
+<p class="muted">
+  Where ore/gem/rock deposits naturally occur, read directly from the game's worldgen rules.
+</p>
+<p class="muted">
+  "Depth" and the host-rock list below are the raw worldgen rule the game checks, not a guarantee
+  -- a "near surface" deposit can still occasionally be found deeper, and these are the conditions
+  a <em>chunk</em> must meet, not a promise any single spot within it generates something.
+</p>
+
+<h2>Ore / gem / rock deposits ({{ generated.deposits.length }})</h2>
+{% call dt.datatable(40, "Search deposits...", ["Deposit", "Category", "Host rock(s)", "Depth", "Mod"]) %}
+{% for dep in generated.deposits | sort(false, false, "code") %}
+  <tr data-search="{{ dep.hostRocks | join(' ') }}" data-category="{{ dep.category }}" data-mod="{{ dep.sourceMod }}">
+    <td>{{ dep.code }}</td>
+    <td><span class="tag">{{ dep.category }}</span></td>
+    <td>
+      {% if dep.gradesByRock %}
+        {% for rock, grades in dep.gradesByRock %}{{ rock }} ({{ grades | join(", ") }}){% if not loop.last %}, {% endif %}{% endfor %}
+      {% else %}
+        {{ dep.hostRocks | join(", ") }}
+      {% endif %}
+    </td>
+    <td>
+      {% if dep.yPosRel %}
+        {% set y = dep.yPosRel.avg %}
+        {% if y >= 0.8 %}near surface{% elif y >= 0.5 %}shallow{% elif y >= 0.25 %}moderate{% else %}deep{% endif %}
+      {% endif %}
+    </td>
+    <td><span class="tag">{{ dep.sourceMod }}</span></td>
+  </tr>
+{% endfor %}
+{% endcall %}

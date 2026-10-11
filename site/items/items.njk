@@ -19,10 +19,11 @@ eleventyComputed:
   &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ item.sourceMod }}</a>
 </p>
 {% if item.missingTranslation %}<p class="warning">No display name found in any lang file &mdash; showing the raw code.</p>{% endif %}
+{% set blockDrops = generated.blockDropsById[item.domain ~ ':' ~ item.code] %}
 
 {% if item.spawnDeposits.length %}
 <h2>Where to find (natural deposits)</h2>
-<p class="muted">Read directly from the game's worldgen rules -- see <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a> for how this differs from an exact "X spawns at Y" guarantee. See also the full <a href="{{ ('/' ~ lang ~ '/') | url }}spawns/">Spawn Locations</a> listing.</p>
+<p class="muted">Read directly from the game's worldgen rules -- see <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a> for how this differs from an exact "X spawns at Y" guarantee. See also the full <a href="{{ ('/' ~ lang ~ '/') | url }}deposits/">Deposits</a> listing.</p>
 <ul>
   {% for depId in item.spawnDeposits %}
     {% set dep = generated.depositsById[depId] %}
@@ -42,7 +43,7 @@ eleventyComputed:
 
 {% if item.spawnBlockPatches.length %}
 <h2>Where to find (natural growth)</h2>
-<p class="muted">Climate conditions a chunk needs for this to grow wild. See also the full <a href="{{ ('/' ~ lang ~ '/') | url }}spawns/">Spawn Locations</a> listing.</p>
+<p class="muted">Climate conditions a chunk needs for this to grow wild. See also the full <a href="{{ ('/' ~ lang ~ '/') | url }}crops/">Crops</a> listing.</p>
 <ul>
   {% for patchId in item.spawnBlockPatches %}
     {% set patch = generated.blockPatchesById[patchId] %}
@@ -58,6 +59,63 @@ eleventyComputed:
     {% endif %}
   {% endfor %}
 </ul>
+{% endif %}
+
+{% if item.spawnTrees.length %}
+<h2>Where to find (tree growth)</h2>
+<p class="muted">Climate band this tree species can generate in. See also the full <a href="{{ ('/' ~ lang ~ '/') | url }}crops/">Crops</a> listing.</p>
+<ul>
+  {% for treeId in item.spawnTrees %}
+    {% set tree = generated.treesById[treeId] %}
+    {% if tree.id %}
+    <li>
+      <span class="tag">{{ "shrub" if tree.isShrub else "tree" }}</span> {{ tree.generator }}
+      {% if tree.minTemp != null or tree.maxTemp != null %} &middot; Temp {{ tree.minTemp if tree.minTemp != null else "any" }}&ndash;{{ tree.maxTemp if tree.maxTemp != null else "any" }}&deg;C{% endif %}
+      {% if tree.minRain != null or tree.maxRain != null %} &middot; Rain {{ (tree.minRain if tree.minRain != null else 0) | round(2) }}&ndash;{{ (tree.maxRain if tree.maxRain != null else 1) | round(2) }}{% endif %}
+      {% if tree.minForest != null or tree.maxForest != null %} &middot; Forest density {{ (tree.minForest if tree.minForest != null else 0) | round(2) }}&ndash;{{ (tree.maxForest if tree.maxForest != null else 1) | round(2) }}{% endif %}
+      {% if tree.minFertility != null or tree.maxFertility != null %} &middot; Soil fertility {{ (tree.minFertility if tree.minFertility != null else 0) | round(2) }}&ndash;{{ (tree.maxFertility if tree.maxFertility != null else 1) | round(2) }}{% endif %}
+      {% if tree.habitat %} &middot; Habitat: {{ tree.habitat }}{% endif %}
+    </li>
+    {% endif %}
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if item.spawnFruitTrees.length %}
+<h2>Where to find (fruit tree growth)</h2>
+<p class="muted">See also the full <a href="{{ ('/' ~ lang ~ '/') | url }}crops/">Crops</a> listing.</p>
+<ul>
+  {% for ftId in item.spawnFruitTrees %}
+    {% set ft = generated.fruitTreesById[ftId] %}
+    {% if ft.id %}
+    <li>
+      {{ ft.variety }}
+      {% if ft.minTemp != null or ft.maxTemp != null %} &middot; Temp {{ ft.minTemp }}&ndash;{{ ft.maxTemp }}&deg;C{% endif %}
+      {% if ft.minRain != null or ft.maxRain != null %} &middot; Rain {{ ft.minRain }}&ndash;{{ ft.maxRain }}{% endif %}
+    </li>
+    {% endif %}
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if blockDrops.id %}
+<h2>Drops ({{ blockDrops.entries.length }})</h2>
+{% call dt.datatable(20, "Search drops...", ["Mechanism", "Drop", "Chance / Quantity", "Notes"]) %}
+{% for entry in blockDrops.entries %}
+  <tr data-category="{{ entry.mechanism }}">
+    <td>{{ entry.mechanism }}{% if entry.panningKeyPattern %}<br><span class="muted tag">{{ entry.panningKeyPattern }}</span>{% endif %}</td>
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ entry.drop.domain }}/{{ entry.drop.code | slugify }}/">{{ generated.items | displayName(entry.drop.domain, entry.drop.code) }}</a></td>
+    <td>
+      {% if entry.drop.chanceAvg != null %}{{ entry.drop.chanceAvg | percent }}{% endif %}
+      {% if entry.drop.quantityAvg != null %}&times;{{ entry.drop.quantityAvg | round(2) }}{% if entry.drop.quantityVar %} (&plusmn;{{ entry.drop.quantityVar }}){% endif %}{% endif %}
+    </td>
+    <td>
+      {% if entry.drop.manMade %}<span class="tag">man-made</span>{% endif %}
+      {% if entry.drop.dropModbyStat %}<span class="tag">scales with {{ entry.drop.dropModbyStat }}</span>{% endif %}
+    </td>
+  </tr>
+{% endfor %}
+{% endcall %}
 {% endif %}
 
 {% if item.producedBy.length %}
@@ -99,7 +157,7 @@ eleventyComputed:
   {% set loot = generated.loot[lootIdx] %}
   {% if loot %}
   <tr data-category="{{ loot.sourceKind }}">
-    <td><a href="{{ ('/' ~ lang ~ '/') | url }}loot/{{ loot.sourceDomain }}/{{ loot.sourceCode | slugify }}/">{{ loot.sourceDisplayName }}</a></td>
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}{{ 'creatures' if loot.sourceKind == 'entity' else 'items' }}/{{ loot.sourceDomain }}/{{ loot.sourceCode | slugify }}/">{{ loot.sourceDisplayName }}</a></td>
     <td><span class="tag">{{ loot.sourceKind }}</span></td>
     <td>{{ loot.mechanism }}</td>
     <td>
@@ -112,6 +170,6 @@ eleventyComputed:
 {% endcall %}
 {% endif %}
 
-{% if not item.producedBy.length and not item.consumedBy.length and not item.droppedBy.length and not item.spawnDeposits.length and not item.spawnBlockPatches.length %}
+{% if not item.producedBy.length and not item.consumedBy.length and not item.droppedBy.length and not blockDrops.id and not item.spawnDeposits.length and not item.spawnBlockPatches.length and not item.spawnTrees.length and not item.spawnFruitTrees.length %}
 <p class="muted">Not produced, consumed, dropped, or naturally spawned by anything currently catalogued.</p>
 {% endif %}

@@ -56,12 +56,22 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   do not merge it back into README.md); `CLAUDE.md` (this file) is for a future Claude session.
   Keep README.md in sync with real pipeline/feature changes — it's the one most likely to drift.
 - **The item index (`generated.items`, built by `src/ingest/crossref.ts`) is a recipe/loot graph,
-  not a full registry walk.** Paintings/tapestries/clothing (`models/decor.ts` → `/decor/`) and
-  ore/gem deposits + wild crop spawn patches (`models/deposits.ts` / `models/blockpatches.ts` →
-  `/spawns/`, cross-referenced onto `ItemIndexEntry.spawnDeposits`/`spawnBlockPatches`) are
-  deliberate carve-outs for things with no recipe and no drop table. If you're asked to surface
-  some other spawn-only/recipe-less content type, this is the existing pattern to follow — don't
-  force it through `crossref.ts`'s recipe/loot walk.
+  not a full registry walk.** Paintings/tapestries/clothing (`models/decor.ts` → `/decor/`), ore/gem
+  deposits (`models/deposits.ts` → `/deposits/`), wild crop/tree spawn patches
+  (`models/blockpatches.ts` / `models/trees.ts` → `/crops/`), and blocks that only drop something
+  with no recipe of their own (grouped in `src/ingest/index.ts` as `blockDrops`/`blockDropsById`,
+  looked up live from `/items/` by `domain:code` — see below) are all deliberate carve-outs,
+  synthesized via `ensureSpawnTarget(domain, code, kind)` in `src/ingest/index.ts` for things with
+  no recipe and (for the first three) no drop table. If you're asked to surface some other
+  spawn-only/recipe-less content type, this is the existing pattern to follow — don't force it
+  through `crossref.ts`'s recipe/loot walk.
+- **Content is organized by what the thing is, not by mechanism.** `/creatures/` is entity-only
+  (stats, spawn conditions, own drop table); a block's drops live directly on that block's own
+  `/items/` page (a "Drops" section, forward direction) rather than a separate per-source listing.
+  The existing "Dropped by" section on an item page (reverse direction: what else drops *this*
+  item) routes each row to `/creatures/...` or `/items/...` depending on `loot.sourceKind` — if you
+  add another cross-link into loot data, check `sourceKind` the same way rather than assuming one
+  target page type.
 - **Entity spawn conditions live under `json.server.spawnconditions`** (or `...spawnconditionsByType`
   for glob-keyed variants), not top-level `json.spawnconditions` — a real bug hit once already
   (`src/ingest/models/loot.ts`, `extractEntitySpawnInfo`). If entity-derived data looks
@@ -86,6 +96,9 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   (`minTemp`, `chance`, `habitatBlocks`, `yPosRel`, etc.), reused across structures, entity spawn
   conditions, and item deposit/patch info. Add new keys here rather than writing one-off prose in a
   template, so the wording stays consistent across pages.
+- **Nunjucks ternary + filter precedence**: `{{ x if cond else y | round(2) }}` applies the filter
+  to `y` only, not to the whole expression — a real bug hit twice while building the tree spawn
+  pages. Parenthesize the ternary before filtering: `{{ (x if cond else y) | round(2) }}`.
 - **Never commit unless explicitly asked.** This has held throughout the project's history; the
   user commits their own work independently between sessions.
 

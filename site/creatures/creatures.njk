@@ -1,19 +1,18 @@
 ---
 pagination:
-  data: generated.lootBySource
+  data: generated.creatures
   size: 1
   alias: source
-permalink: "{{ lang }}/loot/{{ source.sourceDomain }}/{{ source.sourceCode | slugify }}/index.html"
+permalink: "{{ lang }}/creatures/{{ source.sourceDomain }}/{{ source.sourceCode | slugify }}/index.html"
 layout: layouts/base.njk
 eleventyComputed:
-  title: "{{ source.sourceDisplayName }} drops - Vintage Story Wiki"
+  title: "{{ source.sourceDisplayName }} - Vintage Story Wiki"
 ---
 {% import "macros/datatable.njk" as dt %}
-<div class="breadcrumb"><a href="{{ ('/' ~ lang ~ '/') | url }}loot/">&larr; All loot sources</a></div>
+<div class="breadcrumb"><a href="{{ ('/' ~ lang ~ '/') | url }}creatures/">&larr; All creatures</a></div>
 
 <h1>{{ source.sourceDisplayName }}</h1>
 <p class="muted">
-  <span class="tag">{{ source.sourceKind }}</span>
   <code>{{ source.sourceDomain }}:{{ source.sourceCode }}</code>
   &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ source.sourceMod }}</a>
 </p>
@@ -28,7 +27,7 @@ eleventyComputed:
     {% if source.entityStats.tags.length %}
     <tr>
       <th>Tags</th>
-      <td>{% for t in source.entityStats.tags %}<a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}loot/?q={{ t | urlencode }}">{{ t }}</a>{% endfor %}</td>
+      <td>{% for t in source.entityStats.tags %}<a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}creatures/?q={{ t | urlencode }}">{{ t }}</a>{% endfor %}</td>
     </tr>
     {% endif %}
   </tbody>

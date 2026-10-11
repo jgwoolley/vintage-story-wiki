@@ -64,12 +64,15 @@ npm run serve      # same, with a local dev server + live reload
   health, weight, hitbox size, behavior tags, and spawn conditions, see below), the 4 worldgen
   registries (structures, villages, story structures, hook-generated structures), the
   decorative/clothing catalog, and readable books/lore into common shapes.
-- **`models/deposits.ts`** / **`models/blockpatches.ts`** — parse `worldgen/deposits/**/*.json`
-  (ore/gem/rock veins: host rock(s), grade-by-rock, typical depth) and `worldgen/blockpatches/*.json`
-  (wild crops/flowers/mushrooms/etc.: literal block codes plus climate/fertility ranges), then
-  cross-reference both back onto the matching item index entries so an item page can show where it
-  naturally occurs. Entity spawn conditions (climate, habitat blocks, spawn group/chance) are parsed
-  in `models/loot.ts` instead, from each entity's `server.spawnconditions`/`spawnconditionsByType`,
+- **`models/deposits.ts`** / **`models/blockpatches.ts`** / **`models/trees.ts`** — parse
+  `worldgen/deposits/**/*.json` (ore/gem/rock veins: host rock(s), grade-by-rock, typical depth),
+  `worldgen/blockpatches/*.json` (wild crops/flowers/mushrooms/etc.: literal block codes plus
+  climate/fertility ranges), and `worldgen/treengenproperties.json` plus `blocktypes/plant/
+  fruittreebranch.json` (regular tree/shrub species and fruit tree varieties: climate bands
+  cross-referenced to concrete log/leaves/sapling/fruit-item codes), then cross-reference all three
+  back onto the matching item index entries so an item page can show where it naturally occurs.
+  Entity spawn conditions (climate, habitat blocks, spawn group/chance) are parsed in
+  `models/loot.ts` instead, from each entity's `server.spawnconditions`/`spawnconditionsByType`,
   since that's nested under the entity's own JSON rather than a separate worldgen registry.
 - **`crossref.ts`** — builds the item index (which recipes produce/consume an item, which
   blocks/entities drop it), resolving recipe-level wildcard/template placeholders (e.g.
@@ -137,25 +140,44 @@ resolved through the same mechanism as every other display string (including mod
 keys like `betterruins:lore-brickworkerslament-title`), with the game's own `___NEWPAGE___`
 page-break marker preserved.
 
-## Entity stats
+## Creatures vs. Items (`/<lang>/creatures/`, `/<lang>/items/`)
 
-Loot pages for entities show health (`maxhealth`/`maxhealthByType` from the `health` server
-behavior), weight, hitbox size, and behavior tags — all resolved through the same `*ByType`
-glob-matching used for drops. Tags are clickable, linking to `/loot/?q=<tag>` so e.g. every
-`predator`-tagged entity is one click away.
+Content is organized by *what the thing is*, not by *mechanism*: `/creatures/` is entity-only
+(health, hitbox, tags, spawn conditions, and its own drop table), while every block's drops —
+"this block drops X when broken" — live directly on that block's own `/items/` page instead of a
+separate listing, right alongside what produces/consumes it. `src/ingest/index.ts` groups the flat
+loot entries by source (`LootSourceGroup`) and splits the result: entity-kind groups become
+`generated.creatures`; block-kind groups become `generated.blockDrops`/`blockDropsById`, looked up
+live by each item page via its own `domain:code` (no stored id list needed, same pattern as the
+deposit/blockpatch lookups below). A block that only drops something, with no recipe or worldgen
+reference of its own (confirmed: the large majority of block drop sources), still gets synthesized
+an `/items/` page via `ensureSpawnTarget` — the same "give it a page even though nothing else
+points to it" pattern already used for spawn-only blocks. Entity stats (health
+`maxhealth`/`maxhealthByType` from the `health` server behavior, weight, hitbox size, behavior
+tags) are resolved through the same `*ByType` glob-matching used for drops; tags are clickable,
+linking to `/creatures/?q=<tag>` so e.g. every `predator`-tagged entity is one click away.
 
-## Spawn locations (`/<lang>/spawns/`, and per-item/entity)
+## Spawn locations (`/<lang>/deposits/`, `/<lang>/crops/`, and per-item)
 
-Ore/gem/rock deposits and wild crops/flowers/etc. are blocks with no recipe and no drop table of
-their own — nothing "produces" them, the world just generates them — so like paintings/tapestries
-(see Decor & Clothing below) they fall outside the recipe/loot-driven item index and get their own
-extraction path (`models/deposits.ts`, `models/blockpatches.ts`). `/spawns/` lists all of both;
-each item's own page also shows just the entries relevant to it. Entity spawn conditions (climate,
-required nearby block, spawn group/chance, tries-per-chunk) are shown on the entity's own
-`/loot/` page instead, next to its drop table, parsed from `server.spawnconditions` /
-`spawnconditionsByType` in `models/loot.ts`. All of these values are the raw worldgen *rule* the
-game checks per chunk/attempt, not a placement guarantee — see the in-site Info page for the
-visitor-facing version of that caveat.
+Ore/gem/rock deposits, wild crops/flowers/etc., and trees are blocks with no recipe and no drop
+table of their own — nothing "produces" them, the world just generates them — so like
+paintings/tapestries (see Decor & Clothing below) they fall outside the recipe/loot-driven item
+index and get their own extraction path: `models/deposits.ts` (→ `/deposits/`), `models/
+blockpatches.ts` and `models/trees.ts` (→ `/crops/`, covering wild crops/flowers/mushrooms/etc. plus
+regular tree/shrub species and fruit tree varieties). Each item's own page also shows just the
+entries relevant to it. `models/trees.ts` reads a third, structurally distinct worldgen system —
+`worldgen/treengenproperties.json`'s per-species climate bands (confirmed 0–255 scale for
+rain/fertility/forest-density, normalized to this codebase's usual 0–1 on the way out), cross-
+referenced to concrete log/leaves/sapling block codes via each species' own `worldgen/
+treegen/<species>.json` shape file and `plaintreesapling.json`'s glob-keyed sapling→species map
+(reusing `variantExpander.ts`'s `resolveByType`) — plus a wholly separate fruit-tree climate band
+in `blocktypes/plant/fruittreebranch.json`'s `attributes.worldgen`, cross-referenced to the
+concrete fruit item code via its sibling `attributes.fruittreeProperties.<type>.fruitStacks[0].
+code`. Entity spawn conditions (climate, required nearby block, spawn group/chance,
+tries-per-chunk) are shown on the entity's own `/creatures/` page instead, next to its drop table,
+parsed from `server.spawnconditions`/`spawnconditionsByType` in `models/loot.ts`. All of these
+values are the raw worldgen *rule* the game checks per chunk/attempt, not a placement guarantee —
+see the in-site Info page for the visitor-facing version of that caveat.
 
 ## Site features
 

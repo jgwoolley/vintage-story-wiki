@@ -163,6 +163,18 @@ export interface LootEntry {
   };
 }
 
+/** `LootEntry[]` grouped by source (one row per block/entity that drops something). */
+export interface LootSourceGroup {
+  id: string; // `${sourceDomain}:${sourceCode}`
+  sourceDomain: string;
+  sourceCode: string;
+  sourceDisplayName: string;
+  sourceKind: "block" | "entity";
+  sourceMod: string;
+  entityStats?: EntityStats;
+  entries: LootEntry[];
+}
+
 export type StructureKind = "structure" | "village" | "storystructure" | "hookgenerated";
 
 export interface SchematicSummary {
@@ -209,6 +221,8 @@ export interface ItemIndexEntry {
   appearsInStructures: string[]; // structure ids
   spawnDeposits: string[]; // DepositInfo ids (ore/gem/rock -- where this specific grade+rock combo occurs)
   spawnBlockPatches: string[]; // BlockPatchSpawnInfo ids (crops/flowers/mushrooms/etc -- climate band this grows in)
+  spawnTrees: string[]; // TreeSpawnInfo ids (regular tree/shrub species -- climate band this grows in)
+  spawnFruitTrees: string[]; // FruitTreeSpawnInfo ids (fruit tree varieties -- climate band this grows in)
 }
 
 /** An ore/gem/rock deposit (`worldgen/deposits/**`): which rock(s) host it, and at which grades. */
@@ -242,6 +256,48 @@ export interface BlockPatchSpawnInfo {
   maxFertility?: number;
   chance?: number;
   placement?: string;
+}
+
+/** A regular (non-fruit) tree or shrub species' climate band (`worldgen/treengenproperties.json`). */
+export interface TreeSpawnInfo {
+  id: string;
+  domain: string;
+  sourceMod: string;
+  generator: string;
+  isShrub: boolean;
+  weight?: number;
+  minTemp?: number;
+  maxTemp?: number;
+  minRain?: number; // normalized 0-1 (raw data is 0-255)
+  maxRain?: number;
+  minFertility?: number; // normalized 0-1 (raw data is 0-255)
+  maxFertility?: number;
+  minForest?: number; // normalized 0-1 (raw data is 0-255)
+  maxForest?: number;
+  minHeight?: number; // already 0-1
+  maxHeight?: number;
+  minSize?: number;
+  maxSize?: number;
+  suitabilitySizeBonus?: number;
+  habitat?: string;
+  logBlockCode?: string;
+  otherLogBlockCode?: string;
+  leavesBlockCode?: string;
+  leavesBranchyBlockCode?: string;
+  saplingCodes?: string[];
+}
+
+/** A fruit tree variety's climate band (`blocktypes/plant/fruittreebranch.json`). */
+export interface FruitTreeSpawnInfo {
+  id: string;
+  domain: string;
+  sourceMod: string;
+  variety: string;
+  minTemp?: number;
+  maxTemp?: number;
+  minRain?: number; // already 0-1
+  maxRain?: number;
+  fruitItemCode?: string;
 }
 
 export type DecorKind = "painting" | "tapestry" | "clothing";

@@ -132,6 +132,12 @@ export default function (eleventyConfig) {
     triesPerChunk: "How many times per chunk the game attempts this placement. Combined with chance, this governs how rare the result actually is in practice -- a high tries-per-chunk with a low chance can still be rarer than a low tries-per-chunk with a higher chance.",
     hostRocks: "The rock type(s) this deposit can replace. Where grade varies by rock, richer grades (rich/bountiful) are rarer than poor ones within the same deposit.",
     yPosRel: "Typical depth as a fraction of the world's height range: near 1.0 is close to the surface, near 0.0 is near the bottom of the world.",
+    minHeight: "Only generates where terrain height (relative to the world's full height range, 0 = bottom, 1 = top) is at or above this.",
+    maxHeight: "Only generates where terrain height is at or below this.",
+    habitat: "Restricted to a specific habitat (e.g. \"Water\" for swamp-growing species) instead of ordinary dry land.",
+    suitabilitySizeBonus: "Bonus added to this generator's suitability score when a larger tree would fit at the candidate spot, making bigger viable trees preferred over smaller ones up to this amount.",
+    minSize: "Minimum relative tree size (0-1) this climate band may generate at.",
+    maxSize: "Maximum relative tree size (0-1) this climate band may generate at.",
   };
   eleventyConfig.addFilter("restrictionLabel", (key) => key.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase()));
   eleventyConfig.addFilter("restrictionInfo", (key) => RESTRICTION_GLOSSARY[key]);

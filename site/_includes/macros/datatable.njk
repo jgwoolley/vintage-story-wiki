@@ -19,7 +19,7 @@
     <select class="datatable-mod-filter" aria-label="Filter by mod"></select>
   </div>
   <table>
-    {% if headers %}<thead><tr>{% for h in headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>{% endif %}
+    {% if headers %}<thead><tr>{% for h in headers %}<th>{{ h | safe }}</th>{% endfor %}</tr></thead>{% endif %}
     <tbody data-datatable-items>
       {{ caller() }}
     </tbody>
