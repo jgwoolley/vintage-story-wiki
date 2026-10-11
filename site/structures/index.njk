@@ -6,12 +6,12 @@ layout: layouts/base.njk
 <h1>Generated Structures</h1>
 <p class="muted">{{ generated.structures.length }} structure/village/story-structure definitions.</p>
 
-{% set groups = generated.structures | groupby("kind") %}
-{% for kind, structures in groups %}
-  <h2>{{ kind }} ({{ structures.length }})</h2>
-  {% call dt.datatable(60, "Search " + kind + "...") %}
-  {% for structure in structures | sort(false, false, "code") %}
-    <a href="{{ '/' | url }}structures/{{ structure.id | slugify }}/">{{ structure.name or structure.code }}</a>
-  {% endfor %}
-  {% endcall %}
+{% call dt.datatable(60, "Search structures...", ["Name", "Kind", "Mod"]) %}
+{% for structure in generated.structures | sort(false, false, "code") %}
+  <tr data-category="{{ structure.kind }}" data-mod="{{ structure.sourceMod }}">
+    <td><a href="{{ '/' | url }}structures/{{ structure.id | slugify }}/">{{ structure.name or structure.code }}</a></td>
+    <td><span class="tag">{{ structure.kind }}</span></td>
+    <td><span class="tag">{{ structure.sourceMod }}</span></td>
+  </tr>
 {% endfor %}
+{% endcall %}

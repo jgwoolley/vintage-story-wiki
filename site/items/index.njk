@@ -6,8 +6,12 @@ layout: layouts/base.njk
 <h1>Items &amp; Blocks</h1>
 <p class="muted">{{ generated.items.length }} distinct items/blocks referenced by recipes or loot tables.</p>
 
-{% call dt.datatable(60, "Search items & blocks...") %}
+{% call dt.datatable(60, "Search items & blocks...", ["Name", "Kind", "Mod"]) %}
 {% for item in generated.items | sort(false, false, "displayName") %}
-  <a href="{{ '/' | url }}items/{{ item.domain }}/{{ item.code | slugify }}/" data-search="{{ item.domain }}:{{ item.code }}">{{ item.displayName }}</a>
+  <tr data-search="{{ item.domain }}:{{ item.code }}" data-category="{{ item.kind }}" data-mod="{{ item.sourceMod }}">
+    <td><a href="{{ '/' | url }}items/{{ item.domain }}/{{ item.code | slugify }}/">{{ item.displayName }}</a></td>
+    <td><span class="tag">{{ item.kind }}</span></td>
+    <td><span class="tag">{{ item.sourceMod }}</span></td>
+  </tr>
 {% endfor %}
 {% endcall %}

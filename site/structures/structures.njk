@@ -18,14 +18,16 @@ eleventyComputed:
   &middot; from <a href="{{ '/' | url }}mods/">{{ structure.sourceMod }}</a>
 </p>
 
+<h2>Spawn conditions</h2>
 <table>
+  <thead><tr><th>Condition</th><th>Value</th><th>What this means</th></tr></thead>
   <tbody>
-    {% if structure.chance != null %}<tr><th>Spawn chance</th><td>{{ structure.chance | percent }} per chunk/region (before any global multiplier)</td></tr>{% endif %}
-    {% if structure.placement %}<tr><th>Placement</th><td>{{ structure.placement }}</td></tr>{% endif %}
-    {% if structure.minSpawnDistance %}<tr><th>Min spawn distance</th><td>{{ structure.minSpawnDistance }} blocks from spawn</td></tr>{% endif %}
-    {% if structure.minGroupDistance %}<tr><th>Min distance between instances</th><td>{{ structure.minGroupDistance }} blocks</td></tr>{% endif %}
+    {% if structure.chance != null %}<tr><th>Spawn chance</th><td>{{ structure.chance | percent }}</td><td>{{ "chance" | restrictionInfo }}</td></tr>{% endif %}
+    {% if structure.placement %}<tr><th>Placement</th><td>{{ structure.placement }}</td><td>{{ "placement" | restrictionInfo }}</td></tr>{% endif %}
+    {% if structure.minSpawnDistance %}<tr><th>Min spawn distance</th><td>{{ structure.minSpawnDistance }} blocks</td><td>{{ "minSpawnDistance" | restrictionInfo }}</td></tr>{% endif %}
+    {% if structure.minGroupDistance %}<tr><th>Min distance between instances</th><td>{{ structure.minGroupDistance }} blocks</td><td>{{ "minGroupDistance" | restrictionInfo }}</td></tr>{% endif %}
     {% for key, value in structure.restrictions %}
-      <tr><th>{{ key }}</th><td>{{ value }}</td></tr>
+      <tr><th>{{ key | restrictionLabel }}</th><td>{{ value }}</td><td>{{ (key | restrictionInfo) or "" }}</td></tr>
     {% endfor %}
   </tbody>
 </table>

@@ -23,6 +23,34 @@ export default function (eleventyConfig) {
 
   eleventyConfig.addFilter("json", (val) => JSON.stringify(val, null, 2));
 
+  // Plain-English explanations for the worldgen restriction fields that show up raw in
+  // structures.json/storystructures.json/villages.json -- these are otherwise cryptic
+  // PascalCase/camelCase keys with no in-game documentation.
+  const RESTRICTION_GLOSSARY = {
+    minTemp: "Only generates where the chunk's yearly-average temperature is at or above this value (°C).",
+    maxTemp: "Only generates where the chunk's yearly-average temperature is at or below this value (°C).",
+    minRain: "Only generates where the chunk's rainfall value is at or above this (0-1 scale).",
+    maxRain: "Only generates where the chunk's rainfall value is at or below this (0-1 scale).",
+    minForestDensity: "Only generates where local forest density is at or above this (0-1 scale).",
+    maxForestDensity: "Only generates where local forest density is at or below this (0-1 scale).",
+    requireLandform: "Only generates on/in a landform matching this name (e.g. \"cold glaciers\").",
+    landformRadius: "How far around the structure, in blocks, the required landform must extend.",
+    forceTemperature: "Overrides the local climate reading for this structure's own placement logic, regardless of the world's actual temperature there.",
+    MaxBelowSealevel: "Maximum depth below sea level, in blocks, this structure may be placed at.",
+    maxYDiff: "Maximum terrain height variation allowed under the structure's footprint (keeps it off very uneven ground).",
+    dependsOnStructure: "Only generates at a fixed position relative to another named structure (usually \"spawn\").",
+    minSpawnDistX: "Minimum X-axis distance from spawn, in blocks (used with the Z bounds below for a rectangular band instead of a simple radius).",
+    maxSpawnDistX: "Maximum X-axis distance from spawn, in blocks.",
+    minSpawnDistZ: "Minimum Z-axis distance from spawn, in blocks.",
+    maxSpawnDistZ: "Maximum Z-axis distance from spawn, in blocks.",
+    chance: "Probability this structure is attempted at a given candidate location, before any global frequency multiplier from world-creation settings.",
+    placement: "Where this structure is anchored: on the terrain surface, buried underground, or a specific ruin/story layer.",
+    minSpawnDistance: "Minimum distance from the world spawn point, in blocks, before this structure is allowed to generate at all.",
+    minGroupDistance: "Minimum distance enforced between two instances of this same structure, in blocks, so copies don't generate too close together.",
+  };
+  eleventyConfig.addFilter("restrictionLabel", (key) => key.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase()));
+  eleventyConfig.addFilter("restrictionInfo", (key) => RESTRICTION_GLOSSARY[key]);
+
   // Lore/description text is trusted static game content that mixes plain newlines with real
   // inline HTML (<strong>, <font color="...">) -- so it's rendered with `| safe` after this,
   // unlike nunjucks' built-in nl2br which escapes everything first.

@@ -1,9 +1,29 @@
-{% macro datatable(pageSize, placeholder) %}
+{#
+  One real <table> per listing, with pagination, free-text search, and -- whenever rows carry a
+  `data-category`/`data-mod` -- an auto-populated <select> filtering on it (hidden if the page's
+  rows don't vary on that dimension). All three filters sync to URL query params (q/category/mod,
+  numbered q2/category2/mod2 etc for the 2nd+ datatable on the same page) so a filtered view can
+  be bookmarked/shared and survives back/forward navigation -- see datatable.js.
+  Pass `headers` for the <thead> and have the caller emit
+  <tr data-search="..." data-category="..." data-mod="..."><td>...</td>...</tr> rows (any of the
+  three data-* attributes can be omitted when not meaningful for that listing). When the caller
+  produces zero rows, the whole widget (including any surrounding heading the page itself wraps
+  around it) should be skipped by the page template -- this macro itself always renders the table
+  shell since it doesn't know the row count up front.
+#}
+{% macro datatable(pageSize, placeholder, headers) %}
 <div class="datatable" data-page-size="{{ pageSize or 50 }}">
-  <input type="search" class="datatable-search" placeholder="{{ placeholder or 'Search...' }}" aria-label="{{ placeholder or 'Search' }}">
-  <div class="datatable-list grid-list" data-datatable-items>
-    {{ caller() }}
+  <div class="datatable-controls">
+    <input type="search" class="datatable-search" placeholder="{{ placeholder or 'Search...' }}" aria-label="{{ placeholder or 'Search' }}">
+    <select class="datatable-category-filter" aria-label="Filter by category"></select>
+    <select class="datatable-mod-filter" aria-label="Filter by mod"></select>
   </div>
+  <table>
+    {% if headers %}<thead><tr>{% for h in headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>{% endif %}
+    <tbody data-datatable-items>
+      {{ caller() }}
+    </tbody>
+  </table>
   <div class="datatable-pagination" data-datatable-pagination></div>
 </div>
 {% endmacro %}

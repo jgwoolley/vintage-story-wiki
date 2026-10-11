@@ -9,6 +9,7 @@ eleventyComputed:
   title: "{{ item.displayName }} - Vintage Story Wiki"
 ---
 {% import "macros/recipe.njk" as rc %}
+{% import "macros/datatable.njk" as dt %}
 <div class="breadcrumb"><a href="{{ '/' | url }}items/">&larr; All items</a></div>
 
 <h1>{{ item.displayName }}</h1>
@@ -19,54 +20,58 @@ eleventyComputed:
 </p>
 {% if item.missingTranslation %}<p class="warning">No display name found in any lang file &mdash; showing the raw code.</p>{% endif %}
 
-<h2>Produced by ({{ item.producedBy.length }})</h2>
 {% if item.producedBy.length %}
-<ul class="recipe-ref-list">
-  {% for recipeId in item.producedBy %}
-    {% set recipe = generated.recipesById[recipeId] %}
-    {% if recipe %}
-    <li>
-      <a href="{{ '/' | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe.name or recipe.category }}</a> <span class="tag">{{ recipe.category }}</span>
-      {{ rc.summary(recipe | contextualRecipe(item.domain, item.code), generated.items) }}
-    </li>
-    {% endif %}
-  {% endfor %}
-</ul>
-{% else %}<p class="muted">No known recipe produces this.</p>{% endif %}
+<h2>Produced by ({{ item.producedBy.length }})</h2>
+{% call dt.datatable(20, "Search recipes...", ["Recipe", "Category", "Ingredients → output"]) %}
+{% for recipeId in item.producedBy %}
+  {% set recipe = generated.recipesById[recipeId] %}
+  {% if recipe %}
+  <tr data-category="{{ recipe.category }}">
+    <td><a href="{{ '/' | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe.name or recipe.category }}</a></td>
+    <td><span class="tag">{{ recipe.category }}</span></td>
+    <td>{{ rc.summary(recipe | contextualRecipe(item.domain, item.code), generated.items) }}</td>
+  </tr>
+  {% endif %}
+{% endfor %}
+{% endcall %}
+{% endif %}
 
-<h2>Used in ({{ item.consumedBy.length }})</h2>
 {% if item.consumedBy.length %}
-<ul class="recipe-ref-list">
-  {% for recipeId in item.consumedBy %}
-    {% set recipe = generated.recipesById[recipeId] %}
-    {% if recipe %}
-    <li>
-      <a href="{{ '/' | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe.name or recipe.category }}</a> <span class="tag">{{ recipe.category }}</span>
-      {{ rc.summary(recipe | contextualRecipe(item.domain, item.code), generated.items) }}
-    </li>
-    {% endif %}
-  {% endfor %}
-</ul>
-{% else %}<p class="muted">Not used as an ingredient in any known recipe.</p>{% endif %}
+<h2>Used in ({{ item.consumedBy.length }})</h2>
+{% call dt.datatable(20, "Search recipes...", ["Recipe", "Category", "Ingredients → output"]) %}
+{% for recipeId in item.consumedBy %}
+  {% set recipe = generated.recipesById[recipeId] %}
+  {% if recipe %}
+  <tr data-category="{{ recipe.category }}">
+    <td><a href="{{ '/' | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe.name or recipe.category }}</a></td>
+    <td><span class="tag">{{ recipe.category }}</span></td>
+    <td>{{ rc.summary(recipe | contextualRecipe(item.domain, item.code), generated.items) }}</td>
+  </tr>
+  {% endif %}
+{% endfor %}
+{% endcall %}
+{% endif %}
 
-<h2>Dropped by ({{ item.droppedBy.length }})</h2>
 {% if item.droppedBy.length %}
-<table>
-  <thead><tr><th>Source</th><th>Mechanism</th><th>Chance / Quantity</th></tr></thead>
-  <tbody>
-  {% for lootIdx in item.droppedBy %}
-    {% set loot = generated.loot[lootIdx] %}
-    {% if loot %}
-    <tr>
-      <td><a href="{{ '/' | url }}loot/{{ loot.sourceDomain }}/{{ loot.sourceCode | slugify }}/">{{ loot.sourceDisplayName }}</a> <span class="tag">{{ loot.sourceKind }}</span></td>
-      <td>{{ loot.mechanism }}</td>
-      <td>
-        {% if loot.drop.chanceAvg != null %}{{ loot.drop.chanceAvg | percent }}{% endif %}
-        {% if loot.drop.quantityAvg != null %}&times;{{ loot.drop.quantityAvg | round(2) }}{% endif %}
-      </td>
-    </tr>
-    {% endif %}
-  {% endfor %}
-  </tbody>
-</table>
-{% else %}<p class="muted">Not a known drop from any block or entity.</p>{% endif %}
+<h2>Dropped by ({{ item.droppedBy.length }})</h2>
+{% call dt.datatable(20, "Search sources...", ["Source", "Kind", "Mechanism", "Chance / Quantity"]) %}
+{% for lootIdx in item.droppedBy %}
+  {% set loot = generated.loot[lootIdx] %}
+  {% if loot %}
+  <tr data-category="{{ loot.sourceKind }}">
+    <td><a href="{{ '/' | url }}loot/{{ loot.sourceDomain }}/{{ loot.sourceCode | slugify }}/">{{ loot.sourceDisplayName }}</a></td>
+    <td><span class="tag">{{ loot.sourceKind }}</span></td>
+    <td>{{ loot.mechanism }}</td>
+    <td>
+      {% if loot.drop.chanceAvg != null %}{{ loot.drop.chanceAvg | percent }}{% endif %}
+      {% if loot.drop.quantityAvg != null %}&times;{{ loot.drop.quantityAvg | round(2) }}{% endif %}
+    </td>
+  </tr>
+  {% endif %}
+{% endfor %}
+{% endcall %}
+{% endif %}
+
+{% if not item.producedBy.length and not item.consumedBy.length and not item.droppedBy.length %}
+<p class="muted">Not produced, consumed, or dropped by anything currently catalogued.</p>
+{% endif %}

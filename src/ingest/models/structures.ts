@@ -2,6 +2,8 @@ import type { AssetIndex, NormalizedStructure, SchematicSummary, StructureKind }
 import { assetsUnderAnyDomain } from "../assetLoader.js";
 import { readSchematicHeader, type SchematicFile } from "../schematicHeader.js";
 
+// "MinSpawnDistance" is deliberately excluded here -- it's already promoted to the top-level
+// `minSpawnDistance` field below, so including it here would render the same value twice.
 const RESTRICTION_KEYS = [
   "minTemp",
   "maxTemp",
@@ -13,7 +15,6 @@ const RESTRICTION_KEYS = [
   "landformRadius",
   "forceTemperature",
   "MaxBelowSealevel",
-  "MinSpawnDistance",
   "maxYDiff",
   "dependsOnStructure",
   "minSpawnDistX",

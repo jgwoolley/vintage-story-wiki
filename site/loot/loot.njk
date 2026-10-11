@@ -8,6 +8,7 @@ layout: layouts/base.njk
 eleventyComputed:
   title: "{{ source.sourceDisplayName }} drops - Vintage Story Wiki"
 ---
+{% import "macros/datatable.njk" as dt %}
 <div class="breadcrumb"><a href="{{ '/' | url }}loot/">&larr; All loot sources</a></div>
 
 <h1>{{ source.sourceDisplayName }}</h1>
@@ -24,28 +25,30 @@ eleventyComputed:
     {% if source.entityStats.maxHealth != null %}<tr><th>Max health</th><td>{{ source.entityStats.maxHealth }} hp</td></tr>{% endif %}
     {% if source.entityStats.weight != null %}<tr><th>Weight</th><td>{{ source.entityStats.weight }} kg</td></tr>{% endif %}
     {% if source.entityStats.sizeX != null %}<tr><th>Hitbox size</th><td>{{ source.entityStats.sizeX }} &times; {{ source.entityStats.sizeY }} (width &times; height, blocks)</td></tr>{% endif %}
-    {% if source.entityStats.tags.length %}<tr><th>Tags</th><td>{% for t in source.entityStats.tags %}<span class="tag">{{ t }}</span>{% endfor %}</td></tr>{% endif %}
+    {% if source.entityStats.tags.length %}
+    <tr>
+      <th>Tags</th>
+      <td>{% for t in source.entityStats.tags %}<a class="tag" href="{{ '/' | url }}loot/?q={{ t | urlencode }}">{{ t }}</a>{% endfor %}</td>
+    </tr>
+    {% endif %}
   </tbody>
 </table>
 {% endif %}
 
-<h2>Drops</h2>
-<table>
-  <thead><tr><th>Mechanism</th><th>Drop</th><th>Chance / Quantity</th><th>Notes</th></tr></thead>
-  <tbody>
-  {% for entry in source.entries %}
-    <tr>
-      <td>{{ entry.mechanism }}{% if entry.panningKeyPattern %}<br><span class="muted tag">{{ entry.panningKeyPattern }}</span>{% endif %}</td>
-      <td><a href="{{ '/' | url }}items/{{ entry.drop.domain }}/{{ entry.drop.code | slugify }}/">{{ generated.items | displayName(entry.drop.domain, entry.drop.code) }}</a></td>
-      <td>
-        {% if entry.drop.chanceAvg != null %}{{ entry.drop.chanceAvg | percent }}{% endif %}
-        {% if entry.drop.quantityAvg != null %}&times;{{ entry.drop.quantityAvg | round(2) }}{% if entry.drop.quantityVar %} (&plusmn;{{ entry.drop.quantityVar }}){% endif %}{% endif %}
-      </td>
-      <td>
-        {% if entry.drop.manMade %}<span class="tag">man-made</span>{% endif %}
-        {% if entry.drop.dropModbyStat %}<span class="tag">scales with {{ entry.drop.dropModbyStat }}</span>{% endif %}
-      </td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
+<h2>Drops ({{ source.entries.length }})</h2>
+{% call dt.datatable(20, "Search drops...", ["Mechanism", "Drop", "Chance / Quantity", "Notes"]) %}
+{% for entry in source.entries %}
+  <tr data-category="{{ entry.mechanism }}">
+    <td>{{ entry.mechanism }}{% if entry.panningKeyPattern %}<br><span class="muted tag">{{ entry.panningKeyPattern }}</span>{% endif %}</td>
+    <td><a href="{{ '/' | url }}items/{{ entry.drop.domain }}/{{ entry.drop.code | slugify }}/">{{ generated.items | displayName(entry.drop.domain, entry.drop.code) }}</a></td>
+    <td>
+      {% if entry.drop.chanceAvg != null %}{{ entry.drop.chanceAvg | percent }}{% endif %}
+      {% if entry.drop.quantityAvg != null %}&times;{{ entry.drop.quantityAvg | round(2) }}{% if entry.drop.quantityVar %} (&plusmn;{{ entry.drop.quantityVar }}){% endif %}{% endif %}
+    </td>
+    <td>
+      {% if entry.drop.manMade %}<span class="tag">man-made</span>{% endif %}
+      {% if entry.drop.dropModbyStat %}<span class="tag">scales with {{ entry.drop.dropModbyStat }}</span>{% endif %}
+    </td>
+  </tr>
+{% endfor %}
+{% endcall %}

@@ -106,16 +106,32 @@ th { color: var(--muted); font-weight: 600; font-size: 0.85rem; text-transform: 
 }
 .recipe-grid .cell.empty { background: transparent; border-style: dashed; }
 
-.datatable-search {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
+.datatable-controls {
+  display: flex;
+  gap: 0.5rem;
   margin: 0.5rem 0;
+  flex-wrap: wrap;
+}
+.datatable-search {
+  flex: 1;
+  min-width: 10rem;
+  padding: 0.5rem 0.75rem;
   font-size: 1rem;
   background: var(--card);
   color: var(--fg);
   border: 1px solid var(--border);
   border-radius: 6px;
 }
+.datatable-category-filter,
+.datatable-mod-filter {
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  background: var(--card);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.datatable table { margin-top: 0; }
 .datatable-pagination {
   display: flex;
   align-items: center;

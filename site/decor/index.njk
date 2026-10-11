@@ -11,12 +11,12 @@ layout: layouts/base.njk
   from the game's item/block definitions.
 </p>
 
-{% set groups = generated.decor | groupby("kind") %}
-{% for kind, decorItems in groups %}
-  <h2>{{ kind }} ({{ decorItems.length }})</h2>
-  {% call dt.datatable(60, "Search " + kind + "...") %}
-  {% for item in decorItems | sort(false, false, "displayName") %}
-    <a href="{{ '/' | url }}decor/{{ item.domain }}/{{ item.kind }}/{{ item.code | slugify }}/" data-search="{{ item.domain }}:{{ item.code }}">{{ item.displayName }}</a>
-  {% endfor %}
-  {% endcall %}
+{% call dt.datatable(60, "Search decor & clothing...", ["Name", "Kind", "Mod"]) %}
+{% for item in generated.decor | sort(false, false, "displayName") %}
+  <tr data-search="{{ item.domain }}:{{ item.code }}" data-category="{{ item.kind }}" data-mod="{{ item.sourceMod }}">
+    <td><a href="{{ '/' | url }}decor/{{ item.domain }}/{{ item.kind }}/{{ item.code | slugify }}/">{{ item.displayName }}</a></td>
+    <td><span class="tag">{{ item.kind }}</span></td>
+    <td><span class="tag">{{ item.sourceMod }}</span></td>
+  </tr>
 {% endfor %}
+{% endcall %}

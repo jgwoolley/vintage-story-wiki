@@ -4,10 +4,14 @@ layout: layouts/base.njk
 ---
 {% import "macros/datatable.njk" as dt %}
 <h1>Loot &amp; Drops</h1>
-<p class="muted">{{ generated.lootBySource.length }} blocks/entities with known drops.</p>
+<p class="muted">{{ generated.lootBySource.length }} blocks/entities with known drops. Entity tags (shown on each entity's own page) are searchable here too.</p>
 
-{% call dt.datatable(60, "Search loot sources...") %}
+{% call dt.datatable(60, "Search loot sources or tags...", ["Name", "Kind", "Mod"]) %}
 {% for source in generated.lootBySource | sort(false, false, "sourceDisplayName") %}
-  <a href="{{ '/' | url }}loot/{{ source.sourceDomain }}/{{ source.sourceCode | slugify }}/" data-search="{{ source.sourceDomain }}:{{ source.sourceCode }}">{{ source.sourceDisplayName }} <span class="tag">{{ source.sourceKind }}</span></a>
+  <tr data-search="{{ source.sourceDomain }}:{{ source.sourceCode }} {{ source.entityStats.tags | default([]) | join(' ') }}" data-category="{{ source.sourceKind }}" data-mod="{{ source.sourceMod }}">
+    <td><a href="{{ '/' | url }}loot/{{ source.sourceDomain }}/{{ source.sourceCode | slugify }}/">{{ source.sourceDisplayName }}</a></td>
+    <td><span class="tag">{{ source.sourceKind }}</span></td>
+    <td><span class="tag">{{ source.sourceMod }}</span></td>
+  </tr>
 {% endfor %}
 {% endcall %}

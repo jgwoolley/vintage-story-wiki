@@ -8,7 +8,7 @@ layout: layouts/base.njk
 eleventyComputed:
   title: "{{ recipe.name or recipe.category }} - Vintage Story Wiki"
 ---
-<div class="breadcrumb"><a href="{{ '/' | url }}recipes/">&larr; All recipes</a> / <a href="{{ '/' | url }}recipes/#{{ recipe.category }}">{{ recipe.category }}</a></div>
+<div class="breadcrumb"><a href="{{ '/' | url }}recipes/">&larr; All recipes</a> <span class="tag">{{ recipe.category }}</span></div>
 
 <h1>{{ recipe.name or (recipe.category + " recipe") }}</h1>
 <p class="muted">
@@ -32,7 +32,7 @@ eleventyComputed:
               {% if "*" in ing.code or "{" in ing.code %}
                 <a href="{{ '/' | url }}items/?q={{ ing.code | wildcardQuery | urlencode }}">{{ ing.code }}</a>
               {% else %}
-                {{ generated.items | displayName(ing.domain, ing.code) }}
+                <a href="{{ '/' | url }}items/{{ ing.domain }}/{{ ing.code | slugify }}/">{{ generated.items | displayName(ing.domain, ing.code) }}</a>
               {% endif %}
             {% elif ing.tags %}{{ ing.tags | join(", ") }}{% endif %}
           </div>
