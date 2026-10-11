@@ -161,3 +161,6 @@ th { color: var(--muted); font-weight: 600; font-size: 0.85rem; text-transform: 
 .recipe-summary a:hover { color: var(--accent); }
 .recipe-summary .plus { opacity: 0.6; }
 .recipe-summary .arrow { color: var(--accent); font-weight: 700; margin: 0 0.15rem; }
+
+.book-page { line-height: 1.7; }
+.book-page + hr { margin: 1.5rem 0; border: none; border-top: 1px dashed var(--border); }

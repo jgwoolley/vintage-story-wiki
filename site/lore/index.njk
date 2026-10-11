@@ -1,0 +1,13 @@
+---
+title: Books & Lore - Vintage Story Wiki
+layout: layouts/base.njk
+---
+{% import "macros/datatable.njk" as dt %}
+<h1>Books &amp; Lore</h1>
+<p class="muted">{{ generated.lore.length }} readable books/journals/tapestry chapters, with their full in-game text.</p>
+
+{% call dt.datatable(60, "Search books & lore...") %}
+{% for book in generated.lore | sort(false, false, "title") %}
+  <a href="{{ '/' | url }}lore/{{ book.domain }}/{{ book.code | slugify }}/">{{ book.title }} <span class="tag">{{ book.category }}</span></a>
+{% endfor %}
+{% endcall %}

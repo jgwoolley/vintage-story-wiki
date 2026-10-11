@@ -109,16 +109,20 @@ export function expandVariants(index: AssetIndex, categoryPrefixes: string[]): C
 
 /**
  * Resolves a `<field>ByType` map (e.g. dropsByType, attributesByType) for one concrete variant's
- * full code, matching glob (`*`) or raw-regex (`@...`) keys. When several keys match, the last one
- * in object-insertion order wins (mirrors how later/more-specific JSON overrides tend to be listed last).
+ * full code, matching glob (`*`) or raw-regex (`@...`) keys. When several keys match, the most
+ * specific one wins (pattern length as a proxy for literal-character count, so e.g.
+ * "*-polar-adult-male" beats the more generic "*-male" for the same code) -- object order is
+ * NOT a reliable specificity signal (confirmed against real data: bear-adult.json lists the
+ * generic "*-male"/"*-female" entries after the more specific per-type ones).
  */
 export function resolveByType<T>(byType: Record<string, T> | undefined, concreteCode: string): T | undefined {
   if (!byType) return undefined;
-  let result: T | undefined;
+  let best: { pattern: string; value: T } | undefined;
   for (const [pattern, value] of Object.entries(byType)) {
-    if (globToRegExp(pattern).test(concreteCode)) result = value;
+    if (!globToRegExp(pattern).test(concreteCode)) continue;
+    if (!best || pattern.length >= best.pattern.length) best = { pattern, value };
   }
-  return result;
+  return best?.value;
 }
 
 /** Substitutes {groupcode} placeholders (e.g. "{metal}", "{wood}") using resolved group values. */

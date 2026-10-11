@@ -1,0 +1,27 @@
+---
+pagination:
+  data: generated.lore
+  size: 1
+  alias: book
+permalink: "lore/{{ book.domain }}/{{ book.code | slugify }}/index.html"
+layout: layouts/base.njk
+eleventyComputed:
+  title: "{{ book.title }} - Vintage Story Wiki"
+---
+<div class="breadcrumb"><a href="{{ '/' | url }}lore/">&larr; All books &amp; lore</a></div>
+
+<h1>{{ book.title }}</h1>
+<p class="muted">
+  <span class="tag">{{ book.category }}</span>
+  <code>{{ book.domain }}:{{ book.code }}</code>
+  &middot; from <a href="{{ '/' | url }}mods/">{{ book.sourceMod }}</a>
+</p>
+
+{% for page in book.pages %}
+  <div class="card">
+    {% for subpage in page %}
+      <div class="book-page">{{ subpage | lineBreaks | safe }}</div>
+      {% if not loop.last %}<hr>{% endif %}
+    {% endfor %}
+  </div>
+{% endfor %}

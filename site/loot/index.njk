@@ -8,6 +8,6 @@ layout: layouts/base.njk
 
 {% call dt.datatable(60, "Search loot sources...") %}
 {% for source in generated.lootBySource | sort(false, false, "sourceDisplayName") %}
-  <a href="/loot/{{ source.sourceDomain }}/{{ source.sourceCode | slugify }}/" data-search="{{ source.sourceDomain }}:{{ source.sourceCode }}">{{ source.sourceDisplayName }} <span class="tag">{{ source.sourceKind }}</span></a>
+  <a href="{{ '/' | url }}loot/{{ source.sourceDomain }}/{{ source.sourceCode | slugify }}/" data-search="{{ source.sourceDomain }}:{{ source.sourceCode }}">{{ source.sourceDisplayName }} <span class="tag">{{ source.sourceKind }}</span></a>
 {% endfor %}
 {% endcall %}

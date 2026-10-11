@@ -4,18 +4,21 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ title or "Vintage Story Wiki" }}</title>
-  <link rel="stylesheet" href="/assets/style.css">
-  <script src="/assets/datatable.js" defer></script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#128214;</text></svg>">
+  <link rel="stylesheet" href="{{ '/' | url }}assets/style.css">
+  <script src="{{ '/' | url }}assets/datatable.js" defer></script>
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="/">Vintage Story Wiki</a>
+    <a class="brand" href="{{ '/' | url }}">Vintage Story Wiki</a>
     <nav>
-      <a href="/items/">Items</a>
-      <a href="/recipes/">Recipes</a>
-      <a href="/loot/">Loot</a>
-      <a href="/structures/">Structures</a>
-      <a href="/mods/">Mods</a>
+      <a href="{{ '/' | url }}items/">Items</a>
+      <a href="{{ '/' | url }}recipes/">Recipes</a>
+      <a href="{{ '/' | url }}loot/">Loot</a>
+      <a href="{{ '/' | url }}structures/">Structures</a>
+      <a href="{{ '/' | url }}decor/">Decor &amp; Clothing</a>
+      <a href="{{ '/' | url }}lore/">Books &amp; Lore</a>
+      <a href="{{ '/' | url }}mods/">Mods</a>
     </nav>
   </header>
   <main class="content">

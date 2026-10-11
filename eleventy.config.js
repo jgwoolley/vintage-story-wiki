@@ -11,6 +11,8 @@ export default function (eleventyConfig) {
     return item ? item.displayName : code;
   });
 
+  eleventyConfig.addFilter("findById", (list, id) => list.find((x) => x.id === id));
+
   // Turns a wildcard/placeholder ingredient code (e.g. "leather-normal-*", "plank-{wood}") into a
   // plain substring usable as an /items/ search query, by dropping the "*"/"{...}" parts.
   eleventyConfig.addFilter("wildcardQuery", (code) => String(code ?? "").replace(/\{[^}]*\}/g, "").replace(/\*/g, ""));
@@ -20,6 +22,11 @@ export default function (eleventyConfig) {
   eleventyConfig.addFilter("percent", (n) => (typeof n === "number" ? `${(n * 100).toFixed(2)}%` : n));
 
   eleventyConfig.addFilter("json", (val) => JSON.stringify(val, null, 2));
+
+  // Lore/description text is trusted static game content that mixes plain newlines with real
+  // inline HTML (<strong>, <font color="...">) -- so it's rendered with `| safe` after this,
+  // unlike nunjucks' built-in nl2br which escapes everything first.
+  eleventyConfig.addFilter("lineBreaks", (text) => String(text ?? "").replace(/\r\n|\n/g, "<br>"));
 
   // When a recipe has a wildcard ingredient/output (e.g. ingredient "ingot-*" -> output
   // "arrowhead-{metal}"), the generic recipe summary is less useful on a specific item's page
@@ -46,6 +53,12 @@ export default function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy("site/assets");
 
   return {
+    // GitHub Pages project sites (the common case: no custom domain) serve from
+    // https://<user>.github.io/<repo>/, not the domain root -- every internal href/src in the
+    // templates goes through the `{{ '/' | url }}` + relative-path idiom specifically so this one
+    // setting (via PATH_PREFIX, set by CI to "/<repo>/") fixes every link/asset at once instead of
+    // hardcoding the repo name into the templates themselves. Defaults to "/" for local dev.
+    pathPrefix: process.env.PATH_PREFIX || "/",
     dir: {
       input: "site",
       output: "_site",

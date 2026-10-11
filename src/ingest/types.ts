@@ -119,12 +119,21 @@ export interface NormalizedRecipe {
 
 export type LootMechanism = "blockDrop" | "panning" | "entityDrop" | "harvestable";
 
+export interface EntityStats {
+  tags: string[];
+  weight?: number;
+  sizeX?: number;
+  sizeY?: number;
+  maxHealth?: number;
+}
+
 export interface LootEntry {
   sourceKind: "block" | "entity";
   sourceDomain: string;
   sourceCode: string;
   sourceDisplayName: string;
   sourceMod: string;
+  entityStats?: EntityStats;
   mechanism: LootMechanism;
   panningKeyPattern?: string;
   drop: {
@@ -184,6 +193,21 @@ export interface ItemIndexEntry {
   consumedBy: string[]; // recipe ids
   droppedBy: string[]; // loot entry indices (as strings)
   appearsInStructures: string[]; // structure ids
+}
+
+export type DecorKind = "painting" | "tapestry" | "clothing";
+
+export interface DecorItem {
+  id: string;
+  kind: DecorKind;
+  itemKind: "item" | "block";
+  domain: string;
+  code: string;
+  displayName: string;
+  description?: string;
+  sourceMod: string;
+  /** Structure ids whose schematics contain this block/item code (see structureContents.ts). */
+  foundInStructures: string[];
 }
 
 export interface ModSummary {

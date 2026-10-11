@@ -48,6 +48,11 @@ jobs:
         run: npm run ingest
 
       - name: Build site
+        # GitHub Pages project sites (no custom domain) serve from
+        # https://<user>.github.io/<repo>/ rather than the domain root, so every internal
+        # link/asset needs that repo-name prefix -- see eleventy.config.js's pathPrefix.
+        env:
+          PATH_PREFIX: /${{ github.event.repository.name }}/
         run: npx eleventy
 
       - name: Upload Pages artifact

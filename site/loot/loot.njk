@@ -8,22 +8,35 @@ layout: layouts/base.njk
 eleventyComputed:
   title: "{{ source.sourceDisplayName }} drops - Vintage Story Wiki"
 ---
-<div class="breadcrumb"><a href="/loot/">&larr; All loot sources</a></div>
+<div class="breadcrumb"><a href="{{ '/' | url }}loot/">&larr; All loot sources</a></div>
 
 <h1>{{ source.sourceDisplayName }}</h1>
 <p class="muted">
   <span class="tag">{{ source.sourceKind }}</span>
   <code>{{ source.sourceDomain }}:{{ source.sourceCode }}</code>
-  &middot; from <a href="/mods/">{{ source.sourceMod }}</a>
+  &middot; from <a href="{{ '/' | url }}mods/">{{ source.sourceMod }}</a>
 </p>
 
+{% if source.entityStats %}
+<h2>Stats</h2>
+<table>
+  <tbody>
+    {% if source.entityStats.maxHealth != null %}<tr><th>Max health</th><td>{{ source.entityStats.maxHealth }} hp</td></tr>{% endif %}
+    {% if source.entityStats.weight != null %}<tr><th>Weight</th><td>{{ source.entityStats.weight }} kg</td></tr>{% endif %}
+    {% if source.entityStats.sizeX != null %}<tr><th>Hitbox size</th><td>{{ source.entityStats.sizeX }} &times; {{ source.entityStats.sizeY }} (width &times; height, blocks)</td></tr>{% endif %}
+    {% if source.entityStats.tags.length %}<tr><th>Tags</th><td>{% for t in source.entityStats.tags %}<span class="tag">{{ t }}</span>{% endfor %}</td></tr>{% endif %}
+  </tbody>
+</table>
+{% endif %}
+
+<h2>Drops</h2>
 <table>
   <thead><tr><th>Mechanism</th><th>Drop</th><th>Chance / Quantity</th><th>Notes</th></tr></thead>
   <tbody>
   {% for entry in source.entries %}
     <tr>
       <td>{{ entry.mechanism }}{% if entry.panningKeyPattern %}<br><span class="muted tag">{{ entry.panningKeyPattern }}</span>{% endif %}</td>
-      <td><a href="/items/{{ entry.drop.domain }}/{{ entry.drop.code | slugify }}/">{{ generated.items | displayName(entry.drop.domain, entry.drop.code) }}</a></td>
+      <td><a href="{{ '/' | url }}items/{{ entry.drop.domain }}/{{ entry.drop.code | slugify }}/">{{ generated.items | displayName(entry.drop.domain, entry.drop.code) }}</a></td>
       <td>
         {% if entry.drop.chanceAvg != null %}{{ entry.drop.chanceAvg | percent }}{% endif %}
         {% if entry.drop.quantityAvg != null %}&times;{{ entry.drop.quantityAvg | round(2) }}{% if entry.drop.quantityVar %} (&plusmn;{{ entry.drop.quantityVar }}){% endif %}{% endif %}

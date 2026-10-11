@@ -3,6 +3,12 @@ import { globToRegExp } from "./variantExpander.js";
 
 export interface LangResolver {
   displayName(kind: "item" | "block" | "entity", domain: string, code: string): { name: string; missing: boolean };
+  /** Flavor-text description (e.g. "itemdesc-<code>"/"blockdesc-<code>"), or undefined if the game
+   * never defined one -- unlike displayName, absence here is common and not an error to flag. */
+  description(kind: "item" | "block", domain: string, code: string): string | undefined;
+  /** Plain lang-key lookup with no "item-"/"block-" prefix added, for keys referenced literally
+   * elsewhere in the asset data (e.g. a lore config's "title" and "pieces" fields). */
+  raw(domain: string, key: string): string | undefined;
 }
 
 /** Entities don't use a plain "entity-<code>" key -- the game looks them up as "item-creature-<code>". */
@@ -77,6 +83,14 @@ export function buildLangResolver(index: AssetIndex, lang = "en"): LangResolver 
         lookup(domainLang, key) ?? lookup(vanillaFallback, key) ?? composeOreName(domainLang, code) ?? composeOreName(vanillaFallback, code);
       if (name) return { name, missing: false };
       return { name: code, missing: true };
+    },
+    description(kind, domain, code) {
+      const key = `${kind}desc-${code}`;
+      const domainLang = perDomain.get(domain);
+      return lookup(domainLang, key) ?? lookup(vanillaFallback, key);
+    },
+    raw(domain, key) {
+      return lookup(perDomain.get(domain), key) ?? lookup(vanillaFallback, key);
     },
   };
 }

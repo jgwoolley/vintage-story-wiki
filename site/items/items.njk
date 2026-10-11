@@ -9,13 +9,13 @@ eleventyComputed:
   title: "{{ item.displayName }} - Vintage Story Wiki"
 ---
 {% import "macros/recipe.njk" as rc %}
-<div class="breadcrumb"><a href="/items/">&larr; All items</a></div>
+<div class="breadcrumb"><a href="{{ '/' | url }}items/">&larr; All items</a></div>
 
 <h1>{{ item.displayName }}</h1>
 <p class="muted">
   <span class="tag">{{ item.kind }}</span>
   <code>{{ item.domain }}:{{ item.code }}</code>
-  &middot; from <a href="/mods/">{{ item.sourceMod }}</a>
+  &middot; from <a href="{{ '/' | url }}mods/">{{ item.sourceMod }}</a>
 </p>
 {% if item.missingTranslation %}<p class="warning">No display name found in any lang file &mdash; showing the raw code.</p>{% endif %}
 
@@ -26,7 +26,7 @@ eleventyComputed:
     {% set recipe = generated.recipesById[recipeId] %}
     {% if recipe %}
     <li>
-      <a href="/recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe.name or recipe.category }}</a> <span class="tag">{{ recipe.category }}</span>
+      <a href="{{ '/' | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe.name or recipe.category }}</a> <span class="tag">{{ recipe.category }}</span>
       {{ rc.summary(recipe | contextualRecipe(item.domain, item.code), generated.items) }}
     </li>
     {% endif %}
@@ -41,7 +41,7 @@ eleventyComputed:
     {% set recipe = generated.recipesById[recipeId] %}
     {% if recipe %}
     <li>
-      <a href="/recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe.name or recipe.category }}</a> <span class="tag">{{ recipe.category }}</span>
+      <a href="{{ '/' | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe.name or recipe.category }}</a> <span class="tag">{{ recipe.category }}</span>
       {{ rc.summary(recipe | contextualRecipe(item.domain, item.code), generated.items) }}
     </li>
     {% endif %}
@@ -58,7 +58,7 @@ eleventyComputed:
     {% set loot = generated.loot[lootIdx] %}
     {% if loot %}
     <tr>
-      <td><a href="/loot/{{ loot.sourceDomain }}/{{ loot.sourceCode | slugify }}/">{{ loot.sourceDisplayName }}</a> <span class="tag">{{ loot.sourceKind }}</span></td>
+      <td><a href="{{ '/' | url }}loot/{{ loot.sourceDomain }}/{{ loot.sourceCode | slugify }}/">{{ loot.sourceDisplayName }}</a> <span class="tag">{{ loot.sourceKind }}</span></td>
       <td>{{ loot.mechanism }}</td>
       <td>
         {% if loot.drop.chanceAvg != null %}{{ loot.drop.chanceAvg | percent }}{% endif %}

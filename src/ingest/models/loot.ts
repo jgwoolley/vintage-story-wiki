@@ -1,4 +1,4 @@
-import type { AssetIndex, LootEntry } from "../types.js";
+import type { AssetIndex, EntityStats, LootEntry } from "../types.js";
 import type { LangResolver } from "../lang.js";
 import { expandVariants, resolveByType, substitutePlaceholders } from "../variantExpander.js";
 import { splitDomainCode } from "../codeUtil.js";
@@ -10,6 +10,24 @@ interface DropSpec {
   chance?: { avg?: number; var?: number };
   manMade?: boolean;
   dropModbyStat?: string;
+}
+
+/** Pulls the handful of entity stats that are broadly useful on a wiki page: health, size,
+ * weight, and behavior tags. `maxhealth` lives on the "health" entry of `server.behaviors`,
+ * same `*ByType` glob-resolution mechanism used everywhere else for variant-specific values. */
+function extractEntityStats(json: any, concreteCode: string): EntityStats {
+  const behaviors: any[] = json.server?.behaviors ?? [];
+  const healthBehavior = behaviors.find((b) => String(b?.code ?? "").toLowerCase() === "health");
+  const maxHealth = healthBehavior ? resolveByType(healthBehavior.maxhealthByType, concreteCode) ?? healthBehavior.maxhealth : undefined;
+  const weight = resolveByType(json.weightByType, concreteCode) ?? json.weight;
+  const size = resolveByType(json.collisionBoxSizeByType, concreteCode) ?? json.collisionBoxSize;
+  return {
+    tags: Array.isArray(json.tags) ? json.tags : [],
+    weight,
+    sizeX: size?.x,
+    sizeY: size?.y,
+    maxHealth,
+  };
 }
 
 function toLootDrop(spec: DropSpec, fallbackDomain: string, groupValues: Record<string, string>) {
@@ -75,6 +93,7 @@ export function extractLoot(index: AssetIndex, lang: LangResolver): LootEntry[] 
   for (const variant of entityVariants) {
     const json = variant.json as any;
     const sourceDisplayName = lang.displayName("entity", variant.domain, variant.code).name;
+    const entityStats = extractEntityStats(json, variant.code);
 
     const deathDrops: DropSpec[] = json.drops ?? [];
     for (const drop of deathDrops) {
@@ -85,6 +104,7 @@ export function extractLoot(index: AssetIndex, lang: LangResolver): LootEntry[] 
         sourceCode: variant.code,
         sourceDisplayName,
         sourceMod: variant.sourceModid,
+        entityStats,
         mechanism: "entityDrop",
         drop: toLootDrop(drop, variant.domain, variant.groupValues),
       });
@@ -103,6 +123,7 @@ export function extractLoot(index: AssetIndex, lang: LangResolver): LootEntry[] 
         sourceCode: variant.code,
         sourceDisplayName,
         sourceMod: variant.sourceModid,
+        entityStats,
         mechanism: "harvestable",
         drop: toLootDrop(drop, variant.domain, variant.groupValues),
       });

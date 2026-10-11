@@ -11,7 +11,7 @@ layout: layouts/base.njk
   <h2 id="{{ category }}">{{ category }} ({{ recipes.length }})</h2>
   {% call dt.datatable(60, "Search " + category + " recipes...") %}
   {% for recipe in recipes | sort(false, false, "name") %}
-    <a href="/recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe.name or recipe.output.code or recipe.id }}</a>
+    <a href="{{ '/' | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe.name or recipe.output.code or recipe.id }}</a>
   {% endfor %}
   {% endcall %}
 {% endfor %}

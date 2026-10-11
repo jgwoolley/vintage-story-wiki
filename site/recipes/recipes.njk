@@ -8,13 +8,13 @@ layout: layouts/base.njk
 eleventyComputed:
   title: "{{ recipe.name or recipe.category }} - Vintage Story Wiki"
 ---
-<div class="breadcrumb"><a href="/recipes/">&larr; All recipes</a> / <a href="/recipes/#{{ recipe.category }}">{{ recipe.category }}</a></div>
+<div class="breadcrumb"><a href="{{ '/' | url }}recipes/">&larr; All recipes</a> / <a href="{{ '/' | url }}recipes/#{{ recipe.category }}">{{ recipe.category }}</a></div>
 
 <h1>{{ recipe.name or (recipe.category + " recipe") }}</h1>
 <p class="muted">
   <span class="tag">{{ recipe.category }}</span>
   {% if recipe.shapeless %}<span class="tag">shapeless</span>{% endif %}
-  from <a href="/mods/">{{ recipe.sourceMod }}</a>
+  from <a href="{{ '/' | url }}mods/">{{ recipe.sourceMod }}</a>
   {% if recipe.sealHours %}&middot; seals for {{ recipe.sealHours }}h{% endif %}
 </p>
 
@@ -30,7 +30,7 @@ eleventyComputed:
           <div class="cell" title="{{ ing.code or (ing.tags | default([]) | join(', ')) }}">
             {% if ing.code %}
               {% if "*" in ing.code or "{" in ing.code %}
-                <a href="/items/?q={{ ing.code | wildcardQuery | urlencode }}">{{ ing.code }}</a>
+                <a href="{{ '/' | url }}items/?q={{ ing.code | wildcardQuery | urlencode }}">{{ ing.code }}</a>
               {% else %}
                 {{ generated.items | displayName(ing.domain, ing.code) }}
               {% endif %}
@@ -58,14 +58,14 @@ eleventyComputed:
       <td>
         {% if ing.code %}
           {% if "*" in ing.code or "{" in ing.code %}
-            <a href="/items/?q={{ ing.code | wildcardQuery | urlencode }}"><code>{{ ing.code }}</code></a>{% if ing.name %} ({{ ing.name }}){% endif %}
+            <a href="{{ '/' | url }}items/?q={{ ing.code | wildcardQuery | urlencode }}"><code>{{ ing.code }}</code></a>{% if ing.name %} ({{ ing.name }}){% endif %}
           {% else %}
-            <a href="/items/{{ ing.domain }}/{{ ing.code | slugify }}/">{{ generated.items | displayName(ing.domain, ing.code) }}</a>
+            <a href="{{ '/' | url }}items/{{ ing.domain }}/{{ ing.code | slugify }}/">{{ generated.items | displayName(ing.domain, ing.code) }}</a>
           {% endif %}
         {% elif ing.tags %}
           any <span class="tag">{{ ing.tags | join(", ") }}</span>
         {% elif ing.validStacks %}
-          {% for v in ing.validStacks %}<a href="/items/{{ v.domain }}/{{ v.code | slugify }}/">{{ generated.items | displayName(v.domain, v.code) }}</a>{% if not loop.last %} or {% endif %}{% endfor %}
+          {% for v in ing.validStacks %}<a href="{{ '/' | url }}items/{{ v.domain }}/{{ v.code | slugify }}/">{{ generated.items | displayName(v.domain, v.code) }}</a>{% if not loop.last %} or {% endif %}{% endfor %}
         {% endif %}
       </td>
       <td>
@@ -86,9 +86,9 @@ eleventyComputed:
 <p>
   {% if recipe.output.code %}
     {% if "{" in recipe.output.code %}
-      <a href="/items/?q={{ recipe.output.code | wildcardQuery | urlencode }}"><code>{{ recipe.output.code }}</code></a>{% if recipe.wildcard %} (depends on <strong>{{ recipe.wildcard.placeholder }}</strong>){% endif %}
+      <a href="{{ '/' | url }}items/?q={{ recipe.output.code | wildcardQuery | urlencode }}"><code>{{ recipe.output.code }}</code></a>{% if recipe.wildcard %} (depends on <strong>{{ recipe.wildcard.placeholder }}</strong>){% endif %}
     {% else %}
-      <a href="/items/{{ recipe.output.domain }}/{{ recipe.output.code | slugify }}/">{{ generated.items | displayName(recipe.output.domain, recipe.output.code) }}</a>
+      <a href="{{ '/' | url }}items/{{ recipe.output.domain }}/{{ recipe.output.code | slugify }}/">{{ generated.items | displayName(recipe.output.domain, recipe.output.code) }}</a>
     {% endif %}
   {% endif %}
   {% if recipe.output.quantity %}&times;{{ recipe.output.quantity }}{% endif %}

@@ -35,6 +35,22 @@ export interface SchematicHeader {
   blockCodeCount?: number;
 }
 
+/** Finds the `"BlockCodes": { ... }` substring in a schematic file's raw text, if present. */
+function extractBlockCodesSection(text: string): string | undefined {
+  const blockCodesStart = text.indexOf('"BlockCodes"');
+  if (blockCodesStart === -1) return undefined;
+  const braceStart = text.indexOf("{", blockCodesStart);
+  let depth = 0;
+  for (let i = braceStart; i < text.length; i++) {
+    if (text[i] === "{") depth++;
+    else if (text[i] === "}") {
+      depth--;
+      if (depth === 0) return text.slice(braceStart, i + 1);
+    }
+  }
+  return undefined;
+}
+
 /**
  * Reads only the lightweight header fields of a schematic file -- dimensions and a count of
  * distinct block codes -- without parsing the (potentially tens-of-MB) Indices/BlockIds/BlockEntities
@@ -46,27 +62,8 @@ export function readSchematicHeader(fullPath: string): SchematicHeader {
   const sizeY = Number(text.match(/"SizeY"\s*:\s*(\d+)/)?.[1]);
   const sizeZ = Number(text.match(/"SizeZ"\s*:\s*(\d+)/)?.[1]);
 
-  const blockCodesStart = text.indexOf('"BlockCodes"');
-  let blockCodeCount: number | undefined;
-  if (blockCodesStart !== -1) {
-    const braceStart = text.indexOf("{", blockCodesStart);
-    let depth = 0,
-      end = -1;
-    for (let i = braceStart; i < text.length; i++) {
-      if (text[i] === "{") depth++;
-      else if (text[i] === "}") {
-        depth--;
-        if (depth === 0) {
-          end = i;
-          break;
-        }
-      }
-    }
-    if (end !== -1) {
-      const section = text.slice(braceStart, end + 1);
-      blockCodeCount = (section.match(/"\d+"\s*:/g) ?? []).length;
-    }
-  }
+  const section = extractBlockCodesSection(text);
+  const blockCodeCount = section ? (section.match(/"\d+"\s*:/g) ?? []).length : undefined;
 
   return {
     sizeX: Number.isFinite(sizeX) ? sizeX : undefined,
@@ -74,4 +71,21 @@ export function readSchematicHeader(fullPath: string): SchematicHeader {
     sizeZ: Number.isFinite(sizeZ) ? sizeZ : undefined,
     blockCodeCount,
   };
+}
+
+/**
+ * Reads the actual block code VALUES (e.g. "game:supportbeam-veryaged") out of a schematic's
+ * BlockCodes dict -- still without touching the huge Indices/BlockIds/BlockEntities arrays, since
+ * BlockCodes itself is just a small id->code dictionary. Used to find which structures contain a
+ * specific block (e.g. a painting or tapestry), by checking membership rather than full voxel decode.
+ */
+export function readSchematicBlockCodes(fullPath: string): string[] {
+  const text = readFileSync(fullPath, "utf8");
+  const section = extractBlockCodesSection(text);
+  if (!section) return [];
+  try {
+    return Object.values(JSON.parse(section) as Record<string, string>);
+  } catch {
+    return [];
+  }
 }

@@ -8,14 +8,14 @@ layout: layouts/base.njk
 eleventyComputed:
   title: "{{ structure.name or structure.code }} - Vintage Story Wiki"
 ---
-<div class="breadcrumb"><a href="/structures/">&larr; All structures</a></div>
+<div class="breadcrumb"><a href="{{ '/' | url }}structures/">&larr; All structures</a></div>
 
 <h1>{{ structure.name or structure.code }}</h1>
 <p class="muted">
   <span class="tag">{{ structure.kind }}</span>
   {% if structure.group %}<span class="tag">{{ structure.group }}</span>{% endif %}
   <code>{{ structure.domain }}:{{ structure.code }}</code>
-  &middot; from <a href="/mods/">{{ structure.sourceMod }}</a>
+  &middot; from <a href="{{ '/' | url }}mods/">{{ structure.sourceMod }}</a>
 </p>
 
 <table>

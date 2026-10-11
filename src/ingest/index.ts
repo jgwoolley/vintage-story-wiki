@@ -7,6 +7,9 @@ import { collectPatches, filterPatches, applyPatches } from "./patchEngine.js";
 import { extractRecipes } from "./models/recipes.js";
 import { extractLoot } from "./models/loot.js";
 import { extractStructures } from "./models/structures.js";
+import { extractDecorCatalog } from "./models/decor.js";
+import { extractLoreBooks } from "./models/lore.js";
+import { buildBlockCodeToSchematicIndex, buildSchematicToStructureIndex, findStructuresContaining } from "./structureContents.js";
 import { buildLangResolver } from "./lang.js";
 import { buildItemIndex } from "./crossref.js";
 import { writeGenerated } from "./write.js";
@@ -79,7 +82,15 @@ function main(): void {
 
   const lootBySourceMap = new Map<
     string,
-    { sourceDomain: string; sourceCode: string; sourceDisplayName: string; sourceKind: string; sourceMod: string; entries: typeof loot }
+    {
+      sourceDomain: string;
+      sourceCode: string;
+      sourceDisplayName: string;
+      sourceKind: string;
+      sourceMod: string;
+      entityStats: (typeof loot)[number]["entityStats"];
+      entries: typeof loot;
+    }
   >();
   for (const entry of loot) {
     const k = `${entry.sourceDomain}:${entry.sourceCode}`;
@@ -91,6 +102,7 @@ function main(): void {
         sourceDisplayName: entry.sourceDisplayName,
         sourceKind: entry.sourceKind,
         sourceMod: entry.sourceMod,
+        entityStats: entry.entityStats,
         entries: [],
       };
     group.entries.push(entry);
@@ -101,6 +113,24 @@ function main(): void {
   console.log("== Extracting structures ==");
   const structures = extractStructures(index, schematicsByDomain);
   console.log(`  ${structures.length} structures`);
+
+  console.log("== Extracting decor catalog (paintings/tapestries/clothing) ==");
+  const decorCatalog = extractDecorCatalog(index, lang);
+  console.log(`  ${decorCatalog.length} decor items`);
+
+  console.log("== Cross-referencing decor items against structure schematics ==");
+  const blockCodeToSchematic = buildBlockCodeToSchematicIndex(schematicsByDomain);
+  const schematicToStructure = buildSchematicToStructureIndex(structures);
+  let decorWithStructures = 0;
+  for (const item of decorCatalog) {
+    item.foundInStructures = findStructuresContaining(item.code, blockCodeToSchematic, schematicToStructure);
+    if (item.foundInStructures.length) decorWithStructures++;
+  }
+  console.log(`  ${decorWithStructures}/${decorCatalog.length} decor items found in at least one structure's schematics`);
+
+  console.log("== Extracting lore books ==");
+  const loreBooks = extractLoreBooks(index, lang);
+  console.log(`  ${loreBooks.length} books/lore pieces`);
 
   console.log("== Building item index ==");
   const itemIndex = buildItemIndex(recipes, loot, lang);
@@ -119,6 +149,8 @@ function main(): void {
   writeGenerated("loot", loot);
   writeGenerated("lootBySource", lootBySource);
   writeGenerated("structures", structures);
+  writeGenerated("decor", decorCatalog);
+  writeGenerated("lore", loreBooks);
   writeGenerated("items", [...itemIndex.values()]);
   writeGenerated("mods", modSummaries);
 
