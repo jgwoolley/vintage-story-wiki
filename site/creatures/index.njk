@@ -5,12 +5,14 @@ permalink: "{{ lang }}/creatures/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
 <h1>Creatures</h1>
-<p class="muted">{{ generated.creatures.length }} creatures with known drops/stats. Tags (shown on each creature's own page) are searchable here too.</p>
+<p class="muted">{{ generated.creatures.length }} creatures with known drops/stats. Tags are clickable and filter this table; search also matches tags and codes even though they aren't both shown.</p>
 
-{% call dt.datatable(60, "Search creatures or tags...", ["Name", "Mod"]) %}
+{% call dt.datatable(60, "Search creatures or tags...", ["Name", "Health", "Tags", "Mod"]) %}
 {% for source in generated.creatures | sort(false, false, "sourceDisplayName") %}
-  <tr data-search="{{ source.sourceDomain }}:{{ source.sourceCode }} {{ source.entityStats.tags | default([]) | join(' ') }}" data-mod="{{ source.sourceMod }}">
+  <tr data-search="{{ source.sourceDomain }}:{{ source.sourceCode }} {{ source.entityStats.tags | default([]) | join(' ') }}" data-tags="{{ source.entityStats.tags | default([]) | join(' ') }}" data-mod="{{ source.sourceMod }}">
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}creatures/{{ source.sourceDomain }}/{{ source.sourceCode | slugify }}/">{{ source.sourceDisplayName }}</a></td>
+    <td>{% if source.entityStats.maxHealth != null %}{{ source.entityStats.maxHealth }} hp{% endif %}</td>
+    <td>{% for t in source.entityStats.tags | default([]) %}<a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}creatures/?tag={{ t | urlencode }}">{{ t }}</a>{% endfor %}</td>
     <td><span class="tag">{{ source.sourceMod }}</span></td>
   </tr>
 {% endfor %}

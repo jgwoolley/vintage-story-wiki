@@ -6,8 +6,10 @@ permalink: "{{ lang }}/crops/index.html"
 {% import "macros/datatable.njk" as dt %}
 <h1>Crops</h1>
 <p class="muted">
-  Where wild crops/flowers/mushrooms/etc. and trees naturally occur, read directly from the game's
-  worldgen rules.
+  Where wild crops/flowers/mushrooms/etc. naturally occur, read directly from the game's worldgen
+  rules. See also <a href="{{ ('/' ~ lang ~ '/') | url }}trees/">Trees</a> and
+  <a href="{{ ('/' ~ lang ~ '/') | url }}deposits/">Deposits</a> for the other two spawn-only
+  content types.
 </p>
 <p class="muted">
   Climate ranges below are the raw worldgen rule the game checks, not a guarantee -- these are the
@@ -19,45 +21,11 @@ permalink: "{{ lang }}/crops/index.html"
 {% call dt.datatable(40, "Search spawn patches...", ["Blocks", "Category", "Temp (°C)", "Rain", "Mod"]) %}
 {% for patch in generated.blockPatches | sort(false, false, "category") %}
   <tr data-search="{{ patch.blockCodes | join(' ') }}" data-category="{{ patch.category }}" data-mod="{{ patch.sourceMod }}">
-    <td>{% for c in patch.blockCodes %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ patch.domain }}/{{ c | slugify }}/">{{ c }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</td>
+    <td>{% for c in patch.blockCodes %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ patch.domain }}/{{ c | slugify }}/">{{ generated.items | displayName(patch.domain, c) }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</td>
     <td><span class="tag">{{ patch.category }}</span></td>
     <td>{% if patch.minTemp != null or patch.maxTemp != null %}{{ patch.minTemp if patch.minTemp != null else "any" }}&ndash;{{ patch.maxTemp if patch.maxTemp != null else "any" }}{% endif %}</td>
     <td>{% if patch.minRain != null or patch.maxRain != null %}{{ patch.minRain if patch.minRain != null else 0 }}&ndash;{{ patch.maxRain if patch.maxRain != null else 1 }}{% endif %}</td>
     <td><span class="tag">{{ patch.sourceMod }}</span></td>
-  </tr>
-{% endfor %}
-{% endcall %}
-
-<h2>Trees ({{ generated.trees.length }} climate bands, {{ generated.fruitTrees.length }} fruit varieties)</h2>
-<p class="muted">
-  Regular tree/shrub species generate by climate band (temperature, rain, forest density, soil
-  fertility, terrain height); fruit tree varieties are a flat temperature/rain band with no forest
-  or fertility requirement.
-</p>
-
-<h3>Species</h3>
-{% call dt.datatable(40, "Search tree species...", ["Species", "Kind", "Temp (°C)", "Rain", "Fertility", "Forest", "Mod"]) %}
-{% for t in generated.trees | sort(false, false, "generator") %}
-  <tr data-search="{{ t.generator }} {{ t.logBlockCode }} {{ t.leavesBlockCode }}" data-category="{{ 'shrub' if t.isShrub else 'tree' }}" data-mod="{{ t.sourceMod }}">
-    <td>{{ t.generator }}{% if t.habitat %} <span class="tag">{{ t.habitat }}</span>{% endif %}</td>
-    <td><span class="tag">{{ "shrub" if t.isShrub else "tree" }}</span></td>
-    <td>{% if t.minTemp != null or t.maxTemp != null %}{{ t.minTemp if t.minTemp != null else "any" }}&ndash;{{ t.maxTemp if t.maxTemp != null else "any" }}{% endif %}</td>
-    <td>{% if t.minRain != null or t.maxRain != null %}{{ (t.minRain if t.minRain != null else 0) | round(2) }}&ndash;{{ (t.maxRain if t.maxRain != null else 1) | round(2) }}{% endif %}</td>
-    <td>{% if t.minFertility != null or t.maxFertility != null %}{{ (t.minFertility if t.minFertility != null else 0) | round(2) }}&ndash;{{ (t.maxFertility if t.maxFertility != null else 1) | round(2) }}{% endif %}</td>
-    <td>{% if t.minForest != null or t.maxForest != null %}{{ (t.minForest if t.minForest != null else 0) | round(2) }}&ndash;{{ (t.maxForest if t.maxForest != null else 1) | round(2) }}{% endif %}</td>
-    <td><span class="tag">{{ t.sourceMod }}</span></td>
-  </tr>
-{% endfor %}
-{% endcall %}
-
-<h3>Fruit varieties</h3>
-{% call dt.datatable(40, "Search fruit varieties...", ["Fruit", "Temp (°C)", "Rain", "Mod"]) %}
-{% for ft in generated.fruitTrees | sort(false, false, "variety") %}
-  <tr data-search="{{ ft.variety }} {{ ft.fruitItemCode }}" data-mod="{{ ft.sourceMod }}">
-    <td>{% if ft.fruitItemCode %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ ft.domain }}/{{ ft.fruitItemCode | slugify }}/">{{ ft.variety }}</a>{% else %}{{ ft.variety }}{% endif %}</td>
-    <td>{{ ft.minTemp }}&ndash;{{ ft.maxTemp }}</td>
-    <td>{{ ft.minRain }}&ndash;{{ ft.maxRain }}</td>
-    <td><span class="tag">{{ ft.sourceMod }}</span></td>
   </tr>
 {% endfor %}
 {% endcall %}

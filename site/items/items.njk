@@ -63,13 +63,13 @@ eleventyComputed:
 
 {% if item.spawnTrees.length %}
 <h2>Where to find (tree growth)</h2>
-<p class="muted">Climate band this tree species can generate in. See also the full <a href="{{ ('/' ~ lang ~ '/') | url }}crops/">Crops</a> listing.</p>
+<p class="muted">Climate band this tree species can generate in. See also the full <a href="{{ ('/' ~ lang ~ '/') | url }}trees/">Trees</a> listing.</p>
 <ul>
   {% for treeId in item.spawnTrees %}
     {% set tree = generated.treesById[treeId] %}
     {% if tree.id %}
     <li>
-      <span class="tag">{{ "shrub" if tree.isShrub else "tree" }}</span> {{ tree.generator }}
+      <span class="tag">{{ "shrub" if tree.isShrub else "tree" }}</span> {% if tree.saplingCodes and tree.saplingCodes.length %}{{ generated.items | displayName(tree.domain, tree.saplingCodes[0]) }}{% else %}{{ tree.generator }}{% endif %}
       {% if tree.minTemp != null or tree.maxTemp != null %} &middot; Temp {{ tree.minTemp if tree.minTemp != null else "any" }}&ndash;{{ tree.maxTemp if tree.maxTemp != null else "any" }}&deg;C{% endif %}
       {% if tree.minRain != null or tree.maxRain != null %} &middot; Rain {{ (tree.minRain if tree.minRain != null else 0) | round(2) }}&ndash;{{ (tree.maxRain if tree.maxRain != null else 1) | round(2) }}{% endif %}
       {% if tree.minForest != null or tree.maxForest != null %} &middot; Forest density {{ (tree.minForest if tree.minForest != null else 0) | round(2) }}&ndash;{{ (tree.maxForest if tree.maxForest != null else 1) | round(2) }}{% endif %}
@@ -83,13 +83,13 @@ eleventyComputed:
 
 {% if item.spawnFruitTrees.length %}
 <h2>Where to find (fruit tree growth)</h2>
-<p class="muted">See also the full <a href="{{ ('/' ~ lang ~ '/') | url }}crops/">Crops</a> listing.</p>
+<p class="muted">See also the full <a href="{{ ('/' ~ lang ~ '/') | url }}trees/">Trees</a> listing.</p>
 <ul>
   {% for ftId in item.spawnFruitTrees %}
     {% set ft = generated.fruitTreesById[ftId] %}
     {% if ft.id %}
     <li>
-      {{ ft.variety }}
+      {% if ft.fruitItemCode %}{{ generated.items | displayName(ft.domain, ft.fruitItemCode) }}{% else %}{{ ft.variety }}{% endif %}
       {% if ft.minTemp != null or ft.maxTemp != null %} &middot; Temp {{ ft.minTemp }}&ndash;{{ ft.maxTemp }}&deg;C{% endif %}
       {% if ft.minRain != null or ft.maxRain != null %} &middot; Rain {{ ft.minRain }}&ndash;{{ ft.maxRain }}{% endif %}
     </li>

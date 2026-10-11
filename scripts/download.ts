@@ -1,12 +1,13 @@
 #!/usr/bin/env -S npx tsx
 // JavaScript/TypeScript replacement for the old download.sh -- same job (fetch the pinned
-// Vintage Story dedicated server + mods from mods.vintagestory.at), but using Node's built-in
-// fetch instead of curl+jq, so the only non-Node tool this still relies on is `tar` for
-// extracting the server archive (exactly what download.sh itself shelled out to as well).
+// Vintage Story dedicated server + mods from mods.vintagestory.at), using Node's built-in fetch
+// instead of curl+jq, and the pure-JS `tar` package instead of shelling out to a system `tar`
+// binary -- the whole pipeline (download/ingest/build) now runs on Node alone, no OS-provided
+// tool required, so CI only needs a Node runtime, not any particular OS toolset.
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, createWriteStream } from "node:fs";
-import { execFileSync } from "node:child_process";
 import { pipeline } from "node:stream/promises";
 import { join } from "node:path";
+import * as tar from "tar";
 
 interface Options {
   serverBranch: string;
@@ -108,7 +109,7 @@ async function installServer(opts: Options): Promise<void> {
 
   console.log(`==> Extracting server to ${opts.serverDir}/`);
   mkdirSync(opts.serverDir, { recursive: true });
-  execFileSync("tar", ["-xzf", archivePath, "-C", opts.serverDir], { stdio: "ignore" });
+  await tar.extract({ file: archivePath, cwd: opts.serverDir });
   rmSync(archivePath, { force: true });
 
   console.log("✔ Server installed");

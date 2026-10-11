@@ -1,34 +1,32 @@
 ---
 pagination:
-  data: generated.decor
+  data: generated.tapestries
   size: 1
   alias: item
-permalink: "{{ lang }}/decor/{{ item.domain }}/{{ item.kind }}/{{ item.code | slugify }}/index.html"
+permalink: "{{ lang }}/tapestries/{{ item.domain }}/{{ item.code | slugify }}/index.html"
 layout: layouts/base.njk
 eleventyComputed:
   title: "{{ item.displayName }} - Vintage Story Wiki"
 ---
-<div class="breadcrumb"><a href="{{ ('/' ~ lang ~ '/') | url }}decor/">&larr; All decor &amp; clothing</a></div>
+<div class="breadcrumb"><a href="{{ ('/' ~ lang ~ '/') | url }}tapestries/">&larr; All tapestries</a></div>
 
 <h1>{{ item.displayName }}</h1>
 <p class="muted">
-  <span class="tag">{{ item.kind }}</span>
   <code>{{ item.domain }}:{{ item.code }}</code>
   &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ item.sourceMod }}</a>
 </p>
 
-{% if item.description %}
-<div class="card">{{ item.description | safe }}</div>
-{% elif item.relatedLoreBookId %}
+{% if item.relatedLoreBookId %}
 {% set book = generated.lore | findById(item.relatedLoreBookId) %}
 <p class="muted">
   Tapestries have no fixed text of their own &mdash; which one of the
   <a href="{{ ('/' ~ lang ~ '/') | url }}lore/{{ book.domain }}/{{ book.code | slugify }}/">"{{ book.title }}"</a>
-  book's {{ book.pages.length }} chapters a placed tapestry shows is picked at placement time, not
-  encoded in its block code.
+  book's {{ book.pages.length }} chapters this tapestry shows is picked at placement time, not
+  encoded in its block code. Not yet resolved to a specific chapter per placed instance -- see
+  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/">Tools</a> for planned follow-up work.
 </p>
-{% elif item.kind == "painting" %}
-<p class="muted">Paintings have no flavor text in the base game.</p>
+{% else %}
+<p class="muted">No related lore book found for this tapestry.</p>
 {% endif %}
 
 <h2>Found in structures ({{ item.foundInStructures.length }})</h2>
@@ -42,8 +40,5 @@ eleventyComputed:
   {% endfor %}
 </ul>
 {% else %}
-<p class="muted">
-  Not found inside any decoded structure schematic.
-  {% if item.itemKind == "item" %}This is expected for clothing &mdash; worn/stored items live inside a schematic's block-entity inventory data (e.g. a wardrobe or chest), which this wiki doesn't decode (see <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a>). Only placed <em>blocks</em> like paintings and tapestries can be found this way.{% endif %}
-</p>
+<p class="muted">Not found inside any decoded structure schematic.</p>
 {% endif %}

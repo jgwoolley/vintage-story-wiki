@@ -1,15 +1,21 @@
 {#
   One real <table> per listing, with pagination, free-text search, and -- whenever rows carry a
-  `data-category`/`data-mod` -- an auto-populated <select> filtering on it (hidden if the page's
-  rows don't vary on that dimension). All three filters sync to URL query params (q/category/mod,
-  numbered q2/category2/mod2 etc for the 2nd+ datatable on the same page) so a filtered view can
-  be bookmarked/shared and survives back/forward navigation -- see datatable.js.
+  `data-category`/`data-mod` -- an auto-populated <select> filtering on it (hidden only if no row
+  has a value for that dimension at all; a single distinct value still shows the dropdown, since
+  that's what makes it start working immediately for free once a 2nd value appears). A 4th,
+  separate filter dimension exists for tags specifically (`data-tags`, space-separated, exact-token
+  match via the `?tag=` URL param rather than the free-text `?q=` substring search) -- it has no
+  <select> of its own since there's no small fixed set of tags to populate one from; it renders as
+  a removable chip only when a `tag` param is actually active (see datatable.js). All filters sync
+  to URL query params (q/category/mod/tag, numbered q2/category2/mod2/tag2 etc for the 2nd+
+  datatable on the same page) so a filtered view can be bookmarked/shared and survives
+  back/forward navigation -- see datatable.js.
   Pass `headers` for the <thead> and have the caller emit
-  <tr data-search="..." data-category="..." data-mod="..."><td>...</td>...</tr> rows (any of the
-  three data-* attributes can be omitted when not meaningful for that listing). When the caller
-  produces zero rows, the whole widget (including any surrounding heading the page itself wraps
-  around it) should be skipped by the page template -- this macro itself always renders the table
-  shell since it doesn't know the row count up front.
+  <tr data-search="..." data-category="..." data-mod="..." data-tags="..."><td>...</td>...</tr>
+  rows (any of the four data-* attributes can be omitted when not meaningful for that listing).
+  When the caller produces zero rows, the whole widget (including any surrounding heading the page
+  itself wraps around it) should be skipped by the page template -- this macro itself always
+  renders the table shell since it doesn't know the row count up front.
 #}
 {% macro datatable(pageSize, placeholder, headers) %}
 <div class="datatable" data-page-size="{{ pageSize or 50 }}">

@@ -1,0 +1,32 @@
+---
+pagination:
+  data: generated.clothing
+  size: 1
+  alias: item
+permalink: "{{ lang }}/clothing/{{ item.domain }}/{{ item.code | slugify }}/index.html"
+layout: layouts/base.njk
+eleventyComputed:
+  title: "{{ item.displayName }} - Vintage Story Wiki"
+---
+<div class="breadcrumb"><a href="{{ ('/' ~ lang ~ '/') | url }}clothing/">&larr; All clothing</a></div>
+
+<h1>{{ item.displayName }}</h1>
+<p class="muted">
+  <code>{{ item.domain }}:{{ item.code }}</code>
+  &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ item.sourceMod }}</a>
+</p>
+
+{% if item.description %}
+<div class="card">{{ item.description | safe }}</div>
+{% else %}
+<p class="muted">No flavor text found for this item in the base game.</p>
+{% endif %}
+
+<h2>Found in structures</h2>
+<p class="muted">
+  Not found inside any decoded structure schematic. This is expected &mdash; worn/stored clothing
+  lives inside a schematic's block-entity inventory data (e.g. a wardrobe or chest), which this
+  wiki doesn't decode (see <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a>). Only placed
+  <em>blocks</em> like <a href="{{ ('/' ~ lang ~ '/') | url }}paintings/">paintings</a> and
+  <a href="{{ ('/' ~ lang ~ '/') | url }}tapestries/">tapestries</a> can be found this way.
+</p>

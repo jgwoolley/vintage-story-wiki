@@ -3,6 +3,12 @@
   "serverVersion": "1.22.7",
   "mods": [
     { "modid": "betterruins", "version": "0.6.4" },
-    { "modid": "stonequarry", "version": "3.5.1" }
+    { "modid": "stonequarry", "version": "3.5.1" },
+    { "modid": "nf3ttranslocatorrepair", "version": "1.0.0" },
+    { "modid": "nf3ttranslocatorfindercmd", "version": "2.0.0" },
+    { "modid": "nf3ttranslocatornavigator", "version": "2.0.0" },
+    { "modid": "nf3tblueprintcopy", "version": "1.0.0" },
+    { "modid": "nf3tsponge", "version": "2.0.0" },
+    { "modid": "nf3tschematiclocator", "version": "1.0.3" }
   ]
 }

@@ -1,0 +1,28 @@
+---
+title: Tapestries - Vintage Story Wiki
+layout: layouts/base.njk
+permalink: "{{ lang }}/tapestries/index.html"
+---
+{% import "macros/datatable.njk" as dt %}
+<h1>Tapestries</h1>
+<p class="muted">
+  Purely decorative placed blocks with no recipe or drop table, so they don't appear anywhere else
+  on this wiki &mdash; see the <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a> page for why.
+  {{ generated.tapestries.length }} catalogued directly from the game's block definitions.
+</p>
+<p class="muted">
+  Tapestries have no fixed text of their own &mdash; a placed tapestry shows one chapter of the
+  "Tapestry" lore book, picked at placement time, not encoded in its block code. This wiki doesn't
+  yet resolve which specific chapter any one placed tapestry shows; each entry below links to the
+  book instead. Further parsing of placement-time state would be needed to determine a tapestry's
+  true individual name/content.
+</p>
+
+{% call dt.datatable(60, "Search tapestries...", ["Name", "Mod"]) %}
+{% for item in generated.tapestries | sort(false, false, "displayName") %}
+  <tr data-search="{{ item.domain }}:{{ item.code }}" data-mod="{{ item.sourceMod }}">
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}tapestries/{{ item.domain }}/{{ item.code | slugify }}/">{{ item.displayName }}</a></td>
+    <td><span class="tag">{{ item.sourceMod }}</span></td>
+  </tr>
+{% endfor %}
+{% endcall %}

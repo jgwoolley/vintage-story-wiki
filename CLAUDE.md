@@ -56,15 +56,20 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   do not merge it back into README.md); `CLAUDE.md` (this file) is for a future Claude session.
   Keep README.md in sync with real pipeline/feature changes — it's the one most likely to drift.
 - **The item index (`generated.items`, built by `src/ingest/crossref.ts`) is a recipe/loot graph,
-  not a full registry walk.** Paintings/tapestries/clothing (`models/decor.ts` → `/decor/`), ore/gem
-  deposits (`models/deposits.ts` → `/deposits/`), wild crop/tree spawn patches
-  (`models/blockpatches.ts` / `models/trees.ts` → `/crops/`), and blocks that only drop something
-  with no recipe of their own (grouped in `src/ingest/index.ts` as `blockDrops`/`blockDropsById`,
-  looked up live from `/items/` by `domain:code` — see below) are all deliberate carve-outs,
-  synthesized via `ensureSpawnTarget(domain, code, kind)` in `src/ingest/index.ts` for things with
-  no recipe and (for the first three) no drop table. If you're asked to surface some other
-  spawn-only/recipe-less content type, this is the existing pattern to follow — don't force it
-  through `crossref.ts`'s recipe/loot walk.
+  not a full registry walk.** Ore/gem deposits (`models/deposits.ts` → `/deposits/`), wild crop
+  spawn patches (`models/blockpatches.ts` → `/crops/`), tree/fruit-tree spawn bands
+  (`models/trees.ts` → `/trees/`), and blocks that only drop something with no recipe of their own
+  (grouped in `src/ingest/index.ts` as `blockDrops`/`blockDropsById`, looked up live from `/items/`
+  by `domain:code` — see below) are all deliberate carve-outs, synthesized via
+  `ensureSpawnTarget(domain, code, kind)` in `src/ingest/index.ts` for things with no recipe and
+  (for the first three) no drop table. Paintings/tapestries/clothing (`models/decor.ts`) are a
+  separate, parallel carve-out that never joins the item index at all — they get their own
+  dedicated top-level pages (`/paintings/`, `/tapestries/`, `/clothing/`) instead, each backed by
+  its own filtered array (`generated.paintings`/`tapestries`/`clothing`, split from the combined
+  `generated.decor` in `src/ingest/index.ts` right after cross-referencing). If you're asked to
+  surface some other spawn-only/recipe-less content type, pick whichever of these two patterns
+  fits (joins the item index vs. gets its own dedicated page) — don't force it through
+  `crossref.ts`'s recipe/loot walk either way.
 - **Content is organized by what the thing is, not by mechanism.** `/creatures/` is entity-only
   (stats, spawn conditions, own drop table); a block's drops live directly on that block's own
   `/items/` page (a "Drops" section, forward direction) rather than a separate per-source listing.
@@ -81,12 +86,16 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   not whichever glob/regex key happens to appear last in the source file. This was a real bug
   (wrong bear hitbox sizes) before being fixed — if you touch this function, keep that property.
 - **Datatable pattern**: any listing page uses the `datatable(pageSize, placeholder, headers)`
-  macro (`site/_includes/macros/datatable.njk`) wrapping `<tr data-search data-category data-mod>`
-  rows. All filter/search state round-trips through URL query params (`q`, `category`, `mod`, and
-  numbered `q2`/`category2`/... for a second table on the same page) via
-  `site/assets/datatable.js` — not just read once on load. Category/mod `<select>` filters
-  auto-hide when the page's rows don't actually vary on that dimension. Follow this pattern for
-  any new listing page rather than inventing a new table/filter shape.
+  macro (`site/_includes/macros/datatable.njk`) wrapping
+  `<tr data-search data-category data-mod data-tags>` rows. All filter/search state round-trips
+  through URL query params (`q`, `category`, `mod`, `tag`, and numbered `q2`/`category2`/... for a
+  second table on the same page) via `site/assets/datatable.js` — not just read once on load.
+  Category/mod `<select>` filters only hide when a page's rows carry *no* value at all for that
+  dimension — a single distinct value still shows the dropdown (so it works for free the moment a
+  2nd value appears later, e.g. a new mod). `tag` is a 4th, separate filter dimension (exact-token
+  match against space-separated `data-tags`, not the free-text `q` substring search) with no
+  `<select>` — it renders as a removable chip only when a `tag` param is active. Follow this
+  pattern for any new listing page rather than inventing a new table/filter shape.
 - **Wildcard codes are clickable everywhere**: a code like `tallgrass-*` or `leather-normal-*`
   should link to `/<lang>/items/?q=<code | wildcardQuery | urlencode>` (see `wildcardQuery` filter
   in `eleventy.config.js` — strips `*`/`{...}` down to a literal prefix the datatable's substring
@@ -99,6 +108,16 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
 - **Nunjucks ternary + filter precedence**: `{{ x if cond else y | round(2) }}` applies the filter
   to `y` only, not to the whole expression — a real bug hit twice while building the tree spawn
   pages. Parenthesize the ternary before filtering: `{{ (x if cond else y) | round(2) }}`.
+- **Every field in `src/ingest/types.ts` is documented** (inline `//` or leading `/** */` per
+  interface) — keep this true for any new/changed field. This is the single source of truth for
+  what each generated JSON shape actually means; don't let it drift into "self-explanatory" silence.
+- **WIP stub page pattern**: `/guides/`, `/trades/`, `/tools/` are empty placeholder pages for
+  content not extracted yet — a `.wip-badge`-styled note plus prose saying exactly which raw game
+  files the real implementation would read (see those three `index.njk` files for the pattern:
+  explain what's planned and where the data already lives, don't just say "coming soon").
+- **The whole download/ingest/build pipeline is pure Node/npm** — `scripts/download.ts` uses the
+  pure-JS `tar` package, not a shelled-out system binary. If you add a new external-tool
+  dependency to any script, prefer an npm package over shelling out, to keep this property true.
 - **Never commit unless explicitly asked.** This has held throughout the project's history; the
   user commits their own work independently between sessions.
 

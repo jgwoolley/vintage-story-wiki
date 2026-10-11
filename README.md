@@ -1,10 +1,11 @@
 # Vintage Story Wiki
 
 A statically-generated wiki documenting Vintage Story crafting recipes, drop rates,
-world-generated structures, decorative/clothing content, in-game books, and natural spawn locations
-(ore/gem deposits, wild crops, entity habitats), built directly from the game's own asset data
-(vanilla server + installed mods) rather than hand-maintained. This is the contributor/maintainer
-doc; the site's own **Info** tab (`INFO.md`) is a separate, simpler document aimed at visitors.
+world-generated structures, decorative content (paintings/tapestries/clothing), in-game books, and
+natural spawn locations (ore/gem deposits, wild crops, trees, entity habitats), built directly from
+the game's own asset data (vanilla server + installed mods) rather than hand-maintained. This is
+the contributor/maintainer doc; the site's own **Info** tab (`INFO.md`) is a separate, simpler
+document aimed at visitors; `CLAUDE.md` is for a future AI coding session picking up this repo.
 
 ## How it works
 
@@ -14,11 +15,12 @@ doc; the site's own **Info** tab (`INFO.md`) is a separate, simpler document aim
    (ships compiled code — see "Compiled-code mods" below).
 2. **`npm run download`** (`scripts/download.ts`) reads that manifest, downloading the vanilla
    dedicated server into `vs_server/` and mod `.zip` files into `Mods/` (both gitignored) via
-   Node's built-in `fetch` and the mods.vintagestory.at API — the only non-Node tool it still
-   relies on is `tar`, to extract the server archive (same as the original bash version did).
+   Node's built-in `fetch`, the mods.vintagestory.at API, and the pure-JS `tar` package for
+   extraction — the whole pipeline is plain Node/npm, no OS-provided tool is ever shelled out to.
 3. **`npm run ingest`** (`src/ingest/`) reads those raw game assets and produces normalized JSON
-   under `site/_data/generated/` — recipes, loot/drop tables, worldgen structures, a decor/clothing
-   catalog, readable book content, and a cross-referenced item index. See the pipeline stages below.
+   under `site/_data/generated/` — recipes, loot/drop tables, worldgen structures, a decor
+   catalog (paintings/tapestries/clothing), readable book content, and a cross-referenced item
+   index. See the pipeline stages below.
 4. **`npm run build`** runs the ingest step and then builds the static site with Eleventy, from
    `site/` into `_site/`.
 
@@ -105,31 +107,41 @@ game source (`anegostudios/vssurvivalmod`, `vsapi` on GitHub), not just the asse
   part of the registered block code, so `GetHeldItemName` composes the name from code + attribute
   at the moment an instance exists — there's no context-free display name for the bare code.
 - **Clothing/painting/tapestry flavor text, when present, is a separate `itemdesc-`/`blockdesc-`
-  lookup**, not part of the display name at all (see the Decor & Clothing section below).
+  lookup**, not part of the display name at all (see the Decor catalog section below).
 
 After these fixes, vanilla item/block display names resolve at ~97%. The remaining gaps are real
 upstream data, not pipeline bugs: the attribute-parametrized blocks above, and a larger set of
 BetterRuins' own decorative schematic-only blocks that the mod itself never added lang entries for.
 
-## Decor & Clothing catalog (`models/decor.ts`)
+## Decor catalog: Paintings, Tapestries, Clothing (`models/decor.ts`)
 
 Paintings, tapestries, and clothing have no recipe and no drop table — worldgen placement, the
 creative-mode `/giveblock` command, or NPC trade are the only ways to get them in survival — so the
-normal recipe/loot-driven item index never sees them (see "Known v1 limitations" below). `/decor/`
-is a deliberate, separate full-registry walk scoped to just these three categories, with:
+normal recipe/loot-driven item index never sees them (see "Known v1 limitations" below).
+`extractDecorCatalog` is a deliberate, separate full-registry walk scoped to just these three
+categories, returning one flat list (`generated.decor`) that `src/ingest/index.ts` then splits by
+`kind` into `generated.paintings`/`tapestries`/`clothing` — each with its own top-level page
+(`/paintings/`, `/tapestries/`, `/clothing/`) rather than one shared listing with a kind filter,
+consistent with "organize by what the thing is" (see Creatures vs. Items below). Details:
 
 - **Flavor text**, pulled from `itemdesc-`/`blockdesc-` lang keys when the game defines one. Most
   don't — paintings have zero flavor text anywhere in the base game, and only ~24% of clothing
   items have any. That's accurate to the game, not missing data.
 - **Tapestries are a special case**: they have no flat description key at all, but *do* have real
   readable content — each placed tapestry shows one of 18 chapters from the "Tapestry" lore book
-  (`loreChapterIds`), picked by a runtime attribute at placement time. The decor page cross-links
-  to the full book (see Books & Lore below) instead of showing nothing.
+  (`loreChapterIds`), picked by a runtime attribute at placement time, not encoded in the block
+  code. The tapestry page cross-links to the full book (see Books & Lore below) instead of showing
+  nothing, but doesn't yet resolve *which specific chapter* a given placed instance shows — true
+  per-instance tapestry names need further parsing of placement-time state (see `/tools/`, a WIP
+  page, for the planned follow-up).
 - **"Found in structures"**, built from `structureContents.ts`: one pass over every schematic's
   block-code dictionary, cross-referenced against which structures reference which schematic
   files. Works for paintings/tapestries (real placed blocks); clothing items correctly show zero
   matches, since worn/stored items live inside a schematic's opaque block-entity inventory data
-  (e.g. a chest or wardrobe), which this wiki doesn't decode.
+  (e.g. a chest or wardrobe), which this wiki doesn't decode. This is also a coarser match than
+  ideal — it confirms a structure's schematic *contains* the block code somewhere, not that a
+  specific ruin/story-structure variant from `worldgen/storystructures.json`/`structures.json` was
+  directly evaluated (see `/tools/`).
 
 ## Books & Lore (`models/lore.ts`)
 
@@ -157,37 +169,45 @@ points to it" pattern already used for spawn-only blocks. Entity stats (health
 tags) are resolved through the same `*ByType` glob-matching used for drops; tags are clickable,
 linking to `/creatures/?q=<tag>` so e.g. every `predator`-tagged entity is one click away.
 
-## Spawn locations (`/<lang>/deposits/`, `/<lang>/crops/`, and per-item)
+## Spawn locations (`/<lang>/deposits/`, `/<lang>/crops/`, `/<lang>/trees/`, and per-item)
 
 Ore/gem/rock deposits, wild crops/flowers/etc., and trees are blocks with no recipe and no drop
 table of their own — nothing "produces" them, the world just generates them — so like
-paintings/tapestries (see Decor & Clothing below) they fall outside the recipe/loot-driven item
-index and get their own extraction path: `models/deposits.ts` (→ `/deposits/`), `models/
-blockpatches.ts` and `models/trees.ts` (→ `/crops/`, covering wild crops/flowers/mushrooms/etc. plus
-regular tree/shrub species and fruit tree varieties). Each item's own page also shows just the
-entries relevant to it. `models/trees.ts` reads a third, structurally distinct worldgen system —
+paintings/tapestries (see above) they fall outside the recipe/loot-driven item index and get their
+own extraction path, each with its own top-level page: `models/deposits.ts` (→ `/deposits/`),
+`models/blockpatches.ts` (→ `/crops/`, wild crops/flowers/mushrooms/etc.), and `models/trees.ts`
+(→ `/trees/`, regular tree/shrub species plus fruit tree varieties). Each item's own page also
+shows just the entries relevant to it.
+
+`models/trees.ts` reads a third, structurally distinct worldgen system —
 `worldgen/treengenproperties.json`'s per-species climate bands (confirmed 0–255 scale for
 rain/fertility/forest-density, normalized to this codebase's usual 0–1 on the way out), cross-
-referenced to concrete log/leaves/sapling block codes via each species' own `worldgen/
-treegen/<species>.json` shape file and `plaintreesapling.json`'s glob-keyed sapling→species map
-(reusing `variantExpander.ts`'s `resolveByType`) — plus a wholly separate fruit-tree climate band
-in `blocktypes/plant/fruittreebranch.json`'s `attributes.worldgen`, cross-referenced to the
-concrete fruit item code via its sibling `attributes.fruittreeProperties.<type>.fruitStacks[0].
-code`. Entity spawn conditions (climate, required nearby block, spawn group/chance,
-tries-per-chunk) are shown on the entity's own `/creatures/` page instead, next to its drop table,
-parsed from `server.spawnconditions`/`spawnconditionsByType` in `models/loot.ts`. All of these
-values are the raw worldgen *rule* the game checks per chunk/attempt, not a placement guarantee —
-see the in-site Info page for the visitor-facing version of that caveat.
+referenced to concrete log/leaves/sapling block codes via each species' own
+`worldgen/treegen/<species>.json` shape file and `plaintreesapling.json`'s glob-keyed
+sapling→species map (reusing `variantExpander.ts`'s `resolveByType`) — plus a wholly separate
+fruit-tree climate band in `blocktypes/plant/fruittreebranch.json`'s `attributes.worldgen`,
+cross-referenced to the concrete fruit item code via its sibling
+`attributes.fruittreeProperties.<type>.fruitStacks[0].code`.
+
+Entity spawn conditions (climate, required nearby block, spawn group/chance, tries-per-chunk) are
+shown on the entity's own `/creatures/` page instead, next to its drop table, parsed from
+`server.spawnconditions`/`spawnconditionsByType` in `models/loot.ts`. All of these values are the
+raw worldgen *rule* the game checks per chunk/attempt, not a placement guarantee — see the in-site
+Info page for the visitor-facing version of that caveat.
 
 ## Site features
 
 - **Every listing is one real `<table>`**, not a grid-list of plain links, with pagination, a
   free-text search box, and — whenever rows carry a `data-category`/`data-mod` — an auto-populated
-  `<select>` filtering on it (hidden if the page's rows don't vary on that dimension). Sections with
-  zero rows (e.g. an item with no known recipe) are omitted entirely rather than shown empty.
-- **All filter state lives in the URL** (`?q=`, `?category=`, `?mod=`, numbered `q2`/`category2`/...
-  for a 2nd+ table on the same page) via `history.replaceState`, so a filtered/searched view can be
-  bookmarked, shared, or revisited with back/forward navigation. See `site/assets/datatable.js`.
+  `<select>` filtering on it (hidden only if no row has a value for that dimension at all; a single
+  distinct value still shows the dropdown). Sections with zero rows (e.g. an item with no known
+  recipe) are omitted entirely rather than shown empty.
+- **All filter state lives in the URL** (`?q=`, `?category=`, `?mod=`, `?tag=`, numbered
+  `q2`/`category2`/... for a 2nd+ table on the same page) via `history.replaceState`, so a
+  filtered/searched view can be bookmarked, shared, or revisited with back/forward navigation. See
+  `site/assets/datatable.js`. `tag` is a separate exact-match filter dimension (against
+  `data-tags`) from the free-text `q` substring search, used for creature tags — a tag link
+  shouldn't also match unrelated rows whose name/code happens to contain the same substring.
 - **Wildcard/placeholder ingredients are clickable**, e.g. a recipe using `leather-normal-*` links
   to `/items/?q=leather-normal-`, pre-filtering the items list to that family.
 - **Recipes without their own name** (alloy, barrel, cooking, knapping, smithing, clayforming never
@@ -206,9 +226,26 @@ see the in-site Info page for the visitor-facing version of that caveat.
   routing-only prep for a second language later — nothing currently generates non-English content,
   and `LANG_PREFIX` is the only knob, overriding the default `"en"` for local experimentation.
 - **Footer build info**: every page shows when it was generated (stored in UTC, rendered
-  client-side as a relative "X ago" string — see `site/assets/build-time.js`) and links to the
-  exact commit it was built from (`GITHUB_SHA`/`GITHUB_REPOSITORY`, set automatically by every
-  Actions run; falls back to the local git working tree otherwise).
+  client-side as a relative time string — see `site/assets/build-time.js`), itself the link to
+  the exact commit it was built from (`GITHUB_SHA`/`GITHUB_REPOSITORY`, set automatically by every
+  Actions run; falls back to the local git working tree otherwise, where it's plain unlinked text).
+  The " ago" suffix lives in a separate sibling element so "just now" doesn't read as "just now ago".
+
+## Coming soon (`/guides/`, `/trades/`, `/tools/`)
+
+Three pages are intentionally empty stubs, each explaining in-page what's planned and exactly
+where the underlying game data already lives, rather than silently having no page at all:
+
+- **`/guides/`** — the game's own 20 in-game handbook help-guide articles
+  (`config/handbook/00-starterguide.json` through `19-stonelayers.json`).
+- **`/trades/`** — what wandering traders buy/sell, per specialization
+  (`config/tradelists/*.json`, `entities/humanoid/trader-{male,female}.json`,
+  `config/dialogue/trader.json`).
+- **`/tools/`** — interactive tools beyond the generated reference pages: a schematic
+  viewer/uploader (likely adapting
+  [jgwoolley/vintage-story-schematic-preview](https://github.com/jgwoolley/vintage-story-schematic-preview)),
+  and a proper painting/tapestry-in-ruins lookup evaluated directly against
+  `worldgen/storystructures.json`/`structures.json` (see the "Decor catalog" caveat above).
 
 ## Why not run the game engine directly?
 
@@ -265,14 +302,17 @@ genuinely blocked, not merely skipped:
 
 ## Known v1 limitations
 
-- **The recipe/loot item index (`/items/`) only lists things reachable from a recipe or a drop
-  table.** `generated.items` (`crossref.ts`) is built by walking recipe ingredients/outputs and
-  loot entries, not by enumerating every `itemtypes`/`blocktypes` definition in the game. Paintings,
-  tapestries, and clothing are specifically carved out into `/decor/` (see above) precisely because
-  of this gap, but it's not fully closed: roughly 100 other blocktype/itemtype files carry the same
-  handbook-exclude/admin-only pattern (e.g. `attributes.handbook.exclude: true`, same as `tapestry`)
-  and still have no page anywhere on the wiki. Closing it fully would mean switching the item
-  catalog from a recipe/loot graph to a full registry walk — a bigger change than this note,
+- **The recipe/loot item index (`/items/`) only lists things reachable from a recipe, a drop
+  table (either direction), or a worldgen spawn rule.** `generated.items` (`crossref.ts` +
+  `index.ts`'s synthesis loops) is built by walking recipe ingredients/outputs, loot entries (both
+  what something drops and what drops it), and deposit/blockpatch/tree spawn data — not by
+  enumerating every `itemtypes`/`blocktypes` definition in the game. Paintings, tapestries, and
+  clothing are specifically carved out into their own pages (`/paintings/`, `/tapestries/`,
+  `/clothing/`, see above) precisely because of this gap, but it's not fully closed: roughly 100
+  other blocktype/itemtype files carry the same handbook-exclude/admin-only pattern (e.g.
+  `attributes.handbook.exclude: true`, same as `tapestry`) and still have no page anywhere on the
+  wiki. Closing it fully would mean switching the item catalog from a recipe/loot/worldgen graph
+  to a full registry walk — a bigger change than this note,
   flagged here rather than taken on silently.
 - Schematic geometry (the actual block-by-block layout of a generated structure) is not decoded —
   only dimensions and a block-code inventory count are shown, plus (for the decor catalog) whether

@@ -13,6 +13,7 @@
   function initDataTable(root, instanceIndex) {
     const pageSize = parseInt(root.dataset.pageSize || "50", 10);
     const list = root.querySelector("[data-datatable-items]");
+    const controls = root.querySelector(".datatable-controls");
     const searchInput = root.querySelector(".datatable-search");
     const categorySelect = root.querySelector(".datatable-category-filter");
     const modSelect = root.querySelector(".datatable-mod-filter");
@@ -25,14 +26,17 @@
     const qKey = paramKey("q", instanceIndex);
     const categoryKey = paramKey("category", instanceIndex);
     const modKey = paramKey("mod", instanceIndex);
+    const tagKey = paramKey("tag", instanceIndex);
 
     // Builds a <select>'s options from whatever `data-*` values are actually present; hides the
-    // control entirely when the page's rows don't vary on that dimension (including when there's
-    // only one distinct value -- a dropdown with one real choice isn't a useful filter).
+    // control entirely only when the page's rows carry no value at all for that dimension (e.g. no
+    // row has a mod). A single distinct value still shows the dropdown -- a visible "All mods /
+    // game" filter confirms mod/category filtering exists on this page at all, and starts being
+    // immediately useful the moment a second mod/category value shows up, with no further changes.
     function populateSelect(select, attr, allLabel) {
       if (!select) return [];
       const values = [...new Set(items.map((el) => el.dataset[attr]).filter(Boolean))].sort();
-      if (values.length < 2) {
+      if (values.length < 1) {
         select.style.display = "none";
         return [];
       }
@@ -59,6 +63,43 @@
     if (categorySelect && categoryValues.includes(initialParams.get(categoryKey))) categorySelect.value = initialParams.get(categoryKey);
     if (modSelect && modValues.includes(initialParams.get(modKey))) modSelect.value = initialParams.get(modKey);
 
+    // The `tag` param is a separate, exact-token filter against `data-tags` (space-separated),
+    // distinct from the free-text `q` substring search -- a tag link (e.g. "predator") shouldn't
+    // also match some unrelated row whose display name or code happens to contain "predator" as a
+    // substring. There's no fixed small set of tags to populate a <select> from, so instead of a
+    // dropdown this renders as a removable chip only when a tag filter is actually active.
+    let activeTag = initialParams.get(tagKey) || "";
+    let tagChip = null;
+    function renderTagChip() {
+      if (!controls) return;
+      if (!activeTag) {
+        tagChip?.remove();
+        tagChip = null;
+        return;
+      }
+      if (!tagChip) {
+        tagChip = document.createElement("span");
+        tagChip.className = "datatable-tag-chip";
+        controls.appendChild(tagChip);
+      }
+      tagChip.textContent = "";
+      const label = document.createElement("span");
+      label.textContent = `Tag: ${activeTag}`;
+      tagChip.appendChild(label);
+      const clear = document.createElement("button");
+      clear.type = "button";
+      clear.setAttribute("aria-label", "Clear tag filter");
+      clear.textContent = "×";
+      clear.addEventListener("click", () => {
+        activeTag = "";
+        renderTagChip();
+        page = 1;
+        render();
+      });
+      tagChip.appendChild(clear);
+    }
+    renderTagChip();
+
     function matchesQuery(el, query) {
       if (!query) return true;
       // `data-search` lets a row be matched on more than its visible text (e.g. an item's raw
@@ -73,12 +114,18 @@
       return !value || el.dataset[attr] === value;
     }
 
+    function matchesTag(el) {
+      if (!activeTag) return true;
+      return (el.dataset.tags || "").split(" ").filter(Boolean).includes(activeTag);
+    }
+
     function syncUrl() {
       const params = new URLSearchParams(location.search);
       const setOrDelete = (key, value) => (value ? params.set(key, value) : params.delete(key));
       setOrDelete(qKey, (searchInput?.value || "").trim());
       setOrDelete(categoryKey, categorySelect?.value || "");
       setOrDelete(modKey, modSelect?.value || "");
+      setOrDelete(tagKey, activeTag);
       const qs = params.toString();
       history.replaceState(null, "", location.pathname + (qs ? `?${qs}` : "") + location.hash);
     }
@@ -86,7 +133,11 @@
     function render() {
       const query = (searchInput?.value || "").trim().toLowerCase();
       const matches = items.filter(
-        (el) => matchesQuery(el, query) && matchesSelect(el, categorySelect, "category") && matchesSelect(el, modSelect, "mod")
+        (el) =>
+          matchesQuery(el, query) &&
+          matchesSelect(el, categorySelect, "category") &&
+          matchesSelect(el, modSelect, "mod") &&
+          matchesTag(el)
       );
       const totalPages = Math.max(1, Math.ceil(matches.length / pageSize));
       if (page > totalPages) page = totalPages;

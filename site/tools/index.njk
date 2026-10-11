@@ -1,0 +1,30 @@
+---
+title: Tools - Vintage Story Wiki
+description: Planned -- interactive tools beyond the generated reference pages.
+layout: layouts/base.njk
+permalink: "{{ lang }}/tools/index.html"
+---
+<h1>Tools</h1>
+<p class="wip-badge">Work in progress</p>
+<p>Planned interactive tools, beyond the generated reference pages this wiki already has:</p>
+
+<h2>Schematic viewer/uploader</h2>
+<p class="wip-badge">Work in progress</p>
+<p>
+  Upload a <code>.json</code> schematic file and view it rendered in the browser, and (longer
+  term) browse this wiki's own structure schematics the same way instead of just dimensions/block
+  counts. Likely needs adapting code from
+  <a href="https://github.com/jgwoolley/vintage-story-schematic-preview">jgwoolley/vintage-story-schematic-preview</a>.
+</p>
+
+<h2>Painting/tapestry-in-ruins lookup</h2>
+<p class="wip-badge">Work in progress</p>
+<p>
+  Right now, each <a href="{{ ('/' ~ lang ~ '/') | url }}paintings/">painting</a>/
+  <a href="{{ ('/' ~ lang ~ '/') | url }}tapestries/">tapestry</a> page shows which
+  <a href="{{ ('/' ~ lang ~ '/') | url }}structures/">structures</a> it's found in, built from a
+  flat pass over every schematic's block-code dictionary. A proper lookup still needs to be
+  evaluated against <code>worldgen/storystructures.json</code> and <code>worldgen/structures.json</code>
+  directly, to confirm which specific ruin/story-structure variants actually place a given
+  painting or tapestry (rather than just "some schematic somewhere contains this block code").
+</p>

@@ -15,7 +15,8 @@
     "@11ty/eleventy": "^3.0.0",
     "adm-zip": "^0.5.16",
     "json5": "^2.2.3",
-    "markdown-it": "^15.0.2"
+    "markdown-it": "^15.0.2",
+    "tar": "^7.5.22"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.5",

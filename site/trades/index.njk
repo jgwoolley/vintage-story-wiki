@@ -1,0 +1,21 @@
+---
+title: Trades - Vintage Story Wiki
+description: Planned -- what traders buy and sell, and their dialogue.
+layout: layouts/base.njk
+permalink: "{{ lang }}/trades/index.html"
+---
+<h1>Trades</h1>
+<p class="wip-badge">Work in progress</p>
+<p>
+  Not yet extracted. Wandering traders each specialize in one category (furniture, survival
+  goods, building materials, luxuries, commodities, clothing, agriculture, treasure hunting,
+  artisan goods) and buy/sell a fixed list of items at a price range, with their own dialogue and
+  character model.
+</p>
+<p class="muted">
+  Source data: <code>assets/survival/config/tradelists/*.json</code> (one file per trader
+  specialization, listing buy/sell items and price ranges), cross-referenced with
+  <code>assets/survival/entities/humanoid/trader-{male,female}.json</code> (which specialization
+  each trader entity uses) and <code>assets/survival/config/dialogue/trader.json</code> (trader
+  dialogue tree).
+</p>

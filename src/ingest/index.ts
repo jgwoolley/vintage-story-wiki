@@ -144,6 +144,13 @@ function main(): void {
     if (book) item.relatedLoreBookId = book.id;
   }
 
+  // Paintings/tapestries/clothing each get their own top-level page/nav entry rather than one
+  // shared /decor/ listing with a kind filter -- split here (post cross-reference) rather than
+  // filtering in a template, consistent with how creatures/blockDrops were split from loot.
+  const paintings = decorCatalog.filter((d) => d.kind === "painting");
+  const tapestries = decorCatalog.filter((d) => d.kind === "tapestry");
+  const clothing = decorCatalog.filter((d) => d.kind === "clothing");
+
   console.log("== Extracting ore/gem/rock deposits ==");
   const { deposits, codeToDepositIds } = extractDeposits(index);
   console.log(`  ${deposits.length} deposits, covering ${codeToDepositIds.size} concrete block codes`);
@@ -242,6 +249,9 @@ function main(): void {
   writeGenerated("blockDropsById", blockDropsById);
   writeGenerated("structures", structures);
   writeGenerated("decor", decorCatalog);
+  writeGenerated("paintings", paintings);
+  writeGenerated("tapestries", tapestries);
+  writeGenerated("clothing", clothing);
   writeGenerated("lore", loreBooks);
   writeGenerated("deposits", deposits);
   writeGenerated("depositsById", depositsById);

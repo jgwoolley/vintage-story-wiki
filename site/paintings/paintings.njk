@@ -1,0 +1,37 @@
+---
+pagination:
+  data: generated.paintings
+  size: 1
+  alias: item
+permalink: "{{ lang }}/paintings/{{ item.domain }}/{{ item.code | slugify }}/index.html"
+layout: layouts/base.njk
+eleventyComputed:
+  title: "{{ item.displayName }} - Vintage Story Wiki"
+---
+<div class="breadcrumb"><a href="{{ ('/' ~ lang ~ '/') | url }}paintings/">&larr; All paintings</a></div>
+
+<h1>{{ item.displayName }}</h1>
+<p class="muted">
+  <code>{{ item.domain }}:{{ item.code }}</code>
+  &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ item.sourceMod }}</a>
+</p>
+
+{% if item.description %}
+<div class="card">{{ item.description | safe }}</div>
+{% else %}
+<p class="muted">Paintings have no flavor text in the base game.</p>
+{% endif %}
+
+<h2>Found in structures ({{ item.foundInStructures.length }})</h2>
+{% if item.foundInStructures.length %}
+<ul>
+  {% for structureId in item.foundInStructures %}
+    {% set structure = generated.structures | findById(structureId) %}
+    {% if structure %}
+    <li><a href="{{ ('/' ~ lang ~ '/') | url }}structures/{{ structure.id | slugify }}/">{{ structure.name or structure.code }}</a> <span class="tag">{{ structure.kind }}</span></li>
+    {% endif %}
+  {% endfor %}
+</ul>
+{% else %}
+<p class="muted">Not found inside any decoded structure schematic.</p>
+{% endif %}

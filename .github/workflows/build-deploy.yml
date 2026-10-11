@@ -17,6 +17,10 @@ concurrency:
 
 jobs:
   build:
+    # The whole pipeline (download/ingest/build) is pure Node/npm now -- no system package is
+    # ever shelled out to (the old `tar` CLI dependency in scripts/download.ts was replaced with
+    # the pure-JS `tar` npm package). `ubuntu-latest` here is just GitHub Actions' standard
+    # GitHub-hosted runner choice, not an actual OS-level requirement of this project.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

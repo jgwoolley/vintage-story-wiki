@@ -27,7 +27,7 @@ eleventyComputed:
     {% if source.entityStats.tags.length %}
     <tr>
       <th>Tags</th>
-      <td>{% for t in source.entityStats.tags %}<a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}creatures/?q={{ t | urlencode }}">{{ t }}</a>{% endfor %}</td>
+      <td>{% for t in source.entityStats.tags %}<a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}creatures/?tag={{ t | urlencode }}">{{ t }}</a>{% endfor %}</td>
     </tr>
     {% endif %}
   </tbody>

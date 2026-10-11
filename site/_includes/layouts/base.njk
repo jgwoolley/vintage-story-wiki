@@ -35,24 +35,16 @@ description: A statically-generated wiki of Vintage Story crafting recipes, drop
     <nav>
       <a href="{{ ('/' ~ lang ~ '/') | url }}items/">Items</a>
       <a href="{{ ('/' ~ lang ~ '/') | url }}recipes/">Recipes</a>
-      <a href="{{ ('/' ~ lang ~ '/') | url }}creatures/">Creatures</a>
-      <a href="{{ ('/' ~ lang ~ '/') | url }}structures/">Structures</a>
-      <a href="{{ ('/' ~ lang ~ '/') | url }}deposits/">Deposits</a>
-      <a href="{{ ('/' ~ lang ~ '/') | url }}crops/">Crops</a>
-      <a href="{{ ('/' ~ lang ~ '/') | url }}decor/">Decor &amp; Clothing</a>
-      <a href="{{ ('/' ~ lang ~ '/') | url }}lore/">Books &amp; Lore</a>
-      <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">Mods</a>
-      <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a>
     </nav>
+    <a class="nav-info" href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a>
   </header>
   <main class="content">
     {{ content | safe }}
   </main>
   <footer class="site-footer">
     <p>
-      Generated from Vintage Story game &amp; mod data
-      <time datetime="{{ buildInfo.utcIso }}" data-build-time="{{ buildInfo.utcIso }}">{{ buildInfo.utcIso }}</time>.
-      {% if buildInfo.commitUrl %}<a href="{{ buildInfo.commitUrl }}">Click here</a> for more info.{% else %}See the <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a> page for details.{% endif %}
+      Generated
+      {% if buildInfo.commitUrl %}<a href="{{ buildInfo.commitUrl }}">{% endif %}<time datetime="{{ buildInfo.utcIso }}" data-build-time="{{ buildInfo.utcIso }}">{{ buildInfo.utcIso }}</time>{% if buildInfo.commitUrl %}</a>{% endif %}<span data-build-ago> ago</span>.
       Not affiliated with Anego Studios.
     </p>
   </footer>
