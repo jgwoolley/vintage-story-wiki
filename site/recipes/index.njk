@@ -3,15 +3,22 @@ title: Recipes - Vintage Story Wiki
 layout: layouts/base.njk
 ---
 {% import "macros/datatable.njk" as dt %}
+{% import "macros/recipe.njk" as rc %}
 <h1>Recipes</h1>
-<p class="muted">{{ generated.recipes.length }} recipes across {{ generated.recipes | groupby("category") | length }} categories.</p>
+<p class="muted">
+  {{ generated.recipes.length }} recipes across {{ generated.recipes | groupby("category") | length }} categories.
+  Recipes with no name of their own (alloy, barrel, cooking, knapping, smithing, clayforming) are
+  titled after the item they produce and labeled <strong>(Item Recipe)</strong> so it's clear
+  that's a recipe title, not a second name for the item itself.
+</p>
 
-{% call dt.datatable(60, "Search recipes...", ["Name", "Category", "Mod"]) %}
-{% for recipe in generated.recipes | sort(false, false, "name") %}
+{% call dt.datatable(60, "Search recipes...", ["Name", "Category", "Mod", "Ingredients → output"]) %}
+{% for recipe in generated.recipes %}
   <tr data-category="{{ recipe.category }}" data-mod="{{ recipe.sourceMod }}">
-    <td><a href="{{ '/' | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe.name or recipe.output.code or recipe.id }}</a></td>
+    <td><a href="{{ '/' | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe | recipeTitle(generated.items) }}</a></td>
     <td><span class="tag">{{ recipe.category }}</span></td>
     <td><span class="tag">{{ recipe.sourceMod }}</span></td>
+    <td>{{ rc.summary(recipe, generated.items) }}</td>
   </tr>
 {% endfor %}
 {% endcall %}

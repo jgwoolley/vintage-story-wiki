@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "download": "./download.sh $(node scripts/manifest-to-args.js)",
+    "download": "tsx scripts/download.ts",
     "ingest": "tsx src/ingest/index.ts",
     "build": "npm run ingest && eleventy",
     "serve": "npm run ingest && eleventy --serve",
@@ -14,7 +14,8 @@
   "dependencies": {
     "@11ty/eleventy": "^3.0.0",
     "adm-zip": "^0.5.16",
-    "json5": "^2.2.3"
+    "json5": "^2.2.3",
+    "markdown-it": "^15.0.2"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.5",

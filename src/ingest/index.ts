@@ -132,6 +132,15 @@ function main(): void {
   const loreBooks = extractLoreBooks(index, lang);
   console.log(`  ${loreBooks.length} books/lore pieces`);
 
+  // Tapestries have no flat "description" lang key -- their actual text lives in the matching
+  // lore book's chapters (picked at placement time via a runtime "type" attribute). Cross-link
+  // rather than leave tapestry pages looking like they have no content at all.
+  for (const item of decorCatalog) {
+    if (item.kind !== "tapestry") continue;
+    const book = loreBooks.find((b) => b.code === "tapestry" && b.domain === item.domain);
+    if (book) item.relatedLoreBookId = book.id;
+  }
+
   console.log("== Building item index ==");
   const itemIndex = buildItemIndex(recipes, loot, lang);
   console.log(`  ${itemIndex.size} distinct items/blocks referenced`);

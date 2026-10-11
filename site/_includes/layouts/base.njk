@@ -1,12 +1,33 @@
+---
+description: A statically-generated wiki of Vintage Story crafting recipes, drop rates, structures, decor/clothing, and in-game books, built directly from the game's own data.
+---
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ title or "Vintage Story Wiki" }}</title>
+  <meta name="description" content="{{ description }}">
+  <meta name="theme-color" content="#8a5a2b">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#128214;</text></svg>">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Vintage Story Wiki">
+  <meta property="og:title" content="{{ title or 'Vintage Story Wiki' }}">
+  <meta property="og:description" content="{{ description }}">
+  <meta property="og:image" content="{{ siteUrl }}{{ '/' | url }}assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  {% if siteUrl %}<meta property="og:url" content="{{ siteUrl }}{{ page.url | url }}">{% endif %}
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ title or 'Vintage Story Wiki' }}">
+  <meta name="twitter:description" content="{{ description }}">
+  <meta name="twitter:image" content="{{ siteUrl }}{{ '/' | url }}assets/og-image.png">
+
   <link rel="stylesheet" href="{{ '/' | url }}assets/style.css">
   <script src="{{ '/' | url }}assets/datatable.js" defer></script>
+  <script src="{{ '/' | url }}assets/build-time.js" defer></script>
 </head>
 <body>
   <header class="site-header">
@@ -19,13 +40,19 @@
       <a href="{{ '/' | url }}decor/">Decor &amp; Clothing</a>
       <a href="{{ '/' | url }}lore/">Books &amp; Lore</a>
       <a href="{{ '/' | url }}mods/">Mods</a>
+      <a href="{{ '/' | url }}info/">Info</a>
     </nav>
   </header>
   <main class="content">
     {{ content | safe }}
   </main>
   <footer class="site-footer">
-    <p>Generated from Vintage Story game data. Not affiliated with Anego Studios.</p>
+    <p>
+      Generated from Vintage Story game &amp; mod data
+      <time datetime="{{ buildInfo.utcIso }}" data-build-time="{{ buildInfo.utcIso }}">{{ buildInfo.utcIso }}</time>.
+      {% if buildInfo.commitUrl %}<a href="{{ buildInfo.commitUrl }}">Click here</a> for more info.{% else %}See the <a href="{{ '/' | url }}info/">Info</a> page for details.{% endif %}
+      Not affiliated with Anego Studios.
+    </p>
   </footer>
 </body>
 </html>

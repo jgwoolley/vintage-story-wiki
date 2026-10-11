@@ -19,6 +19,16 @@ eleventyComputed:
 
 {% if item.description %}
 <div class="card">{{ item.description | safe }}</div>
+{% elif item.relatedLoreBookId %}
+{% set book = generated.lore | findById(item.relatedLoreBookId) %}
+<p class="muted">
+  Tapestries have no fixed text of their own &mdash; which one of the
+  <a href="{{ '/' | url }}lore/{{ book.domain }}/{{ book.code | slugify }}/">"{{ book.title }}"</a>
+  book's {{ book.pages.length }} chapters a placed tapestry shows is picked at placement time, not
+  encoded in its block code.
+</p>
+{% elif item.kind == "painting" %}
+<p class="muted">Paintings have no flavor text in the base game.</p>
 {% endif %}
 
 <h2>Found in structures ({{ item.foundInStructures.length }})</h2>
@@ -34,6 +44,6 @@ eleventyComputed:
 {% else %}
 <p class="muted">
   Not found inside any decoded structure schematic.
-  {% if item.itemKind == "item" %}This is expected for clothing &mdash; worn/stored items live inside a schematic's block-entity inventory data (e.g. a wardrobe or chest), which this wiki doesn't decode (see README). Only placed <em>blocks</em> like paintings and tapestries can be found this way.{% endif %}
+  {% if item.itemKind == "item" %}This is expected for clothing &mdash; worn/stored items live inside a schematic's block-entity inventory data (e.g. a wardrobe or chest), which this wiki doesn't decode (see <a href="{{ '/' | url }}info/">Info</a>). Only placed <em>blocks</em> like paintings and tapestries can be found this way.{% endif %}
 </p>
 {% endif %}

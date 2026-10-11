@@ -1,9 +1,11 @@
+# Phase 
+
+Crafting grid recpeies still dont seem to be clickable
+
 # Phase 05
 
 - I'd like more information about specific crops / trees / rocks / ore and where they can spawn.
 - If theres any information about how/where particular entities spawn include that.
-- Don't some clothing items and paintains / tapestries have descriptions?
-- Why aren't there localization for ingot-electrum
 
 # Phase
 

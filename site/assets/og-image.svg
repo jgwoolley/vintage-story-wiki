@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2b1f14"/>
+      <stop offset="100%" stop-color="#1b1812"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <text x="100" y="260" font-family="Georgia, 'Segoe UI', serif" font-size="110" fill="#ece6d8">📖</text>
+  <text x="100" y="360" font-family="'Segoe UI', system-ui, sans-serif" font-size="72" font-weight="700" fill="#ece6d8">Vintage Story Wiki</text>
+  <text x="100" y="420" font-family="'Segoe UI', system-ui, sans-serif" font-size="34" fill="#d08f4e">Recipes &#8226; Drops &#8226; Structures &#8226; Decor &#8226; Lore</text>
+  <text x="100" y="470" font-family="'Segoe UI', system-ui, sans-serif" font-size="26" fill="#a69a82">Generated directly from the game's own data</text>
+</svg>

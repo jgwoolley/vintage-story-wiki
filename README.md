@@ -1,18 +1,23 @@
 # Vintage Story Wiki
 
-A statically-generated wiki documenting Vintage Story crafting recipes, drop rates, and
-world-generated structures, built directly from the game's own asset data (vanilla server +
-installed mods) rather than hand-maintained.
+A statically-generated wiki documenting Vintage Story crafting recipes, drop rates,
+world-generated structures, decorative/clothing content, and in-game books, built directly from
+the game's own asset data (vanilla server + installed mods) rather than hand-maintained. This
+README is also published on the site itself as the **Info** tab.
 
 ## How it works
 
 1. **`vs-manifest.json`** pins the vanilla server version/branch and the list of installed mods
-   (`modid` + version). This is the single source of truth for what the wiki documents.
-2. **`npm run download`** wraps `download.sh` using that manifest, downloading the vanilla
-   dedicated server into `vs_server/` and mod `.zip` files into `Mods/` (both gitignored).
+   (`modid` + version). This is the single source of truth for what the wiki documents. Currently
+   pinned to vanilla **1.22.7** plus two mods: **BetterRuins** (JSON-only) and **Stone Quarry**
+   (ships compiled code — see "Compiled-code mods" below).
+2. **`npm run download`** (`scripts/download.ts`) reads that manifest, downloading the vanilla
+   dedicated server into `vs_server/` and mod `.zip` files into `Mods/` (both gitignored) via
+   Node's built-in `fetch` and the mods.vintagestory.at API — the only non-Node tool it still
+   relies on is `tar`, to extract the server archive (same as the original bash version did).
 3. **`npm run ingest`** (`src/ingest/`) reads those raw game assets and produces normalized JSON
-   under `site/_data/generated/` — recipes, loot/drop tables, worldgen structures, and a
-   cross-referenced item index. See the pipeline stages below.
+   under `site/_data/generated/` — recipes, loot/drop tables, worldgen structures, a decor/clothing
+   catalog, readable book content, and a cross-referenced item index. See the pipeline stages below.
 4. **`npm run build`** runs the ingest step and then builds the static site with Eleventy, from
    `site/` into `_site/`.
 
@@ -32,31 +37,40 @@ npm run serve      # same, with a local dev server + live reload
   parsing with a JSON5-tolerant parser (real game files use unquoted keys, trailing commas, and
   comments). Schematic voxel-data files are skipped here (see `schematicHeader.ts`) since they can
   be tens of megabytes.
-- **`schematicHeader.ts`** — lists and reads only the lightweight header fields (dimensions, a
-  block-code count) of `worldgen/schematics/**/*.json` files, without parsing their huge
-  `Indices`/`BlockIds`/`BlockEntities` voxel payloads.
+- **`schematicHeader.ts`** — lists schematic files and reads only their lightweight header fields
+  (dimensions, block-code count) without parsing the huge `Indices`/`BlockIds`/`BlockEntities`
+  voxel payloads. Also exposes the actual block-code *values* (still cheap — `BlockCodes` itself is
+  a small dict) so `structureContents.ts` can check for membership without a full voxel decode.
+- **`structureContents.ts`** — one pass over every schematic's block-code dict, cross-referenced
+  against which structures reference which schematic files, to answer "which structures contain
+  block X" (used by the decor catalog, see below) without re-scanning schematics per lookup.
 - **`patchEngine.ts`** — collects every `patches/**/*.json` file (vanilla + mods), filters by
   `side`/`dependsOn`/`condition` (world-config conditions are resolved against the "Default"
   world-creation preset) and by the `compatibility/<othermodid>/` folder convention, then applies
   the active patches (including the VS-specific `addmerge` op) to compute the *effective* merged
   JSON per target file.
 - **`variantExpander.ts`** — resolves `variantgroups` (inline `states` and/or
-  `loadFromProperties` worldproperty references) into concrete item/block codes, and resolves
-  `*ByType` glob/regex-keyed maps (e.g. `dropsByType`) per concrete variant.
-- **`lang.ts`** — resolves display names from each domain's own `lang/en.json`, falling back to
-  vanilla's shared `game/lang/en.json`, with glob (`block-foo-*`) lang keys supported.
-- **`models/{recipes,loot,structures}.ts`** — normalize the 7 recipe categories, the 4 drop
-  mechanisms (block drops, panning, entity death drops, harvestable drops), and the 4 worldgen
-  registries (structures, villages, story structures, hook-generated structures) into common
-  shapes.
+  `loadFromProperties` worldproperty references) into concrete item/block codes, restricted by a
+  top-level `allowedVariants` allow-list when present, and resolves `*ByType` glob/regex-keyed maps
+  (e.g. `dropsByType`) per concrete variant — picking the *most specific* matching pattern, not
+  whichever happens to appear last in the file (see "Display names" below for why that distinction
+  matters).
+- **`lang.ts`** — resolves display names and flavor-text descriptions from each domain's own
+  `lang/en.json`, falling back to vanilla's shared `game/lang/en.json`, with glob (`block-foo-*`)
+  lang keys and the ore-chunk name composition (see "Display names") both supported.
+- **`models/{recipes,loot,structures,decor,lore}.ts`** — normalize the 7 recipe categories, the 4
+  drop mechanisms (block drops, panning, entity death drops, harvestable drops — plus entity stats:
+  health, weight, hitbox size, behavior tags), the 4 worldgen registries (structures, villages,
+  story structures, hook-generated structures), the decorative/clothing catalog, and readable
+  books/lore into common shapes.
 - **`crossref.ts`** — builds the item index (which recipes produce/consume an item, which
   blocks/entities drop it), resolving recipe-level wildcard/template placeholders (e.g.
   `plank-{wood}`) into concrete linked items.
 
 ## Display names (`lang.ts`)
 
-Resolving a correct display name turned out to need two fixes verified against the actual game
-source (`anegostudios/vssurvivalmod`, `vsapi` on GitHub), not just the asset JSON:
+Resolving a correct display name turned out to need several fixes verified against the actual
+game source (`anegostudios/vssurvivalmod`, `vsapi` on GitHub), not just the asset JSON:
 
 - **`variantgroups` can be restricted by a top-level `allowedVariants` list.** Some item/block
   definitions (`ore-graded.json`, `fishraw.json`, ~40 files total) combine multiple variant groups
@@ -69,12 +83,82 @@ source (`anegostudios/vssurvivalmod`, `vsapi` on GitHub), not just the asset JSO
   `item-<code>` lookup — mirroring `ItemOre.GetHeldItemName` in the game source: a per-grade
   template (`"rich-ore-chunk": "Rich chunk of {0}"`) plus a per-mineral name (`"ore-ilmenite"`),
   with the rock-type segment ignored entirely. `lang.ts` replicates this composition.
+- **Entities resolve under a different lang key than items/blocks** — `item-creature-<code>`
+  (e.g. `item-creature-bear-polar-adult-male` → "Polar bear (male)"), not `entity-<code>`.
+- **`*ByType` glob resolution must pick the most specific match, not the last one in file order.**
+  A real bug this surfaced: `bear-adult.json` lists `"*-polar-adult-male"` (specific hitbox size)
+  *before* the generic `"*-male"`/`"*-female"` fallbacks, so picking "whichever matched last"
+  silently gave every bear the generic hitbox. Fixed to prefer the longer (more specific) pattern.
+- **Attribute-parametrized blocks (lanterns, scroll racks, figureheads) have no single "the" name.**
+  Their material is a runtime attribute (e.g. `itemStack.Attributes.GetString("material")`), not
+  part of the registered block code, so `GetHeldItemName` composes the name from code + attribute
+  at the moment an instance exists — there's no context-free display name for the bare code.
+- **Clothing/painting/tapestry flavor text, when present, is a separate `itemdesc-`/`blockdesc-`
+  lookup**, not part of the display name at all (see the Decor & Clothing section below).
 
-After both fixes, vanilla item/block display names resolve at ~97%. The remaining gaps are real
-upstream data, not pipeline bugs: a few vanilla blocks (lanterns, scroll racks, figureheads) whose
-material is a runtime attribute rather than part of the registered code (so there's no single
-"the" display name for the block in isolation), and a larger set of BetterRuins' own decorative
-schematic-only blocks that the mod itself never added lang entries for.
+After these fixes, vanilla item/block display names resolve at ~97%. The remaining gaps are real
+upstream data, not pipeline bugs: the attribute-parametrized blocks above, and a larger set of
+BetterRuins' own decorative schematic-only blocks that the mod itself never added lang entries for.
+
+## Decor & Clothing catalog (`models/decor.ts`)
+
+Paintings, tapestries, and clothing have no recipe and no drop table — worldgen placement, the
+creative-mode `/giveblock` command, or NPC trade are the only ways to get them in survival — so the
+normal recipe/loot-driven item index never sees them (see "Known v1 limitations" below). `/decor/`
+is a deliberate, separate full-registry walk scoped to just these three categories, with:
+
+- **Flavor text**, pulled from `itemdesc-`/`blockdesc-` lang keys when the game defines one. Most
+  don't — paintings have zero flavor text anywhere in the base game, and only ~24% of clothing
+  items have any. That's accurate to the game, not missing data.
+- **Tapestries are a special case**: they have no flat description key at all, but *do* have real
+  readable content — each placed tapestry shows one of 18 chapters from the "Tapestry" lore book
+  (`loreChapterIds`), picked by a runtime attribute at placement time. The decor page cross-links
+  to the full book (see Books & Lore below) instead of showing nothing.
+- **"Found in structures"**, built from `structureContents.ts`: one pass over every schematic's
+  block-code dictionary, cross-referenced against which structures reference which schematic
+  files. Works for paintings/tapestries (real placed blocks); clothing items correctly show zero
+  matches, since worn/stored items live inside a schematic's opaque block-entity inventory data
+  (e.g. a chest or wardrobe), which this wiki doesn't decode.
+
+## Books & Lore (`models/lore.ts`)
+
+`/lore/` presents the actual readable text of every in-game book, journal, and tapestry chapter —
+both vanilla (19 books) and BetterRuins' own (53 more). `config/lore/<code>.json` files just list a
+title key and an ordered array of "piece" lang keys; the real prose lives in the lang file itself,
+resolved through the same mechanism as every other display string (including mod-domain-prefixed
+keys like `betterruins:lore-brickworkerslament-title`), with the game's own `___NEWPAGE___`
+page-break marker preserved.
+
+## Entity stats
+
+Loot pages for entities show health (`maxhealth`/`maxhealthByType` from the `health` server
+behavior), weight, hitbox size, and behavior tags — all resolved through the same `*ByType`
+glob-matching used for drops. Tags are clickable, linking to `/loot/?q=<tag>` so e.g. every
+`predator`-tagged entity is one click away.
+
+## Site features
+
+- **Every listing is one real `<table>`**, not a grid-list of plain links, with pagination, a
+  free-text search box, and — whenever rows carry a `data-category`/`data-mod` — an auto-populated
+  `<select>` filtering on it (hidden if the page's rows don't vary on that dimension). Sections with
+  zero rows (e.g. an item with no known recipe) are omitted entirely rather than shown empty.
+- **All filter state lives in the URL** (`?q=`, `?category=`, `?mod=`, numbered `q2`/`category2`/...
+  for a 2nd+ table on the same page) via `history.replaceState`, so a filtered/searched view can be
+  bookmarked, shared, or revisited with back/forward navigation. See `site/assets/datatable.js`.
+- **Wildcard/placeholder ingredients are clickable**, e.g. a recipe using `leather-normal-*` links
+  to `/items/?q=leather-normal-`, pre-filtering the items list to that family.
+- **Recipes without their own name** (alloy, barrel, cooking, knapping, smithing, clayforming never
+  have one in the game data) are titled after their output item and labeled "(Item Recipe)" — e.g.
+  "Electrum ingot (Item Recipe)" — so it's clear that's a recipe title, not a second name for the
+  item. Every recipe listing also shows its resolved ingredients → output inline.
+- **GitHub Pages project-site deployment**: every internal link/asset goes through Eleventy's
+  `{{ '/' | url }}` + `pathPrefix` idiom (set via the `PATH_PREFIX` env var in CI), since a project
+  site like `https://<user>.github.io/<repo>/` serves from a subpath, not the domain root — a
+  hardcoded `/assets/style.css` would 404 there even though it works fine in local dev.
+- **Footer build info**: every page shows when it was generated (stored in UTC, rendered
+  client-side as a relative "X ago" string — see `site/assets/build-time.js`) and links to the
+  exact commit it was built from (`GITHUB_SHA`/`GITHUB_REPOSITORY`, set automatically by every
+  Actions run; falls back to the local git working tree otherwise).
 
 ## Why not run the game engine directly?
 
@@ -96,8 +180,15 @@ TypeScript. Investigated and decided against, for now:
 
 Given the JSON pipeline already resolves vanilla display names at ~97% (see above), the tradeoff
 of a new C#/.NET toolchain and heavier CI (real server+world startup vs. instant JSON parsing)
-wasn't worth it yet. Compiled-code mods remain an explicit blind spot as a result — revisit this
-if a mod that actually ships compiled behavior needs documenting.
+wasn't worth it yet.
+
+### Compiled-code mods are a real, current blind spot
+
+This isn't just theoretical anymore: **Stone Quarry** (one of the two installed mods) ships
+`StoneQuarry.dll` and is flagged `hasCompiledCode: true` on the Mods page. Its JSON assets (if any)
+are still ingested normally, but any custom mechanic implemented in C# is invisible to this
+pipeline — revisit the engine-based approach above if a mod's compiled behavior actually needs
+documenting rather than just flagging.
 
 ## Item icons
 
@@ -124,17 +215,19 @@ genuinely blocked, not merely skipped:
 
 ## Known v1 limitations
 
-- **The item/block catalog only lists things reachable from a recipe or a drop table.**
-  `generated.items` (`crossref.ts`) is built by walking recipe ingredients/outputs and loot
-  entries, not by enumerating every `itemtypes`/`blocktypes` definition in the game. Purely
-  decorative content that's neither crafted nor dropped never enters it — e.g. `tapestry`
-  (`blocktypes/cloth/tapestry.json`, which the game's *own* in-game Handbook explicitly excludes
-  too via `attributes.handbook.exclude: true`) and `painting` (obtained only through worldgen
-  placement or the creative-mode `/giveblock` command). Around 100 other blocktype/itemtype files
-  carry the same handbook-exclude/admin-only pattern and have the same gap. Closing it would mean
-  switching the item catalog from a recipe/loot graph to a full registry walk — a bigger change
-  than this note, flagged here rather than taken on silently.
+- **The recipe/loot item index (`/items/`) only lists things reachable from a recipe or a drop
+  table.** `generated.items` (`crossref.ts`) is built by walking recipe ingredients/outputs and
+  loot entries, not by enumerating every `itemtypes`/`blocktypes` definition in the game. Paintings,
+  tapestries, and clothing are specifically carved out into `/decor/` (see above) precisely because
+  of this gap, but it's not fully closed: roughly 100 other blocktype/itemtype files carry the same
+  handbook-exclude/admin-only pattern (e.g. `attributes.handbook.exclude: true`, same as `tapestry`)
+  and still have no page anywhere on the wiki. Closing it fully would mean switching the item
+  catalog from a recipe/loot graph to a full registry walk — a bigger change than this note,
+  flagged here rather than taken on silently.
 - Schematic geometry (the actual block-by-block layout of a generated structure) is not decoded —
-  only dimensions and a block-code inventory count are shown.
+  only dimensions and a block-code inventory count are shown, plus (for the decor catalog) whether
+  a specific block code is present at all.
 - `condition`-gated patches assume the "Default" world-creation preset; a world created with
   non-default settings would see slightly different effective data.
+- Compiled-code mods (currently: Stone Quarry) are flagged but otherwise invisible to this
+  pipeline — see "Compiled-code mods are a real, current blind spot" above.

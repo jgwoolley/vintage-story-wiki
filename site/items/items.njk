@@ -27,7 +27,7 @@ eleventyComputed:
   {% set recipe = generated.recipesById[recipeId] %}
   {% if recipe %}
   <tr data-category="{{ recipe.category }}">
-    <td><a href="{{ '/' | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe.name or recipe.category }}</a></td>
+    <td><a href="{{ '/' | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe | recipeTitle(generated.items) }}</a></td>
     <td><span class="tag">{{ recipe.category }}</span></td>
     <td>{{ rc.summary(recipe | contextualRecipe(item.domain, item.code), generated.items) }}</td>
   </tr>
@@ -43,7 +43,7 @@ eleventyComputed:
   {% set recipe = generated.recipesById[recipeId] %}
   {% if recipe %}
   <tr data-category="{{ recipe.category }}">
-    <td><a href="{{ '/' | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe.name or recipe.category }}</a></td>
+    <td><a href="{{ '/' | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe | recipeTitle(generated.items) }}</a></td>
     <td><span class="tag">{{ recipe.category }}</span></td>
     <td>{{ rc.summary(recipe | contextualRecipe(item.domain, item.code), generated.items) }}</td>
   </tr>

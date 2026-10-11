@@ -208,6 +208,10 @@ export interface DecorItem {
   sourceMod: string;
   /** Structure ids whose schematics contain this block/item code (see structureContents.ts). */
   foundInStructures: string[];
+  /** For tapestries: the lore book id whose chapters this tapestry can display (picked at
+   * placement time via a runtime "type" attribute, not encoded in the block code itself -- see
+   * README). Undefined for everything else. */
+  relatedLoreBookId?: string;
 }
 
 export interface ModSummary {

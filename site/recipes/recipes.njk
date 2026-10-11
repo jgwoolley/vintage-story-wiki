@@ -6,11 +6,12 @@ pagination:
 permalink: "recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/index.html"
 layout: layouts/base.njk
 eleventyComputed:
-  title: "{{ recipe.name or recipe.category }} - Vintage Story Wiki"
+  title: "{{ recipe | recipeTitle(generated.items) }} - Vintage Story Wiki"
 ---
 <div class="breadcrumb"><a href="{{ '/' | url }}recipes/">&larr; All recipes</a> <span class="tag">{{ recipe.category }}</span></div>
 
-<h1>{{ recipe.name or (recipe.category + " recipe") }}</h1>
+<h1>{{ recipe | recipeTitle(generated.items) }}</h1>
+{% if not recipe.name %}<p class="muted">This category has no recipe names of its own in the game data &mdash; titled here after its output item.</p>{% endif %}
 <p class="muted">
   <span class="tag">{{ recipe.category }}</span>
   {% if recipe.shapeless %}<span class="tag">shapeless</span>{% endif %}

@@ -1,4 +1,55 @@
+import { readFileSync } from "node:fs";
+import { execSync } from "node:child_process";
+import MarkdownIt from "markdown-it";
+
+const md = new MarkdownIt({ html: false, linkify: true });
+
+function resolveCommitSha() {
+  if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA;
+  try {
+    return execSync("git rev-parse HEAD", { encoding: "utf8" }).trim();
+  } catch {
+    return undefined;
+  }
+}
+
+function resolveRepoSlug() {
+  if (process.env.GITHUB_REPOSITORY) return process.env.GITHUB_REPOSITORY; // "owner/repo", set automatically in Actions
+  try {
+    const remote = execSync("git remote get-url origin", { encoding: "utf8" }).trim();
+    // Handles both "git@github.com:owner/repo.git" and "https://github.com/owner/repo.git".
+    const match = remote.match(/github\.com[:/]([^/]+\/[^/]+?)(\.git)?$/);
+    return match?.[1];
+  } catch {
+    return undefined;
+  }
+}
+
 export default function (eleventyConfig) {
+  // The commit this build was generated from, and when -- rendered in the footer (base.njk) and
+  // linked to the actual commit on GitHub. GITHUB_SHA/GITHUB_REPOSITORY are set automatically by
+  // every Actions run, so this needs no extra CI configuration; local builds fall back to the
+  // working tree's own git state.
+  eleventyConfig.addGlobalData("buildInfo", () => {
+    const commitSha = resolveCommitSha();
+    const repoSlug = resolveRepoSlug();
+    return {
+      utcIso: new Date().toISOString(),
+      commitSha,
+      commitUrl: commitSha && repoSlug ? `https://github.com/${repoSlug}/commit/${commitSha}` : undefined,
+    };
+  });
+
+  // Renders README.md fresh on every build so the Info page (site/info.njk) always matches the
+  // repo's actual README -- one source of truth, no manual copy to keep in sync.
+  eleventyConfig.addGlobalData("readmeHtml", () => md.render(readFileSync("README.md", "utf8")));
+
+  // Lets CI provide the real deployed origin (e.g. "https://<user>.github.io") for building
+  // absolute Open Graph/Twitter image URLs, which unlike internal links are supposed to be
+  // absolute per spec. Empty string (default) means og:image falls back to a relative path --
+  // fine for local dev, where there's no stable "real" origin to point to anyway.
+  eleventyConfig.addGlobalData("siteUrl", () => process.env.SITE_URL || "");
+
   eleventyConfig.addFilter("slugify", (str) =>
     String(str ?? "")
       .toLowerCase()
@@ -12,6 +63,21 @@ export default function (eleventyConfig) {
   });
 
   eleventyConfig.addFilter("findById", (list, id) => list.find((x) => x.id === id));
+
+  // Several recipe categories (alloy, barrel, cooking, knapping, smithing, clayforming) never
+  // carry an explicit `name` -- without this, templates fell back to showing the raw OUTPUT CODE
+  // (e.g. "ingot-electrum") as if it were the recipe's title, which looks exactly like a missing
+  // item translation even though the item itself ("Electrum ingot") is fully localized. Labeling
+  // it as a recipe, using the item's real name, makes the distinction obvious instead.
+  eleventyConfig.addFilter("recipeTitle", (recipe, items) => {
+    if (recipe.name) return recipe.name;
+    const out = recipe.output;
+    if (out?.code && !out.code.includes("*") && !out.code.includes("{")) {
+      const item = items.find((i) => i.domain === out.domain && i.code === out.code);
+      if (item) return `${item.displayName} (Item Recipe)`;
+    }
+    return `${recipe.category} recipe`;
+  });
 
   // Turns a wildcard/placeholder ingredient code (e.g. "leather-normal-*", "plank-{wood}") into a
   // plain substring usable as an /items/ search query, by dropping the "*"/"{...}" parts.
