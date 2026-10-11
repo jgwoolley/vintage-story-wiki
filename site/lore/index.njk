@@ -1,6 +1,7 @@
 ---
 title: Books & Lore - Vintage Story Wiki
 layout: layouts/base.njk
+permalink: "{{ lang }}/lore/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
 <h1>Books &amp; Lore</h1>
@@ -9,7 +10,7 @@ layout: layouts/base.njk
 {% call dt.datatable(60, "Search books & lore...", ["Title", "Category", "Mod"]) %}
 {% for book in generated.lore | sort(false, false, "title") %}
   <tr data-category="{{ book.category }}" data-mod="{{ book.sourceMod }}">
-    <td><a href="{{ '/' | url }}lore/{{ book.domain }}/{{ book.code | slugify }}/">{{ book.title }}</a></td>
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}lore/{{ book.domain }}/{{ book.code | slugify }}/">{{ book.title }}</a></td>
     <td><span class="tag">{{ book.category }}</span></td>
     <td><span class="tag">{{ book.sourceMod }}</span></td>
   </tr>

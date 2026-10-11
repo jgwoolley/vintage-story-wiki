@@ -1,17 +1,19 @@
 ---
 title: Vintage Story Wiki
 layout: layouts/base.njk
+permalink: "{{ lang }}/index.html"
 ---
 <h1>Vintage Story Wiki</h1>
 <p>A statically-generated reference for crafting recipes, drop rates, and world-generated structures,
 built directly from the game's own asset data for the installed mod set.</p>
 
 <div class="grid-list">
-  <a href="{{ '/' | url }}items/"><strong>Items &amp; Blocks</strong><br><span class="muted">{{ generated.items.length }} entries</span></a>
-  <a href="{{ '/' | url }}recipes/"><strong>Recipes</strong><br><span class="muted">{{ generated.recipes.length }} entries</span></a>
-  <a href="{{ '/' | url }}loot/"><strong>Loot &amp; Drops</strong><br><span class="muted">{{ generated.loot.length }} entries</span></a>
-  <a href="{{ '/' | url }}structures/"><strong>Structures</strong><br><span class="muted">{{ generated.structures.length }} entries</span></a>
-  <a href="{{ '/' | url }}decor/"><strong>Decor &amp; Clothing</strong><br><span class="muted">{{ generated.decor.length }} entries</span></a>
-  <a href="{{ '/' | url }}lore/"><strong>Books &amp; Lore</strong><br><span class="muted">{{ generated.lore.length }} entries</span></a>
-  <a href="{{ '/' | url }}mods/"><strong>Mods</strong><br><span class="muted">{{ generated.mods.length }} installed</span></a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}items/"><strong>Items &amp; Blocks</strong><br><span class="muted">{{ generated.items.length }} entries</span></a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}recipes/"><strong>Recipes</strong><br><span class="muted">{{ generated.recipes.length }} entries</span></a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}loot/"><strong>Loot &amp; Drops</strong><br><span class="muted">{{ generated.loot.length }} entries</span></a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}structures/"><strong>Structures</strong><br><span class="muted">{{ generated.structures.length }} entries</span></a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}spawns/"><strong>Spawn Locations</strong><br><span class="muted">{{ generated.deposits.length }} deposits, {{ generated.blockPatches.length }} patches</span></a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}decor/"><strong>Decor &amp; Clothing</strong><br><span class="muted">{{ generated.decor.length }} entries</span></a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}lore/"><strong>Books &amp; Lore</strong><br><span class="muted">{{ generated.lore.length }} entries</span></a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}mods/"><strong>Mods</strong><br><span class="muted">{{ generated.mods.length }} installed</span></a>
 </div>

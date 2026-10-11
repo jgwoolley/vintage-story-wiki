@@ -3,22 +3,62 @@ pagination:
   data: generated.items
   size: 1
   alias: item
-permalink: "items/{{ item.domain }}/{{ item.code | slugify }}/index.html"
+permalink: "{{ lang }}/items/{{ item.domain }}/{{ item.code | slugify }}/index.html"
 layout: layouts/base.njk
 eleventyComputed:
   title: "{{ item.displayName }} - Vintage Story Wiki"
 ---
 {% import "macros/recipe.njk" as rc %}
 {% import "macros/datatable.njk" as dt %}
-<div class="breadcrumb"><a href="{{ '/' | url }}items/">&larr; All items</a></div>
+<div class="breadcrumb"><a href="{{ ('/' ~ lang ~ '/') | url }}items/">&larr; All items</a></div>
 
 <h1>{{ item.displayName }}</h1>
 <p class="muted">
   <span class="tag">{{ item.kind }}</span>
   <code>{{ item.domain }}:{{ item.code }}</code>
-  &middot; from <a href="{{ '/' | url }}mods/">{{ item.sourceMod }}</a>
+  &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ item.sourceMod }}</a>
 </p>
 {% if item.missingTranslation %}<p class="warning">No display name found in any lang file &mdash; showing the raw code.</p>{% endif %}
+
+{% if item.spawnDeposits.length %}
+<h2>Where to find (natural deposits)</h2>
+<p class="muted">Read directly from the game's worldgen rules -- see <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a> for how this differs from an exact "X spawns at Y" guarantee. See also the full <a href="{{ ('/' ~ lang ~ '/') | url }}spawns/">Spawn Locations</a> listing.</p>
+<ul>
+  {% for depId in item.spawnDeposits %}
+    {% set dep = generated.depositsById[depId] %}
+    {% if dep.id %}
+    <li>
+      <span class="tag">{{ dep.category }}</span>
+      Occurs in <strong>{{ dep.hostRocks | join(", ") }}</strong>{% if dep.gradesByRock %} (grade varies by rock type -- richer grades are rarer, see the deposit's own rocks above){% endif %}.
+      {% if dep.yPosRel %}
+        {% set y = dep.yPosRel.avg %}
+        Typical depth: {% if y >= 0.8 %}near the surface{% elif y >= 0.5 %}shallow underground{% elif y >= 0.25 %}moderate depth{% else %}deep underground{% endif %} (relative height {{ y | round(2) }} -- {{ "yPosRel" | restrictionInfo }}).
+      {% endif %}
+    </li>
+    {% endif %}
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if item.spawnBlockPatches.length %}
+<h2>Where to find (natural growth)</h2>
+<p class="muted">Climate conditions a chunk needs for this to grow wild. See also the full <a href="{{ ('/' ~ lang ~ '/') | url }}spawns/">Spawn Locations</a> listing.</p>
+<ul>
+  {% for patchId in item.spawnBlockPatches %}
+    {% set patch = generated.blockPatchesById[patchId] %}
+    {% if patch.id %}
+    <li>
+      <span class="tag">{{ patch.category }}</span>
+      {% if patch.minTemp != null or patch.maxTemp != null %}Temp {{ patch.minTemp if patch.minTemp != null else "any" }}&ndash;{{ patch.maxTemp if patch.maxTemp != null else "any" }}&deg;C{% endif %}
+      {% if patch.minRain != null or patch.maxRain != null %} &middot; Rain {{ patch.minRain if patch.minRain != null else 0 }}&ndash;{{ patch.maxRain if patch.maxRain != null else 1 }}{% endif %}
+      {% if patch.minForest != null or patch.maxForest != null %} &middot; Forest density {{ patch.minForest if patch.minForest != null else 0 }}&ndash;{{ patch.maxForest if patch.maxForest != null else 1 }}{% endif %}
+      {% if patch.minFertility != null or patch.maxFertility != null %} &middot; Soil fertility {{ patch.minFertility if patch.minFertility != null else 0 }}&ndash;{{ patch.maxFertility if patch.maxFertility != null else 1 }}{% endif %}
+      {% if patch.placement %} &middot; {{ patch.placement }}{% endif %}
+    </li>
+    {% endif %}
+  {% endfor %}
+</ul>
+{% endif %}
 
 {% if item.producedBy.length %}
 <h2>Produced by ({{ item.producedBy.length }})</h2>
@@ -27,7 +67,7 @@ eleventyComputed:
   {% set recipe = generated.recipesById[recipeId] %}
   {% if recipe %}
   <tr data-category="{{ recipe.category }}">
-    <td><a href="{{ '/' | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe | recipeTitle(generated.items) }}</a></td>
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe | recipeTitle(generated.items) }}</a></td>
     <td><span class="tag">{{ recipe.category }}</span></td>
     <td>{{ rc.summary(recipe | contextualRecipe(item.domain, item.code), generated.items) }}</td>
   </tr>
@@ -43,7 +83,7 @@ eleventyComputed:
   {% set recipe = generated.recipesById[recipeId] %}
   {% if recipe %}
   <tr data-category="{{ recipe.category }}">
-    <td><a href="{{ '/' | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe | recipeTitle(generated.items) }}</a></td>
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe | recipeTitle(generated.items) }}</a></td>
     <td><span class="tag">{{ recipe.category }}</span></td>
     <td>{{ rc.summary(recipe | contextualRecipe(item.domain, item.code), generated.items) }}</td>
   </tr>
@@ -59,7 +99,7 @@ eleventyComputed:
   {% set loot = generated.loot[lootIdx] %}
   {% if loot %}
   <tr data-category="{{ loot.sourceKind }}">
-    <td><a href="{{ '/' | url }}loot/{{ loot.sourceDomain }}/{{ loot.sourceCode | slugify }}/">{{ loot.sourceDisplayName }}</a></td>
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}loot/{{ loot.sourceDomain }}/{{ loot.sourceCode | slugify }}/">{{ loot.sourceDisplayName }}</a></td>
     <td><span class="tag">{{ loot.sourceKind }}</span></td>
     <td>{{ loot.mechanism }}</td>
     <td>
@@ -72,6 +112,6 @@ eleventyComputed:
 {% endcall %}
 {% endif %}
 
-{% if not item.producedBy.length and not item.consumedBy.length and not item.droppedBy.length %}
-<p class="muted">Not produced, consumed, or dropped by anything currently catalogued.</p>
+{% if not item.producedBy.length and not item.consumedBy.length and not item.droppedBy.length and not item.spawnDeposits.length and not item.spawnBlockPatches.length %}
+<p class="muted">Not produced, consumed, dropped, or naturally spawned by anything currently catalogued.</p>
 {% endif %}

@@ -2,7 +2,7 @@
 description: A statically-generated wiki of Vintage Story crafting recipes, drop rates, structures, decor/clothing, and in-game books, built directly from the game's own data.
 ---
 <!doctype html>
-<html lang="en">
+<html lang="{{ lang }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -31,16 +31,17 @@ description: A statically-generated wiki of Vintage Story crafting recipes, drop
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="{{ '/' | url }}">Vintage Story Wiki</a>
+    <a class="brand" href="{{ ('/' ~ lang ~ '/') | url }}">Vintage Story Wiki</a>
     <nav>
-      <a href="{{ '/' | url }}items/">Items</a>
-      <a href="{{ '/' | url }}recipes/">Recipes</a>
-      <a href="{{ '/' | url }}loot/">Loot</a>
-      <a href="{{ '/' | url }}structures/">Structures</a>
-      <a href="{{ '/' | url }}decor/">Decor &amp; Clothing</a>
-      <a href="{{ '/' | url }}lore/">Books &amp; Lore</a>
-      <a href="{{ '/' | url }}mods/">Mods</a>
-      <a href="{{ '/' | url }}info/">Info</a>
+      <a href="{{ ('/' ~ lang ~ '/') | url }}items/">Items</a>
+      <a href="{{ ('/' ~ lang ~ '/') | url }}recipes/">Recipes</a>
+      <a href="{{ ('/' ~ lang ~ '/') | url }}loot/">Loot</a>
+      <a href="{{ ('/' ~ lang ~ '/') | url }}structures/">Structures</a>
+      <a href="{{ ('/' ~ lang ~ '/') | url }}spawns/">Spawn Locations</a>
+      <a href="{{ ('/' ~ lang ~ '/') | url }}decor/">Decor &amp; Clothing</a>
+      <a href="{{ ('/' ~ lang ~ '/') | url }}lore/">Books &amp; Lore</a>
+      <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">Mods</a>
+      <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a>
     </nav>
   </header>
   <main class="content">
@@ -50,7 +51,7 @@ description: A statically-generated wiki of Vintage Story crafting recipes, drop
     <p>
       Generated from Vintage Story game &amp; mod data
       <time datetime="{{ buildInfo.utcIso }}" data-build-time="{{ buildInfo.utcIso }}">{{ buildInfo.utcIso }}</time>.
-      {% if buildInfo.commitUrl %}<a href="{{ buildInfo.commitUrl }}">Click here</a> for more info.{% else %}See the <a href="{{ '/' | url }}info/">Info</a> page for details.{% endif %}
+      {% if buildInfo.commitUrl %}<a href="{{ buildInfo.commitUrl }}">Click here</a> for more info.{% else %}See the <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a> page for details.{% endif %}
       Not affiliated with Anego Studios.
     </p>
   </footer>

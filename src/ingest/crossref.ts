@@ -41,6 +41,8 @@ export function buildItemIndex(
         consumedBy: [],
         droppedBy: [],
         appearsInStructures: [],
+        spawnDeposits: [],
+        spawnBlockPatches: [],
       };
       items.set(k, entry);
     }

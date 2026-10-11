@@ -1,6 +1,7 @@
 ---
 title: Loot & Drops - Vintage Story Wiki
 layout: layouts/base.njk
+permalink: "{{ lang }}/loot/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
 <h1>Loot &amp; Drops</h1>
@@ -9,7 +10,7 @@ layout: layouts/base.njk
 {% call dt.datatable(60, "Search loot sources or tags...", ["Name", "Kind", "Mod"]) %}
 {% for source in generated.lootBySource | sort(false, false, "sourceDisplayName") %}
   <tr data-search="{{ source.sourceDomain }}:{{ source.sourceCode }} {{ source.entityStats.tags | default([]) | join(' ') }}" data-category="{{ source.sourceKind }}" data-mod="{{ source.sourceMod }}">
-    <td><a href="{{ '/' | url }}loot/{{ source.sourceDomain }}/{{ source.sourceCode | slugify }}/">{{ source.sourceDisplayName }}</a></td>
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}loot/{{ source.sourceDomain }}/{{ source.sourceCode | slugify }}/">{{ source.sourceDisplayName }}</a></td>
     <td><span class="tag">{{ source.sourceKind }}</span></td>
     <td><span class="tag">{{ source.sourceMod }}</span></td>
   </tr>

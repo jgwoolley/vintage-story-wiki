@@ -1,4 +1,4 @@
-import type { AssetIndex, EntityStats, LootEntry } from "../types.js";
+import type { AssetIndex, EntitySpawnInfo, EntityStats, LootEntry } from "../types.js";
 import type { LangResolver } from "../lang.js";
 import { expandVariants, resolveByType, substitutePlaceholders } from "../variantExpander.js";
 import { splitDomainCode } from "../codeUtil.js";
@@ -15,6 +15,42 @@ interface DropSpec {
 /** Pulls the handful of entity stats that are broadly useful on a wiki page: health, size,
  * weight, and behavior tags. `maxhealth` lives on the "health" entry of `server.behaviors`,
  * same `*ByType` glob-resolution mechanism used everywhere else for variant-specific values. */
+// Spawn conditions come in two shapes: a flat `spawnconditions` object (fields may themselves be
+// *ByType, e.g. bear-adult.json's `climate.minTempByType`), or a `spawnconditionsByType` map keyed
+// by the exact concrete code (e.g. fox-adult.json), whose fields are already fully resolved.
+// Either way, a given field might be a plain value (fox-style) or need its own *ByType lookup
+// (bear-style climate), so every field read goes through this same two-step fallback.
+function pickSpawnField(section: any, field: string, concreteCode: string): any {
+  if (!section) return undefined;
+  if (section[field] !== undefined) return section[field];
+  return resolveByType(section[`${field}ByType`], concreteCode);
+}
+
+function extractEntitySpawnInfo(json: any, concreteCode: string): EntitySpawnInfo | undefined {
+  const server = json.server ?? {};
+  const sc = server.spawnconditions ?? resolveByType(server.spawnconditionsByType, concreteCode);
+  if (!sc) return undefined;
+  const worldgen = sc.worldgen ?? {};
+  const runtime = sc.runtime ?? {};
+  const climate = sc.climate ?? {};
+
+  const habitatBlocks =
+    pickSpawnField(worldgen, "insideBlockCodes", concreteCode) ?? pickSpawnField(runtime, "insideBlockCodes", concreteCode);
+
+  return {
+    minTemp: pickSpawnField(climate, "minTemp", concreteCode) ?? pickSpawnField(worldgen, "minTemp", concreteCode) ?? pickSpawnField(runtime, "minTemp", concreteCode),
+    maxTemp: pickSpawnField(climate, "maxTemp", concreteCode) ?? pickSpawnField(worldgen, "maxTemp", concreteCode) ?? pickSpawnField(runtime, "maxTemp", concreteCode),
+    minRain: pickSpawnField(climate, "minRain", concreteCode) ?? pickSpawnField(worldgen, "minRain", concreteCode) ?? pickSpawnField(runtime, "minRain", concreteCode),
+    maxRain: pickSpawnField(climate, "maxRain", concreteCode) ?? pickSpawnField(worldgen, "maxRain", concreteCode) ?? pickSpawnField(runtime, "maxRain", concreteCode),
+    minForest: pickSpawnField(climate, "minForest", concreteCode) ?? pickSpawnField(worldgen, "minForestOrShrubs", concreteCode),
+    maxForest: pickSpawnField(climate, "maxForest", concreteCode) ?? pickSpawnField(worldgen, "maxForest", concreteCode),
+    habitatBlocks: Array.isArray(habitatBlocks) ? habitatBlocks : undefined,
+    chance: runtime.chance,
+    group: runtime.group,
+    triesPerChunk: worldgen.TriesPerChunk?.avg,
+  };
+}
+
 function extractEntityStats(json: any, concreteCode: string): EntityStats {
   const behaviors: any[] = json.server?.behaviors ?? [];
   const healthBehavior = behaviors.find((b) => String(b?.code ?? "").toLowerCase() === "health");
@@ -27,6 +63,7 @@ function extractEntityStats(json: any, concreteCode: string): EntityStats {
     sizeX: size?.x,
     sizeY: size?.y,
     maxHealth,
+    spawn: extractEntitySpawnInfo(json, concreteCode),
   };
 }
 

@@ -3,19 +3,19 @@ pagination:
   data: generated.recipes
   size: 1
   alias: recipe
-permalink: "recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/index.html"
+permalink: "{{ lang }}/recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/index.html"
 layout: layouts/base.njk
 eleventyComputed:
   title: "{{ recipe | recipeTitle(generated.items) }} - Vintage Story Wiki"
 ---
-<div class="breadcrumb"><a href="{{ '/' | url }}recipes/">&larr; All recipes</a> <span class="tag">{{ recipe.category }}</span></div>
+<div class="breadcrumb"><a href="{{ ('/' ~ lang ~ '/') | url }}recipes/">&larr; All recipes</a> <span class="tag">{{ recipe.category }}</span></div>
 
 <h1>{{ recipe | recipeTitle(generated.items) }}</h1>
 {% if not recipe.name %}<p class="muted">This category has no recipe names of its own in the game data &mdash; titled here after its output item.</p>{% endif %}
 <p class="muted">
   <span class="tag">{{ recipe.category }}</span>
   {% if recipe.shapeless %}<span class="tag">shapeless</span>{% endif %}
-  from <a href="{{ '/' | url }}mods/">{{ recipe.sourceMod }}</a>
+  from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ recipe.sourceMod }}</a>
   {% if recipe.sealHours %}&middot; seals for {{ recipe.sealHours }}h{% endif %}
 </p>
 
@@ -31,9 +31,9 @@ eleventyComputed:
           <div class="cell" title="{{ ing.code or (ing.tags | default([]) | join(', ')) }}">
             {% if ing.code %}
               {% if "*" in ing.code or "{" in ing.code %}
-                <a href="{{ '/' | url }}items/?q={{ ing.code | wildcardQuery | urlencode }}">{{ ing.code }}</a>
+                <a href="{{ ('/' ~ lang ~ '/') | url }}items/?q={{ ing.code | wildcardQuery | urlencode }}">{{ ing.code }}</a>
               {% else %}
-                <a href="{{ '/' | url }}items/{{ ing.domain }}/{{ ing.code | slugify }}/">{{ generated.items | displayName(ing.domain, ing.code) }}</a>
+                <a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ ing.domain }}/{{ ing.code | slugify }}/">{{ generated.items | displayName(ing.domain, ing.code) }}</a>
               {% endif %}
             {% elif ing.tags %}{{ ing.tags | join(", ") }}{% endif %}
           </div>
@@ -59,14 +59,14 @@ eleventyComputed:
       <td>
         {% if ing.code %}
           {% if "*" in ing.code or "{" in ing.code %}
-            <a href="{{ '/' | url }}items/?q={{ ing.code | wildcardQuery | urlencode }}"><code>{{ ing.code }}</code></a>{% if ing.name %} ({{ ing.name }}){% endif %}
+            <a href="{{ ('/' ~ lang ~ '/') | url }}items/?q={{ ing.code | wildcardQuery | urlencode }}"><code>{{ ing.code }}</code></a>{% if ing.name %} ({{ ing.name }}){% endif %}
           {% else %}
-            <a href="{{ '/' | url }}items/{{ ing.domain }}/{{ ing.code | slugify }}/">{{ generated.items | displayName(ing.domain, ing.code) }}</a>
+            <a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ ing.domain }}/{{ ing.code | slugify }}/">{{ generated.items | displayName(ing.domain, ing.code) }}</a>
           {% endif %}
         {% elif ing.tags %}
           any <span class="tag">{{ ing.tags | join(", ") }}</span>
         {% elif ing.validStacks %}
-          {% for v in ing.validStacks %}<a href="{{ '/' | url }}items/{{ v.domain }}/{{ v.code | slugify }}/">{{ generated.items | displayName(v.domain, v.code) }}</a>{% if not loop.last %} or {% endif %}{% endfor %}
+          {% for v in ing.validStacks %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ v.domain }}/{{ v.code | slugify }}/">{{ generated.items | displayName(v.domain, v.code) }}</a>{% if not loop.last %} or {% endif %}{% endfor %}
         {% endif %}
       </td>
       <td>
@@ -87,9 +87,9 @@ eleventyComputed:
 <p>
   {% if recipe.output.code %}
     {% if "{" in recipe.output.code %}
-      <a href="{{ '/' | url }}items/?q={{ recipe.output.code | wildcardQuery | urlencode }}"><code>{{ recipe.output.code }}</code></a>{% if recipe.wildcard %} (depends on <strong>{{ recipe.wildcard.placeholder }}</strong>){% endif %}
+      <a href="{{ ('/' ~ lang ~ '/') | url }}items/?q={{ recipe.output.code | wildcardQuery | urlencode }}"><code>{{ recipe.output.code }}</code></a>{% if recipe.wildcard %} (depends on <strong>{{ recipe.wildcard.placeholder }}</strong>){% endif %}
     {% else %}
-      <a href="{{ '/' | url }}items/{{ recipe.output.domain }}/{{ recipe.output.code | slugify }}/">{{ generated.items | displayName(recipe.output.domain, recipe.output.code) }}</a>
+      <a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ recipe.output.domain }}/{{ recipe.output.code | slugify }}/">{{ generated.items | displayName(recipe.output.domain, recipe.output.code) }}</a>
     {% endif %}
   {% endif %}
   {% if recipe.output.quantity %}&times;{{ recipe.output.quantity }}{% endif %}

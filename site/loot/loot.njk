@@ -3,19 +3,19 @@ pagination:
   data: generated.lootBySource
   size: 1
   alias: source
-permalink: "loot/{{ source.sourceDomain }}/{{ source.sourceCode | slugify }}/index.html"
+permalink: "{{ lang }}/loot/{{ source.sourceDomain }}/{{ source.sourceCode | slugify }}/index.html"
 layout: layouts/base.njk
 eleventyComputed:
   title: "{{ source.sourceDisplayName }} drops - Vintage Story Wiki"
 ---
 {% import "macros/datatable.njk" as dt %}
-<div class="breadcrumb"><a href="{{ '/' | url }}loot/">&larr; All loot sources</a></div>
+<div class="breadcrumb"><a href="{{ ('/' ~ lang ~ '/') | url }}loot/">&larr; All loot sources</a></div>
 
 <h1>{{ source.sourceDisplayName }}</h1>
 <p class="muted">
   <span class="tag">{{ source.sourceKind }}</span>
   <code>{{ source.sourceDomain }}:{{ source.sourceCode }}</code>
-  &middot; from <a href="{{ '/' | url }}mods/">{{ source.sourceMod }}</a>
+  &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ source.sourceMod }}</a>
 </p>
 
 {% if source.entityStats %}
@@ -28,9 +28,33 @@ eleventyComputed:
     {% if source.entityStats.tags.length %}
     <tr>
       <th>Tags</th>
-      <td>{% for t in source.entityStats.tags %}<a class="tag" href="{{ '/' | url }}loot/?q={{ t | urlencode }}">{{ t }}</a>{% endfor %}</td>
+      <td>{% for t in source.entityStats.tags %}<a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}loot/?q={{ t | urlencode }}">{{ t }}</a>{% endfor %}</td>
     </tr>
     {% endif %}
+  </tbody>
+</table>
+{% endif %}
+
+{% if source.entityStats.spawn %}
+{% set spawn = source.entityStats.spawn %}
+<h2>Where it spawns</h2>
+<p class="muted">Conditions the game checks at a candidate chunk before this creature can appear there. All of them must hold at once -- it's an AND, not an OR.</p>
+<table>
+  <thead><tr><th>Condition</th><th>Value</th><th>What this means</th></tr></thead>
+  <tbody>
+    {% if spawn.minTemp != null or spawn.maxTemp != null %}<tr><th>Temperature</th><td>{{ spawn.minTemp if spawn.minTemp != null else "any" }}&ndash;{{ spawn.maxTemp if spawn.maxTemp != null else "any" }}&deg;C</td><td>{{ "minTemp" | restrictionInfo }}</td></tr>{% endif %}
+    {% if spawn.minRain != null or spawn.maxRain != null %}<tr><th>Rain</th><td>{{ spawn.minRain if spawn.minRain != null else 0 }}&ndash;{{ spawn.maxRain if spawn.maxRain != null else 1 }}</td><td>{{ "minRain" | restrictionInfo }}</td></tr>{% endif %}
+    {% if spawn.minForest != null or spawn.maxForest != null %}<tr><th>Forest density</th><td>{{ spawn.minForest if spawn.minForest != null else 0 }}&ndash;{{ spawn.maxForest if spawn.maxForest != null else 1 }}</td><td>{{ "minForest" | restrictionInfo }}</td></tr>{% endif %}
+    {% if spawn.habitatBlocks.length %}
+    <tr>
+      <th>Needs nearby</th>
+      <td>{% for b in spawn.habitatBlocks %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/?q={{ b | wildcardQuery | urlencode }}"><code>{{ b }}</code></a>{% if not loop.last %}, {% endif %}{% endfor %}</td>
+      <td>{{ "habitatBlocks" | restrictionInfo }}</td>
+    </tr>
+    {% endif %}
+    {% if spawn.group %}<tr><th>Spawn group</th><td>{{ spawn.group }}</td><td>{{ "group" | restrictionInfo }}</td></tr>{% endif %}
+    {% if spawn.chance != null %}<tr><th>Chance</th><td>{{ spawn.chance }} per attempt</td><td>{{ "chance" | restrictionInfo }}</td></tr>{% endif %}
+    {% if spawn.triesPerChunk != null %}<tr><th>Tries per chunk</th><td>{{ spawn.triesPerChunk }}</td><td>{{ "triesPerChunk" | restrictionInfo }}</td></tr>{% endif %}
   </tbody>
 </table>
 {% endif %}
@@ -40,7 +64,7 @@ eleventyComputed:
 {% for entry in source.entries %}
   <tr data-category="{{ entry.mechanism }}">
     <td>{{ entry.mechanism }}{% if entry.panningKeyPattern %}<br><span class="muted tag">{{ entry.panningKeyPattern }}</span>{% endif %}</td>
-    <td><a href="{{ '/' | url }}items/{{ entry.drop.domain }}/{{ entry.drop.code | slugify }}/">{{ generated.items | displayName(entry.drop.domain, entry.drop.code) }}</a></td>
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ entry.drop.domain }}/{{ entry.drop.code | slugify }}/">{{ generated.items | displayName(entry.drop.domain, entry.drop.code) }}</a></td>
     <td>
       {% if entry.drop.chanceAvg != null %}{{ entry.drop.chanceAvg | percent }}{% endif %}
       {% if entry.drop.quantityAvg != null %}&times;{{ entry.drop.quantityAvg | round(2) }}{% if entry.drop.quantityVar %} (&plusmn;{{ entry.drop.quantityVar }}){% endif %}{% endif %}

@@ -1,9 +1,10 @@
 # Vintage Story Wiki
 
 A statically-generated wiki documenting Vintage Story crafting recipes, drop rates,
-world-generated structures, decorative/clothing content, and in-game books, built directly from
-the game's own asset data (vanilla server + installed mods) rather than hand-maintained. This
-README is also published on the site itself as the **Info** tab.
+world-generated structures, decorative/clothing content, in-game books, and natural spawn locations
+(ore/gem deposits, wild crops, entity habitats), built directly from the game's own asset data
+(vanilla server + installed mods) rather than hand-maintained. This is the contributor/maintainer
+doc; the site's own **Info** tab (`INFO.md`) is a separate, simpler document aimed at visitors.
 
 ## How it works
 
@@ -60,9 +61,16 @@ npm run serve      # same, with a local dev server + live reload
   lang keys and the ore-chunk name composition (see "Display names") both supported.
 - **`models/{recipes,loot,structures,decor,lore}.ts`** — normalize the 7 recipe categories, the 4
   drop mechanisms (block drops, panning, entity death drops, harvestable drops — plus entity stats:
-  health, weight, hitbox size, behavior tags), the 4 worldgen registries (structures, villages,
-  story structures, hook-generated structures), the decorative/clothing catalog, and readable
-  books/lore into common shapes.
+  health, weight, hitbox size, behavior tags, and spawn conditions, see below), the 4 worldgen
+  registries (structures, villages, story structures, hook-generated structures), the
+  decorative/clothing catalog, and readable books/lore into common shapes.
+- **`models/deposits.ts`** / **`models/blockpatches.ts`** — parse `worldgen/deposits/**/*.json`
+  (ore/gem/rock veins: host rock(s), grade-by-rock, typical depth) and `worldgen/blockpatches/*.json`
+  (wild crops/flowers/mushrooms/etc.: literal block codes plus climate/fertility ranges), then
+  cross-reference both back onto the matching item index entries so an item page can show where it
+  naturally occurs. Entity spawn conditions (climate, habitat blocks, spawn group/chance) are parsed
+  in `models/loot.ts` instead, from each entity's `server.spawnconditions`/`spawnconditionsByType`,
+  since that's nested under the entity's own JSON rather than a separate worldgen registry.
 - **`crossref.ts`** — builds the item index (which recipes produce/consume an item, which
   blocks/entities drop it), resolving recipe-level wildcard/template placeholders (e.g.
   `plank-{wood}`) into concrete linked items.
@@ -136,6 +144,19 @@ behavior), weight, hitbox size, and behavior tags — all resolved through the s
 glob-matching used for drops. Tags are clickable, linking to `/loot/?q=<tag>` so e.g. every
 `predator`-tagged entity is one click away.
 
+## Spawn locations (`/<lang>/spawns/`, and per-item/entity)
+
+Ore/gem/rock deposits and wild crops/flowers/etc. are blocks with no recipe and no drop table of
+their own — nothing "produces" them, the world just generates them — so like paintings/tapestries
+(see Decor & Clothing below) they fall outside the recipe/loot-driven item index and get their own
+extraction path (`models/deposits.ts`, `models/blockpatches.ts`). `/spawns/` lists all of both;
+each item's own page also shows just the entries relevant to it. Entity spawn conditions (climate,
+required nearby block, spawn group/chance, tries-per-chunk) are shown on the entity's own
+`/loot/` page instead, next to its drop table, parsed from `server.spawnconditions` /
+`spawnconditionsByType` in `models/loot.ts`. All of these values are the raw worldgen *rule* the
+game checks per chunk/attempt, not a placement guarantee — see the in-site Info page for the
+visitor-facing version of that caveat.
+
 ## Site features
 
 - **Every listing is one real `<table>`**, not a grid-list of plain links, with pagination, a
@@ -155,6 +176,13 @@ glob-matching used for drops. Tags are clickable, linking to `/loot/?q=<tag>` so
   `{{ '/' | url }}` + `pathPrefix` idiom (set via the `PATH_PREFIX` env var in CI), since a project
   site like `https://<user>.github.io/<repo>/` serves from a subpath, not the domain root — a
   hardcoded `/assets/style.css` would 404 there even though it works fine in local dev.
+- **Every content page lives under a `/<lang>/` path segment** (currently just `/en/`) — baked into
+  each page's `permalink` via the `lang` global data value (eleventy.config.js), composed with the
+  `('/' ~ lang ~ '/') | url` idiom instead of the plain `'/' | url` one used for shared,
+  non-language-specific assets (css/js/favicon/og-image, which stay outside the prefix). The bare
+  site root (`/index.html`) is a tiny meta-refresh redirect to `/en/` (`site/redirect.njk`). This is
+  routing-only prep for a second language later — nothing currently generates non-English content,
+  and `LANG_PREFIX` is the only knob, overriding the default `"en"` for local experimentation.
 - **Footer build info**: every page shows when it was generated (stored in UTC, rendered
   client-side as a relative "X ago" string — see `site/assets/build-time.js`) and links to the
   exact commit it was built from (`GITHUB_SHA`/`GITHUB_REPOSITORY`, set automatically by every

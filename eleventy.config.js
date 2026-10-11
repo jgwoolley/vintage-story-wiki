@@ -40,15 +40,25 @@ export default function (eleventyConfig) {
     };
   });
 
-  // Renders README.md fresh on every build so the Info page (site/info.njk) always matches the
-  // repo's actual README -- one source of truth, no manual copy to keep in sync.
-  eleventyConfig.addGlobalData("readmeHtml", () => md.render(readFileSync("README.md", "utf8")));
+  // The Info page (site/info.njk) renders INFO.md, which is written for wiki *visitors* (why this
+  // exists, how to use it). README.md is written for *contributors/maintainers* instead -- it has
+  // its own full pipeline/architecture writeup, which would be overwhelming reading for someone
+  // who just wants to look up a crafting recipe. Keep them as two separate files, not variants of
+  // the same text.
+  eleventyConfig.addGlobalData("infoHtml", () => md.render(readFileSync("INFO.md", "utf8")));
 
   // Lets CI provide the real deployed origin (e.g. "https://<user>.github.io") for building
   // absolute Open Graph/Twitter image URLs, which unlike internal links are supposed to be
   // absolute per spec. Empty string (default) means og:image falls back to a relative path --
   // fine for local dev, where there's no stable "real" origin to point to anyway.
   eleventyConfig.addGlobalData("siteUrl", () => process.env.SITE_URL || "");
+
+  // Every content page lives under a language-code path segment (e.g. /en/items/) even though
+  // only English exists today. This is routing-only prep: baking the segment into permalinks now
+  // means adding a second language later is "generate another tree under /xx/", not "rewrite every
+  // URL in every template." Shared assets (css/js/favicon/og-image) stay outside this prefix since
+  // they aren't language-specific. Override via LANG env var; nothing else reads it yet.
+  eleventyConfig.addGlobalData("lang", () => process.env.LANG_PREFIX || "en");
 
   eleventyConfig.addFilter("slugify", (str) =>
     String(str ?? "")
@@ -109,10 +119,19 @@ export default function (eleventyConfig) {
     maxSpawnDistX: "Maximum X-axis distance from spawn, in blocks.",
     minSpawnDistZ: "Minimum Z-axis distance from spawn, in blocks.",
     maxSpawnDistZ: "Maximum Z-axis distance from spawn, in blocks.",
-    chance: "Probability this structure is attempted at a given candidate location, before any global frequency multiplier from world-creation settings.",
-    placement: "Where this structure is anchored: on the terrain surface, buried underground, or a specific ruin/story layer.",
+    chance: "Probability this is attempted at a given candidate location/chunk, before any global frequency multiplier from world-creation settings.",
+    placement: "Where this is anchored: on the terrain surface, buried underground, or a specific ruin/story layer.",
     minSpawnDistance: "Minimum distance from the world spawn point, in blocks, before this structure is allowed to generate at all.",
     minGroupDistance: "Minimum distance enforced between two instances of this same structure, in blocks, so copies don't generate too close together.",
+    minForest: "Only spawns/grows where local forest density is at or above this (0-1 scale).",
+    maxForest: "Only spawns/grows where local forest density is at or below this (0-1 scale).",
+    minFertility: "Only grows where soil fertility is at or above this (0-1 scale).",
+    maxFertility: "Only grows where soil fertility is at or below this (0-1 scale).",
+    habitatBlocks: "Needs one of these blocks at/adjacent to the spawn position to appear at all (wildcards like tallgrass-* match any grade/variant of that block; \"air\" means empty space is fine).",
+    group: "The spawn-balancing group this creature belongs to (e.g. hostile, neutral, harmless) -- the game caps how many creatures from each group can exist near a player at once.",
+    triesPerChunk: "How many times per chunk the game attempts this placement. Combined with chance, this governs how rare the result actually is in practice -- a high tries-per-chunk with a low chance can still be rarer than a low tries-per-chunk with a higher chance.",
+    hostRocks: "The rock type(s) this deposit can replace. Where grade varies by rock, richer grades (rich/bountiful) are rarer than poor ones within the same deposit.",
+    yPosRel: "Typical depth as a fraction of the world's height range: near 1.0 is close to the surface, near 0.0 is near the bottom of the world.",
   };
   eleventyConfig.addFilter("restrictionLabel", (key) => key.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase()));
   eleventyConfig.addFilter("restrictionInfo", (key) => RESTRICTION_GLOSSARY[key]);

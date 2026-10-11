@@ -2,19 +2,24 @@
 
 Crafting grid recpeies still dont seem to be clickable
 
-# Phase 05
+#
 
-- I'd like more information about specific crops / trees / rocks / ore and where they can spawn.
-- If theres any information about how/where particular entities spawn include that.
+Also add Help guides
+
+# 
 
 # Phase
 
 Localization for any language should be supported. 
 
+# Phase
+
 # Phase 06
 
 - The following may require code from https://github.com/jgwoolley/vintage-story-schematic-preview. I eventually want to integrate this functionality (both ability to upload a schematic as well as view the schematic in the browser).
 - Lookup which paintings/tapestry specifically spawn in specific ruins. Make sure they are evaluated against the storystructures.json / structures.json
+- see if you can get book spawning information anywhere
+
 
 # Phase 07
 

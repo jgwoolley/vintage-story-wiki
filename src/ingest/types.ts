@@ -119,12 +119,26 @@ export interface NormalizedRecipe {
 
 export type LootMechanism = "blockDrop" | "panning" | "entityDrop" | "harvestable";
 
+export interface EntitySpawnInfo {
+  minTemp?: number;
+  maxTemp?: number;
+  minRain?: number;
+  maxRain?: number;
+  minForest?: number;
+  maxForest?: number;
+  habitatBlocks?: string[];
+  chance?: number;
+  group?: string;
+  triesPerChunk?: number;
+}
+
 export interface EntityStats {
   tags: string[];
   weight?: number;
   sizeX?: number;
   sizeY?: number;
   maxHealth?: number;
+  spawn?: EntitySpawnInfo;
 }
 
 export interface LootEntry {
@@ -193,6 +207,41 @@ export interface ItemIndexEntry {
   consumedBy: string[]; // recipe ids
   droppedBy: string[]; // loot entry indices (as strings)
   appearsInStructures: string[]; // structure ids
+  spawnDeposits: string[]; // DepositInfo ids (ore/gem/rock -- where this specific grade+rock combo occurs)
+  spawnBlockPatches: string[]; // BlockPatchSpawnInfo ids (crops/flowers/mushrooms/etc -- climate band this grows in)
+}
+
+/** An ore/gem/rock deposit (`worldgen/deposits/**`): which rock(s) host it, and at which grades. */
+export interface DepositInfo {
+  id: string;
+  code: string;
+  domain: string;
+  sourceMod: string;
+  category: string; // "metalore" | "gem" | "rock" | "other"
+  hostRocks: string[];
+  gradesByRock?: Record<string, string[]>;
+  generator?: string;
+  triesPerChunk?: number;
+  yPosRel?: { avg?: number; var?: number };
+}
+
+/** A flat worldgen placement rule for crops/flowers/mushrooms/ferns/berry bushes/etc. */
+export interface BlockPatchSpawnInfo {
+  id: string;
+  domain: string;
+  sourceMod: string;
+  category: string; // derived from the filename: "crop" | "flower" | "mushroom" | "fern" | "berrybush" | ...
+  blockCodes: string[];
+  minTemp?: number;
+  maxTemp?: number;
+  minRain?: number;
+  maxRain?: number;
+  minForest?: number;
+  maxForest?: number;
+  minFertility?: number;
+  maxFertility?: number;
+  chance?: number;
+  placement?: string;
 }
 
 export type DecorKind = "painting" | "tapestry" | "clothing";

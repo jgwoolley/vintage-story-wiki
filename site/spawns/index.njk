@@ -1,0 +1,55 @@
+---
+title: Spawn Locations - Vintage Story Wiki
+layout: layouts/base.njk
+permalink: "{{ lang }}/spawns/index.html"
+---
+{% import "macros/datatable.njk" as dt %}
+<h1>Spawn Locations</h1>
+<p class="muted">
+  Where ore/gem/rock deposits and wild crops/flowers/mushrooms/etc. naturally occur, read directly
+  from the game's worldgen rules. Entity spawn conditions (climate, habitat) are shown on each
+  creature's own <a href="{{ ('/' ~ lang ~ '/') | url }}loot/">Loot &amp; Drops</a> page instead, since that's
+  already where their drop tables live.
+</p>
+<p class="muted">
+  "Depth" and climate ranges below are the raw worldgen rule the game checks, not a guarantee -- a
+  "near surface" deposit can still occasionally be found deeper, and these are the conditions a
+  <em>chunk</em> must meet, not a promise any single spot within it generates something.
+</p>
+
+<h2>Ore / gem / rock deposits ({{ generated.deposits.length }})</h2>
+{% call dt.datatable(40, "Search deposits...", ["Deposit", "Category", "Host rock(s)", "Depth", "Mod"]) %}
+{% for dep in generated.deposits | sort(false, false, "code") %}
+  <tr data-search="{{ dep.hostRocks | join(' ') }}" data-category="{{ dep.category }}" data-mod="{{ dep.sourceMod }}">
+    <td>{{ dep.code }}</td>
+    <td><span class="tag">{{ dep.category }}</span></td>
+    <td>
+      {% if dep.gradesByRock %}
+        {% for rock, grades in dep.gradesByRock %}{{ rock }} ({{ grades | join(", ") }}){% if not loop.last %}, {% endif %}{% endfor %}
+      {% else %}
+        {{ dep.hostRocks | join(", ") }}
+      {% endif %}
+    </td>
+    <td>
+      {% if dep.yPosRel %}
+        {% set y = dep.yPosRel.avg %}
+        {% if y >= 0.8 %}near surface{% elif y >= 0.5 %}shallow{% elif y >= 0.25 %}moderate{% else %}deep{% endif %}
+      {% endif %}
+    </td>
+    <td><span class="tag">{{ dep.sourceMod }}</span></td>
+  </tr>
+{% endfor %}
+{% endcall %}
+
+<h2>Crops / flowers / mushrooms / etc. ({{ generated.blockPatches.length }})</h2>
+{% call dt.datatable(40, "Search spawn patches...", ["Blocks", "Category", "Temp (&deg;C)", "Rain", "Mod"]) %}
+{% for patch in generated.blockPatches | sort(false, false, "category") %}
+  <tr data-search="{{ patch.blockCodes | join(' ') }}" data-category="{{ patch.category }}" data-mod="{{ patch.sourceMod }}">
+    <td>{% for c in patch.blockCodes %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ patch.domain }}/{{ c | slugify }}/">{{ c }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</td>
+    <td><span class="tag">{{ patch.category }}</span></td>
+    <td>{% if patch.minTemp != null or patch.maxTemp != null %}{{ patch.minTemp if patch.minTemp != null else "any" }}&ndash;{{ patch.maxTemp if patch.maxTemp != null else "any" }}{% endif %}</td>
+    <td>{% if patch.minRain != null or patch.maxRain != null %}{{ patch.minRain if patch.minRain != null else 0 }}&ndash;{{ patch.maxRain if patch.maxRain != null else 1 }}{% endif %}</td>
+    <td><span class="tag">{{ patch.sourceMod }}</span></td>
+  </tr>
+{% endfor %}
+{% endcall %}

@@ -9,6 +9,8 @@ import { extractLoot } from "./models/loot.js";
 import { extractStructures } from "./models/structures.js";
 import { extractDecorCatalog } from "./models/decor.js";
 import { extractLoreBooks } from "./models/lore.js";
+import { extractDeposits } from "./models/deposits.js";
+import { extractBlockPatchSpawns } from "./models/blockpatches.js";
 import { buildBlockCodeToSchematicIndex, buildSchematicToStructureIndex, findStructuresContaining } from "./structureContents.js";
 import { buildLangResolver } from "./lang.js";
 import { buildItemIndex } from "./crossref.js";
@@ -141,9 +143,56 @@ function main(): void {
     if (book) item.relatedLoreBookId = book.id;
   }
 
+  console.log("== Extracting ore/gem/rock deposits ==");
+  const { deposits, codeToDepositIds } = extractDeposits(index);
+  console.log(`  ${deposits.length} deposits, covering ${codeToDepositIds.size} concrete block codes`);
+
+  console.log("== Extracting crop/flower/mushroom/etc. spawn patches ==");
+  const { patches: blockPatches, codeToPatchIds } = extractBlockPatchSpawns(index);
+  console.log(`  ${blockPatches.length} patches, covering ${codeToPatchIds.size} concrete block codes`);
+
   console.log("== Building item index ==");
   const itemIndex = buildItemIndex(recipes, loot, lang);
   console.log(`  ${itemIndex.size} distinct items/blocks referenced`);
+
+  // Ore/gem/rock and crop/flower/etc. spawn data is keyed by block code regardless of whether
+  // that block is reachable from a recipe or drop table -- this is one of the few deliberate
+  // exceptions to the "only what a recipe/loot references" rule (see README), since "where does
+  // this spawn" is exactly the kind of question that needs a page even for a block nothing else
+  // currently points to.
+  function ensureSpawnTarget(domain: string, code: string): import("./types.js").ItemIndexEntry {
+    const key = `${domain}:${code}`;
+    let entry = itemIndex.get(key);
+    if (!entry) {
+      const { name, missing } = lang.displayName("block", domain, code);
+      entry = {
+        domain,
+        code,
+        kind: "block",
+        displayName: name,
+        missingTranslation: missing,
+        sourceMod: "game",
+        producedBy: [],
+        consumedBy: [],
+        droppedBy: [],
+        appearsInStructures: [],
+        spawnDeposits: [],
+        spawnBlockPatches: [],
+      };
+      itemIndex.set(key, entry);
+    }
+    return entry;
+  }
+
+  for (const [key, depositIds] of codeToDepositIds) {
+    const [domain, code] = key.split(/:(.+)/) as [string, string];
+    ensureSpawnTarget(domain, code).spawnDeposits.push(...depositIds);
+  }
+  for (const [key, patchIds] of codeToPatchIds) {
+    const [domain, code] = key.split(/:(.+)/) as [string, string];
+    ensureSpawnTarget(domain, code).spawnBlockPatches.push(...patchIds);
+  }
+  console.log(`  item index grown to ${itemIndex.size} after adding spawn-only blocks`);
 
   const modSummaries: ModSummary[] = [
     { modid: "game", name: "Vintage Story (vanilla)", version: manifest.serverVersion, side: "Universal", hasCompiledCode: false, isVanilla: true },
@@ -151,6 +200,8 @@ function main(): void {
   ];
 
   const recipesById = Object.fromEntries(recipes.map((r) => [r.id, r]));
+  const depositsById = Object.fromEntries(deposits.map((d) => [d.id, d]));
+  const blockPatchesById = Object.fromEntries(blockPatches.map((p) => [p.id, p]));
 
   console.log("== Writing generated data ==");
   writeGenerated("recipes", recipes);
@@ -160,6 +211,10 @@ function main(): void {
   writeGenerated("structures", structures);
   writeGenerated("decor", decorCatalog);
   writeGenerated("lore", loreBooks);
+  writeGenerated("deposits", deposits);
+  writeGenerated("depositsById", depositsById);
+  writeGenerated("blockPatches", blockPatches);
+  writeGenerated("blockPatchesById", blockPatchesById);
   writeGenerated("items", [...itemIndex.values()]);
   writeGenerated("mods", modSummaries);
 

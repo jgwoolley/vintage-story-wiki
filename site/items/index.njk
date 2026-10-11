@@ -1,6 +1,7 @@
 ---
 title: Items & Blocks - Vintage Story Wiki
 layout: layouts/base.njk
+permalink: "{{ lang }}/items/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
 <h1>Items &amp; Blocks</h1>
@@ -9,7 +10,7 @@ layout: layouts/base.njk
 {% call dt.datatable(60, "Search items & blocks...", ["Name", "Kind", "Mod"]) %}
 {% for item in generated.items | sort(false, false, "displayName") %}
   <tr data-search="{{ item.domain }}:{{ item.code }}" data-category="{{ item.kind }}" data-mod="{{ item.sourceMod }}">
-    <td><a href="{{ '/' | url }}items/{{ item.domain }}/{{ item.code | slugify }}/">{{ item.displayName }}</a></td>
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ item.domain }}/{{ item.code | slugify }}/">{{ item.displayName }}</a></td>
     <td><span class="tag">{{ item.kind }}</span></td>
     <td><span class="tag">{{ item.sourceMod }}</span></td>
   </tr>

@@ -1,20 +1,21 @@
 ---
 title: Decor & Clothing - Vintage Story Wiki
 layout: layouts/base.njk
+permalink: "{{ lang }}/decor/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
 <h1>Decor &amp; Clothing</h1>
 <p class="muted">
   Paintings, tapestries, and clothing are purely decorative/cosmetic content with no recipe or
   drop table, so they don't appear anywhere else on this wiki &mdash; see the
-  <a href="{{ '/' | url }}info/">Info</a> page for why. {{ generated.decor.length }} items catalogued directly
+  <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a> page for why. {{ generated.decor.length }} items catalogued directly
   from the game's item/block definitions.
 </p>
 
 {% call dt.datatable(60, "Search decor & clothing...", ["Name", "Kind", "Mod"]) %}
 {% for item in generated.decor | sort(false, false, "displayName") %}
   <tr data-search="{{ item.domain }}:{{ item.code }}" data-category="{{ item.kind }}" data-mod="{{ item.sourceMod }}">
-    <td><a href="{{ '/' | url }}decor/{{ item.domain }}/{{ item.kind }}/{{ item.code | slugify }}/">{{ item.displayName }}</a></td>
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}decor/{{ item.domain }}/{{ item.kind }}/{{ item.code | slugify }}/">{{ item.displayName }}</a></td>
     <td><span class="tag">{{ item.kind }}</span></td>
     <td><span class="tag">{{ item.sourceMod }}</span></td>
   </tr>

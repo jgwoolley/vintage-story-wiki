@@ -1,6 +1,7 @@
 ---
 title: Recipes - Vintage Story Wiki
 layout: layouts/base.njk
+permalink: "{{ lang }}/recipes/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
 {% import "macros/recipe.njk" as rc %}
@@ -15,7 +16,7 @@ layout: layouts/base.njk
 {% call dt.datatable(60, "Search recipes...", ["Name", "Category", "Mod", "Ingredients → output"]) %}
 {% for recipe in generated.recipes %}
   <tr data-category="{{ recipe.category }}" data-mod="{{ recipe.sourceMod }}">
-    <td><a href="{{ '/' | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe | recipeTitle(generated.items) }}</a></td>
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe | recipeTitle(generated.items) }}</a></td>
     <td><span class="tag">{{ recipe.category }}</span></td>
     <td><span class="tag">{{ recipe.sourceMod }}</span></td>
     <td>{{ rc.summary(recipe, generated.items) }}</td>

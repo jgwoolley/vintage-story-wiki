@@ -3,18 +3,18 @@ pagination:
   data: generated.decor
   size: 1
   alias: item
-permalink: "decor/{{ item.domain }}/{{ item.kind }}/{{ item.code | slugify }}/index.html"
+permalink: "{{ lang }}/decor/{{ item.domain }}/{{ item.kind }}/{{ item.code | slugify }}/index.html"
 layout: layouts/base.njk
 eleventyComputed:
   title: "{{ item.displayName }} - Vintage Story Wiki"
 ---
-<div class="breadcrumb"><a href="{{ '/' | url }}decor/">&larr; All decor &amp; clothing</a></div>
+<div class="breadcrumb"><a href="{{ ('/' ~ lang ~ '/') | url }}decor/">&larr; All decor &amp; clothing</a></div>
 
 <h1>{{ item.displayName }}</h1>
 <p class="muted">
   <span class="tag">{{ item.kind }}</span>
   <code>{{ item.domain }}:{{ item.code }}</code>
-  &middot; from <a href="{{ '/' | url }}mods/">{{ item.sourceMod }}</a>
+  &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ item.sourceMod }}</a>
 </p>
 
 {% if item.description %}
@@ -23,7 +23,7 @@ eleventyComputed:
 {% set book = generated.lore | findById(item.relatedLoreBookId) %}
 <p class="muted">
   Tapestries have no fixed text of their own &mdash; which one of the
-  <a href="{{ '/' | url }}lore/{{ book.domain }}/{{ book.code | slugify }}/">"{{ book.title }}"</a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}lore/{{ book.domain }}/{{ book.code | slugify }}/">"{{ book.title }}"</a>
   book's {{ book.pages.length }} chapters a placed tapestry shows is picked at placement time, not
   encoded in its block code.
 </p>
@@ -37,13 +37,13 @@ eleventyComputed:
   {% for structureId in item.foundInStructures %}
     {% set structure = generated.structures | findById(structureId) %}
     {% if structure %}
-    <li><a href="{{ '/' | url }}structures/{{ structure.id | slugify }}/">{{ structure.name or structure.code }}</a> <span class="tag">{{ structure.kind }}</span></li>
+    <li><a href="{{ ('/' ~ lang ~ '/') | url }}structures/{{ structure.id | slugify }}/">{{ structure.name or structure.code }}</a> <span class="tag">{{ structure.kind }}</span></li>
     {% endif %}
   {% endfor %}
 </ul>
 {% else %}
 <p class="muted">
   Not found inside any decoded structure schematic.
-  {% if item.itemKind == "item" %}This is expected for clothing &mdash; worn/stored items live inside a schematic's block-entity inventory data (e.g. a wardrobe or chest), which this wiki doesn't decode (see <a href="{{ '/' | url }}info/">Info</a>). Only placed <em>blocks</em> like paintings and tapestries can be found this way.{% endif %}
+  {% if item.itemKind == "item" %}This is expected for clothing &mdash; worn/stored items live inside a schematic's block-entity inventory data (e.g. a wardrobe or chest), which this wiki doesn't decode (see <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a>). Only placed <em>blocks</em> like paintings and tapestries can be found this way.{% endif %}
 </p>
 {% endif %}
