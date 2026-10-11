@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title or "Vintage Story Wiki" }}</title>
+  <link rel="stylesheet" href="/assets/style.css">
+  <script src="/assets/datatable.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">Vintage Story Wiki</a>
+    <nav>
+      <a href="/items/">Items</a>
+      <a href="/recipes/">Recipes</a>
+      <a href="/loot/">Loot</a>
+      <a href="/structures/">Structures</a>
+      <a href="/mods/">Mods</a>
+    </nav>
+  </header>
+  <main class="content">
+    {{ content | safe }}
+  </main>
+  <footer class="site-footer">
+    <p>Generated from Vintage Story game data. Not affiliated with Anego Studios.</p>
+  </footer>
+</body>
+</html>

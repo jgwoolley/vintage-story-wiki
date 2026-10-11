@@ -1,0 +1,53 @@
+---
+pagination:
+  data: generated.structures
+  size: 1
+  alias: structure
+permalink: "structures/{{ structure.id | slugify }}/index.html"
+layout: layouts/base.njk
+eleventyComputed:
+  title: "{{ structure.name or structure.code }} - Vintage Story Wiki"
+---
+<div class="breadcrumb"><a href="/structures/">&larr; All structures</a></div>
+
+<h1>{{ structure.name or structure.code }}</h1>
+<p class="muted">
+  <span class="tag">{{ structure.kind }}</span>
+  {% if structure.group %}<span class="tag">{{ structure.group }}</span>{% endif %}
+  <code>{{ structure.domain }}:{{ structure.code }}</code>
+  &middot; from <a href="/mods/">{{ structure.sourceMod }}</a>
+</p>
+
+<table>
+  <tbody>
+    {% if structure.chance != null %}<tr><th>Spawn chance</th><td>{{ structure.chance | percent }} per chunk/region (before any global multiplier)</td></tr>{% endif %}
+    {% if structure.placement %}<tr><th>Placement</th><td>{{ structure.placement }}</td></tr>{% endif %}
+    {% if structure.minSpawnDistance %}<tr><th>Min spawn distance</th><td>{{ structure.minSpawnDistance }} blocks from spawn</td></tr>{% endif %}
+    {% if structure.minGroupDistance %}<tr><th>Min distance between instances</th><td>{{ structure.minGroupDistance }} blocks</td></tr>{% endif %}
+    {% for key, value in structure.restrictions %}
+      <tr><th>{{ key }}</th><td>{{ value }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2>Schematics</h2>
+{% for schem in structure.schematics %}
+  <div class="card">
+    <p class="muted">{{ schem.globPath }}{% if schem.weight %} &middot; weight {{ schem.weight }}{% endif %}</p>
+    {% if schem.resolvedFiles.length %}
+    <table>
+      <thead><tr><th>File</th><th>Size (X&times;Y&times;Z)</th><th>Distinct block codes</th></tr></thead>
+      <tbody>
+      {% for f in schem.resolvedFiles %}
+        <tr>
+          <td><code>{{ f.path }}</code></td>
+          <td>{{ f.sizeX }}&times;{{ f.sizeY }}&times;{{ f.sizeZ }}</td>
+          <td>{{ f.blockCodeCount }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="muted">No matching schematic files found.</p>{% endif %}
+  </div>
+{% endfor %}
+<p class="muted">Schematic geometry (block-by-block layout) is not rendered in v1 &mdash; only dimensions and a block-code inventory count are shown.</p>

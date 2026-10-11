@@ -1,0 +1,9 @@
+{% macro datatable(pageSize, placeholder) %}
+<div class="datatable" data-page-size="{{ pageSize or 50 }}">
+  <input type="search" class="datatable-search" placeholder="{{ placeholder or 'Search...' }}" aria-label="{{ placeholder or 'Search' }}">
+  <div class="datatable-list grid-list" data-datatable-items>
+    {{ caller() }}
+  </div>
+  <div class="datatable-pagination" data-datatable-pagination></div>
+</div>
+{% endmacro %}

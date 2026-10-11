@@ -1,0 +1,123 @@
+---
+pagination:
+  data: generated.recipes
+  size: 1
+  alias: recipe
+permalink: "recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/index.html"
+layout: layouts/base.njk
+eleventyComputed:
+  title: "{{ recipe.name or recipe.category }} - Vintage Story Wiki"
+---
+<div class="breadcrumb"><a href="/recipes/">&larr; All recipes</a> / <a href="/recipes/#{{ recipe.category }}">{{ recipe.category }}</a></div>
+
+<h1>{{ recipe.name or (recipe.category + " recipe") }}</h1>
+<p class="muted">
+  <span class="tag">{{ recipe.category }}</span>
+  {% if recipe.shapeless %}<span class="tag">shapeless</span>{% endif %}
+  from <a href="/mods/">{{ recipe.sourceMod }}</a>
+  {% if recipe.sealHours %}&middot; seals for {{ recipe.sealHours }}h{% endif %}
+</p>
+
+{% if recipe.category == "grid" %}
+  {% set rows = recipe.raw.ingredientPattern.split(",") %}
+  <div class="recipe-grid" style="grid-template-columns: repeat({{ recipe.width }}, 56px);">
+    {% for row in rows %}
+      {% for ch in row %}
+        {% if ch == "_" %}
+          <div class="cell empty"></div>
+        {% else %}
+          {% set ing = recipe.ingredientsBySlot[ch] %}
+          <div class="cell" title="{{ ing.code or (ing.tags | default([]) | join(', ')) }}">
+            {% if ing.code %}{{ generated.items | displayName(ing.domain, ing.code) }}{% elif ing.tags %}{{ ing.tags | join(", ") }}{% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+  </div>
+{% elif recipe.category == "smithing" or recipe.category == "clayforming" or recipe.category == "knapping" %}
+  {% for layer in recipe.raw.pattern %}
+    <p class="muted">Layer {{ loop.index }}</p>
+    <pre>{% for row in layer %}{{ row }}
+{% endfor %}</pre>
+  {% endfor %}
+{% endif %}
+
+<h2>Ingredients</h2>
+<table>
+  <thead><tr><th>Slot</th><th>Item</th><th>Qty / Ratio</th><th>Notes</th></tr></thead>
+  <tbody>
+  {% for ing in recipe.ingredients %}
+    <tr>
+      <td>{{ ing.slotKey or ing.code }}</td>
+      <td>
+        {% if ing.code %}
+          {% if "*" in ing.code or "{" in ing.code %}
+            <code>{{ ing.code }}</code>{% if ing.name %} ({{ ing.name }}){% endif %}
+          {% else %}
+            <a href="/items/{{ ing.domain }}/{{ ing.code | slugify }}/">{{ generated.items | displayName(ing.domain, ing.code) }}</a>
+          {% endif %}
+        {% elif ing.tags %}
+          any <span class="tag">{{ ing.tags | join(", ") }}</span>
+        {% elif ing.validStacks %}
+          {% for v in ing.validStacks %}<a href="/items/{{ v.domain }}/{{ v.code | slugify }}/">{{ generated.items | displayName(v.domain, v.code) }}</a>{% if not loop.last %} or {% endif %}{% endfor %}
+        {% endif %}
+      </td>
+      <td>
+        {% if ing.minratio != null %}{{ ing.minratio | percent }}&ndash;{{ ing.maxratio | percent }}{% endif %}
+        {% if ing.quantity %}&times;{{ ing.quantity }}{% endif %}
+        {% if ing.litres %}{{ ing.litres }}L{% endif %}
+        {% if ing.minQuantity %}{{ ing.minQuantity }}&ndash;{{ ing.maxQuantity }}{% endif %}
+      </td>
+      <td>
+        {% if ing.isTool %}uses {{ ing.toolDurabilityCost }} durability{% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<h2>Output</h2>
+<p>
+  {% if recipe.output.code %}
+    {% if "{" in recipe.output.code %}
+      <code>{{ recipe.output.code }}</code>{% if recipe.wildcard %} (depends on <strong>{{ recipe.wildcard.placeholder }}</strong>){% endif %}
+    {% else %}
+      <a href="/items/{{ recipe.output.domain }}/{{ recipe.output.code | slugify }}/">{{ generated.items | displayName(recipe.output.domain, recipe.output.code) }}</a>
+    {% endif %}
+  {% endif %}
+  {% if recipe.output.quantity %}&times;{{ recipe.output.quantity }}{% endif %}
+  {% if recipe.output.litres %}{{ recipe.output.litres }}L{% endif %}
+</p>
+
+{% if recipe.wildcard %}
+<h3>Resolved variants</h3>
+<table>
+  <thead><tr><th>{{ recipe.wildcard.placeholder }}</th><th>Output</th></tr></thead>
+  <tbody>
+  {% for variant in recipe.wildcard.allowedVariants %}
+    <tr>
+      <td>{{ variant }}</td>
+      <td>{{ recipe.output.code | replace("{" + recipe.wildcard.placeholder + "}", variant) }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{% if recipe.templateVariants %}
+<h3>Variant placeholders</h3>
+<p class="muted">Ingredients and output above use <code>{placeholder}</code> tokens; any combination of these is valid.</p>
+<table>
+  <thead><tr><th>Placeholder</th><th>Allowed values</th></tr></thead>
+  <tbody>
+  {% for placeholder, values in recipe.templateVariants %}
+    <tr><td>{{ placeholder }}</td><td>{{ values | join(", ") }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<details>
+  <summary class="muted">Raw recipe JSON</summary>
+  <pre>{{ recipe.raw | json }}</pre>
+</details>

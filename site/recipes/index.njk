@@ -1,0 +1,17 @@
+---
+title: Recipes - Vintage Story Wiki
+layout: layouts/base.njk
+---
+{% import "macros/datatable.njk" as dt %}
+<h1>Recipes</h1>
+<p class="muted">{{ generated.recipes.length }} recipes across {{ generated.recipes | groupby("category") | length }} categories.</p>
+
+{% set groups = generated.recipes | groupby("category") %}
+{% for category, recipes in groups %}
+  <h2 id="{{ category }}">{{ category }} ({{ recipes.length }})</h2>
+  {% call dt.datatable(60, "Search " + category + " recipes...") %}
+  {% for recipe in recipes | sort(false, false, "name") %}
+    <a href="/recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe.name or recipe.output.code or recipe.id }}</a>
+  {% endfor %}
+  {% endcall %}
+{% endfor %}

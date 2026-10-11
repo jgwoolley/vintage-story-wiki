@@ -1,0 +1,7 @@
+{
+  "serverBranch": "stable",
+  "serverVersion": "1.22.7",
+  "mods": [
+    { "modid": "betterruins", "version": "0.6.4" }
+  ]
+}

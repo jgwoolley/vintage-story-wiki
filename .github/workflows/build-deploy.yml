@@ -1,0 +1,69 @@
+name: Build and deploy wiki
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Hash vs-manifest.json for cache key
+        id: manifest
+        run: echo "hash=${{ hashFiles('vs-manifest.json') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Cache downloaded game server + mods
+        uses: actions/cache@v4
+        with:
+          path: |
+            vs_server
+            Mods
+          key: vs-data-${{ steps.manifest.outputs.hash }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download game server + mods (skipped on cache hit)
+        run: npm run download
+
+      - name: Ingest game data
+        run: npm run ingest
+
+      - name: Build site
+        run: npx eleventy
+
+      - name: Upload Pages artifact
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

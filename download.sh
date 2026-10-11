@@ -16,10 +16,10 @@ else
   RED=''; GREEN=''; YELLOW=''; BLUE=''; RESET=''
 fi
 
-info() { printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok()   { printf "${GREEN}✔${RESET} %s\n" "$1"; }
-skip() { printf "${YELLOW}-${RESET} %s\n" "$1"; }
-err()  { printf "${RED}✘${RESET} %s\n" "$1" >&2; }
+info() { printf -- "${BLUE}==>${RESET} %s\n" "$1"; }
+ok()   { printf -- "${GREEN}✔${RESET} %s\n" "$1"; }
+skip() { printf -- "${YELLOW}-${RESET} %s\n" "$1"; }
+err()  { printf -- "${RED}✘${RESET} %s\n" "$1" >&2; }
 
 usage() {
   cat <<EOF

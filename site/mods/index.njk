@@ -1,0 +1,23 @@
+---
+title: Mods - Vintage Story Wiki
+layout: layouts/base.njk
+---
+<h1>Mods</h1>
+<p>This wiki was generated from vanilla game data plus the following installed mods.</p>
+
+<table>
+  <thead><tr><th>Mod</th><th>Version</th><th>Side</th><th>Notes</th></tr></thead>
+  <tbody>
+  {% for mod in generated.mods %}
+    <tr>
+      <td>{{ mod.name }} <span class="tag">{{ mod.modid }}</span></td>
+      <td>{{ mod.version }}</td>
+      <td>{{ mod.side }}</td>
+      <td>
+        {% if mod.isVanilla %}<span class="muted">vanilla</span>{% endif %}
+        {% if mod.hasCompiledCode %}<span class="warning">ships compiled code (.dll) &mdash; custom behavior not captured</span>{% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>

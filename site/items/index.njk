@@ -1,0 +1,13 @@
+---
+title: Items & Blocks - Vintage Story Wiki
+layout: layouts/base.njk
+---
+{% import "macros/datatable.njk" as dt %}
+<h1>Items &amp; Blocks</h1>
+<p class="muted">{{ generated.items.length }} distinct items/blocks referenced by recipes or loot tables.</p>
+
+{% call dt.datatable(60, "Search items & blocks...") %}
+{% for item in generated.items | sort(false, false, "displayName") %}
+  <a href="/items/{{ item.domain }}/{{ item.code | slugify }}/">{{ item.displayName }}</a>
+{% endfor %}
+{% endcall %}

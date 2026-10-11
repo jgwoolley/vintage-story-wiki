@@ -1,0 +1,38 @@
+---
+pagination:
+  data: generated.lootBySource
+  size: 1
+  alias: source
+permalink: "loot/{{ source.sourceDomain }}/{{ source.sourceCode | slugify }}/index.html"
+layout: layouts/base.njk
+eleventyComputed:
+  title: "{{ source.sourceCode }} drops - Vintage Story Wiki"
+---
+<div class="breadcrumb"><a href="/loot/">&larr; All loot sources</a></div>
+
+<h1>{{ source.sourceCode }}</h1>
+<p class="muted">
+  <span class="tag">{{ source.sourceKind }}</span>
+  <code>{{ source.sourceDomain }}:{{ source.sourceCode }}</code>
+  &middot; from <a href="/mods/">{{ source.sourceMod }}</a>
+</p>
+
+<table>
+  <thead><tr><th>Mechanism</th><th>Drop</th><th>Chance / Quantity</th><th>Notes</th></tr></thead>
+  <tbody>
+  {% for entry in source.entries %}
+    <tr>
+      <td>{{ entry.mechanism }}{% if entry.panningKeyPattern %}<br><span class="muted tag">{{ entry.panningKeyPattern }}</span>{% endif %}</td>
+      <td><a href="/items/{{ entry.drop.domain }}/{{ entry.drop.code | slugify }}/">{{ generated.items | displayName(entry.drop.domain, entry.drop.code) }}</a></td>
+      <td>
+        {% if entry.drop.chanceAvg != null %}{{ entry.drop.chanceAvg | percent }}{% endif %}
+        {% if entry.drop.quantityAvg != null %}&times;{{ entry.drop.quantityAvg | round(2) }}{% if entry.drop.quantityVar %} (&plusmn;{{ entry.drop.quantityVar }}){% endif %}{% endif %}
+      </td>
+      <td>
+        {% if entry.drop.manMade %}<span class="tag">man-made</span>{% endif %}
+        {% if entry.drop.dropModbyStat %}<span class="tag">scales with {{ entry.drop.dropModbyStat }}</span>{% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>

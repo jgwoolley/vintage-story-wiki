@@ -1,0 +1,17 @@
+---
+title: Structures - Vintage Story Wiki
+layout: layouts/base.njk
+---
+{% import "macros/datatable.njk" as dt %}
+<h1>Generated Structures</h1>
+<p class="muted">{{ generated.structures.length }} structure/village/story-structure definitions.</p>
+
+{% set groups = generated.structures | groupby("kind") %}
+{% for kind, structures in groups %}
+  <h2>{{ kind }} ({{ structures.length }})</h2>
+  {% call dt.datatable(60, "Search " + kind + "...") %}
+  {% for structure in structures | sort(false, false, "code") %}
+    <a href="/structures/{{ structure.id | slugify }}/">{{ structure.name or structure.code }}</a>
+  {% endfor %}
+  {% endcall %}
+{% endfor %}

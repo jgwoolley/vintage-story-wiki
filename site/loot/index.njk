@@ -1,0 +1,13 @@
+---
+title: Loot & Drops - Vintage Story Wiki
+layout: layouts/base.njk
+---
+{% import "macros/datatable.njk" as dt %}
+<h1>Loot &amp; Drops</h1>
+<p class="muted">{{ generated.lootBySource.length }} blocks/entities with known drops.</p>
+
+{% call dt.datatable(60, "Search loot sources...") %}
+{% for source in generated.lootBySource | sort(false, false, "sourceCode") %}
+  <a href="/loot/{{ source.sourceDomain }}/{{ source.sourceCode | slugify }}/">{{ source.sourceCode }} <span class="tag">{{ source.sourceKind }}</span></a>
+{% endfor %}
+{% endcall %}
