@@ -1,0 +1,42 @@
+{% macro ingredientLabel(items, ing) %}
+{%- if ing.code -%}
+  {%- if "*" in ing.code or "{" in ing.code -%}
+    <a href="/items/?q={{ ing.code | wildcardQuery | urlencode }}">{{ ing.code }}</a>
+  {%- else -%}
+    <a href="/items/{{ ing.domain }}/{{ ing.code | slugify }}/">{{ items | displayName(ing.domain, ing.code) }}</a>
+  {%- endif -%}
+{%- elif ing.tags and ing.isTool -%}
+  {{ (ing.tags[0] | replace("tool-", "")) }} (tool)
+{%- elif ing.tags -%}
+  any {{ ing.tags | join(", ") }}
+{%- elif ing.validStacks and ing.validStacks.length -%}
+  {%- for v in ing.validStacks -%}
+    <a href="/items/{{ v.domain }}/{{ v.code | slugify }}/">{{ items | displayName(v.domain, v.code) }}</a>{% if not loop.last %} or {% endif %}
+  {%- endfor -%}
+{%- endif -%}
+{% endmacro %}
+
+{% macro quantity(spec) %}
+{%- if spec.minratio != null %} ({{ spec.minratio | percent }}&ndash;{{ spec.maxratio | percent }}){% endif -%}
+{%- if spec.quantity and spec.quantity != 1 %} &times;{{ spec.quantity }}{% endif -%}
+{%- if spec.litres %} &times;{{ spec.litres }}L{% endif -%}
+{% endmacro %}
+
+{% macro outputLabel(items, output, wildcard) %}
+{%- if output.code -%}
+  {%- if "{" in output.code -%}
+    <a href="/items/?q={{ output.code | wildcardQuery | urlencode }}"><code>{{ output.code }}</code></a>
+  {%- else -%}
+    <a href="/items/{{ output.domain }}/{{ output.code | slugify }}/">{{ items | displayName(output.domain, output.code) }}</a>
+  {%- endif -%}
+{%- endif -%}
+{% endmacro %}
+
+{# Compact one-line "A + B + C -> D" summary of a recipe's ingredients and output. #}
+{% macro summary(recipe, items) %}
+<div class="recipe-summary">
+  {% for ing in recipe.ingredients %}{{ ingredientLabel(items, ing) }}{{ quantity(ing) }}{% if not loop.last %} <span class="plus">+</span> {% endif %}{% endfor %}
+  <span class="arrow">&rarr;</span>
+  {{ outputLabel(items, recipe.output, recipe.wildcard) }}{{ quantity(recipe.output) }}
+</div>
+{% endmacro %}

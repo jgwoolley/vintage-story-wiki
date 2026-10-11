@@ -2,7 +2,12 @@ import type { AssetIndex } from "./types.js";
 import { globToRegExp } from "./variantExpander.js";
 
 export interface LangResolver {
-  displayName(kind: "item" | "block", domain: string, code: string): { name: string; missing: boolean };
+  displayName(kind: "item" | "block" | "entity", domain: string, code: string): { name: string; missing: boolean };
+}
+
+/** Entities don't use a plain "entity-<code>" key -- the game looks them up as "item-creature-<code>". */
+function keyFor(kind: "item" | "block" | "entity", code: string): string {
+  return kind === "entity" ? `item-creature-${code}` : `${kind}-${code}`;
 }
 
 interface DomainLang {
@@ -66,7 +71,7 @@ export function buildLangResolver(index: AssetIndex, lang = "en"): LangResolver 
 
   return {
     displayName(kind, domain, code) {
-      const key = `${kind}-${code}`;
+      const key = keyFor(kind, code);
       const domainLang = perDomain.get(domain);
       const name =
         lookup(domainLang, key) ?? lookup(vanillaFallback, key) ?? composeOreName(domainLang, code) ?? composeOreName(vanillaFallback, code);

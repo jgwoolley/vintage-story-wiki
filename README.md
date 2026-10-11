@@ -99,9 +99,41 @@ of a new C#/.NET toolchain and heavier CI (real server+world startup vs. instant
 wasn't worth it yet. Compiled-code mods remain an explicit blind spot as a result — revisit this
 if a mod that actually ships compiled behavior needs documenting.
 
+## Item icons
+
+The wiki is text-only, and that isn't just an unfinished feature — real icons turned out to be
+genuinely blocked, not merely skipped:
+
+- The dedicated server download contains **zero item/block appearance textures**. The only PNGs
+  anywhere in `vs_server/assets/` are ~46 environment/skybox/season-tint images needed for
+  server-side world simulation (`textures/environment/...`) — nothing for how an item or block
+  actually looks. Textures are a client-only concern, and the headless server never renders
+  anything, so Anego Studios doesn't ship them in that download at all.
+- Even with textures, Vintage Story doesn't use pre-baked flat icon images the way many other
+  games do — an inventory icon *is* the item's real 3D shape+texture, rendered by the client at a
+  fixed camera angle at runtime (see e.g. `BlockLantern.GetOrCreateMesh`/`OnBeforeRender` in the
+  game source). A faithful icon would need a shape parser and a 3D rasterizer, not a PNG crop.
+- Getting real textures at all would require the game's **client** package. Unlike the freely
+  redistributable dedicated server, that sits behind an account/purchase gate — a CDN URL of the
+  same shape as the server's exists (`vs_client_linux-x64_<version>.tar.gz`) but isn't meant to be
+  fetched anonymously, and downloading it without authorization isn't something this pipeline
+  should do.
+- We tried procedurally generated placeholder icons as a no-licensing-risk stand-in — a colored
+  chip showing the item's initials, computed deterministically from its code, no game assets
+  involved. It didn't look good enough to keep and was reverted; the wiki stays text-only.
+
 ## Known v1 limitations
 
-- No item/block icons — text-only pages. Planned as a later phase.
+- **The item/block catalog only lists things reachable from a recipe or a drop table.**
+  `generated.items` (`crossref.ts`) is built by walking recipe ingredients/outputs and loot
+  entries, not by enumerating every `itemtypes`/`blocktypes` definition in the game. Purely
+  decorative content that's neither crafted nor dropped never enters it — e.g. `tapestry`
+  (`blocktypes/cloth/tapestry.json`, which the game's *own* in-game Handbook explicitly excludes
+  too via `attributes.handbook.exclude: true`) and `painting` (obtained only through worldgen
+  placement or the creative-mode `/giveblock` command). Around 100 other blocktype/itemtype files
+  carry the same handbook-exclude/admin-only pattern and have the same gap. Closing it would mean
+  switching the item catalog from a recipe/loot graph to a full registry walk — a bigger change
+  than this note, flagged here rather than taken on silently.
 - Schematic geometry (the actual block-by-block layout of a generated structure) is not decoded —
   only dimensions and a block-code inventory count are shown.
 - `condition`-gated patches assume the "Default" world-creation preset; a world created with

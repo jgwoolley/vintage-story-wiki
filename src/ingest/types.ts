@@ -123,6 +123,7 @@ export interface LootEntry {
   sourceKind: "block" | "entity";
   sourceDomain: string;
   sourceCode: string;
+  sourceDisplayName: string;
   sourceMod: string;
   mechanism: LootMechanism;
   panningKeyPattern?: string;

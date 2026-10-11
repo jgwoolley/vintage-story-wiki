@@ -6,11 +6,11 @@ pagination:
 permalink: "loot/{{ source.sourceDomain }}/{{ source.sourceCode | slugify }}/index.html"
 layout: layouts/base.njk
 eleventyComputed:
-  title: "{{ source.sourceCode }} drops - Vintage Story Wiki"
+  title: "{{ source.sourceDisplayName }} drops - Vintage Story Wiki"
 ---
 <div class="breadcrumb"><a href="/loot/">&larr; All loot sources</a></div>
 
-<h1>{{ source.sourceCode }}</h1>
+<h1>{{ source.sourceDisplayName }}</h1>
 <p class="muted">
   <span class="tag">{{ source.sourceKind }}</span>
   <code>{{ source.sourceDomain }}:{{ source.sourceCode }}</code>

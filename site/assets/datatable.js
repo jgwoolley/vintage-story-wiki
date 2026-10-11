@@ -12,7 +12,11 @@
     let page = 1;
 
     function matchesQuery(el, query) {
-      return !query || el.textContent.toLowerCase().includes(query);
+      if (!query) return true;
+      // `data-search` lets a row be matched on more than its visible text (e.g. an item's raw
+      // code as well as its display name), so a deep link by code still finds the right rows.
+      const haystack = `${el.textContent} ${el.dataset.search || ""}`.toLowerCase();
+      return haystack.includes(query);
     }
 
     function render() {
@@ -74,6 +78,11 @@
       page = 1;
       render();
     });
+
+    // Lets other pages deep-link into a filtered view, e.g. a recipe linking a wildcard
+    // ingredient like "leather-normal-*" to /items/?q=leather-normal- .
+    const presetQuery = new URLSearchParams(location.search).get("q");
+    if (presetQuery && searchInput) searchInput.value = presetQuery;
 
     render();
   }

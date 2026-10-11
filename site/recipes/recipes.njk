@@ -28,7 +28,13 @@ eleventyComputed:
         {% else %}
           {% set ing = recipe.ingredientsBySlot[ch] %}
           <div class="cell" title="{{ ing.code or (ing.tags | default([]) | join(', ')) }}">
-            {% if ing.code %}{{ generated.items | displayName(ing.domain, ing.code) }}{% elif ing.tags %}{{ ing.tags | join(", ") }}{% endif %}
+            {% if ing.code %}
+              {% if "*" in ing.code or "{" in ing.code %}
+                <a href="/items/?q={{ ing.code | wildcardQuery | urlencode }}">{{ ing.code }}</a>
+              {% else %}
+                {{ generated.items | displayName(ing.domain, ing.code) }}
+              {% endif %}
+            {% elif ing.tags %}{{ ing.tags | join(", ") }}{% endif %}
           </div>
         {% endif %}
       {% endfor %}
@@ -52,7 +58,7 @@ eleventyComputed:
       <td>
         {% if ing.code %}
           {% if "*" in ing.code or "{" in ing.code %}
-            <code>{{ ing.code }}</code>{% if ing.name %} ({{ ing.name }}){% endif %}
+            <a href="/items/?q={{ ing.code | wildcardQuery | urlencode }}"><code>{{ ing.code }}</code></a>{% if ing.name %} ({{ ing.name }}){% endif %}
           {% else %}
             <a href="/items/{{ ing.domain }}/{{ ing.code | slugify }}/">{{ generated.items | displayName(ing.domain, ing.code) }}</a>
           {% endif %}
@@ -80,7 +86,7 @@ eleventyComputed:
 <p>
   {% if recipe.output.code %}
     {% if "{" in recipe.output.code %}
-      <code>{{ recipe.output.code }}</code>{% if recipe.wildcard %} (depends on <strong>{{ recipe.wildcard.placeholder }}</strong>){% endif %}
+      <a href="/items/?q={{ recipe.output.code | wildcardQuery | urlencode }}"><code>{{ recipe.output.code }}</code></a>{% if recipe.wildcard %} (depends on <strong>{{ recipe.wildcard.placeholder }}</strong>){% endif %}
     {% else %}
       <a href="/items/{{ recipe.output.domain }}/{{ recipe.output.code | slugify }}/">{{ generated.items | displayName(recipe.output.domain, recipe.output.code) }}</a>
     {% endif %}

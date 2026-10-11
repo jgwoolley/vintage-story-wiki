@@ -8,6 +8,7 @@ layout: layouts/base.njk
 eleventyComputed:
   title: "{{ item.displayName }} - Vintage Story Wiki"
 ---
+{% import "macros/recipe.njk" as rc %}
 <div class="breadcrumb"><a href="/items/">&larr; All items</a></div>
 
 <h1>{{ item.displayName }}</h1>
@@ -20,11 +21,14 @@ eleventyComputed:
 
 <h2>Produced by ({{ item.producedBy.length }})</h2>
 {% if item.producedBy.length %}
-<ul>
+<ul class="recipe-ref-list">
   {% for recipeId in item.producedBy %}
     {% set recipe = generated.recipesById[recipeId] %}
     {% if recipe %}
-    <li><a href="/recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe.name or recipe.category }}</a> <span class="tag">{{ recipe.category }}</span></li>
+    <li>
+      <a href="/recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe.name or recipe.category }}</a> <span class="tag">{{ recipe.category }}</span>
+      {{ rc.summary(recipe | contextualRecipe(item.domain, item.code), generated.items) }}
+    </li>
     {% endif %}
   {% endfor %}
 </ul>
@@ -32,11 +36,14 @@ eleventyComputed:
 
 <h2>Used in ({{ item.consumedBy.length }})</h2>
 {% if item.consumedBy.length %}
-<ul>
+<ul class="recipe-ref-list">
   {% for recipeId in item.consumedBy %}
     {% set recipe = generated.recipesById[recipeId] %}
     {% if recipe %}
-    <li><a href="/recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe.name or recipe.category }}</a> <span class="tag">{{ recipe.category }}</span></li>
+    <li>
+      <a href="/recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe.name or recipe.category }}</a> <span class="tag">{{ recipe.category }}</span>
+      {{ rc.summary(recipe | contextualRecipe(item.domain, item.code), generated.items) }}
+    </li>
     {% endif %}
   {% endfor %}
 </ul>
@@ -51,7 +58,7 @@ eleventyComputed:
     {% set loot = generated.loot[lootIdx] %}
     {% if loot %}
     <tr>
-      <td><a href="/loot/{{ loot.sourceDomain }}/{{ loot.sourceCode | slugify }}/">{{ loot.sourceCode }}</a> <span class="tag">{{ loot.sourceKind }}</span></td>
+      <td><a href="/loot/{{ loot.sourceDomain }}/{{ loot.sourceCode | slugify }}/">{{ loot.sourceDisplayName }}</a> <span class="tag">{{ loot.sourceKind }}</span></td>
       <td>{{ loot.mechanism }}</td>
       <td>
         {% if loot.drop.chanceAvg != null %}{{ loot.drop.chanceAvg | percent }}{% endif %}

@@ -141,3 +141,23 @@ th { color: var(--muted); font-weight: 600; font-size: 0.85rem; text-transform: 
 .warning { color: #b4531a; font-weight: 600; }
 .muted { color: var(--muted); }
 .breadcrumb { font-size: 0.85rem; margin-bottom: 1rem; }
+
+.recipe-ref-list { list-style: none; padding: 0; }
+.recipe-ref-list li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.recipe-ref-list li:last-child { border-bottom: none; }
+.recipe-summary {
+  margin-top: 0.3rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+}
+.recipe-summary a { color: var(--muted); }
+.recipe-summary a:hover { color: var(--accent); }
+.recipe-summary .plus { opacity: 0.6; }
+.recipe-summary .arrow { color: var(--accent); font-weight: 700; margin: 0 0.15rem; }

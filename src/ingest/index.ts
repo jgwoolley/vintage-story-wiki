@@ -67,18 +67,32 @@ function main(): void {
   );
   for (const t of patchReport.unresolvedFileTargets.slice(0, 40)) console.log(`  unresolved: ${t.file} (op ${t.op}, from ${t.sourceFile})`);
 
+  const lang = buildLangResolver(index);
+
   console.log("== Extracting recipes ==");
   const recipes = extractRecipes(index);
   console.log(`  ${recipes.length} normalized recipes`);
 
   console.log("== Extracting loot ==");
-  const loot = extractLoot(index);
+  const loot = extractLoot(index, lang);
   console.log(`  ${loot.length} loot entries`);
 
-  const lootBySourceMap = new Map<string, { sourceDomain: string; sourceCode: string; sourceKind: string; sourceMod: string; entries: typeof loot }>();
+  const lootBySourceMap = new Map<
+    string,
+    { sourceDomain: string; sourceCode: string; sourceDisplayName: string; sourceKind: string; sourceMod: string; entries: typeof loot }
+  >();
   for (const entry of loot) {
     const k = `${entry.sourceDomain}:${entry.sourceCode}`;
-    const group = lootBySourceMap.get(k) ?? { sourceDomain: entry.sourceDomain, sourceCode: entry.sourceCode, sourceKind: entry.sourceKind, sourceMod: entry.sourceMod, entries: [] };
+    const group =
+      lootBySourceMap.get(k) ??
+      {
+        sourceDomain: entry.sourceDomain,
+        sourceCode: entry.sourceCode,
+        sourceDisplayName: entry.sourceDisplayName,
+        sourceKind: entry.sourceKind,
+        sourceMod: entry.sourceMod,
+        entries: [],
+      };
     group.entries.push(entry);
     lootBySourceMap.set(k, group);
   }
@@ -89,7 +103,6 @@ function main(): void {
   console.log(`  ${structures.length} structures`);
 
   console.log("== Building item index ==");
-  const lang = buildLangResolver(index);
   const itemIndex = buildItemIndex(recipes, loot, lang);
   console.log(`  ${itemIndex.size} distinct items/blocks referenced`);
 

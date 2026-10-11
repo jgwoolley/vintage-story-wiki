@@ -1,4 +1,5 @@
 import type { AssetIndex, LootEntry } from "../types.js";
+import type { LangResolver } from "../lang.js";
 import { expandVariants, resolveByType, substitutePlaceholders } from "../variantExpander.js";
 import { splitDomainCode } from "../codeUtil.js";
 
@@ -27,13 +28,14 @@ function toLootDrop(spec: DropSpec, fallbackDomain: string, groupValues: Record<
   };
 }
 
-export function extractLoot(index: AssetIndex): LootEntry[] {
+export function extractLoot(index: AssetIndex, lang: LangResolver): LootEntry[] {
   const out: LootEntry[] = [];
 
   // --- Block drops + panning drops ---
   const blockVariants = expandVariants(index, ["blocktypes/"]);
   for (const variant of blockVariants) {
     const json = variant.json as any;
+    const sourceDisplayName = lang.displayName("block", variant.domain, variant.code).name;
     const drops: DropSpec[] = resolveByType(json.dropsByType, variant.code) ?? json.drops ?? [];
     for (const drop of drops) {
       if (!drop?.code) continue;
@@ -41,6 +43,7 @@ export function extractLoot(index: AssetIndex): LootEntry[] {
         sourceKind: "block",
         sourceDomain: variant.domain,
         sourceCode: variant.code,
+        sourceDisplayName,
         sourceMod: variant.sourceModid,
         mechanism: "blockDrop",
         drop: toLootDrop(drop, variant.domain, variant.groupValues),
@@ -56,6 +59,7 @@ export function extractLoot(index: AssetIndex): LootEntry[] {
             sourceKind: "block",
             sourceDomain: variant.domain,
             sourceCode: variant.code,
+            sourceDisplayName,
             sourceMod: variant.sourceModid,
             mechanism: "panning",
             panningKeyPattern: pattern,
@@ -70,6 +74,7 @@ export function extractLoot(index: AssetIndex): LootEntry[] {
   const entityVariants = expandVariants(index, ["entities/"]);
   for (const variant of entityVariants) {
     const json = variant.json as any;
+    const sourceDisplayName = lang.displayName("entity", variant.domain, variant.code).name;
 
     const deathDrops: DropSpec[] = json.drops ?? [];
     for (const drop of deathDrops) {
@@ -78,6 +83,7 @@ export function extractLoot(index: AssetIndex): LootEntry[] {
         sourceKind: "entity",
         sourceDomain: variant.domain,
         sourceCode: variant.code,
+        sourceDisplayName,
         sourceMod: variant.sourceModid,
         mechanism: "entityDrop",
         drop: toLootDrop(drop, variant.domain, variant.groupValues),
@@ -95,6 +101,7 @@ export function extractLoot(index: AssetIndex): LootEntry[] {
         sourceKind: "entity",
         sourceDomain: variant.domain,
         sourceCode: variant.code,
+        sourceDisplayName,
         sourceMod: variant.sourceModid,
         mechanism: "harvestable",
         drop: toLootDrop(drop, variant.domain, variant.groupValues),
