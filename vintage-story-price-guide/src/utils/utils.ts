@@ -125,7 +125,10 @@ export function serializeWayPoints({ createdTime, modifiedTime, waypoints, sourc
                 createdTime: new Date(),
                 modifiedTime: new Date(),
                 origin: row.data.origin,
-            },
+                pinned: row.data.pinned,
+                color: row.data.color,
+                icon: row.data.icon,
+            }
             position: {
                 x: row.position.x,
                 y: row.position.y,
