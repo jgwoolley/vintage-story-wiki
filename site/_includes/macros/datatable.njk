@@ -1,6 +1,6 @@
 {#
-  One real <table> per listing, with pagination, free-text search, and three multi-value filter
-  dimensions -- category, mod, and tag -- each rendered as a button that opens a small checkbox
+  One real <table> per listing, with pagination, free-text search, and four multi-value filter
+  dimensions -- category, mod, tag, and description (see `descriptionAttrs` below) -- each rendered as a button that opens a small checkbox
   panel (see datatable.js) populated from whatever `data-category`/`data-mod`/`data-tags` values
   are actually present on the rows. Checking several boxes in one dimension matches rows with ANY
   of those values (OR within a dimension); the three dimensions (plus the free-text search) are
@@ -47,6 +47,10 @@
       <button type="button" class="datatable-filter-toggle" aria-haspopup="true" aria-expanded="false">Tags</button>
       <div class="datatable-filter-panel" hidden></div>
     </div>
+    <div class="datatable-filter" data-filter-dimension="description">
+      <button type="button" class="datatable-filter-toggle" aria-haspopup="true" aria-expanded="false">Description</button>
+      <div class="datatable-filter-panel" hidden></div>
+    </div>
   </div>
   <div class="datatable-active-filters" data-datatable-active-filters></div>
   <table>
@@ -58,3 +62,12 @@
   <div class="datatable-pagination" data-datatable-pagination></div>
 </div>
 {% endmacro %}
+
+{#
+  The row attributes for the "Description" filter dimension: whether this row's thing has a
+  localized description (an itemdesc-/blockdesc-/characterdesc-/traitdesc- lang string). Emit on
+  every row of a listing whose content type *can* have one (pass the raw description, or
+  undefined) -- `<tr data-...{{ dt.descriptionAttrs(x.description) }}>`. Filters as
+  `?description=yes|no`; listings that never emit it don't show the Description button at all.
+#}
+{% macro descriptionAttrs(description) %} data-description="{{ 'yes' if description else 'no' }}" data-description-label="{{ 'Has description' if description else 'No description' }}"{% endmacro %}

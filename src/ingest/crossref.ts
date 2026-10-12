@@ -1,6 +1,9 @@
-import type { AssetIndex, ItemIndexEntry, LootEntry, NormalizedRecipe } from "./types.js";
+import type { AssetIndex, CodeRef, CSharpClassMap, CSharpRegistrationKind, ItemIndexEntry, LootEntry, NormalizedRecipe } from "./types.js";
 import type { LangResolver } from "./lang.js";
-import { expandVariants, substitutePlaceholders } from "./variantExpander.js";
+import { expandVariants, globToRegExp, resolveByType, substitutePlaceholders } from "./variantExpander.js";
+import csharpClassMapJson from "./csharpClassMap.json" with { type: "json" };
+
+const csharpClassMap = csharpClassMapJson as CSharpClassMap;
 
 function key(domain: string, code: string): string {
   return `${domain}:${code}`;
@@ -171,4 +174,102 @@ export function attachItemMetadata(
       if (maxStackSize !== undefined) entry.maxStackSize = maxStackSize;
     }
   }
+}
+
+/**
+ * Final pass over the finished item index (run after every other step has added entries, so
+ * trade/reward-only items get it too): each entry's lang `description`, and `codeRefs` -- the C#
+ * names its own itemtype/blocktype JSON points at (`class`, `entityClass`, `behaviors[].name`,
+ * `entityBehaviors[].name`, each also via its `...ByType` glob variant), resolved to a GitHub link
+ * through the committed `csharpClassMap.json` (see scripts/map-csharp-classes.ts). Names that map
+ * doesn't cover (implemented in VSEssentials, the engine, or a mod DLL) are kept, just unlinked.
+ *
+ * Which registry a name is looked up in follows the engine: a block's `behaviors` are block
+ * behaviors, falling back to collectible behaviors (a block is a collectible); an item's are
+ * collectible behaviors; `entityClass`/`entityBehaviors` only exist on blocks.
+ */
+export function attachDescriptionsAndCodeRefs(items: Map<string, ItemIndexEntry>, index: AssetIndex, lang: LangResolver): void {
+  for (const entry of items.values()) {
+    const description = lang.description(entry.kind, entry.domain, entry.code);
+    if (description) entry.description = description;
+  }
+
+  const lookup = (kinds: CSharpRegistrationKind[], role: CodeRef["role"], name: string): CodeRef => {
+    for (const kind of kinds) {
+      const loc = csharpClassMap.registrations[kind]?.[name];
+      if (!loc) continue;
+      const url = loc.path
+        ? `https://github.com/${csharpClassMap.repo}/blob/${csharpClassMap.commit}/${loc.path}${loc.line ? `#L${loc.line}` : ""}`
+        : undefined;
+      return { role, name, type: loc.type, ...(url ? { path: loc.path, url } : {}) };
+    }
+    return { role, name };
+  };
+  const behaviorNames = (list: unknown): string[] =>
+    Array.isArray(list) ? list.map((b) => (b as { name?: unknown })?.name).filter((n): n is string => typeof n === "string") : [];
+
+  const batches: { kind: "item" | "block"; prefix: string }[] = [
+    { kind: "item", prefix: "itemtypes/" },
+    { kind: "block", prefix: "blocktypes/" },
+  ];
+  for (const { kind, prefix } of batches) {
+    for (const variant of expandVariants(index, [prefix])) {
+      const entry = items.get(key(variant.domain, variant.code));
+      if (!entry) continue;
+      const json = variant.json as Record<string, unknown>;
+      const pick = <T>(field: string): T | undefined =>
+        resolveByType(json[`${field}ByType`] as Record<string, T> | undefined, variant.code) ?? (json[field] as T | undefined);
+
+      const refs: CodeRef[] = [];
+      const cls = pick<string>("class");
+      if (typeof cls === "string") refs.push(lookup([kind], "class", cls));
+      const behaviorKinds: CSharpRegistrationKind[] = kind === "block" ? ["blockBehavior", "collectibleBehavior"] : ["collectibleBehavior"];
+      for (const name of behaviorNames(pick("behaviors"))) refs.push(lookup(behaviorKinds, "behavior", name));
+      if (kind === "block") {
+        const entityClass = pick<string>("entityClass");
+        if (typeof entityClass === "string") refs.push(lookup(["blockEntity"], "entityClass", entityClass));
+        for (const name of behaviorNames(pick("entityBehaviors"))) refs.push(lookup(["blockEntityBehavior"], "entityBehavior", name));
+      }
+      if (refs.length) entry.codeRefs = refs;
+    }
+  }
+}
+
+/**
+ * vs-manifest.json `includeItems`: force specific items/blocks into the index even when nothing
+ * else reaches them (e.g. static translocators, which have no recipe, drop, or worldgen rule).
+ * Each pattern is a `domain:code` glob -- `*` is a wildcard, and a pattern without a `domain:`
+ * prefix matches any domain -- tested against every concrete itemtypes/blocktypes variant. Matches
+ * are synthesized via `ensure` (the same "give it a page" path as ensureSpawnTarget) with the
+ * variant's real source mod, and tagged with `includedByManifest`. Returns how many variants each
+ * pattern matched, so the caller can warn about patterns that match nothing (likely a typo).
+ */
+export function includeManifestItems(
+  items: Map<string, ItemIndexEntry>,
+  index: AssetIndex,
+  patterns: string[],
+  ensure: (domain: string, code: string, kind: "item" | "block") => ItemIndexEntry
+): Map<string, number> {
+  const matchCounts = new Map(patterns.map((p) => [p, 0]));
+  if (!patterns.length) return matchCounts;
+  const compiled = patterns.map((pattern) => {
+    const [domainPart, codePart] = pattern.includes(":") ? pattern.split(/:(.*)/s) : ["*", pattern];
+    return { pattern, domain: globToRegExp(domainPart), code: globToRegExp(codePart) };
+  });
+  const batches: { kind: "item" | "block"; prefix: string }[] = [
+    { kind: "item", prefix: "itemtypes/" },
+    { kind: "block", prefix: "blocktypes/" },
+  ];
+  for (const { kind, prefix } of batches) {
+    for (const variant of expandVariants(index, [prefix])) {
+      const hit = compiled.find((c) => c.domain.test(variant.domain) && c.code.test(variant.code));
+      if (!hit) continue;
+      matchCounts.set(hit.pattern, matchCounts.get(hit.pattern)! + 1);
+      const isNew = !items.has(key(variant.domain, variant.code));
+      const entry = ensure(variant.domain, variant.code, kind);
+      if (isNew) entry.sourceMod = variant.sourceModid;
+      entry.includedByManifest = hit.pattern;
+    }
+  }
+  return matchCounts;
 }

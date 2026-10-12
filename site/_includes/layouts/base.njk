@@ -30,6 +30,14 @@ description: A statically-generated wiki of Vintage Story crafting recipes, drop
   <script src="{{ '/' | url }}assets/build-time.js" defer></script>
   <script src="{{ '/' | url }}assets/nav.js" defer></script>
   <script src="{{ '/' | url }}assets/layers.js" defer></script>
+  {#- Bare-specifier mapping for the vendored Three.js (see eleventy.config.js passthrough). Costs
+      nothing on pages that never import it; must precede any <script type="module">. -#}
+  <script type="importmap">
+    {"imports": {
+      "three": "{{ '/' | url }}assets/vendor/three/three.module.min.js",
+      "three/addons/": "{{ '/' | url }}assets/vendor/three/addons/"
+    }}
+  </script>
 </head>
 <body>
   <header class="site-header">

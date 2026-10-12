@@ -257,6 +257,17 @@ export default function (eleventyConfig) {
   });
 
   eleventyConfig.addPassthroughCopy("site/assets");
+  // Three.js (the 3D voxel viewer's only dependency, pinned exactly in package.json) is served
+  // from our own /assets/vendor/three/ rather than a CDN, so the pinned npm version is the one that
+  // actually ships. three.module.min.js imports ./three.core.min.js by relative path, so both go
+  // in the same folder; the addons keep their upstream `from 'three'` imports, resolved by the
+  // importmap in layouts/base.njk.
+  eleventyConfig.addPassthroughCopy({
+    "node_modules/three/build/three.module.min.js": "assets/vendor/three/three.module.min.js",
+    "node_modules/three/build/three.core.min.js": "assets/vendor/three/three.core.min.js",
+    "node_modules/three/examples/jsm/controls/OrbitControls.js": "assets/vendor/three/addons/OrbitControls.js",
+    "node_modules/three/LICENSE": "assets/vendor/three/LICENSE",
+  });
 
   return {
     // GitHub Pages project sites (the common case: no custom domain) serve from

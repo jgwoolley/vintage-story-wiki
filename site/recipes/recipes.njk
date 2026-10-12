@@ -43,21 +43,67 @@ eleventyComputed:
     {% endfor %}
   </div>
 {% elif recipe.category == "smithing" or recipe.category == "clayforming" or recipe.category == "knapping" %}
-  <div class="layer-switcher">
-    {% if recipe.raw.pattern.length > 1 %}
-    <div class="layer-tabs" role="tablist">
-      {% for layer in recipe.raw.pattern %}
-        <button type="button" class="layer-tab{% if loop.first %} active{% endif %}" data-layer-index="{{ loop.index0 }}">Layer {{ loop.index }}</button>
-      {% endfor %}
+  {% set layerCount = recipe.raw.pattern.length %}
+  <div class="layer-switcher voxel-recipe pattern-viewer" data-category="{{ recipe.category }}">
+    {#- One container: a toolbar (view / 3D layer mode / layer tabs) over a stage showing exactly one
+        of the 3D model (assets/recipeVoxels.js on the shared core assets/voxelViewer.js) or the 2D
+        per-layer slice grids. Controls that don't apply in the current state are disabled, never
+        hidden, so the layer tabs sit in the same place in both views. Without JS/WebGL the
+        view/mode rows stay hidden and the 2D view is all there is; the layer tabs still work. -#}
+    <div class="pattern-toolbar">
+      <div class="pattern-toolbar-row voxel-controls" hidden>
+        <div class="pattern-group">
+          <span class="pattern-group-label">View</span>
+          <div class="segmented" role="group" aria-label="View">
+            <button type="button" class="layer-tab" data-view="3d">3D model</button>
+            <button type="button" class="layer-tab" data-view="2d">2D layers</button>
+          </div>
+        </div>
+        {% if layerCount > 1 %}
+        <div class="pattern-group voxel-modes">
+          <span class="pattern-group-label">Show</span>
+          <div class="segmented" role="group" aria-label="Layers shown in 3D">
+            <button type="button" class="layer-tab" data-mode="all">All layers</button>
+            <button type="button" class="layer-tab" data-mode="single">One layer</button>
+            <button type="button" class="layer-tab" data-mode="below">Layer N and below</button>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      <div class="pattern-toolbar-row">
+        <div class="pattern-group">
+          <span class="pattern-group-label">Layer</span>
+          {% if layerCount > 1 %}
+          <div class="segmented layer-tabs" role="group" aria-label="Layer">
+            {% for layer in recipe.raw.pattern %}
+              <button type="button" class="layer-tab{% if loop.first %} active{% endif %}" data-layer-index="{{ loop.index0 }}">{{ loop.index }}</button>
+            {% endfor %}
+          </div>
+          {% else %}
+          <span class="muted">1 (single-layer pattern)</span>
+          {% endif %}
+        </div>
+      </div>
     </div>
-    {% else %}
-    <p class="muted">Layer 1</p>
-    {% endif %}
-    {% for layer in recipe.raw.pattern %}
-      <pre class="layer-panel" data-layer-index="{{ loop.index0 }}" {% if not loop.first %}hidden{% endif %}>{% for row in layer %}{{ row }}
-{% endfor %}</pre>
-    {% endfor %}
+    <div class="pattern-stage">
+      <div class="voxel-viewer" hidden>
+        <div class="voxel-viewer-canvas" aria-label="3D view of the {{ recipe.category }} pattern for {{ recipe | recipeTitle(generated.items) }}"></div>
+        <div class="voxel-viewer-bar">
+          <span class="muted">Drag to rotate &middot; scroll/pinch to zoom &middot; right-drag to pan</span>
+          <button type="button" class="layer-tab voxel-viewer-reset">Reset view</button>
+        </div>
+      </div>
+      <div class="layer-slices">
+        {% for layer in recipe.raw.pattern %}
+          <div class="layer-panel voxel-slice" data-layer-index="{{ loop.index0 }}" style="--cols: {{ layer[0].length }};" {% if not loop.first %}hidden{% endif %}>
+            {%- for row in layer %}{% for ch in row %}<i{% if ch == "#" %} class="on"{% endif %}></i>{% endfor %}{% endfor -%}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    <script type="application/json" class="voxel-pattern">{{ recipe.raw.pattern | dump | safe }}</script>
   </div>
+  <script type="module" src="{{ '/' | url }}assets/recipeVoxels.js"></script>
 {% endif %}
 
 <h2>Ingredients</h2>

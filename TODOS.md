@@ -2,6 +2,14 @@
 
 ## Phase
 
+- Buying / Selling direction should have different colors in Trades.
+- Why isn't nf3tblueprintcopy appearing in recipies as a mod selection. it adds a recipie: https://mods.vintagestory.at/show/mod/47272.
+- Info / Research / Build time should be included in navbar
+- Resolve UTC into local time in build page: Took 3m 00s, finished 2026-10-12T15:54:02.734Z UTC.
+- Current selected layer in model for Layer N and below show in a slightly different color.
+- Number of ingots not stated in Anvil Base
+- Maps not localized correctly for better ruins: betterruins:locatormap-mine1
+- Filters for things that are an npc reward / etc
 - Crops -> blockpatches name. But maybe the crop section on wiki index page just redirects to block patches. So you get a more acurate name for the page but still have better discoverability
 - Add a filter on clothing that has a description maybe for items too. Does clothing even need to be stand alone from items?
 - List of possible names for traders

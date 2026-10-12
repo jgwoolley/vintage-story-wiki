@@ -14,16 +14,16 @@ permalink: "{{ lang }}/items/index.html"
   if it's reachable from a <strong>recipe</strong> (an input or an output), a
   <strong>drop table</strong> (dropped by breaking a block or killing a creature), a
   <strong>worldgen spawn rule</strong> (an ore/gem/rock deposit, a crop/flower patch, a tree, a
-  fruit tree), a <strong>trader's buy/sell list</strong>, or an <strong>NPC dialogue reward</strong>.
+  fruit tree), a <strong>trader's buy/sell list</strong>, an <strong>NPC dialogue reward</strong>, or is listed by hand in the wiki's own <code>vs-manifest.json</code> (<code>includeItems</code>, for things like translocators that nothing else reaches).
   Pure creative-mode novelties, debug items, and anything else with none of those ties are not
   included -- this is a cross-referenced graph, not a registry dump.
 </p>
 <p><a href="{{ ('/' ~ lang ~ '/') | url }}sources/items/">Exactly how this page is built &rarr;</a></p>
 </div>
 
-{% call dt.datatable(60, "Search items & blocks...", ["Name", "Code", "Kind", "Mod"]) %}
+{% call dt.datatable(60, "Search items & blocks...", ["Name", "Item Code", "Kind", "Mod"]) %}
 {% for item in generated.items | sort(false, false, "displayName") %}
-  <tr data-search="{{ item.domain }}:{{ item.code }}" data-category="{{ item.kind }}" data-mod="{{ item.sourceMod }}" data-mod-label="{{ generated.mods | modName(item.sourceMod) }}" data-tags="{{ item.tags | default([]) | join(' ') }}">
+  <tr data-search="{{ item.domain }}:{{ item.code }}" data-category="{{ item.kind }}" data-mod="{{ item.sourceMod }}" data-mod-label="{{ generated.mods | modName(item.sourceMod) }}" data-tags="{{ item.tags | default([]) | join(' ') }}"{{ dt.descriptionAttrs(item.description) }}>
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ item.domain }}/{{ item.code | slugify }}/">{{ item.displayName }}</a></td>
     <td><code>{{ item.domain }}:{{ item.code }}</code></td>
     <td><span class="tag">{{ item.kind }}</span></td>

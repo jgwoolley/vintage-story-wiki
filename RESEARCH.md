@@ -1,6 +1,6 @@
 # Research notes
 
-Investigation only, per explicit instruction — nothing in this file has been implemented.
+Investigation notes. Unless a section says otherwise, nothing here has been implemented.
 Each section below is one of the four research tasks requested, with findings from the real game
 data and a recommended approach for a future implementation session to pick up.
 
@@ -49,6 +49,11 @@ could they be summarized into one row?
    (`variantExpander.ts`) if this grouping logic ends up needing its own glob resolution.
 
 ## 2. Rendering smithing/clayforming/knapping layers in 3D
+
+**Status: implemented.** Recipe pages now show an interactive 3D voxel model, built on a shared
+renderer meant to be reused for schematics. One correction to the findings below: smithing
+patterns are *not* always a single layer. 22 of the 48 vanilla smithing recipes have 2–5 layers
+(e.g. the helve hammer has 3).
 
 **The question**: recipe voxel patterns ("layers") currently render as flat text — should they be
 shown as an actual 3D shape instead?

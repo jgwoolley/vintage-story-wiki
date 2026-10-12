@@ -1,0 +1,2630 @@
+{
+  "repo": "anegostudios/vssurvivalmod",
+  "commit": "849fa8cad9e392368566efc7474e73db6404a145",
+  "registrations": {
+    "item": {
+      "ItemAnchor": {
+        "type": "ItemAnchor",
+        "path": "Item/ItemAnchor.cs",
+        "line": 14
+      },
+      "ItemArmorStand": {
+        "type": "ItemArmorStand",
+        "path": "Item/ItemArmorStand.cs",
+        "line": 11
+      },
+      "ItemArrow": {
+        "type": "ItemArrow",
+        "path": "Item/ItemArrow.cs",
+        "line": 9
+      },
+      "ItemAxe": {
+        "type": "ItemAxe",
+        "path": "Item/ItemAxe.cs",
+        "line": 16
+      },
+      "ItemBoat": {
+        "type": "ItemBoat",
+        "path": "Systems/Boats/ItemBoat.cs",
+        "line": 11
+      },
+      "ItemBook": {
+        "type": "ItemBook",
+        "path": "Systems/WritingSystem/ItemBook.cs",
+        "line": 53
+      },
+      "ItemBow": {
+        "type": "ItemBow",
+        "path": "Item/ItemBow.cs",
+        "line": 15
+      },
+      "ItemBugnet": {
+        "type": "ItemBugnet",
+        "path": "Item/ItemBugnet.cs",
+        "line": 66
+      },
+      "ItemCandle": {
+        "type": "ItemCandle",
+        "path": "Item/ItemCandle.cs",
+        "line": 10
+      },
+      "ItemCattailRoot": {
+        "type": "ItemCattailRoot",
+        "path": "Item/ItemCattailRoots.cs",
+        "line": 9
+      },
+      "ItemCheese": {
+        "type": "ItemCheese",
+        "path": "Item/ItemCheese.cs",
+        "line": 10
+      },
+      "ItemChisel": {
+        "type": "ItemChisel",
+        "path": "Item/ItemChisel.cs",
+        "line": 31
+      },
+      "ItemClay": {
+        "type": "ItemClay",
+        "path": "Item/ItemClay.cs",
+        "line": 14
+      },
+      "ItemCleaver": {
+        "type": "ItemCleaver",
+        "path": "Item/ItemCleaver.cs",
+        "line": 11
+      },
+      "ItemClosedBeenade": {
+        "type": "ItemClosedBeenade",
+        "path": "Item/ItemClosedBeenade.cs",
+        "line": 12
+      },
+      "ItemCoal": {
+        "type": "ItemCoal",
+        "path": "Item/ItemCoal.cs",
+        "line": 9
+      },
+      "ItemCreature": {
+        "type": "ItemCreature",
+        "path": "Item/ItemCreature.cs",
+        "line": 16
+      },
+      "ItemCreatureInventory": {
+        "type": "ItemCreatureInventory",
+        "path": "Item/ItemCreatureInventory.cs",
+        "line": 15
+      },
+      "ItemCrowbar": {
+        "type": "ItemCrowbar",
+        "path": "Item/ItemCrowbar.cs",
+        "line": 10
+      },
+      "ItemDeadButterfly": {
+        "type": "ItemDeadButterfly",
+        "path": "Item/ItemDeadButterfly.cs",
+        "line": 9
+      },
+      "ItemDough": {
+        "type": "ItemDough",
+        "path": "Item/ItemDough.cs",
+        "line": 11
+      },
+      "ItemDryGrass": {
+        "type": "ItemDryGrass",
+        "path": "Item/ItemDryGrass.cs",
+        "line": 10
+      },
+      "ItemEgg": {
+        "type": "ItemEgg",
+        "path": "Item/ItemEgg.cs",
+        "line": 10
+      },
+      "ItemEntityMover": {
+        "type": "ItemEntityMoverTool",
+        "path": "Item/ItemEntityMoverTool.cs",
+        "line": 13
+      },
+      "ItemFirestarter": {
+        "type": "ItemFirestarter",
+        "path": "Item/ItemFirestarter.cs",
+        "line": 12
+      },
+      "ItemFirewood": {
+        "type": "ItemFirewood",
+        "path": "Item/ItemFirewood.cs",
+        "line": 8
+      },
+      "ItemFishingPole": {
+        "type": "ItemFishingPole",
+        "path": "Item/ItemFishingPole.cs",
+        "line": 75
+      },
+      "ItemFlint": {
+        "type": "ItemFlint",
+        "path": "Item/ItemFlint.cs",
+        "line": 12
+      },
+      "ItemFlute": {
+        "type": "ItemFlute",
+        "path": "Item/ItemInstrument.cs",
+        "line": 9
+      },
+      "ItemGem": {
+        "type": "ItemGem",
+        "path": "Item/ItemGem.cs",
+        "line": 9
+      },
+      "ItemGlider": {
+        "type": "ItemGlider",
+        "path": "Item/ItemGlider.cs",
+        "line": 133
+      },
+      "ItemHackingSpear": {
+        "type": "ItemHackingSpear",
+        "path": "Item/ItemHackingSpear.cs",
+        "line": 14
+      },
+      "ItemHammer": {
+        "type": "ItemHammer",
+        "path": "Item/ItemHammer.cs",
+        "line": 15
+      },
+      "ItemHoe": {
+        "type": "ItemHoe",
+        "path": "Item/ItemHoe.cs",
+        "line": 12
+      },
+      "ItemHoneyComb": {
+        "type": "ItemHoneyComb",
+        "path": "Legacy/Item/ItemHoneyComb.cs",
+        "line": 10
+      },
+      "ItemIngot": {
+        "type": "ItemIngot",
+        "path": "Item/ItemIngot.cs",
+        "line": 11
+      },
+      "ItemIronBloom": {
+        "type": "ItemIronBloom",
+        "path": "Item/ItemIronBloom.cs",
+        "line": 13
+      },
+      "ItemJournalEntry": {
+        "type": "ItemJournalEntry",
+        "path": "Item/ItemJournalEntry.cs",
+        "line": 11
+      },
+      "ItemKnife": {
+        "type": "ItemKnife",
+        "path": "Item/ItemKnife.cs",
+        "line": 14
+      },
+      "ItemLiquidPortion": {
+        "type": "ItemLiquidPortion",
+        "path": "Item/ItemLiquidPortion.cs",
+        "line": 9
+      },
+      "ItemLocatorMap": {
+        "type": "ItemLocatorMap",
+        "path": "Systems/LocatorMaps/ItemLocatorMap.cs",
+        "line": 24
+      },
+      "ItemLootRandomizer": {
+        "type": "ItemLootRandomizer",
+        "path": "Systems/Loot/ItemLootRandomizer.cs",
+        "line": 12
+      },
+      "ItemMeasuringRope": {
+        "type": "ItemMeasuringRope",
+        "path": "Item/ItemMeasuringRope.cs",
+        "line": 187
+      },
+      "ItemMechHelper": {
+        "type": "ItemMechHelper",
+        "path": "Systems/JonasDevices/EntityMechHelper.cs",
+        "line": 9
+      },
+      "ItemMedallion": {
+        "type": "ItemMedallion",
+        "path": "Systems/Riding/ItemMedallion.cs",
+        "line": 8
+      },
+      "ItemMetalPlate": {
+        "type": "ItemMetalPlate",
+        "path": "Item/ItemMetalPlate.cs",
+        "line": 11
+      },
+      "ItemNightvisiondevice": {
+        "type": "ItemNightvisiondevice",
+        "path": "Systems/JonasDevices/ItemNightVisionDevice.cs",
+        "line": 93
+      },
+      "ItemNpcGuideStick": {
+        "type": "ItemNpcGuideStick",
+        "path": "Item/ItemNpcGuideStick.cs",
+        "line": 8
+      },
+      "ItemNugget": {
+        "type": "ItemNugget",
+        "path": "Item/ItemNugget.cs",
+        "line": 11
+      },
+      "ItemOar": {
+        "type": "ItemOar",
+        "path": "Item/ItemOar.cs",
+        "line": 8
+      },
+      "ItemOpenedBeenade": {
+        "type": "ItemOpenedBeenade",
+        "path": "Item/ItemOpenedBeenade.cs",
+        "line": 15
+      },
+      "ItemOre": {
+        "type": "ItemOre",
+        "path": "Item/ItemOre.cs",
+        "line": 13
+      },
+      "ItemPadlock": {
+        "type": "ItemPadlock",
+        "path": "Item/ItemPadlock.cs",
+        "line": 11
+      },
+      "ItemPlank": {
+        "type": "ItemPlank",
+        "path": "Item/ItemPlank.cs",
+        "line": 7
+      },
+      "ItemPlantableSeed": {
+        "type": "ItemPlantableSeed",
+        "path": "Item/ItemPlantableSeed.cs",
+        "line": 14
+      },
+      "ItemPlumbAndSquare": {
+        "type": "ItemPlumbAndSquare",
+        "path": "Item/ItemPlumbAndSquare.cs",
+        "line": 14
+      },
+      "ItemPoultice": {
+        "type": "ItemPoultice",
+        "path": "Legacy/Item/ItemPoultice.cs",
+        "line": 14
+      },
+      "ItemPressedMash": {
+        "type": "ItemPressedMash",
+        "path": "Item/ItemPressedMash.cs",
+        "line": 12
+      },
+      "ItemProspectingPick": {
+        "type": "ItemProspectingPick",
+        "path": "Systems/Prospecting/ItemProspectingPick.cs",
+        "line": 18
+      },
+      "ItemRandomLore": {
+        "type": "ItemRandomLore",
+        "path": "Item/ItemRandomLore.cs",
+        "line": 14
+      },
+      "ItemRollable": {
+        "type": "ItemRollable",
+        "path": "Systems/WritingSystem/ItemBook.cs",
+        "line": 18
+      },
+      "ItemRoller": {
+        "type": "ItemRoller",
+        "path": "Systems/Boats/ItemRoller.cs",
+        "line": 47
+      },
+      "ItemRope": {
+        "type": "ItemRope",
+        "path": "Item/ItemRope.cs",
+        "line": 24
+      },
+      "ItemScrapWeaponKit": {
+        "type": "ItemScrapWeaponKit",
+        "path": "Item/ItemScrapWeaponKit.cs",
+        "line": 11
+      },
+      "ItemScythe": {
+        "type": "ItemScythe",
+        "path": "Item/ItemScythe.cs",
+        "line": 12
+      },
+      "ItemShears": {
+        "type": "ItemShears",
+        "path": "Item/ItemShears.cs",
+        "line": 12
+      },
+      "ItemShield": {
+        "type": "ItemShield",
+        "path": "Item/ItemShield.cs",
+        "line": 39
+      },
+      "ItemShieldFromAttributes": {
+        "type": "ItemShieldFromAttributes",
+        "path": "Item/ItemShieldFromAttributes.cs",
+        "line": 17
+      },
+      "ItemSkillTimeswitch": {
+        "type": "ItemSkillTimeswitch",
+        "path": "Lore/Devastation/Timeswitch/Timeswitch.cs",
+        "line": 80
+      },
+      "ItemSling": {
+        "type": "ItemSling",
+        "path": "Item/ItemSling.cs",
+        "line": 15
+      },
+      "ItemSnowball": {
+        "type": "ItemSnowball",
+        "path": "Item/ItemSnowball.cs",
+        "line": 14
+      },
+      "ItemSnowShovel": {
+        "type": "ItemSnowshovel",
+        "path": "Item/ItemSnowshovel.cs",
+        "line": 319
+      },
+      "ItemSpear": {
+        "type": "ItemSpear",
+        "path": "Item/ItemSpear.cs",
+        "line": 12
+      },
+      "ItemStackRandomizer": {
+        "type": "ItemStackRandomizer",
+        "path": "Systems/Loot/ItemStackRandomizer.cs",
+        "line": 52
+      },
+      "ItemStone": {
+        "type": "ItemStone",
+        "path": "Item/ItemStone.cs",
+        "line": 13
+      },
+      "ItemStrawDummy": {
+        "type": "ItemStrawDummy",
+        "path": "Item/ItemStrawDummy.cs",
+        "line": 11
+      },
+      "ItemTemporalGear": {
+        "type": "ItemTemporalGear",
+        "path": "Item/ItemTemporalGear.cs",
+        "line": 12
+      },
+      "ItemTextureFlipper": {
+        "type": "ItemTextureFlipper",
+        "path": "Item/ItemTextureFlipper.cs",
+        "line": 20
+      },
+      "ItemTongs": {
+        "type": "ItemTongs",
+        "path": "Item/ItemTongs.cs",
+        "line": 90
+      },
+      "ItemTreeSeed": {
+        "type": "ItemTreeSeed",
+        "path": "Item/ItemTreeSeed.cs",
+        "line": 11
+      },
+      "ItemWearable": {
+        "type": "ItemWearable",
+        "path": "Legacy/Item/ItemWearable.cs",
+        "line": 12
+      },
+      "ItemWearableAttachment": {
+        "type": "ItemWearableAttachment",
+        "path": "Legacy/Item/ItemWearableAttachment.cs",
+        "line": 10
+      },
+      "ItemWorkItem": {
+        "type": "ItemWorkItem",
+        "path": "Item/ItemWorkItem.cs",
+        "line": 15
+      },
+      "ItemWormGrunter": {
+        "type": "ItemWormGrunter",
+        "path": "Item/ItemWormGrunter.cs",
+        "line": 139
+      },
+      "ItemWrench": {
+        "type": "ItemWrench",
+        "path": "Item/ItemWrench.cs",
+        "line": 17
+      }
+    },
+    "blockBehavior": {
+      "BlockEntityInteract": {
+        "type": "BlockBehaviorBlockEntityInteract"
+      },
+      "BreakIfFloating": {
+        "type": "BlockBehaviorBreakIfFloating",
+        "path": "BlockBehavior/BehaviorBreakIfFloating.cs",
+        "line": 22
+      },
+      "BreakSnowFirst": {
+        "type": "BlockBehaviorBreakSnowFirst",
+        "path": "BlockBehavior/BehaviorBreakSnowFirst.cs",
+        "line": 19
+      },
+      "CabinetDoors": {
+        "type": "BlockBehaviorCabinetDoors",
+        "path": "BlockBehavior/BlockBehaviorCabinetDoors.cs",
+        "line": 12
+      },
+      "CanAttach": {
+        "type": "BlockBehaviorCanAttach",
+        "path": "BlockBehavior/BehaviorCanAttach.cs",
+        "line": 25
+      },
+      "CanIgnite": {
+        "type": "BlockBehaviorCanIgnite",
+        "path": "BlockBehavior/BehaviorCanIgnite.cs",
+        "line": 23
+      },
+      "Chimney": {
+        "type": "BlockBehaviorChimney",
+        "path": "BlockBehavior/BehaviorChimney.cs",
+        "line": 24
+      },
+      "Container": {
+        "type": "BlockBehaviorContainer",
+        "path": "BlockBehavior/BehaviorContainer.cs",
+        "line": 22
+      },
+      "Coverable": {
+        "type": "BlockBehaviorCoverable",
+        "path": "BlockBehavior/BlockBehaviorCoverable.cs",
+        "line": 22
+      },
+      "CreatureContainer": {
+        "type": "BlockBehaviorCreatureContainer",
+        "path": "BlockBehavior/BehaviorCreatureContainer.cs",
+        "line": 29
+      },
+      "CuttableTallGrass": {
+        "type": "BlockBehaviorCuttableTallGrass",
+        "path": "BlockBehavior/BlockBehaviorCuttableTallGrass.cs",
+        "line": 8
+      },
+      "Display": {
+        "type": "BlockBehaviorDisplay",
+        "path": "BlockBehavior/BlockBehaviorDisplay.cs",
+        "line": 78
+      },
+      "Door": {
+        "type": "BlockBehaviorDoor",
+        "path": "BlockBehavior/BehaviorDoor.cs",
+        "line": 41
+      },
+      "DropNotSnowCovered": {
+        "type": "BlockBehaviorDropNotSnowCovered",
+        "path": "BlockBehavior/BehaviorDropNotSnowCovered.cs",
+        "line": 22
+      },
+      "ElevatorControl": {
+        "type": "BlockBehaviorElevatorControl",
+        "path": "BlockBehavior/BehaviorElevatorControl.cs",
+        "line": 21
+      },
+      "ExchangeOnInteract": {
+        "type": "BlockBehaviorExchangeOnInteract",
+        "path": "BlockBehavior/BehaviorExchangeOnInteract.cs",
+        "line": 29
+      },
+      "FiniteSpreadingLiquid": {
+        "type": "BlockBehaviorFiniteSpreadingLiquid",
+        "path": "BlockBehavior/BehaviorFiniteSpreadingLiquid.cs",
+        "line": 35
+      },
+      "FruitingBush": {
+        "type": "BlockBehaviorFruitingBush",
+        "path": "Systems/Farming/BlockBehaviorFruitingBush.cs",
+        "line": 18
+      },
+      "FruitingBushCutting": {
+        "type": "BlockBehaviorFruitingBushCutting",
+        "path": "Systems/Farming/BlockBehaviorFruitingBushCutting.cs",
+        "line": 8
+      },
+      "GiveItemPerPlayer": {
+        "type": "BlockBehaviorGiveItemPerPlayer",
+        "path": "Lore/Lazaret/BlockGiveItemPerPlayer.cs",
+        "line": 17
+      },
+      "GroundUnplaceable": {
+        "type": "BlockBehaviorGroundUnplaceable",
+        "path": "BlockBehavior/BehaviorUnplaceable.cs",
+        "line": 49
+      },
+      "Harvestable": {
+        "type": "BlockBehaviorHarvestable",
+        "path": "BlockBehavior/BehaviorHarvestable.cs",
+        "line": 41
+      },
+      "HeatSource": {
+        "type": "BlockBehaviorHeatSource",
+        "path": "BlockBehavior/BehaviorHeatSource.cs",
+        "line": 23
+      },
+      "HorizontalAttachable": {
+        "type": "BlockBehaviorHorizontalAttachable",
+        "path": "BlockBehavior/BehaviorHorizontalAttachable.cs",
+        "line": 54
+      },
+      "HorizontalOrientable": {
+        "type": "BlockBehaviorHorizontalOrientable",
+        "path": "BlockBehavior/BehaviorHorizontalOrientable.cs",
+        "line": 32
+      },
+      "HorizontalUpDownOrientable": {
+        "type": "BlockBehaviorHorUDOrientable",
+        "path": "BlockBehavior/BehaviorHorUDOrientable.cs",
+        "line": 8
+      },
+      "Ignitable": {
+        "type": "BlockBehaviorIgniteable",
+        "path": "BlockBehavior/BehaviorIgnitable.cs",
+        "line": 52
+      },
+      "JonasBoilerDoor": {
+        "type": "BlockBehaviorJonasBoilerDoor",
+        "path": "BlockBehavior/BehaviorJonasBoiler.cs",
+        "line": 19
+      },
+      "JonasGasifier": {
+        "type": "BlockBehaviorJonasGasifier",
+        "path": "Lore/ResoArchives/BlockBehaviorJonasGasifier.cs",
+        "line": 21
+      },
+      "JonasHydraulicPump": {
+        "type": "BlockBehaviorJonasHydraulicPump",
+        "path": "Lore/ResoArchives/BlockBehaviorJonasHydraulicPump.cs",
+        "line": 19
+      },
+      "Ladder": {
+        "type": "BlockBehaviorLadder",
+        "path": "BlockBehavior/BehaviorLadder.cs",
+        "line": 37
+      },
+      "Lockable": {
+        "type": "BlockBehaviorLockable",
+        "path": "BlockBehavior/BehaviorLockable.cs",
+        "line": 23
+      },
+      "MilkingContainer": {
+        "type": "BlockBehaviorMilkingContainer",
+        "path": "BlockBehavior/BehaviorMilkingContainer.cs",
+        "line": 24
+      },
+      "MyceliumHost": {
+        "type": "BlockBehaviorMyceliumHost",
+        "path": "BlockBehavior/BehaviorMyceliumHost.cs",
+        "line": 21
+      },
+      "NoParticles": {
+        "type": "BlockBehaviorNoParticles",
+        "path": "BlockBehavior/BehaviorLongRangeParticleEmitter.cs",
+        "line": 8
+      },
+      "NWOrientable": {
+        "type": "BlockBehaviorNWOrientable",
+        "path": "BlockBehavior/BehaviorNWOrientable.cs",
+        "line": 29
+      },
+      "OmniAttachable": {
+        "type": "BlockBehaviorOmniAttachable",
+        "path": "BlockBehavior/BehaviorOmniAttachable.cs",
+        "line": 62
+      },
+      "OmniRotatable": {
+        "type": "BlockBehaviorOmniRotatable",
+        "path": "BlockBehavior/BehaviorOmniRotatable.cs",
+        "line": 56
+      },
+      "Pillar": {
+        "type": "BlockBehaviorPillar",
+        "path": "BlockBehavior/BehaviorPillar.cs",
+        "line": 31
+      },
+      "PushEventOnBlockBroken": {
+        "type": "BlockBehaviorPushEventOnBlockBroken",
+        "path": "BlockBehavior/BehaviorPushEventOnBlockBroken.cs",
+        "line": 25
+      },
+      "RainDrip": {
+        "type": "BlockBehaviorRainDrip",
+        "path": "BlockBehavior/BlockBehaviorRainDrip.cs",
+        "line": 85
+      },
+      "Reinforcable": {
+        "type": "BlockBehaviorReinforcable",
+        "path": "BlockBehavior/BehaviorReinforcable.cs",
+        "line": 23
+      },
+      "Reparable": {
+        "type": "BlockBehaviorReparable",
+        "path": "BlockBehavior/BehaviorReparable.cs",
+        "line": 37
+      },
+      "RightClickPickup": {
+        "type": "BlockBehaviorRightClickPickup",
+        "path": "BlockBehavior/BehaviorRightClickPickup.cs",
+        "line": 17
+      },
+      "RopeTieable": {
+        "type": "BlockBehaviorRopeTieable"
+      },
+      "RotateablePlaceable": {
+        "type": "BlockBehaviorRotateablePlaceable",
+        "path": "BlockBehavior/BlockBehaviorRotateablePlaceable.cs",
+        "line": 19
+      },
+      "Slab": {
+        "type": "BlockBehaviorSlab",
+        "path": "BlockBehavior/BehaviorSlab.cs",
+        "line": 14
+      },
+      "SneakPlacing": {
+        "type": "BlockBehaviorSneakPlacing",
+        "path": "BlockBehavior/BehaviorSneakPlacing.cs",
+        "line": 20
+      },
+      "Snowballable": {
+        "type": "BlockBehaviorSnowballable",
+        "path": "Systems/Snowballs.cs",
+        "line": 57
+      },
+      "Steaming": {
+        "type": "BlockBehaviorSteaming",
+        "path": "BlockBehavior/BlockBehaviorRainDrip.cs",
+        "line": 24
+      },
+      "TrapDoor": {
+        "type": "BlockBehaviorTrapDoor",
+        "path": "BlockBehavior/BlockBehaviorTrapDoor.cs",
+        "line": 35
+      },
+      "Unplaceable": {
+        "type": "BlockBehaviorUnplaceable",
+        "path": "BlockBehavior/BehaviorUnplaceable.cs",
+        "line": 21
+      },
+      "Unstable": {
+        "type": "BlockBehaviorUnstable",
+        "path": "BlockBehavior/BehaviorUnstable.cs",
+        "line": 29
+      },
+      "UnstableFalling": {
+        "type": "BlockBehaviorUnstableFalling",
+        "path": "BlockBehavior/BehaviorUnstableFalling.cs",
+        "line": 26
+      },
+      "UnstableRock": {
+        "type": "BlockBehaviorUnstableRock",
+        "path": "BlockBehavior/BlockBehaviorUnstableRock.cs",
+        "line": 102
+      },
+      "WrenchOrientable": {
+        "type": "BlockBehaviorWrenchOrientable",
+        "path": "BlockBehavior/BehaviorWrenchOrientable.cs",
+        "line": 29
+      }
+    },
+    "block": {
+      "BlockAngledGears": {
+        "type": "BlockAngledGears",
+        "path": "Systems/MechanicalPower/Block/BlockAngledGears.cs",
+        "line": 9
+      },
+      "BlockAntlerMount": {
+        "type": "BlockAntlerMount",
+        "path": "Block/BlockAntlerMount.cs",
+        "line": 8
+      },
+      "BlockAnvil": {
+        "type": "BlockAnvil",
+        "path": "Block/BlockAnvil.cs",
+        "line": 13
+      },
+      "BlockAnvilPart": {
+        "type": "BlockAnvilPart",
+        "path": "Block/BlockAnvilPart.cs",
+        "line": 8
+      },
+      "BlockArchimedesScrew": {
+        "type": "BlockArchimedesScrew",
+        "path": "Systems/MechanicalPower/Block/BlockArchimedesScrew.cs",
+        "line": 11
+      },
+      "BlockAxle": {
+        "type": "BlockAxle",
+        "path": "Systems/MechanicalPower/Block/BlockAxle.cs",
+        "line": 9
+      },
+      "BlockBamboo": {
+        "type": "BlockBamboo",
+        "path": "Block/BlockBamboo.cs",
+        "line": 15
+      },
+      "BlockBarrel": {
+        "type": "BlockBarrel",
+        "path": "Systems/Barrel/BlockBarrel.cs",
+        "line": 16
+      },
+      "BlockBaseReturnTeleporter": {
+        "type": "BlockBaseReturnTeleporter",
+        "path": "Systems/JonasDevices/BlockBaseReturnTeleporter.cs",
+        "line": 205
+      },
+      "BlockBasketTrap": {
+        "type": "BlockAnimalTrap",
+        "path": "Block/BlockAnimalTrap.cs",
+        "line": 15
+      },
+      "BlockBed": {
+        "type": "BlockBed",
+        "path": "Block/BlockBed.cs",
+        "line": 14
+      },
+      "BlockBeehive": {
+        "type": "BlockBeehive",
+        "path": "Block/BlockBeehive.cs",
+        "line": 10
+      },
+      "BlockBeeHiveKilnDoor": {
+        "type": "BlockBeeHiveKilnDoor",
+        "path": "Block/BlockBeeHiveKilnDoor.cs",
+        "line": 10
+      },
+      "BlockBellows": {
+        "type": "BlockBellows",
+        "path": "Block/BlockBellows.cs",
+        "line": 7
+      },
+      "BlockBerryBush": {
+        "type": "BlockBerryBush",
+        "path": "Legacy/Block/BlockBerryBush.cs",
+        "line": 12
+      },
+      "BlockBituCoal": {
+        "type": "BlockBituCoal",
+        "path": "Block/BlockBituCoal.cs",
+        "line": 11
+      },
+      "BlockBloomery": {
+        "type": "BlockBloomery",
+        "path": "Block/BlockBloomery.cs",
+        "line": 11
+      },
+      "BlockBoiler": {
+        "type": "BlockBoiler",
+        "path": "Block/BlockBoiler.cs",
+        "line": 12
+      },
+      "BlockBomb": {
+        "type": "BlockBomb",
+        "path": "Block/BlockBomb.cs",
+        "line": 11
+      },
+      "BlockBookshelf": {
+        "type": "BlockBookshelf",
+        "path": "Block/BlockBookshelf.cs",
+        "line": 11
+      },
+      "BlockBough": {
+        "type": "BlockBough",
+        "path": "Block/BlockBough.cs",
+        "line": 8
+      },
+      "BlockBrake": {
+        "type": "BlockBrake",
+        "path": "Systems/MechanicalPower/Block/BlockBrake.cs",
+        "line": 9
+      },
+      "BlockBucket": {
+        "type": "BlockBucket",
+        "path": "Block/BlockBucket.cs",
+        "line": 21
+      },
+      "BlockBunchOCandles": {
+        "type": "BlockBunchOCandles",
+        "path": "Block/BlockBunchOCandles.cs",
+        "line": 11
+      },
+      "BlockCactus": {
+        "type": "BlockCactus",
+        "path": "Block/BlockCactus.cs",
+        "line": 9
+      },
+      "BlockCandle": {
+        "type": "BlockCandle",
+        "path": "Block/BlockCandle.cs",
+        "line": 8
+      },
+      "BlockCanvas": {
+        "type": "BlockCanvas",
+        "path": "Block/BlockCanvas.cs",
+        "line": 7
+      },
+      "BlockChandelier": {
+        "type": "BlockChandelier",
+        "path": "Block/BlockChandelier.cs",
+        "line": 9
+      },
+      "BlockCharcoalPile": {
+        "type": "BlockCharcoalPile",
+        "path": "Block/BlockCharcoalPile.cs",
+        "line": 9
+      },
+      "BlockCharcoalPit": {
+        "type": "BlockCharcoalPit",
+        "path": "Block/BlockCharcoalPit.cs",
+        "line": 9
+      },
+      "BlockCheese": {
+        "type": "BlockCheese",
+        "path": "Block/BlockCheese.cs",
+        "line": 11
+      },
+      "BlockCheeseCurdsBundle": {
+        "type": "BlockCheeseCurdsBundle",
+        "path": "Block/BlockCheeseCurdsBundle.cs",
+        "line": 11
+      },
+      "BlockChisel": {
+        "type": "BlockChisel",
+        "path": "Systems/Microblock/BlockChisel.cs",
+        "line": 16
+      },
+      "BlockChute": {
+        "type": "BlockChute",
+        "path": "Block/BlockChute.cs",
+        "line": 12
+      },
+      "BlockClayForm": {
+        "type": "BlockClayForm",
+        "path": "Block/BlockClayForm.cs",
+        "line": 11
+      },
+      "BlockClayOven": {
+        "type": "BlockClayOven",
+        "path": "Block/BlockClayOven.cs",
+        "line": 16
+      },
+      "BlockClutch": {
+        "type": "BlockClutch",
+        "path": "Systems/MechanicalPower/Block/BlockClutch.cs",
+        "line": 9
+      },
+      "BlockClutter": {
+        "type": "BlockClutter",
+        "path": "Block/BlockClutter.cs",
+        "line": 108
+      },
+      "BlockClutterBookshelf": {
+        "type": "BlockClutterBookshelf",
+        "path": "Lore/ResoArchives/BlockClutterBookshelf.cs",
+        "line": 17
+      },
+      "BlockClutterBookshelfWithLore": {
+        "type": "BlockClutterBookshelfWithLore",
+        "path": "Lore/ResoArchives/BlockClutterBookshelfWithLore.cs",
+        "line": 12
+      },
+      "BlockCoalPile": {
+        "type": "BlockCoalPile",
+        "path": "Block/BlockCoalPile.cs",
+        "line": 24
+      },
+      "BlockCokeOvenDoor": {
+        "type": "BlockCokeOvenDoor",
+        "path": "Block/BlockCokeOvenDoor.cs",
+        "line": 8
+      },
+      "BlockCommand": {
+        "type": "BlockCommand",
+        "path": "Block/BlockCommand.cs",
+        "line": 11
+      },
+      "BlockCondenser": {
+        "type": "BlockCondenser",
+        "path": "Block/BlockCondenser.cs",
+        "line": 8
+      },
+      "BlockCookedContainer": {
+        "type": "BlockCookedContainer",
+        "path": "Systems/Cooking/BlockCookedContainer.cs",
+        "line": 15
+      },
+      "BlockCookingContainer": {
+        "type": "BlockCookingContainer",
+        "path": "Systems/Cooking/BlockCookingContainer.cs",
+        "line": 12
+      },
+      "BlockCoral": {
+        "type": "BlockCoral",
+        "path": "Block/BlockCoral.cs",
+        "line": 10
+      },
+      "BlockCorpseReturnTeleporter": {
+        "type": "BlockCorpseReturnTeleporter",
+        "path": "Systems/JonasDevices/BlockCorpseReturnTeleporter.cs",
+        "line": 271
+      },
+      "BlockCrate": {
+        "type": "BlockCrate",
+        "path": "Block/BlockCrate.cs",
+        "line": 299
+      },
+      "BlockCreativeRotor": {
+        "type": "BlockCreativeRotor",
+        "path": "Systems/MechanicalPower/Block/BlockCreativeRotor.cs",
+        "line": 9
+      },
+      "BlockCrock": {
+        "type": "BlockCrock",
+        "path": "Block/BlockCrock.cs",
+        "line": 14
+      },
+      "BlockCrop": {
+        "type": "BlockCrop",
+        "path": "Block/BlockCrop.cs",
+        "line": 16
+      },
+      "BlockCropProp": {
+        "type": "BlockCropProp",
+        "path": "BlockEntityBehavior/BEBehaviorCropProp.cs",
+        "line": 16
+      },
+      "BlockCrowfoot": {
+        "type": "BlockCrowfoot",
+        "path": "Block/BlockCrowfoot.cs",
+        "line": 9
+      },
+      "BlockCrystal": {
+        "type": "BlockCrystal",
+        "path": "Block/BlockCrystal.cs",
+        "line": 9
+      },
+      "BlockDamageOnTouch": {
+        "type": "BlockDamageOnTouch",
+        "path": "Block/BlockDamageOnTouch.cs",
+        "line": 20
+      },
+      "BlockDaubWattle": {
+        "type": "BlockDaubWattle",
+        "path": "Block/BlockDaubWattle.cs",
+        "line": 9
+      },
+      "BlockDeadCrop": {
+        "type": "BlockDeadCrop",
+        "path": "Block/BlockDeadCrop.cs",
+        "line": 10
+      },
+      "BlockDevastationGrowth": {
+        "type": "BlockDevastationGrowth",
+        "path": "Block/BlockDevastationGrowth.cs",
+        "line": 11
+      },
+      "BlockDisplayCase": {
+        "type": "BlockDisplayCase",
+        "path": "Block/BlockDisplayCase.cs",
+        "line": 10
+      },
+      "BlockDoor": {
+        "type": "BlockDoor",
+        "path": "Legacy/BlockDoor.cs",
+        "line": 9
+      },
+      "BlockDynamicTreeBranch": {
+        "type": "BlockFruitTreeBranch",
+        "path": "Systems/FruitTree/BlockFruitTreeBranch.cs",
+        "line": 31
+      },
+      "BlockDynamicTreeFoliage": {
+        "type": "BlockFruitTreeFoliage",
+        "path": "Systems/FruitTree/BlockFruitTreeFoliage.cs",
+        "line": 11
+      },
+      "BlockFarmland": {
+        "type": "BlockFarmland",
+        "path": "Block/BlockFarmland.cs",
+        "line": 9
+      },
+      "BlockFence": {
+        "type": "BlockFence",
+        "path": "Block/BlockFence.cs",
+        "line": 11
+      },
+      "BlockFenceGate": {
+        "type": "BlockFenceGate",
+        "path": "Block/BlockFenceGate.cs",
+        "line": 10
+      },
+      "BlockFenceGateRoughHewn": {
+        "type": "BlockFenceGateRoughHewn",
+        "path": "Block/BlockFenceGateRoughHewn.cs",
+        "line": 10
+      },
+      "BlockFenceStackAware": {
+        "type": "BlockFenceStackAware",
+        "path": "Block/BlockFenceStackAware.cs",
+        "line": 12
+      },
+      "BlockFern": {
+        "type": "BlockFern",
+        "path": "Block/BlockFern.cs",
+        "line": 9
+      },
+      "BlockFernTree": {
+        "type": "BlockFernTree",
+        "path": "Block/BlockFernTree.cs",
+        "line": 9
+      },
+      "BlockFigurehead": {
+        "type": "BlockFigurehead",
+        "path": "Block/BlockFigurehead.cs",
+        "line": 12
+      },
+      "BlockFirepit": {
+        "type": "BlockFirepit",
+        "path": "Block/BlockFirepit.cs",
+        "line": 13
+      },
+      "BlockFirewoodPile": {
+        "type": "BlockFirewoodPile",
+        "path": "Legacy/Block/BlockFirewoodPile.cs",
+        "line": 11
+      },
+      "BlockForestFloor": {
+        "type": "BlockForestFloor",
+        "path": "Block/BlockForestFloor.cs",
+        "line": 18
+      },
+      "BlockForge": {
+        "type": "BlockForge",
+        "path": "Block/BlockForge.cs",
+        "line": 15
+      },
+      "BlockFruitPress": {
+        "type": "BlockFruitPress",
+        "path": "Block/BlockFruitPress.cs",
+        "line": 11
+      },
+      "BlockFruitPressTop": {
+        "type": "BlockFruitPressTop",
+        "path": "Block/BlockFruitpressTop.cs",
+        "line": 11
+      },
+      "BlockFullCoating": {
+        "type": "BlockFullCoating",
+        "path": "Block/BlockFullCoating.cs",
+        "line": 126
+      },
+      "BlockGasifier": {
+        "type": "BlockGasifier",
+        "path": "Block/BlockGasifier.cs",
+        "line": 8
+      },
+      "BlockGeneric": {
+        "type": "BlockGeneric"
+      },
+      "BlockGenericTypedContainer": {
+        "type": "BlockGenericTypedContainer",
+        "path": "Block/BlockGenericTypedContainer.cs",
+        "line": 76
+      },
+      "BlockGenericTypedContainerTrunk": {
+        "type": "BlockGenericTypedContainerTrunk",
+        "path": "Block/BlockGenericTypedContainer.cs",
+        "line": 35
+      },
+      "BlockGlacierIce": {
+        "type": "BlockGlacierIce",
+        "path": "Block/BlockGlacierIce.cs",
+        "line": 7
+      },
+      "BlockGlassPane": {
+        "type": "BlockGlassPane",
+        "path": "Block/BlockGlassPane.cs",
+        "line": 30
+      },
+      "BlockGlowworms": {
+        "type": "BlockGlowworms",
+        "path": "Block/BlockGlowworms.cs",
+        "line": 9
+      },
+      "BlockGrindingWheel": {
+        "type": "BlockGrindingWheel",
+        "path": "Block/BlockGrindingWheel.cs",
+        "line": 10
+      },
+      "BlockGroundStorage": {
+        "type": "BlockGroundStorage",
+        "path": "Block/BlockGroundStorage.cs",
+        "line": 22
+      },
+      "BlockHangingLichen": {
+        "type": "BlockHangingLichen",
+        "path": "Block/BlockHangingLichen.cs",
+        "line": 9
+      },
+      "BlockHelveHammer": {
+        "type": "BlockHelveHammer",
+        "path": "Systems/MechanicalPower/Block/BlockHelvehammer.cs",
+        "line": 7
+      },
+      "BlockHenbox": {
+        "type": "BlockHenbox",
+        "path": "Block/BlockHenbox.cs",
+        "line": 8
+      },
+      "BlockHopper": {
+        "type": "BlockHopper",
+        "path": "Block/BlockHopper.cs",
+        "line": 14
+      },
+      "BlockIngotMold": {
+        "type": "BlockIngotMold",
+        "path": "Block/BlockIngotMold.cs",
+        "line": 12
+      },
+      "BlockIngotPile": {
+        "type": "BlockIngotPile",
+        "path": "Legacy/Block/BlockIngotPile.cs",
+        "line": 11
+      },
+      "BlockJonasLensTower": {
+        "type": "BlockJonasLensTower",
+        "path": "Systems/JonasDevices/BlockJonasLensTower.cs",
+        "line": 14
+      },
+      "BlockKnappingSurface": {
+        "type": "BlockKnappingSurface",
+        "path": "Block/BlockKnappingSurface.cs",
+        "line": 11
+      },
+      "BlockLabeledChest": {
+        "type": "BlockLabeledChest",
+        "path": "Block/BlockLabeledChest.cs",
+        "line": 10
+      },
+      "BlockLakeIce": {
+        "type": "BlockLakeIce",
+        "path": "Block/BlockLakeIce.cs",
+        "line": 10
+      },
+      "BlockLantern": {
+        "type": "BlockLantern",
+        "path": "Block/BlockLantern.cs",
+        "line": 17
+      },
+      "BlockLargeGear3m": {
+        "type": "BlockLargeGear3m",
+        "path": "Systems/MechanicalPower/Block/BlockLargeGear3m.cs",
+        "line": 9
+      },
+      "BlockLava": {
+        "type": "BlockLava",
+        "path": "Block/BlockLava.cs",
+        "line": 16
+      },
+      "BlockLayered": {
+        "type": "BlockLayered",
+        "path": "Block/BlockLayered.cs",
+        "line": 8
+      },
+      "BlockLayeredSlowDig": {
+        "type": "BlockLayeredSlowDig",
+        "path": "Block/BlockLayeredSlowDig.cs",
+        "line": 8
+      },
+      "BlockLeaves": {
+        "type": "BlockLeaves",
+        "path": "Block/BlockLeaves.cs",
+        "line": 12
+      },
+      "BlockLeavesNarrow": {
+        "type": "BlockLeavesNarrow",
+        "path": "Block/BlockLeavesNarrow.cs",
+        "line": 8
+      },
+      "BlockLightningRod": {
+        "type": "BlockLightningRod",
+        "path": "Block/BlockLightningRod.cs",
+        "line": 7
+      },
+      "BlockLinen": {
+        "type": "BlockLinen",
+        "path": "Block/BlockLinen.cs",
+        "line": 9
+      },
+      "BlockLiquidContainerTopOpened": {
+        "type": "BlockLiquidContainerTopOpened",
+        "path": "Systems/Liquid/BlockLiquidContainerTopOpened.cs",
+        "line": 15
+      },
+      "BlockLocustNest": {
+        "type": "BlockLocustNest",
+        "path": "Block/BlockLocustNest.cs",
+        "line": 10
+      },
+      "BlockLog": {
+        "type": "BlockLog",
+        "path": "Block/BlockLog.cs",
+        "line": 12
+      },
+      "BlockLogSection": {
+        "type": "BlockLogSection",
+        "path": "Block/BlockLogSection.cs",
+        "line": 8
+      },
+      "BlockLooseGears": {
+        "type": "BlockLooseGears",
+        "path": "Block/BlockLooseGears.cs",
+        "line": 11
+      },
+      "BlockLooseOres": {
+        "type": "BlockLooseOres",
+        "path": "Block/BlockLooseOres.cs",
+        "line": 10
+      },
+      "BlockLooseRock": {
+        "type": "BlockLooseRock",
+        "path": "Block/BlockRequireSolidGround.cs",
+        "line": 9
+      },
+      "BlockLooseStones": {
+        "type": "BlockLooseStones",
+        "path": "Block/BlockLooseStones.cs",
+        "line": 10
+      },
+      "BlockLootVessel": {
+        "type": "BlockLootVessel",
+        "path": "Block/BlockLootVessel.cs",
+        "line": 167
+      },
+      "BlockLupine": {
+        "type": "BlockLupine",
+        "path": "Block/BlockLupine.cs",
+        "line": 8
+      },
+      "BlockMaterialFromAttributes": {
+        "type": "BlockMaterialFromAttributes",
+        "path": "Block/BlockMaterialFromAttributes.cs",
+        "line": 14
+      },
+      "BlockMeal": {
+        "type": "BlockMeal",
+        "path": "Systems/Cooking/BlockMeal.cs",
+        "line": 40
+      },
+      "BlockMetalPartPile": {
+        "type": "BlockMetalPartPile",
+        "path": "Block/BlockMetalPartPile.cs",
+        "line": 10
+      },
+      "BlockMetaRemainSelectable": {
+        "type": "BlockMetaRemainSelectable",
+        "path": "Block/BlockTileConnector.cs",
+        "line": 10
+      },
+      "BlockMeteorite": {
+        "type": "BlockMeteorite",
+        "path": "Block/BlockMeteorite.cs",
+        "line": 11
+      },
+      "BlockMicroBlock": {
+        "type": "BlockMicroBlock",
+        "path": "Systems/Microblock/BlockMicroBlock.cs",
+        "line": 64
+      },
+      "BlockMoldRack": {
+        "type": "BlockMoldRack",
+        "path": "Block/BlockVerticalRack.cs",
+        "line": 8
+      },
+      "BlockMPConsumer": {
+        "type": "BlockMPConsumer",
+        "path": "Block/BlockMPConsumer.cs",
+        "line": 9
+      },
+      "BlockMPMultiblockGear": {
+        "type": "BlockMPMultiblockGear",
+        "path": "Systems/MechanicalPower/Block/BlockMPMultiblockGear.cs",
+        "line": 13
+      },
+      "BlockMPMultiblockPulverizer": {
+        "type": "BlockMPMultiblockPulverizer",
+        "path": "Systems/MechanicalPower/Block/BlockMPMultiblockPulverizer.cs",
+        "line": 13
+      },
+      "BlockMushroom": {
+        "type": "BlockMushroom",
+        "path": "Block/BlockMushroom.cs",
+        "line": 10
+      },
+      "BlockOilLamp": {
+        "type": "BlockOilLamp",
+        "path": "Block/BlockOilLamp.cs",
+        "line": 9
+      },
+      "BlockOmokTable": {
+        "type": "BlockOmokTable",
+        "path": "Block/BlockOmokTable.cs",
+        "line": 8
+      },
+      "BlockOre": {
+        "type": "BlockOre",
+        "path": "Block/BlockOre.cs",
+        "line": 10
+      },
+      "BlockPan": {
+        "type": "BlockPan",
+        "path": "Block/BlockPan.cs",
+        "line": 25
+      },
+      "BlockPeatbrick": {
+        "type": "BlockPeatbrick",
+        "path": "Block/BlockPeatbrick.cs",
+        "line": 10
+      },
+      "BlockPeatPile": {
+        "type": "BlockPeatPile",
+        "path": "Legacy/Block/BlockPeatPile.cs",
+        "line": 11
+      },
+      "BlockPie": {
+        "type": "BlockPie",
+        "path": "Block/BlockPie.cs",
+        "line": 25
+      },
+      "BlockPitkiln": {
+        "type": "BlockPitkiln",
+        "path": "Block/BlockPitkiln.cs",
+        "line": 45
+      },
+      "BlockPlaceOnDrop": {
+        "type": "BlockPlaceOnDrop",
+        "path": "Block/BlockPlaceOnDrop.cs",
+        "line": 11
+      },
+      "BlockPlankPile": {
+        "type": "BlockPlankPile",
+        "path": "Legacy/Block/BlockPlankPile.cs",
+        "line": 9
+      },
+      "BlockPlant": {
+        "type": "BlockPlant",
+        "path": "Block/BlockPlant.cs",
+        "line": 11
+      },
+      "BlockPlantContainer": {
+        "type": "BlockPlantContainer",
+        "path": "Block/BlockPlantContainer.cs",
+        "line": 28
+      },
+      "BlockPlantDamageOnTouch": {
+        "type": "BlockPlantDamageOnTouch",
+        "path": "Block/BlockDamageOnTouch.cs",
+        "line": 11
+      },
+      "BlockPlatePile": {
+        "type": "BlockPlatePile",
+        "path": "Legacy/Block/BlockPlatePile.cs",
+        "line": 10
+      },
+      "BlockPulverizer": {
+        "type": "BlockPulverizer",
+        "path": "Systems/MechanicalPower/Block/BlockPulverizer.cs",
+        "line": 10
+      },
+      "BlockQuern": {
+        "type": "BlockQuern",
+        "path": "Block/BlockQuern.cs",
+        "line": 14
+      },
+      "BlockRails": {
+        "type": "BlockRails",
+        "path": "Block/BlockRails.cs",
+        "line": 8
+      },
+      "BlockRainAmbient": {
+        "type": "BlockRainAmbient",
+        "path": "Block/BlockGlassPane.cs",
+        "line": 9
+      },
+      "BlockRandomizer": {
+        "type": "BlockRandomizer",
+        "path": "Systems/Loot/BlockRandomizer.cs",
+        "line": 9
+      },
+      "BlockReeds": {
+        "type": "BlockReeds",
+        "path": "Block/BlockReeds.cs",
+        "line": 12
+      },
+      "BlockRefractoryBrick": {
+        "type": "BlockRefractoryBrick",
+        "path": "Block/BlockRefractoryBrick.cs",
+        "line": 10
+      },
+      "BlockRequireFertileGround": {
+        "type": "BlockRequireFertileGround",
+        "path": "Block/BlockRequireFertileGround.cs",
+        "line": 10
+      },
+      "BlockRequireSolidGround": {
+        "type": "BlockRequireSolidGround",
+        "path": "Block/BlockRequireSolidGround.cs",
+        "line": 83
+      },
+      "BlockResonator": {
+        "type": "BlockResonator",
+        "path": "Systems/JonasDevices/BlockResonator.cs",
+        "line": 10
+      },
+      "BlockRiftWard": {
+        "type": "BlockRiftWard",
+        "path": "Systems/JonasDevices/BlockRiftWard.cs",
+        "line": 7
+      },
+      "BlockRockTyped": {
+        "type": "BlockRockTyped",
+        "path": "Block/BlockRockTyped.cs",
+        "line": 14
+      },
+      "BlockSapling": {
+        "type": "BlockSapling",
+        "path": "Block/BlockSapling.cs",
+        "line": 12
+      },
+      "BlockScrollRack": {
+        "type": "BlockScrollRack",
+        "path": "Block/BlockScrollRack.cs",
+        "line": 11
+      },
+      "BlockSeashell": {
+        "type": "BlockSeashell",
+        "path": "Block/BlockShell.cs",
+        "line": 10
+      },
+      "BlockSeaweed": {
+        "type": "BlockSeaweed",
+        "path": "Block/BlockSeaweed.cs",
+        "line": 42
+      },
+      "BlockShapeMaterialFromAttributes": {
+        "type": "BlockShapeMaterialFromAttributes",
+        "path": "Block/BlockShapeMaterialFromAttributes.cs",
+        "line": 16
+      },
+      "BlockShelf": {
+        "type": "BlockShelf",
+        "path": "Block/BlockShelf.cs",
+        "line": 10
+      },
+      "BlockSign": {
+        "type": "BlockSign",
+        "path": "Block/BlockSign.cs",
+        "line": 124
+      },
+      "BlockSignPost": {
+        "type": "BlockSignPost",
+        "path": "Block/BlockSignPost.cs",
+        "line": 11
+      },
+      "BlockSimpleCoating": {
+        "type": "BlockSimpleCoating",
+        "path": "Block/BlockSimpleCoating.cs",
+        "line": 8
+      },
+      "BlockSkep": {
+        "type": "BlockSkep",
+        "path": "Block/BlockSkep.cs",
+        "line": 13
+      },
+      "BlockSlab": {
+        "type": "BlockSlab",
+        "path": "Block/BlockSlab.cs",
+        "line": 8
+      },
+      "BlockSlabSnowRemove": {
+        "type": "BlockSlabSnowRemove",
+        "path": "Block/BlockSlabSnowRemove.cs",
+        "line": 10
+      },
+      "BlockSlantedRoofingHalf": {
+        "type": "BlockSlantedRoofingHalf",
+        "path": "Block/BlockSlantedRoofingHalf.cs",
+        "line": 8
+      },
+      "BlockSmeltedContainer": {
+        "type": "BlockSmeltedContainer",
+        "path": "Block/BlockSmeltedContainer.cs",
+        "line": 16
+      },
+      "BlockSmeltingContainer": {
+        "type": "BlockSmeltingContainer",
+        "path": "Block/BlockSmeltingContainer.cs",
+        "line": 11
+      },
+      "BlockSmoothTextureTransition": {
+        "type": "BlockSmoothTextureTransition",
+        "path": "Block/BlockFullCoating.cs",
+        "line": 13
+      },
+      "BlockSnow": {
+        "type": "BlockSnow",
+        "path": "Block/BlockSnow.cs",
+        "line": 9
+      },
+      "BlockSnowLayer": {
+        "type": "BlockSnowLayer",
+        "path": "Block/BlockSnowLayer.cs",
+        "line": 11
+      },
+      "BlockSoil": {
+        "type": "BlockSoil",
+        "path": "Block/BlockSoil.cs",
+        "line": 26
+      },
+      "BlockSoilDeposit": {
+        "type": "BlockSoilDeposit",
+        "path": "Block/BlockSoilDeposit.cs",
+        "line": 10
+      },
+      "BlockSpawner": {
+        "type": "BlockSpawner",
+        "path": "Block/BlockSpawner.cs",
+        "line": 11
+      },
+      "BlockSpurGear": {
+        "type": "BlockSpurGear",
+        "path": "Systems/MechanicalPower/Block/BlockSpurGear.cs",
+        "line": 10
+      },
+      "BlockStairs": {
+        "type": "BlockStairs",
+        "path": "Block/BlockStairs.cs",
+        "line": 8
+      },
+      "BlockStalagSection": {
+        "type": "BlockStalagSection",
+        "path": "Block/BlockStalagSection.cs",
+        "line": 14
+      },
+      "BlockStaticTranslocator": {
+        "type": "BlockStaticTranslocator",
+        "path": "Systems/JonasDevices/BlockStaticTranslocator.cs",
+        "line": 11
+      },
+      "BlockSticksLayer": {
+        "type": "BlockSticksLayer",
+        "path": "Block/BlockSticksLayer.cs",
+        "line": 8
+      },
+      "BlockStoneCoffinLid": {
+        "type": "BlockStoneCoffinLid",
+        "path": "Block/BlockStoneCoffinLid.cs",
+        "line": 10
+      },
+      "BlockStoneCoffinSection": {
+        "type": "BlockStoneCoffinSection",
+        "path": "Block/BlockStoneCoffinSection.cs",
+        "line": 15
+      },
+      "BlockSupportBeam": {
+        "type": "BlockSupportBeam",
+        "path": "Systems/SupportBeams/BlockSupportBeam.cs",
+        "line": 41
+      },
+      "BlockTapestry": {
+        "type": "BlockTapestry",
+        "path": "Block/BlockTapestry.cs",
+        "line": 105
+      },
+      "BlockTeleporter": {
+        "type": "BlockTeleporter",
+        "path": "Block/BlockTeleporter.cs",
+        "line": 10
+      },
+      "BlockTermiteMound": {
+        "type": "BlockTermiteMound",
+        "path": "Block/BlockTermiteMound.cs",
+        "line": 10
+      },
+      "BlockTicker": {
+        "type": "BlockTicker",
+        "path": "Block/BlockTicker.cs",
+        "line": 8
+      },
+      "BlockTileConnector": {
+        "type": "BlockTileConnector",
+        "path": "Block/BlockTileConnector.cs",
+        "line": 14
+      },
+      "BlockTinted": {
+        "type": "BlockTinted",
+        "path": "Block/BlockTinted.cs",
+        "line": 10
+      },
+      "BlockTobiasTeleporter": {
+        "type": "BlockTobiasTeleporter",
+        "path": "Block/BlockTobiasTeleporter.cs",
+        "line": 9
+      },
+      "BlockToggle": {
+        "type": "BlockToggle",
+        "path": "Systems/MechanicalPower/Block/BlockToggle.cs",
+        "line": 10
+      },
+      "BlockToolMold": {
+        "type": "BlockToolMold",
+        "path": "Block/BlockToolMold.cs",
+        "line": 17
+      },
+      "BlockToolRack": {
+        "type": "BlockToolRack",
+        "path": "Block/BlockToolRack.cs",
+        "line": 15
+      },
+      "BlockTorch": {
+        "type": "BlockTorch",
+        "path": "Block/BlockTorch.cs",
+        "line": 16
+      },
+      "BlockTorchHolder": {
+        "type": "BlockTorchHolder",
+        "path": "Block/BlockTorchHolder.cs",
+        "line": 9
+      },
+      "BlockTransmission": {
+        "type": "BlockTransmission",
+        "path": "Systems/MechanicalPower/Block/BlockTransmission.cs",
+        "line": 8
+      },
+      "BlockTrapdoor": {
+        "type": "BlockTrapdoor",
+        "path": "Block/BlockTrapdoor.cs",
+        "line": 8
+      },
+      "BlockTrough": {
+        "type": "BlockTrough",
+        "path": "Block/BlockTrough.cs",
+        "line": 117
+      },
+      "BlockTroughDoubleBlock": {
+        "type": "BlockTroughDoubleBlock",
+        "path": "Block/BlockTroughDoubleBlock.cs",
+        "line": 10
+      },
+      "BlockVariheight": {
+        "type": "BlockVariheight",
+        "path": "Block/BlockVariheight.cs",
+        "line": 8
+      },
+      "BlockVines": {
+        "type": "BlockVines",
+        "path": "Block/BlockVines.cs",
+        "line": 12
+      },
+      "BlockWater": {
+        "type": "BlockWater",
+        "path": "Block/BlockWater.cs",
+        "line": 13
+      },
+      "BlockWaterfall": {
+        "type": "BlockWaterfall",
+        "path": "Block/BlockWaterfall.cs",
+        "line": 11
+      },
+      "BlockWaterflowing": {
+        "type": "BlockWaterflowing",
+        "path": "Block/BlockWaterFlowing.cs",
+        "line": 14
+      },
+      "BlockWateringCan": {
+        "type": "BlockWateringCan",
+        "path": "Block/BlockWateringCan.cs",
+        "line": 12
+      },
+      "BlockWaterLily": {
+        "type": "BlockWaterLily",
+        "path": "Block/BlockWaterLily.cs",
+        "line": 11
+      },
+      "BlockWaterLilyGiant": {
+        "type": "BlockWaterLilyGiant",
+        "path": "Block/BlockWaterLily.cs",
+        "line": 67
+      },
+      "BlockWaterPlant": {
+        "type": "BlockWaterPlant",
+        "path": "Block/BlockWaterPlant.cs",
+        "line": 8
+      },
+      "BlockWaterwheel": {
+        "type": "BlockWaterWheel",
+        "path": "Systems/MechanicalPower/Block/BlockWaterWheel.cs",
+        "line": 11
+      },
+      "BlockWattleFence": {
+        "type": "BlockWattleFence",
+        "path": "Block/BlockWattleFence.cs",
+        "line": 10
+      },
+      "BlockWindmillRotor": {
+        "type": "BlockWindmillRotor",
+        "path": "Systems/MechanicalPower/Block/BlockWindmillRotor.cs",
+        "line": 9
+      },
+      "BlockWithGrassOverlay": {
+        "type": "BlockWithGrassOverlay",
+        "path": "Block/BlockWithGrassOverlay.cs",
+        "line": 10
+      },
+      "BlockWithLeavesMotion": {
+        "type": "BlockWithLeavesMotion",
+        "path": "Block/BlockWithLeavesMotion.cs",
+        "line": 14
+      },
+      "BlockWorldgenHook": {
+        "type": "BlockWorldgenHook",
+        "path": "Block/BlockWorldgenHook.cs",
+        "line": 9
+      },
+      "ToggleCollisionBox": {
+        "type": "BlockToggleCollisionBox",
+        "path": "BlockEntityBehavior/BEBehaviorToggleCollisionBox.cs",
+        "line": 9
+      }
+    },
+    "blockEntityBehavior": {
+      "Animatable": {
+        "type": "BEBehaviorAnimatable"
+      },
+      "AttractsLightning": {
+        "type": "BEBehaviorAttractsLightning",
+        "path": "BlockEntityBehavior/BEBehaviorAttractsLightning.cs",
+        "line": 26
+      },
+      "Burning": {
+        "type": "BEBehaviorBurning",
+        "path": "BlockEntityBehavior/BEBehaviorBurning.cs",
+        "line": 24
+      },
+      "CabinetDoors": {
+        "type": "BEBehaviorCabinetDoors",
+        "path": "BlockEntityBehavior/BEBehaviorCabinetDoors.cs",
+        "line": 58
+      },
+      "ClutterBookshelf": {
+        "type": "BEBehaviorClutterBookshelf",
+        "path": "Lore/ResoArchives/BEBehaviorClutterBookshelf.cs",
+        "line": 11
+      },
+      "ClutterBookshelfWithLore": {
+        "type": "BEBehaviorClutterBookshelfWithLore",
+        "path": "Lore/ResoArchives/BEBehaviorClutterBookshelfWithLore.cs",
+        "line": 12
+      },
+      "ContainedBagInventory": {
+        "type": "BEBehaviorContainedBagInventory",
+        "path": "BlockEntityBehavior/BEBehaviorContainedBagInventory.cs",
+        "line": 9
+      },
+      "ControlPointAnimatable": {
+        "type": "BEBehaviorControlPointAnimatable",
+        "path": "Lore/ResoArchives/BEBehaviorControlPointAnimatable.cs",
+        "line": 11
+      },
+      "ControlPointLampNode": {
+        "type": "BEBehaviorControlPointLampNode",
+        "path": "Lore/ResoArchives/BEBehaviorControlPointLampNode.cs",
+        "line": 18
+      },
+      "Coverable": {
+        "type": "BlockEntityBehaviorCoverable",
+        "path": "BlockEntityBehavior/BlockEntityBehaviorCoverable.cs",
+        "line": 26
+      },
+      "CropProp": {
+        "type": "BEBehaviorCropProp",
+        "path": "BlockEntityBehavior/BEBehaviorCropProp.cs",
+        "line": 100
+      },
+      "Display": {
+        "type": "BEBehaviorDisplay",
+        "path": "BlockEntityBehavior/BEBehaviorDisplay.cs",
+        "line": 24
+      },
+      "Door": {
+        "type": "BEBehaviorDoor",
+        "path": "BlockEntityBehavior/BEBehaviorDoor.cs",
+        "line": 31
+      },
+      "DoorBarLock": {
+        "type": "BEBehaviorDoorBarLock",
+        "path": "BlockEntityBehavior/BEBehaviorDoorBarLock.cs",
+        "line": 28
+      },
+      "Durability": {
+        "type": "BEBehaviorDurability",
+        "path": "BlockEntityBehavior/BEBehaviorDurability.cs",
+        "line": 10
+      },
+      "ElevatorControl": {
+        "type": "BEBehaviorElevatorControl",
+        "path": "BlockEntityBehavior/BEBehaviorElevatorControl.cs",
+        "line": 20
+      },
+      "FirepitAmbient": {
+        "type": "BEBehaviorFirepitAmbient",
+        "path": "BlockEntityBehavior/BEBehaviorFirepitAmbient.cs",
+        "line": 21
+      },
+      "FruitingBush": {
+        "type": "BEBehaviorFruitingBush",
+        "path": "Systems/Farming/BEBehaviorFruitingBush.cs",
+        "line": 17
+      },
+      "FruitingBushCutting": {
+        "type": "BEBehaviorFruitingBushCutting",
+        "path": "Systems/Farming/BEBehaviorFruitingBushCutting.cs",
+        "line": 10
+      },
+      "FruitingBushMesh": {
+        "type": "BEBehaviorFruitingBushMesh",
+        "path": "Systems/Farming/BEBehaviorFruitingBushMesh.cs",
+        "line": 10
+      },
+      "GiveItemPerPlayer": {
+        "type": "BEBehaviorGiveItemPerPlayer",
+        "path": "Lore/Lazaret/BlockGiveItemPerPlayer.cs",
+        "line": 59
+      },
+      "JonasBoilerDoor": {
+        "type": "BEBehaviorJonasBoilerDoor",
+        "path": "Lore/ResoArchives/BEBehaviorJonasBoilerDoor.cs",
+        "line": 12
+      },
+      "JonasGasifier": {
+        "type": "BEBehaviorJonasGasifier",
+        "path": "Lore/ResoArchives/BEBehaviorJonasGasifier.cs",
+        "line": 14
+      },
+      "JonasHydraulicPump": {
+        "type": "BEBehaviorJonasHydraulicPump",
+        "path": "Lore/ResoArchives/BEBehaviorJonasHydraulicPump.cs",
+        "line": 12
+      },
+      "Mannequin": {
+        "type": "BEBehaviorMannequin",
+        "path": "BlockEntityBehavior/BEBehaviorMannequin.cs",
+        "line": 10
+      },
+      "MaterialFromAttributes": {
+        "type": "BEBehaviorMaterialFromAttributes",
+        "path": "BlockEntityBehavior/BEBehaviorMaterialFromAttributes.cs",
+        "line": 10
+      },
+      "MicroblockSnowCover": {
+        "type": "BEBehaviorMicroblockSnowCover",
+        "path": "Systems/Microblock/BEBehaviorMicroblockSnowCover.cs",
+        "line": 12
+      },
+      "MPAngledGears": {
+        "type": "BEBehaviorMPAngledGears",
+        "path": "Systems/MechanicalPower/BlockEntityBehavior/BEBehaviorAngledGears.cs",
+        "line": 13
+      },
+      "MPArchimedesScrew": {
+        "type": "BEBehaviorMPArchimedesScrew",
+        "path": "Systems/MechanicalPower/BlockEntityBehavior/BEBehaviorArchimedesScrew.cs",
+        "line": 11
+      },
+      "MPAxle": {
+        "type": "BEBehaviorMPAxle",
+        "path": "Systems/MechanicalPower/BlockEntityBehavior/BEBehaviorAxle.cs",
+        "line": 15
+      },
+      "MPBrake": {
+        "type": "BEBehaviorMPBrake",
+        "path": "Systems/MechanicalPower/BlockEntityBehavior/BEBehaviorBrake.cs",
+        "line": 10
+      },
+      "MPConsumer": {
+        "type": "BEBehaviorMPConsumer",
+        "path": "Systems/MechanicalPower/BlockEntityBehavior/BEBehaviorMPConsumer.cs",
+        "line": 11
+      },
+      "MPCreativeRotor": {
+        "type": "BEBehaviorMPCreativeRotor",
+        "path": "Systems/MechanicalPower/BlockEntityBehavior/BEBehaviorCreativeRotor.cs",
+        "line": 12
+      },
+      "MPLargeGear3m": {
+        "type": "BEBehaviorMPLargeGear3m",
+        "path": "Systems/MechanicalPower/BlockEntityBehavior/BEBehaviorLargeGear3m.cs",
+        "line": 10
+      },
+      "MPPulverizer": {
+        "type": "BEBehaviorMPPulverizer",
+        "path": "Systems/MechanicalPower/BlockEntityBehavior/BEBehaviorPulverizer.cs",
+        "line": 11
+      },
+      "MPSpurGear": {
+        "type": "BEBehaviorMPSpurGear",
+        "path": "Systems/MechanicalPower/BlockEntityBehavior/BEBehaviorMPSpurGear.cs",
+        "line": 11
+      },
+      "MPToggle": {
+        "type": "BEBehaviorMPToggle",
+        "path": "Systems/MechanicalPower/BlockEntityBehavior/BEBehaviorToggle.cs",
+        "line": 12
+      },
+      "MPTransmission": {
+        "type": "BEBehaviorMPTransmission",
+        "path": "Systems/MechanicalPower/BlockEntityBehavior/BEBehaviorTransmission.cs",
+        "line": 12
+      },
+      "MPWaterWheel": {
+        "type": "BEBehaviorMPWaterWheel",
+        "path": "Systems/MechanicalPower/BlockEntityBehavior/BEBehaviorMPWaterWheel.cs",
+        "line": 16
+      },
+      "MPWindmillRotor": {
+        "type": "BEBehaviorWindmillRotor",
+        "path": "Systems/MechanicalPower/BlockEntityBehavior/BEBehaviorWindmillRotor.cs",
+        "line": 110
+      },
+      "RightClickConstructable": {
+        "type": "BEBehaviorRightClickConstructable",
+        "path": "Systems/MechanicalPower/BlockEntityBehavior/BEBehaviorRightClickConstructable.cs",
+        "line": 13
+      },
+      "RockRubbleFromAttributes": {
+        "type": "BEBehaviorRockRubbleFromAttributes",
+        "path": "BlockEntityBehavior/BEBehaviorRockRubbleFromAttributes.cs",
+        "line": 11
+      },
+      "RotatablePlaceable": {
+        "type": "BEBehaviorRotatablePlaceable",
+        "path": "BlockEntityBehavior/BEBehaviorRotatablePlaceable.cs",
+        "line": 9
+      },
+      "ShapeFromAttributes": {
+        "type": "BEBehaviorShapeFromAttributes",
+        "path": "BlockEntityBehavior/BEBehaviorShapeFromAttributes.cs",
+        "line": 68
+      },
+      "ShapeMaterialFromAttributes": {
+        "type": "BEBehaviorShapeMaterialFromAttributes",
+        "path": "BlockEntityBehavior/BEBehaviorShapeMaterialFromAttributes.cs",
+        "line": 10
+      },
+      "SupportBeam": {
+        "type": "BEBehaviorSupportBeam",
+        "path": "Systems/SupportBeams/BEBehaviorSupportBeam.cs",
+        "line": 15
+      },
+      "TemperatureSensitive": {
+        "type": "BEBehaviorTemperatureSensitive",
+        "path": "BlockEntityBehavior/BEBehaviorTemperatureSensitive.cs",
+        "line": 54
+      },
+      "ToggleCollisionBox": {
+        "type": "BEBehaviorToggleCollisionBox",
+        "path": "BlockEntityBehavior/BEBehaviorToggleCollisionBox.cs",
+        "line": 32
+      },
+      "TrapDoor": {
+        "type": "BEBehaviorTrapDoor",
+        "path": "BlockEntityBehavior/BEBehaviorTrapDoor.cs",
+        "line": 29
+      }
+    },
+    "collectibleBehavior": {
+      "ArtPigment": {
+        "type": "CollectibleBehaviorArtPigment",
+        "path": "CollectibleBehavior/BehaviorArtPigment.cs",
+        "line": 16
+      },
+      "BoatableCrate": {
+        "type": "CollectibleBehaviorBoatableCrate",
+        "path": "Block/BlockCrate.cs",
+        "line": 165
+      },
+      "BoatableGenericTypedContainer": {
+        "type": "CollectibleBehaviorBoatableGenericTypedContainer",
+        "path": "Block/BlockGenericTypedContainer.cs",
+        "line": 17
+      },
+      "CustomTongedShape": {
+        "type": "CollectibleBehaviorCustomTongedShape",
+        "path": "CollectibleBehavior/CollectibleBehaviorCustomTongedShape.cs",
+        "line": 14
+      },
+      "EntityDeconstructTool": {
+        "type": "CollectibleBehaviorEntityDeconstructTool",
+        "path": "CollectibleBehavior/CollectibleBehaviorEntityDeconstructTool.cs",
+        "line": 7
+      },
+      "GroundStorable": {
+        "type": "CollectibleBehaviorGroundStorable",
+        "path": "CollectibleBehavior/BehaviorGroundStorable.cs",
+        "line": 100
+      },
+      "GroundStoredHeldBag": {
+        "type": "CollectibleBehaviorGroundStoredHeldBag",
+        "path": "CollectibleBehavior/CollectibleBehaviorGroundStoredHeldBag.cs",
+        "line": 7
+      },
+      "GroundStoredProcessable": {
+        "type": "CollectibleBehaviorGroundStoredProcessable",
+        "path": "CollectibleBehavior/BehaviorGroundStoredProcessable.cs",
+        "line": 40
+      },
+      "HealingItem": {
+        "type": "CollectibleBehaviorHealingItem",
+        "path": "CollectibleBehavior/CollectibleBehaviorHealingItem.cs",
+        "line": 13
+      },
+      "Sharpenable": {
+        "type": "CollectibleBehaviorSharpenable",
+        "path": "CollectibleBehavior/CollectibleBehaviorSharpenable.cs",
+        "line": 8
+      },
+      "Squeezable": {
+        "type": "CollectibleBehaviorSqueezable",
+        "path": "CollectibleBehavior/BehaviorSqueezable.cs",
+        "line": 11
+      },
+      "TypedDisplayableProps": {
+        "type": "CollectibleBehaviorTypedDisplayableProps",
+        "path": "CollectibleBehavior/BehaviorDisplayableProps.cs",
+        "line": 14
+      },
+      "TypedTexture": {
+        "type": "CollectibleBehaviorTypedTexture",
+        "path": "CollectibleBehavior/CollectibleBehaviorTypedTexture.cs",
+        "line": 13
+      },
+      "Wearable": {
+        "type": "CollectibleBehaviorWearable",
+        "path": "CollectibleBehavior/BehaviorWearable.cs",
+        "line": 17
+      }
+    },
+    "blockEntity": {
+      "AnimalBasket": {
+        "type": "BlockEntityAnimalBasket",
+        "path": "BlockEntity/BEAnimalBasket.cs",
+        "line": 7
+      },
+      "AntlerMount": {
+        "type": "BlockEntityAntlerMount",
+        "path": "BlockEntity/BEAntlerMount.cs",
+        "line": 12
+      },
+      "Anvil": {
+        "type": "BlockEntityAnvil",
+        "path": "BlockEntity/BEAnvil.cs",
+        "line": 26
+      },
+      "AnvilPart": {
+        "type": "BlockEntityAnvilPart",
+        "path": "BlockEntity/BEAnvilPart.cs",
+        "line": 11
+      },
+      "ArchimedesScrew": {
+        "type": "BlockEntityArchimedesScrew",
+        "path": "Systems/MechanicalPower/BlockEntity/BEArchimedesScrew.cs",
+        "line": 7
+      },
+      "Barrel": {
+        "type": "BlockEntityBarrel",
+        "path": "Systems/Barrel/BEBarrel.cs",
+        "line": 13
+      },
+      "BaseReturnTeleporter": {
+        "type": "BlockEntityBaseReturnTeleporter",
+        "path": "Systems/JonasDevices/BlockBaseReturnTeleporter.cs",
+        "line": 13
+      },
+      "BasketTrap": {
+        "type": "BlockEntityAnimalTrap",
+        "path": "BlockEntity/BEAnimalTrap.cs",
+        "line": 42
+      },
+      "Bed": {
+        "type": "BlockEntityBed",
+        "path": "BlockEntity/BEBed.cs",
+        "line": 15
+      },
+      "Beehive": {
+        "type": "BlockEntityBeehive",
+        "path": "BlockEntity/BEBeehive.cs",
+        "line": 24
+      },
+      "BeeHiveKiln": {
+        "type": "BlockEntityBeeHiveKiln",
+        "path": "BlockEntity/BEBeeHiveKiln.cs",
+        "line": 17
+      },
+      "Bellows": {
+        "type": "BlockEntityBellows",
+        "path": "BlockEntity/BEBellows.cs",
+        "line": 12
+      },
+      "BerryBush": {
+        "type": "BlockEntityBerryBush",
+        "path": "Legacy/BlockEntity/BEBerryBush.cs",
+        "line": 16
+      },
+      "BerryBushFarmland": {
+        "type": "BlockEntityBerryBushFarmland",
+        "path": "BlockEntity/BEBerryBushFarmland.cs",
+        "line": 44
+      },
+      "BlockRandomizer": {
+        "type": "BlockEntityBlockRandomizer",
+        "path": "Systems/Loot/BlockEntityBlockRandomizer.cs",
+        "line": 15
+      },
+      "Bloomery": {
+        "type": "BlockEntityBloomery",
+        "path": "BlockEntity/BEBloomery.cs",
+        "line": 13
+      },
+      "Boiler": {
+        "type": "BlockEntityBoiler",
+        "path": "BlockEntity/BEBoiler.cs",
+        "line": 17
+      },
+      "Bomb": {
+        "type": "BlockEntityBomb",
+        "path": "BlockEntity/BEBomb.cs",
+        "line": 13
+      },
+      "Bookshelf": {
+        "type": "BlockEntityBookshelf",
+        "path": "BlockEntity/BEBookshelf.cs",
+        "line": 13
+      },
+      "Brake": {
+        "type": "BEBrake",
+        "path": "Systems/MechanicalPower/BlockEntity/BEBrake.cs",
+        "line": 12
+      },
+      "Bucket": {
+        "type": "BlockEntityBucket",
+        "path": "BlockEntity/BEBucket.cs",
+        "line": 13
+      },
+      "CharcoalPit": {
+        "type": "BlockEntityCharcoalPit",
+        "path": "BlockEntity/BECharcoalPit.cs",
+        "line": 20
+      },
+      "Cheese": {
+        "type": "BECheese",
+        "path": "BlockEntity/BECheese.cs",
+        "line": 11
+      },
+      "CheeseCurdsBundle": {
+        "type": "BECheeseCurdsBundle",
+        "path": "BlockEntity/BECheeseCurdsBundle.cs",
+        "line": 20
+      },
+      "Chisel": {
+        "type": "BlockEntityChisel",
+        "path": "Systems/Microblock/BEChisel.cs",
+        "line": 17
+      },
+      "ClayForm": {
+        "type": "BlockEntityClayForm",
+        "path": "BlockEntity/BEClayForm.cs",
+        "line": 20
+      },
+      "Clutch": {
+        "type": "BEClutch",
+        "path": "Systems/MechanicalPower/BlockEntity/BEClutch.cs",
+        "line": 17
+      },
+      "CoalPile": {
+        "type": "BlockEntityCoalPile",
+        "path": "BlockEntity/BECoalPile.cs",
+        "line": 16
+      },
+      "Commands": {
+        "type": "BlockEntityCommands",
+        "path": "BlockEntity/BEGuiConfigurableCommands.cs",
+        "line": 13
+      },
+      "Condenser": {
+        "type": "BlockEntityCondenser",
+        "path": "BlockEntity/BECondenser.cs",
+        "line": 13
+      },
+      "Conditional": {
+        "type": "BlockEntityConditional",
+        "path": "BlockEntity/BEConditional.cs",
+        "line": 12
+      },
+      "CookedContainer": {
+        "type": "BlockEntityCookedContainer",
+        "path": "Systems/Cooking/BECookedContainer.cs",
+        "line": 11
+      },
+      "CorpseReturnTeleporter": {
+        "type": "BlockEntityCorpseReturnTeleporter",
+        "path": "Systems/JonasDevices/BlockCorpseReturnTeleporter.cs",
+        "line": 17
+      },
+      "Crate": {
+        "type": "BlockEntityCrate",
+        "path": "BlockEntity/BECrate.cs",
+        "line": 15
+      },
+      "Crock": {
+        "type": "BlockEntityCrock",
+        "path": "BlockEntity/BECrock.cs",
+        "line": 14
+      },
+      "DeadCrop": {
+        "type": "BlockEntityDeadCrop",
+        "path": "BlockEntity/BEDeadCrop.cs",
+        "line": 21
+      },
+      "DisplayCase": {
+        "type": "BlockEntityDisplayCase",
+        "path": "BlockEntity/BEDisplayCase.cs",
+        "line": 14
+      },
+      "DynamicTreeBranch": {
+        "type": "BlockEntityFruitTreeBranch",
+        "path": "Systems/FruitTree/BEFruitTreeBranch.cs",
+        "line": 13
+      },
+      "DynamicTreeFoliage": {
+        "type": "BlockEntityFruitTreeFoliage",
+        "path": "Systems/FruitTree/BEFruitTreeFoliage.cs",
+        "line": 19
+      },
+      "Farmland": {
+        "type": "BlockEntityFarmland",
+        "path": "BlockEntity/BEFarmland.cs",
+        "line": 19
+      },
+      "Firepit": {
+        "type": "BlockEntityFirepit",
+        "path": "BlockEntity/Firepit/BEFirepit.cs",
+        "line": 17
+      },
+      "FirewoodPile": {
+        "type": "BlockEntityFirewoodPile",
+        "path": "Legacy/BlockEntity/BEFireWoodPile.cs",
+        "line": 10
+      },
+      "Forge": {
+        "type": "BlockEntityForge",
+        "path": "BlockEntity/BEForge.cs",
+        "line": 14
+      },
+      "FruitPress": {
+        "type": "BlockEntityFruitPress",
+        "path": "BlockEntity/BEFruitpress.cs",
+        "line": 49
+      },
+      "GenericContainer": {
+        "type": "BlockEntityGenericContainer",
+        "path": "BlockEntity/BEGenericContainer.cs",
+        "line": 12
+      },
+      "GenericTypedContainer": {
+        "type": "BlockEntityGenericTypedContainer",
+        "path": "BlockEntity/BEGenericTypedContainer.cs",
+        "line": 16
+      },
+      "GrindingWheel": {
+        "type": "BlockEntityGrindingWheel",
+        "path": "BlockEntity/BEGrindingWheel.cs",
+        "line": 18
+      },
+      "GroundStorage": {
+        "type": "BlockEntityGroundStorage",
+        "path": "BlockEntity/BEGroundStorage.cs",
+        "line": 18
+      },
+      "GuiConfigurableCommands": {
+        "type": "BlockEntityGuiConfigurableCommands",
+        "path": "BlockEntity/BEGuiConfigurableCommands.cs",
+        "line": 109
+      },
+      "HelveHammer": {
+        "type": "BEHelveHammer",
+        "path": "Systems/MechanicalPower/BlockEntity/BEHelveHammer.cs",
+        "line": 17
+      },
+      "HenBox": {
+        "type": "BlockEntityHenBox",
+        "path": "BlockEntity/BEHenBox.cs",
+        "line": 29
+      },
+      "IngotMold": {
+        "type": "BlockEntityIngotMold",
+        "path": "BlockEntity/BEIngotMold.cs",
+        "line": 23
+      },
+      "IngotPile": {
+        "type": "BlockEntityIngotPile",
+        "path": "Legacy/BlockEntity/BEIngotPile.cs",
+        "line": 11
+      },
+      "ItemFlow": {
+        "type": "BlockEntityItemFlow",
+        "path": "BlockEntity/BEItemFlow.cs",
+        "line": 16
+      },
+      "JonasLensTower": {
+        "type": "BEJonasLensTower",
+        "path": "Systems/JonasDevices/BlockJonasLensTower.cs",
+        "line": 61
+      },
+      "KnappingSurface": {
+        "type": "BlockEntityKnappingSurface",
+        "path": "BlockEntity/BEKnappingSurface.cs",
+        "line": 18
+      },
+      "LabeledChest": {
+        "type": "BlockEntityLabeledChest",
+        "path": "BlockEntity/BELabeledChest.cs",
+        "line": 14
+      },
+      "Lantern": {
+        "type": "BELantern",
+        "path": "BlockEntity/BELantern.cs",
+        "line": 14
+      },
+      "LargeGear3m": {
+        "type": "BELargeGear3m",
+        "path": "Systems/MechanicalPower/BlockEntity/BELargeGear3m.cs",
+        "line": 10
+      },
+      "Layer": {
+        "type": "BlockEntityLayer",
+        "path": "BlockEntity/BELayer.cs",
+        "line": 9
+      },
+      "LightningRod": {
+        "type": "BlockEntityLightningRod",
+        "path": "BlockEntity/BELightningRod.cs",
+        "line": 7
+      },
+      "LocustNest": {
+        "type": "BlockEntityLocustNest",
+        "path": "BlockEntity/BELocustNest.cs",
+        "line": 14
+      },
+      "Meal": {
+        "type": "BlockEntityMeal",
+        "path": "BlockEntity/BEMeal.cs",
+        "line": 14
+      },
+      "MechPoweredBellows": {
+        "type": "BlockEntityMechPoweredBellows",
+        "path": "BlockEntity/BlockEntityMechPoweredBellows.cs",
+        "line": 10
+      },
+      "MicroBlock": {
+        "type": "BlockEntityMicroBlock",
+        "path": "Systems/Microblock/BEMicroBlock.cs",
+        "line": 74
+      },
+      "MoldRack": {
+        "type": "BlockEntityMoldRack",
+        "path": "BlockEntity/BEVerticalRack.cs",
+        "line": 11
+      },
+      "MPMultiblock": {
+        "type": "BEMPMultiblock",
+        "path": "Systems/MechanicalPower/BlockEntity/BEMultiblock.cs",
+        "line": 10
+      },
+      "MusicTrigger": {
+        "type": "BlockEntityMusicTrigger",
+        "path": "Lore/ResoArchives/BlockEntityMusicTrigger.cs",
+        "line": 12
+      },
+      "Mycelium": {
+        "type": "BlockEntityMycelium",
+        "path": "BlockEntity/BEMycelium.cs",
+        "line": 65
+      },
+      "OmokTable": {
+        "type": "BlockEntityOmokTable",
+        "path": "BlockEntity/BEOmokTable.cs",
+        "line": 13
+      },
+      "Oven": {
+        "type": "BlockEntityOven",
+        "path": "Systems/Cooking/Clayoven/BEClayOven.cs",
+        "line": 21
+      },
+      "PeatPile": {
+        "type": "BlockEntityPeatPile",
+        "path": "Legacy/BlockEntity/BEPeatPile.cs",
+        "line": 10
+      },
+      "Pie": {
+        "type": "BlockEntityPie",
+        "path": "BlockEntity/BEPie.cs",
+        "line": 36
+      },
+      "PitKiln": {
+        "type": "BlockEntityPitKiln",
+        "path": "BlockEntity/BEPitKiln.cs",
+        "line": 19
+      },
+      "PlankPile": {
+        "type": "BlockEntityPlankPile",
+        "path": "Legacy/BlockEntity/BEPlankPile.cs",
+        "line": 11
+      },
+      "PlantContainer": {
+        "type": "BlockEntityPlantContainer",
+        "path": "BlockEntity/BEPlantContainer.cs",
+        "line": 22
+      },
+      "PlatePile": {
+        "type": "BlockEntityPlatePile",
+        "path": "Legacy/BlockEntity/BEPlatePile.cs",
+        "line": 12
+      },
+      "Pulverizer": {
+        "type": "BEPulverizer",
+        "path": "Systems/MechanicalPower/BlockEntity/BEPulverizer.cs",
+        "line": 17
+      },
+      "PumpkinVine": {
+        "type": "BlockEntityPumpkinVine",
+        "path": "BlockEntity/BEPumpkinVine.cs",
+        "line": 13
+      },
+      "Quern": {
+        "type": "BlockEntityQuern",
+        "path": "BlockEntity/BEQuern.cs",
+        "line": 16
+      },
+      "Resonator": {
+        "type": "BlockEntityResonator",
+        "path": "BlockEntity/BEResonator.cs",
+        "line": 14
+      },
+      "RiftWard": {
+        "type": "BlockEntityRiftWard",
+        "path": "BlockEntity/BERiftWard.cs",
+        "line": 12
+      },
+      "Sapling": {
+        "type": "BlockEntitySapling",
+        "path": "BlockEntity/BESapling.cs",
+        "line": 20
+      },
+      "ScrollRack": {
+        "type": "BlockEntityScrollRack",
+        "path": "BlockEntity/BEScrollRack.cs",
+        "line": 12
+      },
+      "Shelf": {
+        "type": "BlockEntityShelf",
+        "path": "BlockEntity/BEShelf.cs",
+        "line": 27
+      },
+      "Sign": {
+        "type": "BlockEntitySign",
+        "path": "BlockEntity/BESign.cs",
+        "line": 24
+      },
+      "SignPost": {
+        "type": "BlockEntitySignPost",
+        "path": "BlockEntity/BESignPost.cs",
+        "line": 13
+      },
+      "SmeltedContainer": {
+        "type": "BlockEntitySmeltedContainer",
+        "path": "BlockEntity/BESmeltedContainer.cs",
+        "line": 10
+      },
+      "SoilNutrition": {
+        "type": "BlockEntitySoilNutrition",
+        "path": "BlockEntity/BESoilNutrition.cs",
+        "line": 21
+      },
+      "Spawner": {
+        "type": "BlockEntitySpawner",
+        "path": "BlockEntity/BESpawner.cs",
+        "line": 179
+      },
+      "StaticTranslocator": {
+        "type": "BlockEntityStaticTranslocator",
+        "path": "BlockEntity/BEStaticTranslocator.cs",
+        "line": 17
+      },
+      "StoneCoffin": {
+        "type": "BlockEntityStoneCoffin",
+        "path": "BlockEntity/BEStoneCoffin.cs",
+        "line": 18
+      },
+      "Stove": {
+        "type": "BlockEntityStove",
+        "path": "BlockEntity/Unfinished/BEStove.cs",
+        "line": 5
+      },
+      "Tapestry": {
+        "type": "BlockEntityTapestry",
+        "path": "BlockEntity/BETapestry.cs",
+        "line": 13
+      },
+      "Teleporter": {
+        "type": "BlockEntityTeleporter",
+        "path": "BlockEntity/BETeleporter.cs",
+        "line": 211
+      },
+      "Ticker": {
+        "type": "BlockEntityTicker",
+        "path": "BlockEntity/BETicker.cs",
+        "line": 13
+      },
+      "TileConnector": {
+        "type": "BETileConnector",
+        "path": "BlockEntity/BETileConnector.cs",
+        "line": 12
+      },
+      "TobiasTeleporter": {
+        "type": "BlockEntityTobiasTeleporter",
+        "path": "BlockEntity/BETobiasTeleporter.cs",
+        "line": 15
+      },
+      "ToolMold": {
+        "type": "BlockEntityToolMold",
+        "path": "BlockEntity/BEToolMold.cs",
+        "line": 19
+      },
+      "ToolRack": {
+        "type": "BlockEntityToolrack",
+        "path": "BlockEntity/BEToolrack.cs",
+        "line": 14
+      },
+      "Torch": {
+        "type": "BlockEntityTorch",
+        "path": "BlockEntity/BETorch.cs",
+        "line": 7
+      },
+      "TorchHolder": {
+        "type": "BlockEntityTorchHolder",
+        "path": "BlockEntity/BETorchTorchholder.cs",
+        "line": 7
+      },
+      "Trough": {
+        "type": "BlockEntityTrough",
+        "path": "BlockEntity/BETrough.cs",
+        "line": 51
+      },
+      "WateringCan": {
+        "type": "BlockEntityWateringCan",
+        "path": "BlockEntity/BEWateringCan.cs",
+        "line": 14
+      },
+      "WildFruitingBush": {
+        "type": "BlockEntityWildFruitingBush",
+        "path": "BlockEntity/BEBerryBushFarmland.cs",
+        "line": 10
+      },
+      "WorldgenHook": {
+        "type": "BlockEntityWorldgenHook",
+        "path": "BlockEntity/BEWorldgenHook.cs",
+        "line": 11
+      }
+    }
+  }
+}

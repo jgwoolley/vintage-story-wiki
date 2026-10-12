@@ -16,6 +16,7 @@ eleventyComputed:
   <code>{{ cls.domain }}:{{ cls.code }}</code>
   &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ cls.sourceMod }}</a>
 </p>
+{% if cls.description %}<div class="card">{{ cls.description | replace("__LANG__", ('/' ~ lang ~ '/') | url) | safe }}</div>{% endif %}
 
 <h2>Traits</h2>
 {% if cls.traits.length %}

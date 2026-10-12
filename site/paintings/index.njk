@@ -16,7 +16,7 @@ permalink: "{{ lang }}/paintings/index.html"
 
 {% call dt.datatable(60, "Search paintings...", ["Name", "Mod"]) %}
 {% for item in generated.paintings | sort(false, false, "displayName") %}
-  <tr data-search="{{ item.domain }}:{{ item.code }}" data-mod="{{ item.sourceMod }}" data-mod-label="{{ generated.mods | modName(item.sourceMod) }}">
+  <tr data-search="{{ item.domain }}:{{ item.code }}" data-mod="{{ item.sourceMod }}" data-mod-label="{{ generated.mods | modName(item.sourceMod) }}"{{ dt.descriptionAttrs(item.description) }}>
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}paintings/{{ item.domain }}/{{ item.code | slugify }}/">{{ item.displayName }}</a></td>
     <td><span class="tag">{{ item.sourceMod }}</span></td>
   </tr>

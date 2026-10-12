@@ -1,4 +1,5 @@
 {
+  "$schema": "./vs-manifest.schema.json",
   "serverBranch": "stable",
   "serverVersion": "1.22.7",
   "mods": [
@@ -9,5 +10,9 @@
     { "modid": "nf3ttranslocatornavigator", "version": "2.0.0" },
     { "modid": "nf3tblueprintcopy", "version": "1.0.0" },
     { "modid": "nf3tsponge", "version": "2.0.0" }
+  ],
+  "includeItems": [
+    "survival:statictranslocator-*",
+    "survival:teleporterbase"
   ]
 }

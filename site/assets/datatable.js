@@ -1,6 +1,6 @@
-// Client-side search + category/mod/tag multi-select filters + column sort + pagination for
+// Client-side search + category/mod/tag/description multi-select filters + column sort + pagination for
 // table listings. Operates on plain DOM rows (<tr>, whatever) already rendered server-side -- no
-// data fetching. All of search/filters/sort (search text, the active values in each of the three
+// data fetching. All of search/filters/sort (search text, the active values in each of the four
 // filter dimensions, and the sorted column + direction) are kept in sync with the URL query
 // string so a filtered/sorted view can be bookmarked, shared, or revisited with back/forward
 // navigation. Pagination alone stays client-only, reset on reload.
@@ -100,6 +100,7 @@
       buildDimension("category", "category", "Category", null, false),
       buildDimension("mod", "mod", "Mod", "modLabel", false),
       buildDimension("tag", "tags", "Tags", null, true),
+      buildDimension("description", "description", "Description", "descriptionLabel", false),
     ];
     allDimensions.push(...dimensions);
 
@@ -125,7 +126,7 @@
       dim.toggle.textContent = dim.active.size ? `${dim.label} (${dim.active.size})` : dim.label;
     }
 
-    // Every active value across all three dimensions, regardless of which one, shown as a
+    // Every active value across all four dimensions, regardless of which one, shown as a
     // removable chip -- reuses the same visual style the old single-value tag chip used.
     function renderActiveChips() {
       if (!activeFiltersEl) return;

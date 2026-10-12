@@ -20,6 +20,8 @@ eleventyComputed:
   &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ item.sourceMod }}</a>
 </p>
 {% if item.missingTranslation %}<p class="warning">No display name found in any lang file &mdash; showing the raw code.</p>{% endif %}
+{% if item.includedByManifest %}<p class="muted">Listed explicitly in the wiki's <code>vs-manifest.json</code> (<code>includeItems</code>: <code>{{ item.includedByManifest }}</code>), so it has a page even if nothing else here links to it.</p>{% endif %}
+{% if item.description %}<div class="card">{{ item.description | safe }}</div>{% endif %}
 {% set blockDrops = generated.blockDropsById[item.domain ~ ':' ~ item.code] %}
 
 {% set itemTags = item.tags | default([]) %}
@@ -33,6 +35,32 @@ eleventyComputed:
       <td>{% for t in itemTags %}<a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}items/?tag={{ t | urlencode }}">{{ t }}</a>{% endfor %}</td>
     </tr>
     {% endif %}
+  </tbody>
+</table>
+{% endif %}
+
+{% if item.codeRefs %}
+{#- C# names this item/block's own JSON points at, linked to the implementing file via the
+    committed src/ingest/csharpClassMap.json (see scripts/map-csharp-classes.ts). -#}
+{% set codeRoleLabels = {
+  "class": ("Block class" if item.kind == "block" else "Item class"),
+  "entityClass": "Block entity",
+  "behavior": "Behavior",
+  "entityBehavior": "Block entity behavior"
+} %}
+<h2>Game logic (C#)</h2>
+<p class="muted">The C# classes this {{ item.kind }}'s JSON definition hands its behavior to. Files link to <a href="https://github.com/anegostudios/vssurvivalmod">vssurvivalmod</a> on GitHub, pinned to the commit the mapping was made from.</p>
+<table>
+  <thead><tr><th>Role</th><th>Name in JSON</th><th>C# type</th><th>Source file</th></tr></thead>
+  <tbody>
+  {% for ref in item.codeRefs %}
+    <tr>
+      <td>{{ codeRoleLabels[ref.role] }}</td>
+      <td><code>{{ ref.name }}</code></td>
+      <td>{% if ref.type %}<code>{{ ref.type }}</code>{% endif %}</td>
+      <td>{% if ref.url %}<a href="{{ ref.url }}"><code>{{ ref.path }}</code></a>{% else %}<span class="muted">Not in vssurvivalmod (engine, VSEssentials, or a mod DLL)</span>{% endif %}</td>
+    </tr>
+  {% endfor %}
   </tbody>
 </table>
 {% endif %}

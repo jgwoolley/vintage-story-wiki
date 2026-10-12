@@ -17,7 +17,7 @@ permalink: "{{ lang }}/classes/index.html"
 
 {% call dt.datatable(20, "Search classes...", ["Class", "Traits", "Gear", "Mod"]) %}
 {% for cls in generated.classes %}
-  <tr data-search="{{ cls.displayName }} {{ cls.code }} {{ cls.traits | join(' ') }}" data-mod="{{ cls.sourceMod }}" data-mod-label="{{ generated.mods | modName(cls.sourceMod) }}">
+  <tr data-search="{{ cls.displayName }} {{ cls.code }} {{ cls.traits | join(' ') }}" data-mod="{{ cls.sourceMod }}" data-mod-label="{{ generated.mods | modName(cls.sourceMod) }}"{{ dt.descriptionAttrs(cls.description) }}>
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}classes/{{ cls.domain }}/{{ cls.code | slugify }}/">{{ cls.displayName }}</a></td>
     <td>
       {% for code in cls.traits %}
@@ -40,7 +40,7 @@ permalink: "{{ lang }}/classes/index.html"
 </p>
 {% call dt.datatable(40, "Search traits...", ["Trait", "Type", "Effects", "Notes"]) %}
 {% for trait in generated.traits %}
-  <tr data-search="{{ trait.displayName }} {{ trait.code }}" data-category="{{ trait.type }}">
+  <tr data-search="{{ trait.displayName }} {{ trait.code }}" data-category="{{ trait.type }}"{{ dt.descriptionAttrs(trait.description) }}>
     <td>{{ trait.displayName }}</td>
     <td><span class="tag {% if trait.type == 'positive' %}tag-positive{% else %}tag-negative{% endif %}">{{ trait.type }}</span></td>
     <td>

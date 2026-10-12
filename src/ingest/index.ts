@@ -21,7 +21,7 @@ import { extractTraits, extractCharacterClasses } from "./models/classes.js";
 import { buildBlockCodeToSchematicIndex, buildSchematicToStructureIndex, findStructuresContaining } from "./structureContents.js";
 import { expandVariants } from "./variantExpander.js";
 import { buildLangResolver } from "./lang.js";
-import { buildItemIndex, attachItemMetadata } from "./crossref.js";
+import { buildItemIndex, attachItemMetadata, attachDescriptionsAndCodeRefs, includeManifestItems } from "./crossref.js";
 import { writeGenerated } from "./write.js";
 
 const SERVER_ASSETS_DIR = "vs_server/assets";
@@ -340,6 +340,12 @@ function main(): void {
   attachItemMetadata(itemIndex, index, ensureSpawnTarget);
   console.log(`  item index grown to ${itemIndex.size} after adding tagged-tool-only items`);
 
+  const includeMatches = includeManifestItems(itemIndex, index, manifest.includeItems ?? [], ensureSpawnTarget);
+  for (const [pattern, count] of includeMatches) {
+    if (count === 0) console.warn(`  ! vs-manifest.json includeItems pattern "${pattern}" matched no item/block variant`);
+  }
+  console.log(`  item index grown to ${itemIndex.size} after adding vs-manifest.json includeItems`);
+
   // Cross-reference each trade listing back onto the item it lists, same "give it a page even if
   // nothing else does" synthesis as everything else above -- a traded-only item (no recipe, no
   // drop, no worldgen spawn) would otherwise have no /items/ page at all.
@@ -391,6 +397,14 @@ function main(): void {
     if (entry.appearsInStructures.length) itemsWithStructures++;
   }
   console.log(`  ${itemsWithStructures}/${itemIndex.size} items/blocks found in at least one structure's schematics`);
+
+  console.log("== Attaching item descriptions + C# class references ==");
+  attachDescriptionsAndCodeRefs(itemIndex, index, lang);
+  const itemValues = [...itemIndex.values()];
+  console.log(
+    `  ${itemValues.filter((e) => e.description).length} with a description, ` +
+      `${itemValues.filter((e) => e.codeRefs?.some((r) => r.url)).length} with at least one linked C# file`
+  );
 
   const modSummaries: ModSummary[] = [
     { modid: "game", name: "Vintage Story (vanilla)", version: manifest.serverVersion, side: "Universal", hasCompiledCode: false, isVanilla: true },

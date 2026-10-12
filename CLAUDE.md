@@ -22,7 +22,12 @@ npm run clean        # rm -rf .scratch _site site/_data/generated
 
 `vssurvivalmod/` at the repo root (gitignored) is a clone of the game's C# source
 (`anegostudios/vssurvivalmod`), kept around purely as a reference for verifying display-name /
-spawn-condition logic against the real engine behavior — it's not part of the build.
+spawn-condition logic against the real engine behavior — it's not part of the build. It's also the
+input to `scripts/map-csharp-classes.ts`, a hand-run generator for the committed
+`src/ingest/csharpClassMap.json` (JSON class/behavior name → `.cs` file + line, pinned to the
+clone's commit), which item pages use for their "Game logic (C#)" links. The user explicitly does
+**not** want the C# source pulled into the project or the download/build pipeline. Only the
+mapping is committed; refresh it by re-running that script, don't fetch source in CI.
 
 ## The one bug you will probably rediscover
 
@@ -62,7 +67,10 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   (grouped in `src/ingest/index.ts` as `blockDrops`/`blockDropsById`, looked up live from `/items/`
   by `domain:code` — see below) are all deliberate carve-outs, synthesized via
   `ensureSpawnTarget(domain, code, kind)` in `src/ingest/index.ts` for things with no recipe and
-  (for the first three) no drop table. Paintings/tapestries/clothing (`models/decor.ts`) are a
+  (for the first three) no drop table. For one-off things no rule reaches at all (static
+  translocators, teleporters), don't write a new carve-out: add a `domain:code` glob to
+  `vs-manifest.json`'s `includeItems` (validated by `vs-manifest.schema.json`, which must stay in
+  sync with `VsManifest` in `types.ts`). Paintings/tapestries/clothing (`models/decor.ts`) are a
   separate, parallel carve-out that never joins the item index at all — they get their own
   dedicated top-level pages (`/paintings/`, `/tapestries/`, `/clothing/`) instead, each backed by
   its own filtered array (`generated.paintings`/`tapestries`/`clothing`, split from the combined
@@ -132,15 +140,18 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   hand-rolled per detail template — don't reintroduce that pattern, call the macro instead.
 - **Datatable pattern**: any listing page uses the `datatable(pageSize, placeholder, headers)`
   macro (`site/_includes/macros/datatable.njk`) wrapping
-  `<tr data-search data-category data-mod data-mod-label data-tags>` rows. `data-mod-label`
+  `<tr data-search data-category data-mod data-mod-label data-tags>` rows (plus
+  `{{ dt.descriptionAttrs(x.description) }}` on listings whose content can have a lang
+  description, which emits `data-description`/`data-description-label` for the 4th, "Description",
+  filter dimension). `data-mod-label`
   (optional) is the human mod name shown in the filter panel (`{{ generated.mods | modName(x.sourceMod) }}`)
   while `data-mod` stays the modid the filter actually matches on — add both together, every
-  `data-mod=` row in `site/` does. Category/mod/tag are all **multi-select** filter dimensions:
+  `data-mod=` row in `site/` does. Category/mod/tag/description are all **multi-select** filter dimensions:
   each renders as a button (`.datatable-filter-toggle`, labeled "Category"/"Mod"/"Tags") that opens
   a small checkbox panel (`.datatable-filter-panel`) listing every distinct value seen across the
   page's rows (for `tag`, `data-tags` is space-separated and split into individual tokens first,
   since one row can carry several tags). Checking several boxes within one dimension matches rows
-  with ANY of those checked values (OR within a dimension); the three dimensions plus the
+  with ANY of those checked values (OR within a dimension); the four dimensions plus the
   free-text search box are ANDed together, same as always. Every currently-active value, from any
   dimension, also renders as a removable chip in `.datatable-active-filters` below the controls
   row. A dimension's whole button+panel widget only hides when a page's rows carry *no* value at
@@ -220,12 +231,29 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   that was just clicked — clicking an already-open panel's toggle just closes it. If you add
   another click-to-open panel anywhere, follow this close-others-then-open-this pattern rather
   than a bare `hidden = !hidden` toggle, which lets multiple panels stack open simultaneously.
+- **3D voxel rendering has one shared core, `site/assets/voxelViewer.js`** (Three.js, vendored
+  from `node_modules` via `eleventy.config.js` passthrough + the importmap in `base.njk`, never a
+  CDN). It's generic: callers pass `{x,y,z,color}` voxels and restyle via `setStyle(fn)`.
+  `recipeVoxels.js` is the recipe adapter. When the schematic viewer from the user's separate
+  `vintage-story-schematic-preview` project gets merged in, write a schematic adapter (decoded
+  `Indices`/`BlockIds` → voxels, packed index `x = i & 0x3FF, z = (i >> 10) & 0x3FF, y = (i >> 20) & 0x3FF`)
+  on top of this core. Don't port that project's own one-`Mesh`-per-block Three.js r136 renderer
+  as a second 3D code path. Smithing patterns are NOT always 1 layer (22 of 48 have 2–5); don't
+  special-case by category, branch on `pattern.length`.
 - **Recipe voxel-pattern layers (smithing/clayforming/knapping) show one layer at a time**,
   selected via click-to-switch tabs (`.layer-switcher`/`.layer-tab`/`.layer-panel` in
-  `site/recipes/recipes.njk` + `site/assets/layers.js`) rather than stacking every layer's `<pre>`
-  block on the page at once — some recipes have a lot of layers (`clayoven` has 16), and the old
-  stacked rendering was hard to read as a shape. The tab bar only renders when there's more than
-  one layer (smithing recipes are always exactly 1 layer).
+  `site/recipes/recipes.njk` + `site/assets/layers.js`) rather than stacking every layer's slice
+  on the page at once. Some recipes have a lot of layers (`clayoven` has 16), and the old stacked
+  rendering was hard to read as a shape. The tab bar only renders when there's more than one layer.
+  `layers.js` fires a `layerchange` CustomEvent on the switcher, which is how the 3D view's "One
+  layer"/"Layer N and below" modes follow the tabs. The 2D slices and the 3D model are mutually
+  exclusive views (`recipeVoxels.js` owns the view/mode/layer state). The view/mode buttons reuse
+  the `.layer-tab` class for styling, so `layers.js` selects `.layer-tab[data-layer-index]`
+  specifically. Keep that selector narrow if you add more buttons there. All of these controls
+  live in one `.pattern-toolbar` (View / Show / Layer rows) inside the `.pattern-viewer`
+  container. The user wants the Layer tabs to look the same and sit in the same place in both
+  views, so inapplicable controls are `disabled`, never hidden (Show modes in 2D, Layer tabs in
+  3D "All layers"). Don't reintroduce hide/show toggling there.
 - **Mods can inject lang keys into a different domain's namespace**: a mod's own `lang/en.json`
   can author a key as a literal `"<domain>:<realkey>"` string (the colon is part of the flat key,
   not a nested object) to place that string under a *different* domain's lookup (confirmed real
@@ -262,8 +290,11 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   separate process invocations (separate CI workflow steps, possibly minutes apart), so
   `downloadTiming.json`/`ingestTiming.json`/`eleventyBuildTiming.json` (see `src/ingest/types.ts`)
   are the only thing that survives between them.
-- **Never commit unless explicitly asked.** This has held throughout the project's history; the
-  user commits their own work independently between sessions.
+- **Git is read-only for Claude.** Read operations (`git status`, `log`, `diff`, `show`, `blame`,
+  ...) are fine. Never run anything that writes to the repo's git state: no `commit`, `add`,
+  `stash`, `checkout`/`switch`, `reset`, `restore`, `rebase`, `merge`, `branch`, `tag`, `push`, and so on.
+  The user does all git writes themselves, between sessions. Leave changes as uncommitted edits in
+  the working tree.
 
 ## Where things are
 

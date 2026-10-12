@@ -12,7 +12,13 @@ document aimed at visitors; `CLAUDE.md` is for a future AI coding session pickin
 1. **`vs-manifest.json`** pins the vanilla server version/branch and the list of installed mods
    (`modid` + version). This is the single source of truth for what the wiki documents. Currently
    pinned to vanilla **1.22.7** plus two mods: **BetterRuins** (JSON-only) and **Stone Quarry**
-   (ships compiled code — see "Compiled-code mods" below).
+   (ships compiled code — see "Compiled-code mods" below). Its optional `includeItems` list
+   (`domain:code` globs, e.g. `"survival:statictranslocator-*"`) forces items/blocks into the item
+   index that no recipe/drop/worldgen/trade/dialogue rule reaches (`includeManifestItems` in
+   `crossref.ts`; ingest warns about patterns that match nothing). The file's shape is described
+   by `vs-manifest.schema.json` (JSON Schema draft-07), referenced from the manifest's own
+   `"$schema"` key so VS Code validates and autocompletes it with no extra setup. Keep the schema
+   in sync with `VsManifest` in `src/ingest/types.ts` when adding a field.
 2. **`npm run download`** (`scripts/download.ts`) reads that manifest, downloading the vanilla
    dedicated server into `vs_server/` and mod `.zip` files into `Mods/` (both gitignored) via
    Node's built-in `fetch`, the mods.vintagestory.at API, and the pure-JS `tar` package for
@@ -340,24 +346,58 @@ Info page for the visitor-facing version of that caveat.
   caveats (chance-as-weight, the full living-entity roster, the tapestry reroll mechanic).
 - **`/<lang>/research/`** — `RESEARCH.md` published the same way `INFO.md` → `/info/` already
   was (`eleventy.config.js`'s `researchHtml` global data, `md.render(readFileSync("RESEARCH.md"))`),
-  referenced from `/info/`. Investigation notes only — nothing on that page is implemented.
+  referenced from `/info/`. Investigation notes; each section says whether it has since been implemented.
 - **Header "Tools" dropdown** (`site/assets/nav.js`, next to the Info link) lists every
   individual tool (built and WIP) as a direct link, mirroring the home page's own expanded Tools
   section and `/tools/`'s own per-tool anchors.
 - **Sort state also round-trips through the URL** (`?sort=<colIndex>&dir=asc|desc`, numbered
   `sort2`/`dir2`/... the same way the filters are) — a sorted view can be bookmarked/shared just
   like a filtered one now, not just reset on reload.
-- **Smithing/clayforming/knapping recipe layers show one at a time**, via click-to-switch tabs
-  (`site/assets/layers.js`) instead of stacking every layer's `<pre>` block on the page at once —
-  some recipes (`clayoven`) have 16 layers, which was unreadable stacked.
+- **Smithing/clayforming/knapping recipe patterns have two views, one shown at a time**, inside
+  one bordered container: a toolbar with labeled View ("3D model | 2D layers"), Show (3D layer
+  mode) and Layer (tab per layer) groups, over a stage holding the 3D canvas or the 2D slice.
+  Controls that don't apply right now are disabled, never hidden, so the Layer tabs stay in the
+  same spot in both views. The chosen view is remembered across pages via `localStorage`.
+  - 2D: one flat slice grid per layer, picked with the Layer tabs (`site/assets/layers.js`).
+  - 3D: an interactive voxel model (orbit/zoom/pan) with three layer modes: "All layers", "One
+    layer", or "Layer N and below". The last two use the same Layer tabs, so the selected layer
+    carries over between views.
+  - The slice grids are plain server-rendered HTML. Without JS/WebGL the toggles stay hidden and
+    the 2D view is all that shows.
+  - `site/assets/voxelViewer.js` is the **generic renderer core** (`createVoxelViewer(container,
+    {voxels})` → `setStyle`/`pick`/`resetView`/`dispose`). It knows nothing about recipes and is
+    meant to be reused by the planned schematic viewer (RESEARCH.md topic 3). It uses one
+    `InstancedMesh` per opacity with per-instance colors and renders on demand only.
+    `site/assets/recipeVoxels.js` is the recipe-specific adapter: `pattern[layer][row][col]` →
+    `y = layer` (Layer 1 at the bottom), `z = row`, `x = col`.
+  - **Three.js is the project's only browser-side library dependency.** It's pinned exactly in
+    `package.json` (no `^`) and copied out of `node_modules/three` into `/assets/vendor/three/` by
+    `eleventy.config.js` passthrough. It's never loaded from a CDN. A global `<script
+    type="importmap">` in `layouts/base.njk` maps the bare `three` / `three/addons/` specifiers.
+    To add another Three.js addon, add it to that passthrough map.
 - **Every listing is one real `<table>`**, not a grid-list of plain links, with pagination, a
-  free-text search box, and — whenever rows carry a `data-category`/`data-mod`/`data-tags` — an
+  free-text search box, and — whenever rows carry a `data-category`/`data-mod`/`data-tags`/
+  `data-description` — an
   auto-populated multi-select filter panel for it (a button that opens a checkbox list; hidden only
   if no row has a value for that dimension at all — a single distinct value still shows it).
   Checking several boxes within one dimension matches rows with ANY of them (OR within a
-  dimension); category/mod/tag/free-text search are ANDed together across dimensions. Every active
+  dimension); category/mod/tag/description/free-text search are ANDed together across dimensions.
+  The Description filter ("Has description" / "No description", `?description=yes|no`) is on
+  items, clothing, paintings, classes and traits: whatever has a localized
+  `itemdesc-`/`blockdesc-`/`characterdesc-`/`traitdesc-` lang string. Every active
   value, from any dimension, also shows as a removable chip below the controls row. Sections with
   zero rows (e.g. an item with no known recipe) are omitted entirely rather than shown empty.
+- **Item/block pages show their description and a "Game logic (C#)" table.** The table lists the
+  C# names the item's own JSON points at (`class`, `entityClass`, `behaviors`, `entityBehaviors`)
+  and links each one to its implementing `.cs` file on GitHub.
+  - The name-to-file mapping is a committed snapshot, `src/ingest/csharpClassMap.json`, generated
+    by hand with `npx tsx scripts/map-csharp-classes.ts`. The script reads the local gitignored
+    `vssurvivalmod/` clone and matches each `api.Register...Class("Name", typeof(Type))` call to
+    the file declaring `Type`.
+  - Links are pinned to the clone's commit, so line anchors stay right. The C# source never enters
+    the build.
+  - Names implemented outside vssurvivalmod (VSEssentials, the engine, mod DLLs) show unlinked.
+  - Re-run the script after updating the clone, e.g. on a game version bump.
 - **All filter state lives in the URL** (`?q=`, and `?category=`/`?mod=`/`?tag=` as
   comma-separated lists of active values, e.g. `?category=block,item&tag=tool,weapon`, numbered
   `q2`/`category2`/... for a 2nd+ table on the same page) via `history.replaceState`, so a

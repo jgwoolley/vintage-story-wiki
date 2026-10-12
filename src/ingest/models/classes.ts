@@ -51,6 +51,13 @@ export function extractTraits(index: AssetIndex, lang: LangResolver): TraitInfo[
   return out.sort((a, b) => a.code.localeCompare(b.code));
 }
 
+// characterdesc-<code> is game rich text: an italic flavor quote wrapped in <font color=...>, a
+// <br><br>, then plain prose. <i>/<br> are valid HTML and kept; the color-only <font> wrapper is
+// dropped (it would fight the site's own light/dark palette).
+function classDescription(raw: string | undefined): string | undefined {
+  return raw ? rewriteHandbookLinks(raw).replace(/<\/?font\b[^>]*>/gi, "") : undefined;
+}
+
 /**
  * Player starting classes (`config/characterclasses.json`) -- same single-file, no-variant shape
  * as `extractTraits`. Gear codes are bare item codes (no domain prefix in the source file) --
@@ -75,6 +82,7 @@ export function extractCharacterClasses(index: AssetIndex, lang: LangResolver): 
         domain: asset.domain,
         sourceMod: asset.modid,
         displayName: lang.raw(asset.domain, `characterclass-${c.code}`) ?? c.code,
+        description: classDescription(lang.raw(asset.domain, `characterdesc-${c.code}`)),
         traits: c.traits ?? [],
         gear,
       });
