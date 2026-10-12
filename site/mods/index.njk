@@ -3,9 +3,11 @@ title: Mods - Vintage Story Wiki
 layout: layouts/base.njk
 permalink: "{{ lang }}/mods/index.html"
 ---
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Mods"}]) }}
 <h1>Mods</h1>
 <p>This wiki was generated from vanilla game data plus the following installed mods.</p>
-<p class="muted">Source: each mod's own <code>modinfo.json</code> (name/version/side/type/website/authors/description); the mod name links out to its mods.vintagestory.at listing when that's been cached by <code>npm run download</code> (re-run it to pick this up for mods downloaded before this existed).</p>
+<p class="muted">Source: each mod's own <code>modinfo.json</code> (name/version/side/type/website/authors/description); the mod name links out to its mods.vintagestory.at listing when that's been cached by <code>npm run download</code> (re-run it to pick this up for mods downloaded before this existed). <a href="{{ ('/' ~ lang ~ '/') | url }}sources/mods/">Full details &rarr;</a></p>
 
 <table>
   <thead><tr><th>Mod</th><th>Version</th><th>Side</th><th>Type</th><th>Authors</th><th>Notes</th></tr></thead>
@@ -13,7 +15,7 @@ permalink: "{{ lang }}/mods/index.html"
   {% for mod in generated.mods %}
     <tr>
       <td>
-        {% if mod.logoUrl %}<img src="{{ mod.logoUrl }}" alt="" class="mod-icon" width="24" height="24" loading="lazy">{% endif %}
+        {% if mod.logoUrl %}<img src="{{ mod.logoUrl }}" alt="" class="mod-icon" width="96" height="96" loading="lazy">{% endif %}
         {% if mod.assetid %}<a href="https://mods.vintagestory.at/show/mod/{{ mod.assetid }}">{{ mod.name }}</a>{% else %}{{ mod.name }}{% endif %}
         <span class="tag">{{ mod.modid }}</span>
         {% if mod.website %}&middot; <a href="{{ mod.website }}">source</a>{% endif %}

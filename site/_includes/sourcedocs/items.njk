@@ -1,0 +1,29 @@
+<div class="coverage-note">
+<p><strong>Not a registry dump.</strong> An item/block only gets a page here if it's reachable from at
+least one of: a recipe (input or output), a block/creature drop table, a worldgen spawn rule (ore
+deposit, crop/flower patch, tree, fruit tree), a trader's buy/sell list, an NPC dialogue reward, or
+a recipe ingredient's own tool-tag (e.g. <code>tool-hammer</code>). An item that exists in the raw
+game files but satisfies none of those (pure creative-mode novelties, debug items, etc.) will not
+appear.</p>
+</div>
+
+<p>
+<code>src/ingest/crossref.ts</code> builds the base index by walking every normalized recipe
+(input/output codes) and every flattened loot entry (drop codes). Six later passes in
+<code>src/ingest/index.ts</code> then widen it, each via the same
+<code>ensureSpawnTarget(domain, code, kind)</code> synthesis -- "give this code a page even
+though the recipe/loot walk alone never would have":
+</p>
+<ul>
+  <li>ore/gem/rock deposits (<code>models/deposits.ts</code>) -- a block with no recipe and no drop table still needs a page to answer "where do I find this"</li>
+  <li>crop/flower/mushroom spawn patches (<code>models/blockpatches.ts</code>)</li>
+  <li>tree and fruit-tree spawn bands (<code>models/trees.ts</code>)</li>
+  <li>block-drop-only blocks (break a block, get an item, with no recipe producing that block)</li>
+  <li>tagged tools (<code>attachItemMetadata</code> in <code>crossref.ts</code> -- only ~23 files in the whole game declare a <code>tags</code> array at all)</li>
+  <li>trader-only and NPC-dialogue-reward-only items (nothing else references them, but a trade listing or a reward still deserves a page)</li>
+</ul>
+<p>
+Paintings, tapestries, and clothing are a deliberate, separate exception: they never join this
+index at all, since they're pure decor with no recipe/drop/worldgen tie -- they get their own
+dedicated catalogs instead (see their own source pages).
+</p>

@@ -1,0 +1,13 @@
+<p>
+Each deposit file lists one or more mineral/rock entries, each with a host-rock reference
+(<code>attributes.inblock</code>, sometimes a wildcard covering many rock types via
+<code>allowedVariants</code>) and a placed-block template (<code>attributes.placeblock</code>)
+that may itself vary by grade (poor/medium/rich/bountiful). Every host-rock × grade combination is
+expanded into its own concrete block code so a page like "chromite in andesite" is distinct from
+"chromite in kimberlite", since real grade ranges genuinely differ per rock.
+</p>
+<p>
+This is a worldgen-only catalog: it covers every rock/grade combination the deposit files declare,
+regardless of whether that exact block is otherwise reachable from a recipe or drop table (most
+aren't, directly -- you mine the ore block first).
+</p>

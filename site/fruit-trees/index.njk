@@ -4,6 +4,8 @@ layout: layouts/base.njk
 permalink: "{{ lang }}/fruit-trees/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Fruit Trees"}]) }}
 <h1>Fruit Trees</h1>
 <p class="muted">
   Fruit tree varieties are a distinct worldgen system from regular
@@ -11,7 +13,7 @@ permalink: "{{ lang }}/fruit-trees/index.html"
   per variety, with no forest-density or soil-fertility requirement, read directly from the
   game's worldgen rules.
 </p>
-<p class="muted">Source: <code>blocktypes/plant/fruittreebranch.json</code>'s <code>attributes.worldgen</code> array.</p>
+<p class="muted">Source: <code>blocktypes/plant/fruittreebranch.json</code>'s <code>attributes.worldgen</code> array. <a href="{{ ('/' ~ lang ~ '/') | url }}sources/fruit-trees/">Full details &rarr;</a></p>
 
 <h2>Fruit varieties ({{ generated.fruitTrees.length }})</h2>
 {% call dt.datatable(40, "Search fruit varieties...", ["Fruit", "Temp (°C)", "Rain", "Mod"]) %}

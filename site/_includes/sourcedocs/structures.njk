@@ -1,0 +1,22 @@
+<p>
+All 4 structure registries (plain structures, villages, story structures, and the separate
+"hook-generated" family) are normalized into one common shape. Each entry's schematic file
+reference is a glob itself (e.g. <code>ruins/undergroundruin-small-*.json</code>) -- resolved
+against the real schematic file listing (headers only: dimensions and the small
+<code>BlockCodes</code> palette dictionary, never the actual per-block voxel/BlockEntities data,
+which stays unparsed here for size reasons) to report real dimensions and a block-code inventory
+per matching file.
+</p>
+<div class="coverage-note">
+<p><strong>Spawn <code>chance</code> is sometimes a relative weight, not a probability.</strong>
+When several entries share one <code>code</code> (e.g. a structure's own small/medium/large size
+variants), <code>chance</code> is a weight among those siblings and can be well above 1 -- shown
+as a labeled raw weight rather than a nonsensical "1300%"-style percentage in that case.</p>
+</div>
+<p>
+Cross-referencing which structures contain a given block/item code (used by every item page's
+"Found in structures" section, and precisely by the tapestries page) is a flat pass over every
+schematic's <code>BlockCodes</code> dictionary -- it confirms a code is <em>somewhere</em> in a
+matching schematic, not where or how many times, except for tapestries/wallcarvings specifically,
+which get a real per-instance decode (see the tapestries source page).
+</p>

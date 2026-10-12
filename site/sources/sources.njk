@@ -1,0 +1,31 @@
+---
+pagination:
+  data: pipelineSources
+  size: 1
+  alias: src
+permalink: "{{ lang }}/sources/{{ src.id }}/index.html"
+layout: layouts/base.njk
+eleventyComputed:
+  title: "How {{ src.title }} was built - Vintage Story Wiki"
+---
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Sources", url: "sources/"}, {label: src.title}]) }}
+
+<h1>How <a href="{{ ('/' ~ lang ~ '/') | url }}{{ src.listingUrl }}">{{ src.title }}</a> was built</h1>
+
+<h2>Raw game files read</h2>
+<ul>
+{% for g in src.globs %}
+  <li><code>{{ g }}</code></li>
+{% endfor %}
+</ul>
+
+<h2>Processing</h2>
+{% include "sourcedocs/" + src.id + ".njk" %}
+
+<h2>Pipeline code</h2>
+<ul>
+{% for f in src.modelFiles %}
+  <li>{% if buildInfo.repoSlug %}<a href="https://github.com/{{ buildInfo.repoSlug }}/blob/main/{{ f }}"><code>{{ f }}</code></a>{% else %}<code>{{ f }}</code>{% endif %}</li>
+{% endfor %}
+</ul>

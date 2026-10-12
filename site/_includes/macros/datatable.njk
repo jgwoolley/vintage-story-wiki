@@ -1,20 +1,25 @@
 {#
-  One real <table> per listing, with pagination, free-text search, and -- whenever rows carry a
-  `data-category`/`data-mod` -- an auto-populated <select> filtering on it (hidden only if no row
-  has a value for that dimension at all; a single distinct value still shows the dropdown, since
-  that's what makes it start working immediately for free once a 2nd value appears). A 4th,
-  separate filter dimension exists for tags specifically (`data-tags`, space-separated, exact-token
-  match via the `?tag=` URL param rather than the free-text `?q=` substring search) -- it has no
-  <select> of its own since there's no small fixed set of tags to populate one from; it renders as
-  a removable chip only when a `tag` param is actually active (see datatable.js). All filters sync
-  to URL query params (q/category/mod/tag, numbered q2/category2/mod2/tag2 etc for the 2nd+
-  datatable on the same page) so a filtered view can be bookmarked/shared and survives
-  back/forward navigation -- see datatable.js.
+  One real <table> per listing, with pagination, free-text search, and three multi-value filter
+  dimensions -- category, mod, and tag -- each rendered as a button that opens a small checkbox
+  panel (see datatable.js) populated from whatever `data-category`/`data-mod`/`data-tags` values
+  are actually present on the rows. Checking several boxes in one dimension matches rows with ANY
+  of those values (OR within a dimension); the three dimensions (plus the free-text search) are
+  ANDed together, same as before. A dimension's whole button+panel widget is hidden only if no row
+  has a value for it at all (a single distinct value still shows it, since that's what makes it
+  start working immediately for free once a 2nd value appears). `data-tags` is space-separated and
+  matched per-token (exact match, not the free-text `?q=` substring search) -- a row can carry
+  several tags and match on any one of them. Every active value across all three dimensions also
+  renders as a removable chip below the controls row, regardless of which dimension it came from.
+  All filters sync to URL query params as comma-separated lists (`?category=rock,ore`), numbered
+  q2/category2/mod2/tag2 etc for the 2nd+ datatable on the same page, so a filtered view can be
+  bookmarked/shared and survives back/forward navigation -- see datatable.js. Only one filter
+  panel is ever open at a time, across every dimension and every datatable instance on the page --
+  opening one closes any other that was open, rather than letting several stack up.
   Pass `headers` for the <thead> and have the caller emit
   <tr data-search="..." data-category="..." data-mod="..." data-mod-label="..." data-tags="...">
   <td>...</td>...</tr> rows (any of these data-* attributes can be omitted when not meaningful
   for that listing). `data-mod` is the modid the filter matches on; `data-mod-label` (optional) is
-  the human-readable name shown in the dropdown instead (e.g. "BetterRuins" instead of
+  the human-readable name shown in the panel instead (e.g. "BetterRuins" instead of
   "betterruins") -- see the `modName` filter in `eleventy.config.js`, used as
   `{{ generated.mods | modName(x.sourceMod) }}`. Falls back to the raw modid when omitted.
   When the caller produces zero rows, the whole widget (including any surrounding heading the page
@@ -22,15 +27,28 @@
   renders the table shell since it doesn't know the row count up front.
   Every header is clickable to sort the (filtered) rows by that column's cell text (numeric-aware;
   click again to reverse, a 3rd click returns to unsorted) -- see datatable.js, no data-* opt-in
-  needed, this applies to every datatable automatically.
+  needed, this applies to every datatable automatically. The sorted column/direction also syncs to
+  the URL (`?sort=<colIndex>&dir=asc|desc`, numbered the same way as the filters), the same
+  bookmarkable treatment the filters get.
 #}
 {% macro datatable(pageSize, placeholder, headers) %}
 <div class="datatable" data-page-size="{{ pageSize or 50 }}">
   <div class="datatable-controls">
     <input type="search" class="datatable-search" placeholder="{{ placeholder or 'Search...' }}" aria-label="{{ placeholder or 'Search' }}">
-    <select class="datatable-category-filter" aria-label="Filter by category"></select>
-    <select class="datatable-mod-filter" aria-label="Filter by mod"></select>
+    <div class="datatable-filter" data-filter-dimension="category">
+      <button type="button" class="datatable-filter-toggle" aria-haspopup="true" aria-expanded="false">Category</button>
+      <div class="datatable-filter-panel" hidden></div>
+    </div>
+    <div class="datatable-filter" data-filter-dimension="mod">
+      <button type="button" class="datatable-filter-toggle" aria-haspopup="true" aria-expanded="false">Mod</button>
+      <div class="datatable-filter-panel" hidden></div>
+    </div>
+    <div class="datatable-filter" data-filter-dimension="tag">
+      <button type="button" class="datatable-filter-toggle" aria-haspopup="true" aria-expanded="false">Tags</button>
+      <div class="datatable-filter-panel" hidden></div>
+    </div>
   </div>
+  <div class="datatable-active-filters" data-datatable-active-filters></div>
   <table>
     {% if headers %}<thead><tr>{% for h in headers %}<th class="datatable-sortable" data-col="{{ loop.index0 }}"><span class="datatable-th-label">{{ h | safe }}</span></th>{% endfor %}</tr></thead>{% endif %}
     <tbody data-datatable-items>

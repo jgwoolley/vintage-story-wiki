@@ -8,7 +8,8 @@ layout: layouts/base.njk
 eleventyComputed:
   title: "{{ recipe | recipeTitle(generated.items) }} - Vintage Story Wiki"
 ---
-<div class="breadcrumb"><a href="{{ ('/' ~ lang ~ '/') | url }}recipes/">&larr; All recipes</a> <span class="tag">{{ recipe.category }}</span></div>
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Recipes", url: "recipes/"}, {label: recipe | recipeTitle(generated.items)}]) }}
 
 <h1>{{ recipe | recipeTitle(generated.items) }}</h1>
 {% if not recipe.name %}<p class="muted">This category has no recipe names of its own in the game data &mdash; titled here after its output item.</p>{% endif %}
@@ -42,11 +43,21 @@ eleventyComputed:
     {% endfor %}
   </div>
 {% elif recipe.category == "smithing" or recipe.category == "clayforming" or recipe.category == "knapping" %}
-  {% for layer in recipe.raw.pattern %}
-    <p class="muted">Layer {{ loop.index }}</p>
-    <pre>{% for row in layer %}{{ row }}
+  <div class="layer-switcher">
+    {% if recipe.raw.pattern.length > 1 %}
+    <div class="layer-tabs" role="tablist">
+      {% for layer in recipe.raw.pattern %}
+        <button type="button" class="layer-tab{% if loop.first %} active{% endif %}" data-layer-index="{{ loop.index0 }}">Layer {{ loop.index }}</button>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="muted">Layer 1</p>
+    {% endif %}
+    {% for layer in recipe.raw.pattern %}
+      <pre class="layer-panel" data-layer-index="{{ loop.index0 }}" {% if not loop.first %}hidden{% endif %}>{% for row in layer %}{{ row }}
 {% endfor %}</pre>
-  {% endfor %}
+    {% endfor %}
+  </div>
 {% endif %}
 
 <h2>Ingredients</h2>

@@ -97,12 +97,28 @@ permalink: "{{ lang }}/index.html"
   </a>
 </div>
 
-<h2>Coming soon</h2>
-<p class="muted">Not yet extracted -- see each page for where the underlying game data lives.</p>
+<h2>Tools</h2>
+<p class="muted">Interactive tools beyond the generated reference pages -- some built, some still planned. See <a href="{{ ('/' ~ lang ~ '/') | url }}tools/">the tools page</a> for full descriptions.</p>
 <div class="grid-list">
-  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/">
-    <strong>Tools <span class="wip-badge">WIP</span></strong>
-    <span class="muted">Interactive tools beyond the generated reference pages.</span>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}trades/">
+    <strong>Trades price guide</strong>
+    <span class="muted">Every trader's buy/sell listings, flattened into one sortable table.</span>
+  </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/#schematic-vieweruploader">
+    <strong>Schematic viewer/uploader <span class="wip-badge">WIP</span></strong>
+    <span class="muted">Upload and view a .json schematic file in the browser.</span>
+  </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/#paintingtapestry-in-ruins-lookup">
+    <strong>Painting/tapestry-in-ruins lookup <span class="wip-badge">WIP</span></strong>
+    <span class="muted">Which specific ruin variants place a given painting or tapestry.</span>
+  </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/#alloy-ratio-calculator">
+    <strong>Alloy ratio calculator <span class="wip-badge">WIP</span></strong>
+    <span class="muted">Max crucible bits for a target alloy ratio, given item-stack limits.</span>
+  </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/#worldgen-seedbiome-lookup">
+    <strong>World seed/biome lookup <span class="wip-badge">WIP</span></strong>
+    <span class="muted">Plug in a seed + worldgen settings, get the biome/temperature/rain there.</span>
   </a>
 </div>
 
@@ -116,5 +132,9 @@ permalink: "{{ lang }}/index.html"
   <a href="{{ ('/' ~ lang ~ '/') | url }}info/">
     <strong>Info</strong>
     <span class="muted">Why this wiki exists, and how to use it.</span>
+  </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}sources/">
+    <strong>Sources</strong>
+    <span class="muted">Exactly which raw game files feed each page, and how.</span>
   </a>
 </div>

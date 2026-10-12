@@ -1,0 +1,15 @@
+<p>
+Every recipe file under the 7 category directories above is read and normalized into one common
+shape (ingredients, output, category). Grid recipes keep their shaped-pattern slot layout;
+smithing/clayforming/knapping recipes keep their voxel <code>pattern</code> (rows of
+<code>#</code>/<code>_</code> per layer, used by the item page's layer preview); alloy/barrel/
+cooking recipes keep their ratio-range ingredients (<code>minratio</code>/<code>maxratio</code>).
+Ingredient/output codes with an unresolved <code>*</code> wildcard or <code>{placeholder}</code>
+are expanded against the recipe's own <code>allowedVariants</code> (or the matching block/item
+file's variant groups) wherever that's resolvable, rather than left as a literal template string.
+</p>
+<p>
+Recipes with no name of their own in the game data (alloy, barrel, cooking, knapping, smithing,
+clayforming never have one) are titled after their output item and labeled "(Item Recipe)" on
+this wiki, so it's clear that's a derived title, not a second real name for the item.
+</p>

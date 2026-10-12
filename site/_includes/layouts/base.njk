@@ -28,6 +28,8 @@ description: A statically-generated wiki of Vintage Story crafting recipes, drop
   <link rel="stylesheet" href="{{ '/' | url }}assets/style.css">
   <script src="{{ '/' | url }}assets/datatable.js" defer></script>
   <script src="{{ '/' | url }}assets/build-time.js" defer></script>
+  <script src="{{ '/' | url }}assets/nav.js" defer></script>
+  <script src="{{ '/' | url }}assets/layers.js" defer></script>
 </head>
 <body>
   <header class="site-header">
@@ -36,6 +38,17 @@ description: A statically-generated wiki of Vintage Story crafting recipes, drop
       <a href="{{ ('/' ~ lang ~ '/') | url }}items/">Items</a>
       <a href="{{ ('/' ~ lang ~ '/') | url }}recipes/">Recipes</a>
     </nav>
+    <div class="nav-dropdown">
+      <button type="button" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Tools</button>
+      <div class="nav-dropdown-panel" hidden>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}trades/">Trades price guide</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}tools/#schematic-vieweruploader">Schematic viewer/uploader <span class="wip-badge">WIP</span></a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}tools/#paintingtapestry-in-ruins-lookup">Painting/tapestry lookup <span class="wip-badge">WIP</span></a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}tools/#alloy-ratio-calculator">Alloy ratio calculator <span class="wip-badge">WIP</span></a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}tools/#worldgen-seedbiome-lookup">World seed/biome lookup <span class="wip-badge">WIP</span></a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}tools/">All tools &rarr;</a>
+      </div>
+    </div>
     <a class="nav-info" href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a>
   </header>
   <main class="content">
@@ -44,7 +57,7 @@ description: A statically-generated wiki of Vintage Story crafting recipes, drop
   <footer class="site-footer">
     <p>
       Generated
-      {% if buildInfo.commitUrl %}<a href="{{ buildInfo.commitUrl }}">{% endif %}<time datetime="{{ buildInfo.utcIso }}" data-build-time="{{ buildInfo.utcIso }}">{{ buildInfo.utcIso }}</time>{% if buildInfo.commitUrl %}</a>{% endif %}<span data-build-ago> ago</span>.
+      <a href="{{ ('/' ~ lang ~ '/') | url }}build/"><time datetime="{{ buildInfo.utcIso }}" data-build-time="{{ buildInfo.utcIso }}">{{ buildInfo.utcIso }}</time></a><span data-build-ago> ago</span>.
       Not affiliated with Anego Studios.
     </p>
   </footer>

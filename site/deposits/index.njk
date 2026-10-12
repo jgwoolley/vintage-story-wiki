@@ -4,6 +4,8 @@ layout: layouts/base.njk
 permalink: "{{ lang }}/deposits/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Deposits"}]) }}
 <h1>Deposits</h1>
 <p class="muted">
   Where ore/gem/rock deposits naturally occur, read directly from the game's worldgen rules.
@@ -13,7 +15,7 @@ permalink: "{{ lang }}/deposits/index.html"
   -- a "near surface" deposit can still occasionally be found deeper, and these are the conditions
   a <em>chunk</em> must meet, not a promise any single spot within it generates something.
 </p>
-<p class="muted">Source: <code>worldgen/deposits/**/*.json</code>.</p>
+<p class="muted">Source: <code>worldgen/deposits/**/*.json</code>. <a href="{{ ('/' ~ lang ~ '/') | url }}sources/deposits/">Full details &rarr;</a></p>
 
 <h2>How rock type is determined</h2>
 <p class="muted">

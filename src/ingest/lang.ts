@@ -69,6 +69,31 @@ function composeOreName(lang: DomainLang | undefined, code: string): string | un
   return template.replace("{0}", mineralName);
 }
 
+const METALBLOCK_STATES = new Set(["new", "corroded"]);
+const METALBLOCK_TYPES = new Set(["plain", "riveted"]);
+
+/**
+ * `metalblock-<state>-<type>-<metal>` (`blocktypes/metal/metalblock.json`'s 3 variant groups:
+ * state=new/corroded, type=plain/riveted, metal=<~19 metals, loadFromProperties>) only ever
+ * authors a lang key per metal (`block-metalblock-<metal>`, confirmed: no state/type segment and
+ * no wildcard key exists in the real lang file at all) -- the corroded/riveted/new/plain
+ * distinction is purely cosmetic (just a different texture) and genuinely has no separate name.
+ * Strips the state/type tokens (when present at the front) and looks up the remaining metal name
+ * alone, rather than guessing a generic "drop the last N tokens" rule that could silently collide
+ * with an unrelated real key for a different block family.
+ */
+function composeMetalBlockName(lang: DomainLang | undefined, code: string): string | undefined {
+  if (!code.startsWith("metalblock-")) return undefined;
+  const tokens = code.slice("metalblock-".length).split("-");
+  if (METALBLOCK_STATES.has(tokens[0])) tokens.shift();
+  if (METALBLOCK_TYPES.has(tokens[0])) tokens.shift();
+  if (!tokens.length) return undefined;
+  // metalblock is always a block (never an item), so the real key always carries the "block-"
+  // prefix (confirmed: "block-metalblock-copper" exists in the real lang file) -- hardcoded here
+  // rather than taking a `kind` parameter, since there's no item-kind variant of this to resolve.
+  return lookup(lang, `block-metalblock-${tokens.join("-")}`);
+}
+
 /**
  * Tapestries/wallcarvings don't resolve via a flat "<prefix>-<type>" key either -- mirrors
  * `BlockTapestry.GetPlacedBlockName`/`GetHeldItemName` (confirmed against
@@ -118,7 +143,12 @@ export function buildLangResolver(index: AssetIndex, lang = "en"): LangResolver 
       const key = keyFor(kind, code);
       const domainLang = perDomain.get(domain);
       const name =
-        lookup(domainLang, key) ?? lookup(vanillaFallback, key) ?? composeOreName(domainLang, code) ?? composeOreName(vanillaFallback, code);
+        lookup(domainLang, key) ??
+        lookup(vanillaFallback, key) ??
+        composeOreName(domainLang, code) ??
+        composeOreName(vanillaFallback, code) ??
+        composeMetalBlockName(domainLang, code) ??
+        composeMetalBlockName(vanillaFallback, code);
       if (name) return { name, missing: false };
       return { name: code, missing: true };
     },

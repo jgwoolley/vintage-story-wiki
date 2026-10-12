@@ -8,7 +8,8 @@ layout: layouts/base.njk
 eleventyComputed:
   title: "{{ item.displayName }} - Vintage Story Wiki"
 ---
-<div class="breadcrumb"><a href="{{ ('/' ~ lang ~ '/') | url }}clothing/">&larr; All clothing</a></div>
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Clothing", url: "clothing/"}, {label: item.displayName}]) }}
 
 <h1>{{ item.displayName }}</h1>
 <p class="muted">

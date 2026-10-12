@@ -4,9 +4,11 @@ layout: layouts/base.njk
 permalink: "{{ lang }}/lore/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Books & Lore"}]) }}
 <h1>Books &amp; Lore</h1>
 <p class="muted">{{ generated.lore.length }} readable books/journals/tapestry chapters, with their full in-game text.</p>
-<p class="muted">Source: <code>config/lore/*.json</code> (title/text are lang-key references).</p>
+<p class="muted">Source: <code>config/lore/*.json</code> (title/text are lang-key references). <a href="{{ ('/' ~ lang ~ '/') | url }}sources/lore/">Full details &rarr;</a></p>
 
 {% call dt.datatable(60, "Search books & lore...", ["Title", "Category", "Mod"]) %}
 {% for book in generated.lore | sort(false, false, "title") %}

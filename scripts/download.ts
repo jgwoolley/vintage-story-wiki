@@ -8,6 +8,19 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync
 import { pipeline } from "node:stream/promises";
 import { join } from "node:path";
 import * as tar from "tar";
+import type { DownloadAction, DownloadTiming, ModDownloadResult } from "../src/ingest/types.js";
+
+// Timing/outcome data for this run, written to the same `site/_data/generated/` directory the
+// ingest pipeline writes to (see `src/ingest/write.ts`) -- surfaced on the site's `/<lang>/build/`
+// page alongside the ingest and Eleventy-build phase timings. Written here rather than through
+// that module's `writeGenerated` helper since this script runs before/independently of ingest and
+// shouldn't import ingest-pipeline internals just for one directory constant.
+const TIMING_OUT_DIR = "site/_data/generated";
+
+function writeDownloadTiming(timing: DownloadTiming): void {
+  mkdirSync(TIMING_OUT_DIR, { recursive: true });
+  writeFileSync(join(TIMING_OUT_DIR, "downloadTiming.json"), JSON.stringify(timing, null, 2));
+}
 
 interface Options {
   serverBranch: string;
@@ -96,10 +109,10 @@ async function downloadToFile(url: string, destPath: string): Promise<void> {
   await pipeline(res.body as unknown as NodeJS.ReadableStream, createWriteStream(destPath));
 }
 
-async function installServer(opts: Options): Promise<void> {
+async function installServer(opts: Options): Promise<DownloadAction> {
   if (!opts.force && existsSync(opts.serverDir) && readdirSync(opts.serverDir).length > 0) {
     console.log(`- Server already present in ${opts.serverDir}/, skipping (use --force to reinstall)`);
-    return;
+    return "skipped-present";
   }
 
   const archivePath = "vs_server.tar.gz";
@@ -113,6 +126,7 @@ async function installServer(opts: Options): Promise<void> {
   rmSync(archivePath, { force: true });
 
   console.log("✔ Server installed");
+  return "downloaded";
 }
 
 interface ModRelease {
@@ -121,7 +135,7 @@ interface ModRelease {
   mainfile: string;
 }
 
-async function installMod(spec: string, opts: Options): Promise<void> {
+async function installMod(spec: string, opts: Options): Promise<DownloadAction> {
   const [modid, version] = spec.includes(":") ? (spec.split(/:(.+)/) as [string, string]) : [spec, undefined];
 
   console.log(`==> Looking up mod '${modid}'${version ? ` version ${version}` : ""}`);
@@ -157,13 +171,13 @@ async function installMod(spec: string, opts: Options): Promise<void> {
   if (!release) {
     console.error(`✘ Could not find mod '${modid}'${version ? ` version ${version}` : ""} on mods.vintagestory.at`);
     process.exitCode = 1;
-    return;
+    return "failed";
   }
 
   const dest = join(opts.modsDir, release.filename);
   if (!opts.force && existsSync(dest)) {
     console.log(`- Mod already present: ${dest} (use --force to re-download)`);
-    return;
+    return "skipped-present";
   }
 
   console.log(`==> Downloading mod ${release.filename}`);
@@ -172,15 +186,39 @@ async function installMod(spec: string, opts: Options): Promise<void> {
   await downloadToFile(downloadUrl, dest);
 
   console.log(`✔ Mod saved to ${dest}`);
+  return "downloaded";
 }
 
 async function main(): Promise<void> {
+  const startedAt = Date.now();
   const opts = parseArgs(process.argv.slice(2));
 
-  await installServer(opts);
+  const serverAction = await installServer(opts);
+  const modActions: ModDownloadResult[] = [];
   for (const spec of opts.mods) {
-    await installMod(spec, opts);
+    const modid = spec.includes(":") ? spec.split(":")[0] : spec;
+    // A per-mod lookup/download failure (bad modid, network blip) shouldn't take down the whole
+    // run or leave no timing data behind -- record it as "failed" (same as installMod's own
+    // handled not-found case) and keep going with the rest of the manifest.
+    let action: DownloadAction;
+    try {
+      action = await installMod(spec, opts);
+    } catch (err) {
+      console.error(`✘ ${modid}: ${(err as Error).message}`);
+      process.exitCode = 1;
+      action = "failed";
+    }
+    modActions.push({ modid, action });
   }
+
+  const timing: DownloadTiming = {
+    durationMs: Date.now() - startedAt,
+    finishedAtIso: new Date().toISOString(),
+    serverAction,
+    modActions,
+    anyDownloaded: serverAction === "downloaded" || modActions.some((m) => m.action === "downloaded"),
+  };
+  writeDownloadTiming(timing);
 
   console.log("✔ Done");
 }

@@ -9,13 +9,21 @@ eleventyComputed:
   title: "{{ trade.id.split(':')[1] }} trader - Vintage Story Wiki"
 ---
 {% import "macros/datatable.njk" as dt %}
-<div class="breadcrumb"><a href="{{ ('/' ~ lang ~ '/') | url }}trades/">&larr; All trades</a></div>
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Trades", url: "trades/"}, {label: trade.id.split(':')[1] ~ " trader"}]) }}
 
 <h1>{{ trade.id.split(':')[1] }} trader</h1>
 <p class="muted">
   {% if trade.moneyAvg != null %}Starts with {{ trade.moneyAvg }}{% if trade.moneyVar %} &plusmn; {{ trade.moneyVar }}{% endif %} coins to spend.{% endif %}
   &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ trade.sourceMod }}</a>
 </p>
+{% if trade.traderEntities.length %}
+<p class="muted">
+  Trader entity variants using this specialization (resolved from the entity's own
+  <code>variantgroups</code>, not an explicit field):
+  {% for e in trade.traderEntities %}<a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}creatures/{{ e.domain }}/{{ e.code | slugify }}/">{{ e.code }}</a>{% endfor %}
+</p>
+{% endif %}
 
 <h2>Selling ({{ trade.selling.length }})</h2>
 {% call dt.datatable(20, "Search what this trader sells...", ["Item", "Price", "Stock"]) %}

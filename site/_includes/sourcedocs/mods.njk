@@ -1,0 +1,9 @@
+<p>
+Not derived from in-game assets at all -- this page describes which mods this build of the wiki
+includes, from each mod's own <code>modinfo.json</code> inside its downloaded <code>.zip</code>
+(name/version/side/type/website/authors/description), plus whether it ships compiled code
+(a <code>.dll</code>, whose custom behavior can't be read from JSON and is flagged as such). The
+mod listing/logo link (<code>assetid</code>/<code>urlalias</code>/<code>logoUrl</code>) is cached
+separately, once per mod, by <code>npm run download</code> hitting the mods.vintagestory.at API --
+ingest itself never touches the network.
+</p>

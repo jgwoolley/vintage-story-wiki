@@ -8,7 +8,8 @@ layout: layouts/base.njk
 eleventyComputed:
   title: "{{ cls.displayName }} - Vintage Story Wiki"
 ---
-<div class="breadcrumb"><a href="{{ ('/' ~ lang ~ '/') | url }}classes/">&larr; All classes</a></div>
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Classes", url: "classes/"}, {label: cls.displayName}]) }}
 
 <h1>{{ cls.displayName }}</h1>
 <p class="muted">
@@ -32,7 +33,7 @@ eleventyComputed:
           <div><code>{{ key | restrictionLabel }}</code>: {% if value >= 0 %}+{% endif %}{{ value }}</div>
         {% endfor %}
       </td>
-      <td>{% if trait.description %}{{ trait.description | safe }}{% endif %}</td>
+      <td>{% if trait.description %}{{ trait.description | replace("__LANG__", ('/' ~ lang ~ '/') | url) | safe }}{% endif %}</td>
     </tr>
     {% endif %}
   {% endfor %}

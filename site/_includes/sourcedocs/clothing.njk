@@ -1,0 +1,12 @@
+<p>
+The 14 <code>itemtypes/wearable/seraph/*.json</code> files (one per wearable slot: head, face,
+neck, shoulder, upperbody, ...) are each fully variant-expanded. Clothing has no recipe/drop table
+of its own in survival (worldgen placement inside a container, the creative inventory, or a
+character class's starting gear are the only sources), so -- like paintings/tapestries -- it never
+joins the main item index and gets its own dedicated catalog instead.
+</p>
+<p>
+"Found in structures" is left empty for every clothing item: worn/stored items live inside a
+schematic's opaque block-entity inventory data (a wardrobe, a chest, ...), which isn't decoded for
+this content type the way tapestries' own block-entity attributes are.
+</p>

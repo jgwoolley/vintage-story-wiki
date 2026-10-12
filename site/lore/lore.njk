@@ -8,7 +8,8 @@ layout: layouts/base.njk
 eleventyComputed:
   title: "{{ book.title }} - Vintage Story Wiki"
 ---
-<div class="breadcrumb"><a href="{{ ('/' ~ lang ~ '/') | url }}lore/">&larr; All books &amp; lore</a></div>
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Books & Lore", url: "lore/"}, {label: book.title}]) }}
 
 <h1>{{ book.title }}</h1>
 <p class="muted">
@@ -18,7 +19,7 @@ eleventyComputed:
 </p>
 
 {% for page in book.pages %}
-  <div class="card">
+  <div class="card" id="chapter-{{ loop.index0 }}">
     {% for subpage in page %}
       <div class="book-page">{{ subpage | lineBreaks | safe }}</div>
       {% if not loop.last %}<hr>{% endif %}

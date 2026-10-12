@@ -103,23 +103,56 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   block drops already had. Silently zeroed out real drops for any entity whose drops vary by
   variant (confirmed: shiver/bowtorn/drifter's harvestable drops, locust's death drops). If you
   add another drop-reading code path, use the same two-step fallback, not just the flat array.
+- **Trader specialization → trader entity is resolved via `variantgroups`, not an explicit
+  field** — there isn't one in the game data. `entities/humanoid/trader-{male,female}.json`
+  declare a `variantgroups` entry `{code: "type", states: [...specialization codes...]}`, and the
+  entity's own `attributes.tradePropsFile: "config/tradelists/trader-{type}"` substitutes that
+  same `type` variant value into the tradelist filename — so the `type` variant *state itself* is
+  the specialization code, and that's the only join key available. `src/ingest/index.ts`
+  re-expands `entities/` via `expandVariants` after both `extractTrades` and `extractLoot` have
+  run (not reusing `extractLoot`'s `creatureRoster`, since `CreatureRosterEntry` only keeps the
+  already-flattened code, not each variant's `groupValues`) and attaches every matching concrete
+  entity (domain + code, e.g. `trader-male-treasurehunter-cold`) to that specialization's
+  `TradeList.traderEntities` array — generalized by checking variant-group overlap with loaded
+  specialization codes, not hardcoded to the literal string "trader", so a modded trader entity
+  would be picked up the same way. One specialization resolves to several concrete entities
+  (every gender x climate combination); the 8 vanilla `villager-*` tradelists intentionally
+  resolve to zero, since named villagers aren't assigned a specialization through this mechanism
+  at all. If you add another cross-reference that needs a variant's `groupValues` (not just its
+  flattened code), you'll likely need to re-run `expandVariants` the same way rather than reaching
+  into `creatureRoster`.
+- **Breadcrumb pattern**: every page except the home page and the root redirect calls the
+  `trail(lang, crumbs)` macro (`site/_includes/macros/breadcrumb.njk`, imported per-template —
+  there's no automatic base-layout injection) right before its `<h1>`, rendering
+  "Vintage Story Wiki / <Section>" on a listing page (`crumbs` is a single `{label}` entry, no
+  `url`, since it's the current page) or "Vintage Story Wiki / <Section> / <item display name>"
+  on a paginated detail page (`crumbs` is `[{label, url: "<section>/"}, {label: <item's display
+  name>}]`  — only the last entry omits `url`, rendering unlinked). This replaced the old one-off
+  `<div class="breadcrumb"><a href="...">&larr; All X</a></div>` back-links that used to be
+  hand-rolled per detail template — don't reintroduce that pattern, call the macro instead.
 - **Datatable pattern**: any listing page uses the `datatable(pageSize, placeholder, headers)`
   macro (`site/_includes/macros/datatable.njk`) wrapping
   `<tr data-search data-category data-mod data-mod-label data-tags>` rows. `data-mod-label`
-  (optional) is the human mod name shown in the dropdown (`{{ generated.mods | modName(x.sourceMod) }}`)
+  (optional) is the human mod name shown in the filter panel (`{{ generated.mods | modName(x.sourceMod) }}`)
   while `data-mod` stays the modid the filter actually matches on — add both together, every
-  `data-mod=` row in `site/` does. All filter/search state round-trips
-  through URL query params (`q`, `category`, `mod`, `tag`, and numbered `q2`/`category2`/... for a
-  second table on the same page) via `site/assets/datatable.js` — not just read once on load.
-  Category/mod `<select>` filters only hide when a page's rows carry *no* value at all for that
-  dimension — a single distinct value still shows the dropdown (so it works for free the moment a
-  2nd value appears later, e.g. a new mod). `tag` is a 4th, separate filter dimension (exact-token
-  match against space-separated `data-tags`, not the free-text `q` substring search) with no
-  `<select>` — it renders as a removable chip only when a `tag` param is active. Every header is
-  also click-to-sort automatically (numeric-aware, 3-state: asc/desc/unsorted) — no per-column
-  opt-in needed, it's driven by the rendered `<td>` text, not sync'd to the URL (unlike the
-  filters). Follow this pattern for any new listing page rather than inventing a new table/filter
-  shape.
+  `data-mod=` row in `site/` does. Category/mod/tag are all **multi-select** filter dimensions:
+  each renders as a button (`.datatable-filter-toggle`, labeled "Category"/"Mod"/"Tags") that opens
+  a small checkbox panel (`.datatable-filter-panel`) listing every distinct value seen across the
+  page's rows (for `tag`, `data-tags` is space-separated and split into individual tokens first,
+  since one row can carry several tags). Checking several boxes within one dimension matches rows
+  with ANY of those checked values (OR within a dimension); the three dimensions plus the
+  free-text search box are ANDed together, same as always. Every currently-active value, from any
+  dimension, also renders as a removable chip in `.datatable-active-filters` below the controls
+  row. A dimension's whole button+panel widget only hides when a page's rows carry *no* value at
+  all for that dimension — a single distinct value still shows it (so it works for free the moment
+  a 2nd value appears later, e.g. a new mod or a 2nd tag). All filter/search state round-trips
+  through URL query params — `q` stays free text, but `category`/`mod`/`tag` are each a
+  **comma-separated list of active values** (e.g. `?category=block,item&tag=tool,weapon`), with
+  the numbered `q2`/`category2`/`mod2`/`tag2`/... convention still used for a second table on the
+  same page — via `site/assets/datatable.js`, not just read once on load. Every header is also
+  click-to-sort automatically (numeric-aware, 3-state: asc/desc/unsorted) — no per-column opt-in
+  needed, it's driven by the rendered `<td>` text, not sync'd to the URL (unlike the filters).
+  Follow this pattern for any new listing page rather than inventing a new table/filter shape.
 - **Wildcard codes are clickable everywhere**: a code like `tallgrass-*` or `leather-normal-*`
   should link to `/<lang>/items/?q=<code | wildcardQuery | urlencode>` (see `wildcardQuery` filter
   in `eleventy.config.js` — strips `*`/`{...}` down to a literal prefix the datatable's substring
@@ -132,6 +165,18 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
 - **Nunjucks ternary + filter precedence**: `{{ x if cond else y | round(2) }}` applies the filter
   to `y` only, not to the whole expression — a real bug hit twice while building the tree spawn
   pages. Parenthesize the ternary before filtering: `{{ (x if cond else y) | round(2) }}`.
+- **A macro imported the normal way (`{% import "macros/x.njk" as x %}`, no `with context`) does
+  NOT see the importing template's `lang`** (or any other page-level/global data) — a bare
+  `{{ ('/' ~ lang ~ '/') | url }}` reference inside such a macro's body silently renders `lang` as
+  the literal text "undefined" rather than erroring. This was a real, long-standing bug in
+  `site/_includes/macros/recipe.njk`'s `ingredientLabel`/`outputLabel`/`summary` macros — every
+  compact recipe-summary link on `/items/` and `/recipes/` (thousands of pages) was a broken
+  `/undefined/items/...` URL until a user caught a live instance and it was fixed by adding `lang`
+  as an explicit first parameter to each macro (same pattern `breadcrumb.njk`'s `trail(lang,
+  crumbs)` already used correctly) and passing it from every call site. If you add a new macro
+  that builds a `{{ ('/' ~ lang ~ '/') | url }}` link, take `lang` as an explicit parameter — don't
+  rely on it being ambient, and don't assume the rendered text looking plausible means the href is
+  correct; check the actual `href`/`src` attribute, not just the link text.
 - **Every field in `src/ingest/types.ts` is documented** (inline `//` or leading `/** */` per
   interface) — keep this true for any new/changed field. This is the single source of truth for
   what each generated JSON shape actually means; don't let it drift into "self-explanatory" silence.
@@ -142,6 +187,45 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   `/trades/` *used* to be stubs but are now fully implemented (`models/guides.ts`,
   `models/trades.ts`) — don't assume this list is still accurate without checking `site/<dir>/`
   for a real `.njk` detail page first.
+- **"Source" documentation pages (`/<lang>/sources/<id>/`)**: every top-level listing has a
+  matching entry in `site/_data/pipelineSources.json` (globs + model file paths) and a prose
+  partial at `site/_includes/sourcedocs/<id>.njk`, rendered through one shared pagination
+  template (`site/sources/sources.njk`, dynamically including `"sourcedocs/" + src.id + ".njk"`
+  — Nunjucks `{% include %}` accepts a computed string expression for the template path, this is
+  the one place in the codebase that relies on that). If you add a new top-level content type (a
+  new `generated.<x>` + its own `site/<x>/index.njk`), add a matching `pipelineSources.json`
+  entry and `sourcedocs/<id>.njk` partial in the same change, and link the new listing page's own
+  "Source: ..." line to it — this is now expected for every top-level page, not optional polish.
+  Each page's "Pipeline code" file paths link to `https://github.com/{{ buildInfo.repoSlug }}/blob/main/<path>` (pinned to `main`, not whatever branch/commit actually built the page) — `buildInfo.repoSlug` already exists for this (see "Build info page" below), don't hardcode the owner/repo string again.
+- **Repo-root markdown files published as real pages**: `INFO.md` → `/info/`, `RESEARCH.md` →
+  `/research/`, each via one `eleventyConfig.addGlobalData("<x>Html", () => md.render(readFileSync("<X>.md", "utf8")))`
+  in `eleventy.config.js` (plain markdown-it, no Nunjucks preprocessing of the `.md` file's own
+  content — an internal link inside one of these files can't use the `{{ ('/' ~ lang ~ '/') | url }}`
+  idiom, which is why neither file links to other site pages; this is consistent with the existing
+  file, not a new limitation). The page template just does `{{ <x>Html | safe }}` inside a
+  `.readme-content`-styled div. If you add another repo-root doc meant for site visitors, follow
+  this exact pattern rather than hand-duplicating its prose into a `.njk` page.
+- **A CSS class that sets `display` unconditionally defeats the `hidden` HTML attribute** —
+  confirmed real: `.datatable-filter-panel { display: flex; ... }` with no `[hidden]` guard beat
+  the browser's own `[hidden]{display:none}` default (author-origin always wins over user-agent
+  origin, regardless of selector specificity), so every filter panel rendered open on every page
+  load, only "closing" once JS ran. Any element toggled via the `hidden` attribute/property needs
+  its `display` set in two paired rules instead of one unconditional rule:
+  `.foo[hidden] { display: none; }` + `.foo:not([hidden]) { display: flex; }` (see
+  `.datatable-filter-panel`/`.nav-dropdown-panel` for the pattern). Never write
+  `.foo { display: flex; }` on an element anything toggles via `hidden`.
+- **Only one dropdown/flyout panel open at a time, site-wide**: both the datatable filter panels
+  (`site/assets/datatable.js`, tracked via its module-level `allDimensions` array) and the header
+  "Tools" nav dropdown (`site/assets/nav.js`) close every other open panel before opening the one
+  that was just clicked — clicking an already-open panel's toggle just closes it. If you add
+  another click-to-open panel anywhere, follow this close-others-then-open-this pattern rather
+  than a bare `hidden = !hidden` toggle, which lets multiple panels stack open simultaneously.
+- **Recipe voxel-pattern layers (smithing/clayforming/knapping) show one layer at a time**,
+  selected via click-to-switch tabs (`.layer-switcher`/`.layer-tab`/`.layer-panel` in
+  `site/recipes/recipes.njk` + `site/assets/layers.js`) rather than stacking every layer's `<pre>`
+  block on the page at once — some recipes have a lot of layers (`clayoven` has 16), and the old
+  stacked rendering was hard to read as a shape. The tab bar only renders when there's more than
+  one layer (smithing recipes are always exactly 1 layer).
 - **Mods can inject lang keys into a different domain's namespace**: a mod's own `lang/en.json`
   can author a key as a literal `"<domain>:<realkey>"` string (the colon is part of the flat key,
   not a nested object) to place that string under a *different* domain's lookup (confirmed real
@@ -163,6 +247,21 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
 - **The whole download/ingest/build pipeline is pure Node/npm** — `scripts/download.ts` uses the
   pure-JS `tar` package, not a shelled-out system binary. If you add a new external-tool
   dependency to any script, prefer an npm package over shelling out, to keep this property true.
+- **Eleventy cannot report its own total build duration to its own templates** — there's no point
+  in its lifecycle where it both knows the number and can still write it into the HTML it's
+  producing (by the time an `eleventy.after` hook fires with the real duration, every page has
+  already rendered). `/<lang>/build/` (`site/build/index.njk`) wants to show exactly that number,
+  so `scripts/build-site.ts` wraps the real `eleventy` CLI as a child process, times the whole
+  invocation from outside it, and writes `site/_data/generated/eleventyBuildTiming.json` only
+  *after* that child exits — `npm run build` and the CI "Build site" workflow step both call this
+  wrapper instead of invoking `eleventy` directly now. The number the page shows is therefore
+  always one full build run stale (the *previous* successful build, not the one currently
+  rendering that page) — labeled that way on the page rather than presented as live. If you touch
+  build timing again, keep writing to disk rather than trying to thread the number through in
+  memory — `npm run download`, `npm run ingest`, and the Eleventy build are three genuinely
+  separate process invocations (separate CI workflow steps, possibly minutes apart), so
+  `downloadTiming.json`/`ingestTiming.json`/`eleventyBuildTiming.json` (see `src/ingest/types.ts`)
+  are the only thing that survives between them.
 - **Never commit unless explicitly asked.** This has held throughout the project's history; the
   user commits their own work independently between sessions.
 

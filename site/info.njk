@@ -4,6 +4,8 @@ description: Why this wiki exists, how to use it, and what it covers.
 layout: layouts/base.njk
 permalink: "{{ lang }}/info/index.html"
 ---
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Info"}]) }}
 <div class="readme-content">
 {{ infoHtml | safe }}
 </div>

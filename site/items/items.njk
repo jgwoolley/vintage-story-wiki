@@ -10,7 +10,8 @@ eleventyComputed:
 ---
 {% import "macros/recipe.njk" as rc %}
 {% import "macros/datatable.njk" as dt %}
-<div class="breadcrumb"><a href="{{ ('/' ~ lang ~ '/') | url }}items/">&larr; All items</a></div>
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Items & Blocks", url: "items/"}, {label: item.displayName}]) }}
 
 <h1>{{ item.displayName }}</h1>
 <p class="muted">
@@ -143,6 +144,10 @@ eleventyComputed:
     <td>
       {% if entry.drop.manMade %}<span class="tag">man-made</span>{% endif %}
       {% if entry.drop.dropModbyStat %}<span class="tag">scales with {{ entry.drop.dropModbyStat }}</span>{% endif %}
+      {% if entry.stackRandomizerCode %}
+        {% set containerParts = entry.stackRandomizerCode.split(':') %}
+        <span class="tag">from <a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ containerParts[0] }}/{{ containerParts[1] | slugify }}/">{{ generated.items | displayName(containerParts[0], containerParts[1]) }}</a></span>
+      {% endif %}
     </td>
   </tr>
 {% endfor %}
@@ -158,7 +163,7 @@ eleventyComputed:
   <tr data-category="{{ recipe.category }}">
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe | recipeTitle(generated.items) }}</a></td>
     <td><span class="tag">{{ recipe.category }}</span></td>
-    <td>{{ rc.summary(recipe | contextualRecipe(item.domain, item.code), generated.items) }}</td>
+    <td>{{ rc.summary(lang, recipe | contextualRecipe(item.domain, item.code), generated.items) }}</td>
   </tr>
   {% endif %}
 {% endfor %}
@@ -174,7 +179,7 @@ eleventyComputed:
   <tr data-category="{{ recipe.category }}">
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe | recipeTitle(generated.items) }}</a></td>
     <td><span class="tag">{{ recipe.category }}</span></td>
-    <td>{{ rc.summary(recipe | contextualRecipe(item.domain, item.code), generated.items) }}</td>
+    <td>{{ rc.summary(lang, recipe | contextualRecipe(item.domain, item.code), generated.items) }}</td>
   </tr>
   {% endif %}
 {% endfor %}
@@ -190,7 +195,13 @@ eleventyComputed:
   <tr data-category="{{ loot.sourceKind }}">
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}{{ 'creatures' if loot.sourceKind == 'entity' else 'items' }}/{{ loot.sourceDomain }}/{{ loot.sourceCode | slugify }}/">{{ loot.sourceDisplayName }}</a></td>
     <td><span class="tag">{{ loot.sourceKind }}</span></td>
-    <td>{{ loot.mechanism }}</td>
+    <td>
+      {{ loot.mechanism }}
+      {% if loot.stackRandomizerCode %}
+        {% set containerParts = loot.stackRandomizerCode.split(':') %}
+        <br><span class="muted tag">from <a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ containerParts[0] }}/{{ containerParts[1] | slugify }}/">{{ generated.items | displayName(containerParts[0], containerParts[1]) }}</a></span>
+      {% endif %}
+    </td>
     <td>
       {% if loot.drop.chanceAvg != null %}{{ loot.drop.chanceAvg | percent }}{% endif %}
       {% if loot.drop.quantityAvg != null %}&times;{{ loot.drop.quantityAvg | round(2) }}{% endif %}
@@ -233,6 +244,35 @@ eleventyComputed:
 {% endcall %}
 {% endif %}
 
-{% if not item.producedBy.length and not item.consumedBy.length and not item.droppedBy.length and not blockDrops.id and not item.spawnDeposits.length and not item.spawnBlockPatches.length and not item.spawnTrees.length and not item.spawnFruitTrees.length and not item.rockStrata.length and not item.tradesSelling.length and not item.tradesBuying.length %}
-<p class="muted">Not produced, consumed, dropped, traded, or naturally spawned by anything currently catalogued.</p>
+{% if item.npcRewards.length %}
+<h2>NPC rewards ({{ item.npcRewards.length }})</h2>
+<p class="muted">NPCs whose dialogue can hand this over as a reward (e.g. for completing a small favor, or just for free) -- not something bought at a trade price.</p>
+{% call dt.datatable(20, "Search NPCs...", ["NPC", "Stack size"]) %}
+{% for rewardIdx in item.npcRewards %}
+  {% set reward = generated.dialogueRewards[rewardIdx] %}
+  {% if reward.npcId %}
+  <tr>
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}creatures/{{ reward.npcDomain }}/{{ reward.npcCode | slugify }}/">{{ reward.npcDisplayName }}</a></td>
+    <td>{% if reward.stacksize %}&times;{{ reward.stacksize }}{% endif %}</td>
+  </tr>
+  {% endif %}
+{% endfor %}
+{% endcall %}
+{% endif %}
+
+{% if item.appearsInStructures.length %}
+<h2>Found in structures ({{ item.appearsInStructures.length }})</h2>
+<ul class="grid-list">
+{% for structureId in item.appearsInStructures %}
+  {% set structure = generated.structures | findById(structureId) %}
+  {% if structure.id %}
+  <li><a href="{{ ('/' ~ lang ~ '/') | url }}structures/{{ structure.id | slugify }}/">{{ structure.name or structure.code }}</a> <span class="tag">{{ structure.kind }}</span></li>
+  {% endif %}
+{% endfor %}
+</ul>
+<p class="muted">This confirms the schematic(s) contain this code somewhere, not where or how many times -- the per-instance block-entity decoding used for tapestries isn't run for every content type.</p>
+{% endif %}
+
+{% if not item.producedBy.length and not item.consumedBy.length and not item.droppedBy.length and not blockDrops.id and not item.spawnDeposits.length and not item.spawnBlockPatches.length and not item.spawnTrees.length and not item.spawnFruitTrees.length and not item.rockStrata.length and not item.tradesSelling.length and not item.tradesBuying.length and not item.appearsInStructures.length and not item.npcRewards.length %}
+<p class="muted">Not produced, consumed, dropped, traded, naturally spawned, found in any structure, or an NPC reward currently catalogued.</p>
 {% endif %}

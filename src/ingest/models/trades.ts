@@ -7,6 +7,10 @@ function normalizeListings(raw: RawListing[], tradeListId: string, direction: "s
   const out: TradeListing[] = [];
   raw.forEach((r, i) => {
     if (!r.code) return;
+    const stockAvg = r.stock?.avg;
+    const stockVar = r.stock?.var;
+    const priceAvg = r.price?.avg;
+    const priceVar = r.price?.var;
     out.push({
       id: `${tradeListId}#${direction}#${i}`,
       tradeListId,
@@ -15,10 +19,17 @@ function normalizeListings(raw: RawListing[], tradeListId: string, direction: "s
       code: r.code,
       itemKind: r.type === "block" ? "block" : "item",
       stacksize: r.stacksize,
-      stockAvg: r.stock?.avg,
-      stockVar: r.stock?.var,
-      priceAvg: r.price?.avg,
-      priceVar: r.price?.var,
+      stockAvg,
+      stockVar,
+      priceAvg,
+      priceVar,
+      // min/max are a plain derived range (avg - var / avg + var) for templates that want to show
+      // "12-18" instead of "15 ± 3" -- see TradeListing's doc comment. var defaults to 0 when
+      // absent (a fixed-amount listing), never left undefined just because var itself is missing.
+      stockMin: stockAvg !== undefined ? stockAvg - (stockVar ?? 0) : undefined,
+      stockMax: stockAvg !== undefined ? stockAvg + (stockVar ?? 0) : undefined,
+      priceMin: priceAvg !== undefined ? priceAvg - (priceVar ?? 0) : undefined,
+      priceMax: priceAvg !== undefined ? priceAvg + (priceVar ?? 0) : undefined,
     });
   });
   return out;
@@ -32,9 +43,13 @@ function normalizeListings(raw: RawListing[], tradeListId: string, direction: "s
  * attribute values) -- not modeled here, only the base code/price/stock range is kept, since the
  * attribute variations are themselves cosmetic/randomized rather than distinct tradeable things.
  * Trader *personality* assignment (which specialization a given trader entity uses, picked via a
- * `variantgroups`-driven `type` on `entities/humanoid/trader-{male,female}.json`) and the
- * trader's dialogue tree (`config/dialogue/trader.json`, a genuine branching state machine, not
- * flat flavor text) are both out of scope for v1 -- this only covers what's actually for sale.
+ * `variantgroups`-driven `type` on `entities/humanoid/trader-{male,female}.json`) is cross-
+ * referenced in `index.ts` after this and entity extraction have both run -- see
+ * `TraderEntityRef`'s doc comment in `types.ts` for how the join works, and `TradeList.traderEntities`
+ * below (left empty here, filled in by `index.ts`). NPC dialogue trees
+ * (`config/dialogue/trader.json` and friends, a genuine branching state machine, not flat flavor
+ * text) are extracted separately -- see `models/dialogue.ts` -- this only covers what's actually
+ * for sale plus which entities sell it.
  */
 export function extractTrades(index: AssetIndex): TradeList[] {
   const out: TradeList[] = [];
@@ -57,6 +72,9 @@ export function extractTrades(index: AssetIndex): TradeList[] {
       moneyVar: json.money?.var,
       selling: normalizeListings(json.selling?.list ?? [], id, "selling"),
       buying: normalizeListings(json.buying?.list ?? [], id, "buying"),
+      // Populated in index.ts, after the trader entities themselves are extracted -- see
+      // TraderEntityRef's doc comment for why that cross-reference can't happen here.
+      traderEntities: [],
     });
   }
 

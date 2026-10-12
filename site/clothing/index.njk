@@ -4,6 +4,8 @@ layout: layouts/base.njk
 permalink: "{{ lang }}/clothing/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Clothing"}]) }}
 <h1>Clothing</h1>
 <p class="muted">
   Purely decorative/cosmetic wearable items with no recipe or drop table, so they don't appear
@@ -11,7 +13,7 @@ permalink: "{{ lang }}/clothing/index.html"
   page for why. {{ generated.clothing.length }} catalogued directly from the game's item
   definitions.
 </p>
-<p class="muted">Source: <code>itemtypes/wearable/seraph/*.json</code>.</p>
+<p class="muted">Source: <code>itemtypes/wearable/seraph/*.json</code>. <a href="{{ ('/' ~ lang ~ '/') | url }}sources/clothing/">Full details &rarr;</a></p>
 
 {% call dt.datatable(60, "Search clothing...", ["Name", "Mod"]) %}
 {% for item in generated.clothing | sort(false, false, "displayName") %}

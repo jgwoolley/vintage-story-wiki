@@ -1,7 +1,7 @@
 import type { AssetIndex } from "../types.js";
 import type { LangResolver } from "../lang.js";
 import { assetsUnderAnyDomain } from "../assetLoader.js";
-import { splitDomainCode } from "../codeUtil.js";
+import { resolveLangRef } from "../codeUtil.js";
 
 export interface LoreBook {
   id: string;
@@ -12,11 +12,6 @@ export interface LoreBook {
   category: string;
   /** One entry per `pieces` key, already split on the game's own "___NEWPAGE___" page-break marker. */
   pages: string[][];
-}
-
-function resolveLangRef(lang: LangResolver, fallbackDomain: string, ref: string): string {
-  const { domain, bareCode } = splitDomainCode(ref, fallbackDomain);
-  return lang.raw(domain, bareCode) ?? ref;
 }
 
 /**

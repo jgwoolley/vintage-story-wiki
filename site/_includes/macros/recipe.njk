@@ -1,4 +1,13 @@
-{% macro ingredientLabel(items, ing) %}
+{#
+  Every macro below that builds a link takes `lang` as an explicit first parameter rather than
+  referencing the bare global `lang` value -- a macro imported without `with context` (the idiom
+  used at every call site) does NOT see the importing template's `lang`, so a bare reference
+  silently renders as the literal text "undefined" in the URL (confirmed: this was a real,
+  long-standing bug affecting every /items/ and /recipes/ listing page's compact recipe summary,
+  e.g. "/undefined/items/betterruins/br-schematic-shipwright/"). Always pass `lang` through from
+  the call site, same as the `breadcrumb.njk` macro does.
+#}
+{% macro ingredientLabel(lang, items, ing) %}
 {%- if ing.code -%}
   {%- if "*" in ing.code or "{" in ing.code -%}
     <a href="{{ ('/' ~ lang ~ '/') | url }}items/?q={{ ing.code | wildcardQuery | urlencode }}">{{ ing.code }}</a>
@@ -22,7 +31,7 @@
 {%- if spec.litres %} &times;{{ spec.litres }}L{% endif -%}
 {% endmacro %}
 
-{% macro outputLabel(items, output, wildcard) %}
+{% macro outputLabel(lang, items, output, wildcard) %}
 {%- if output.code -%}
   {%- if "{" in output.code -%}
     <a href="{{ ('/' ~ lang ~ '/') | url }}items/?q={{ output.code | wildcardQuery | urlencode }}"><code>{{ output.code }}</code></a>
@@ -33,10 +42,10 @@
 {% endmacro %}
 
 {# Compact one-line "A + B + C -> D" summary of a recipe's ingredients and output. #}
-{% macro summary(recipe, items) %}
+{% macro summary(lang, recipe, items) %}
 <div class="recipe-summary">
-  {% for ing in recipe.ingredients %}{{ ingredientLabel(items, ing) }}{{ quantity(ing) }}{% if not loop.last %} <span class="plus">+</span> {% endif %}{% endfor %}
+  {% for ing in recipe.ingredients %}{{ ingredientLabel(lang, items, ing) }}{{ quantity(ing) }}{% if not loop.last %} <span class="plus">+</span> {% endif %}{% endfor %}
   <span class="arrow">&rarr;</span>
-  {{ outputLabel(items, recipe.output, recipe.wildcard) }}{{ quantity(recipe.output) }}
+  {{ outputLabel(lang, items, recipe.output, recipe.wildcard) }}{{ quantity(recipe.output) }}
 </div>
 {% endmacro %}

@@ -5,13 +5,15 @@ layout: layouts/base.njk
 permalink: "{{ lang }}/classes/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Classes"}]) }}
 <h1>Classes</h1>
 <p class="muted">
   A character class is chosen once at world start and is permanent for that character -- it fixes
   a set of positive/negative <a href="{{ ('/' ~ lang ~ '/') | url }}classes/#traits">traits</a>
   (stat modifiers) and a set of starting gear.
 </p>
-<p class="muted">Source: <code>config/characterclasses.json</code>, <code>config/traits.json</code>.</p>
+<p class="muted">Source: <code>config/characterclasses.json</code>, <code>config/traits.json</code>. <a href="{{ ('/' ~ lang ~ '/') | url }}sources/classes/">Full details &rarr;</a></p>
 
 {% call dt.datatable(20, "Search classes...", ["Class", "Traits", "Gear", "Mod"]) %}
 {% for cls in generated.classes %}
@@ -46,7 +48,7 @@ permalink: "{{ lang }}/classes/index.html"
         <div><code>{{ key | restrictionLabel }}</code>: {% if value >= 0 %}+{% endif %}{{ value }}</div>
       {% endfor %}
     </td>
-    <td>{% if trait.description %}{{ trait.description | safe }}{% endif %}</td>
+    <td>{% if trait.description %}{{ trait.description | replace("__LANG__", ('/' ~ lang ~ '/') | url) | safe }}{% endif %}</td>
   </tr>
 {% endfor %}
 {% endcall %}

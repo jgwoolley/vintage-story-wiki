@@ -4,14 +4,28 @@ layout: layouts/base.njk
 permalink: "{{ lang }}/items/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Items & Blocks"}]) }}
 <h1>Items &amp; Blocks</h1>
-<p class="muted">{{ generated.items.length }} distinct items/blocks referenced by recipes, drops, or worldgen spawn rules.</p>
-<p class="muted">Source: cross-referenced from recipes (<code>recipes/**/*.json</code>), drop tables (entity/block loot), and worldgen spawn data -- not a full walk of every item/block the game defines. See each item's own page for exactly which of those apply.</p>
+<p class="muted">{{ generated.items.length }} distinct items/blocks.</p>
+<div class="coverage-note">
+<p>
+  <strong>This is not every item/block the game defines.</strong> An item/block only appears here
+  if it's reachable from a <strong>recipe</strong> (an input or an output), a
+  <strong>drop table</strong> (dropped by breaking a block or killing a creature), a
+  <strong>worldgen spawn rule</strong> (an ore/gem/rock deposit, a crop/flower patch, a tree, a
+  fruit tree), a <strong>trader's buy/sell list</strong>, or an <strong>NPC dialogue reward</strong>.
+  Pure creative-mode novelties, debug items, and anything else with none of those ties are not
+  included -- this is a cross-referenced graph, not a registry dump.
+</p>
+<p><a href="{{ ('/' ~ lang ~ '/') | url }}sources/items/">Exactly how this page is built &rarr;</a></p>
+</div>
 
-{% call dt.datatable(60, "Search items & blocks...", ["Name", "Kind", "Mod"]) %}
+{% call dt.datatable(60, "Search items & blocks...", ["Name", "Code", "Kind", "Mod"]) %}
 {% for item in generated.items | sort(false, false, "displayName") %}
   <tr data-search="{{ item.domain }}:{{ item.code }}" data-category="{{ item.kind }}" data-mod="{{ item.sourceMod }}" data-mod-label="{{ generated.mods | modName(item.sourceMod) }}" data-tags="{{ item.tags | default([]) | join(' ') }}">
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ item.domain }}/{{ item.code | slugify }}/">{{ item.displayName }}</a></td>
+    <td><code>{{ item.domain }}:{{ item.code }}</code></td>
     <td><span class="tag">{{ item.kind }}</span></td>
     <td><span class="tag">{{ item.sourceMod }}</span></td>
   </tr>

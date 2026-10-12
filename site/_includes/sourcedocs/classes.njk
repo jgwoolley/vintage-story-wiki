@@ -1,0 +1,11 @@
+<p>
+Both source files are single flat JSON arrays with no variant expansion at all -- the only two
+content types in this whole pipeline that simple. <code>config/characterclasses.json</code> lists
+the 6 starting classes, each a fixed trait-code list plus a starting-gear item-code list (resolved
+against the existing clothing catalog). <code>config/traits.json</code> lists all 26 traits and
+their raw stat-modifier <code>attributes</code> (shown as-is, labeled, rather than converted into
+a fixed unit, since the modifier's meaning varies per key). Trait display names are authored as
+game-chat rich text (e.g. <code>&lt;font color="#84ff84"&gt;&bull; Soldier &lt;/font&gt;</code>)
+and stripped down to plain text here; trait descriptions, when present, keep their
+<code>handbooksearch://</code> links, rewritten the same way guide text is.
+</p>

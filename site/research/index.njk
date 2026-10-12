@@ -1,0 +1,12 @@
+---
+title: Research - Vintage Story Wiki
+description: Investigation notes for planned future features -- nothing here is implemented yet.
+layout: layouts/base.njk
+permalink: "{{ lang }}/research/index.html"
+---
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Research"}]) }}
+<p class="wip-badge">Investigation only -- nothing below is implemented</p>
+<div class="readme-content">
+{{ researchHtml | safe }}
+</div>

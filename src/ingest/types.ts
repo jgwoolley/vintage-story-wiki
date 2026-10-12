@@ -132,7 +132,19 @@ export interface NormalizedRecipe {
   raw: unknown; // original unpatched-but-concrete recipe JSON, shown on the recipe detail page
 }
 
-export type LootMechanism = "blockDrop" | "panning" | "entityDrop" | "harvestable";
+// "stackRandomizer": a block/entity drop can itself be an `ItemStackRandomizer`-class item -- a
+// sealed "box" item (e.g. "stackrandomizer-alljonas", in-game display name "Jonas Parts&Frames
+// Stack randomizer", dropped by locust/shiver/drifter/bowtorn/bell -- confirmed via the vanilla
+// lang key `item-stackrandomizer-alljonas`) rather than a concrete reward by itself. Its itemtype
+// JSON (`class: "ItemStackRandomizer"`, e.g. `survival/itemtypes/meta/stackrandomizer.json`)
+// carries an `attributesByType["*-<variant>"].stacks` weighted pool of the *actual* possible
+// contents (e.g. jonasparts-*/jonasframes-* items for the "alljonas" variant), resolved the same
+// `resolveByType`/concrete-code way as every other `*ByType` field elsewhere in this file.
+// `extractLoot` keeps the original entry for the box item itself (so it still gets its own
+// `/items/` page and `droppedBy` link) and additionally synthesizes one `stackRandomizer` entry
+// per pool content, so a creature's drop table shows what it can concretely yield, not just the
+// opaque box.
+export type LootMechanism = "blockDrop" | "panning" | "entityDrop" | "harvestable" | "stackRandomizer";
 
 /** An entity's `server.spawnconditions`/`spawnconditionsByType` -- NOT top-level `spawnconditions`, see CLAUDE.md. */
 export interface EntitySpawnInfo {
@@ -158,7 +170,7 @@ export interface EntityStats {
   spawn?: EntitySpawnInfo;
 }
 
-/** One normalized drop: something a block/entity can yield, via one of the 4 `LootMechanism`s. */
+/** One normalized drop: something a block/entity can yield, via one of the 5 `LootMechanism`s. */
 export interface LootEntry {
   sourceKind: "block" | "entity";
   sourceDomain: string;
@@ -168,13 +180,18 @@ export interface LootEntry {
   entityStats?: EntityStats; // only set when sourceKind === "entity"
   mechanism: LootMechanism;
   panningKeyPattern?: string; // panning mechanism only: the sluice-box pattern key this drop corresponds to
+  stackRandomizerCode?: string; // stackRandomizer mechanism only: the container item this entry's contents were expanded from, as "domain:code" (e.g. "survival:stackrandomizer-alljonas") -- domain included since a pool's contents aren't guaranteed to share the container's own domain
   drop: {
     type?: string;
     domain: string;
     code: string;
     quantityAvg?: number;
     quantityVar?: number; // +/- variance around quantityAvg
-    chanceAvg?: number; // 0-1 probability of this drop occurring at all
+    // 0-1 probability of this drop occurring at all -- EXCEPT for a `stackRandomizer` entry,
+    // where the container's own drop chance/quantity is tracked on its own separate (kept)
+    // LootEntry, so this is instead that content's share of the container's weighted pool
+    // (each pool content's raw `chance` weight, normalized so the pool's weights sum to 1).
+    chanceAvg?: number;
     chanceVar?: number;
     manMade?: boolean; // true if this drop only occurs from a player-made (not wild-spawned) instance
     dropModbyStat?: string; // name of a player/entity stat that scales this drop's quantity (e.g. a "harvesting" skill)
@@ -254,7 +271,7 @@ export interface ItemIndexEntry {
   producedBy: string[]; // NormalizedRecipe ids that output this item/block
   consumedBy: string[]; // NormalizedRecipe ids that consume this item/block as an ingredient
   droppedBy: string[]; // indices (as strings) into the flat `generated.loot` array -- other things that drop this
-  appearsInStructures: string[]; // structure ids -- stays empty in v1, schematic voxel data isn't decoded (see README)
+  appearsInStructures: string[]; // structure ids whose schematics' BlockCodes dictionary contains this item/block's code -- populated in index.ts via the same structureContents.ts cross-reference used for the decor catalog's DecorItem.foundInStructures; a coarse match (confirms the code is somewhere in that schematic, not where/how many times)
   spawnDeposits: string[]; // DepositInfo ids (ore/gem/rock -- where this specific grade+rock combo occurs)
   spawnBlockPatches: string[]; // BlockPatchSpawnInfo ids (crops/flowers/mushrooms/etc -- climate band this grows in)
   spawnTrees: string[]; // TreeSpawnInfo ids (regular tree/shrub species -- climate band this grows in)
@@ -264,6 +281,7 @@ export interface ItemIndexEntry {
   maxStackSize?: number; // the item/blocktype's own top-level `maxstacksize`; absent in the raw JSON for many items (engine-side default, not recoverable from JSON alone) -- never guessed
   tradesSelling: string[]; // TradeListing ids (direction "selling") -- traders who sell this item to the player
   tradesBuying: string[]; // TradeListing ids (direction "buying") -- traders who buy this item from the player
+  npcRewards: string[]; // indices (as strings) into the flat `generated.dialogueRewards` array -- NPCs whose dialogue can hand over this item
 }
 
 /** An ore/gem/rock deposit (`worldgen/deposits/**`): which rock(s) host it, and at which grades. */
@@ -449,6 +467,30 @@ export interface TradeListing {
   stockVar?: number;
   priceAvg?: number;
   priceVar?: number;
+  // priceMin/priceMax/stockMin/stockMax are derived (avg - var / avg + var) at ingest time purely
+  // so templates can show a plain "min-max" range (e.g. the flat /trades/ listing) without
+  // re-deriving it in Nunjucks -- avg/var above are kept as-is, not replaced, since they're the
+  // actual game-data shape and other code may still want the "average ± variance" framing.
+  stockMin?: number;
+  stockMax?: number;
+  priceMin?: number;
+  priceMax?: number;
+}
+
+/**
+ * One concrete trader entity variant (e.g. `trader-male-treasurehunter-cold`) that uses a given
+ * specialization's trade list. VS has no explicit "specialization" field anywhere -- the link is
+ * entirely implicit: `entities/humanoid/trader-{male,female}.json` declare a `variantgroups` entry
+ * `{ code: "type", states: [...specialization codes...] }`, and the entity's own
+ * `attributes.tradePropsFile: "config/tradelists/trader-{type}"` substitutes that same `type`
+ * variant value into the tradelist filename. So the *specialization code itself* (the `{type}`
+ * state, e.g. "treasurehunter") is the join key between a concrete entity variant and its
+ * TradeList -- there's no separate ID to look up. One specialization is used by several concrete
+ * entity codes (every gender x climate combination), so this is an array, not a single ref.
+ */
+export interface TraderEntityRef {
+  domain: string;
+  code: string; // fully-resolved entity code, e.g. "trader-male-treasurehunter-cold" -- links to /creatures/<domain>/<code>/
 }
 
 /** One trader specialization's full buy/sell list. */
@@ -460,6 +502,69 @@ export interface TradeList {
   moneyVar?: number;
   selling: TradeListing[];
   buying: TradeListing[];
+  // Every concrete trader entity variant (gender x climate) that resolves to this specialization
+  // via its `type` variantgroups state -- see TraderEntityRef's doc comment. Empty when no loaded
+  // entity's `type` variant states include this specialization's code (e.g. a mod-added tradelist
+  // with no matching entity variant yet).
+  traderEntities: TraderEntityRef[];
+}
+
+/** One item a dialogue branch hands over as a reward (the `giveitemstack` trigger -- the only
+ * reward-shaped trigger actually found in the real dialogue data; `takefrominventory` is the
+ * mirror-image "player pays the NPC" trigger and isn't a reward, so it's not modeled). */
+export interface DialogueReward {
+  domain: string;
+  code: string;
+  kind: "item" | "block";
+  stacksize?: number;
+}
+
+/**
+ * One NPC's dialogue (`config/dialogue/<name>.json`, referenced by an entity's `conversable`
+ * behavior -- a flat `dialogue: "config/dialogue/x"` string, or a glob-keyed `dialogueByType` map
+ * resolved the same `resolveByType` way as drops/spawn conditions elsewhere) flattened to the two
+ * facts actually useful on a wiki page: every line the NPC side of the conversation can say, and
+ * every item it can hand over as a reward. The underlying file is a genuine branching state
+ * machine (a `components` array of talk/condition nodes wired together by `jumpTo` targets,
+ * conditioned on player/entity variables) -- not rendered as a graph, deliberately; see
+ * `models/dialogue.ts`. One `NpcDialogue` per concrete entity variant (not per dialogue file),
+ * since several variants commonly share the same file -- both trader genders share "trader" (via
+ * `dialogueByType`'s `"*"` fallback), most villager jobs share the generic "villager" file the
+ * same way -- so the same `lines`/`rewards` legitimately repeat verbatim across several entries.
+ * Only covers entities that also have the "health" server behavior (see `hasHealthBehavior` in
+ * `models/loot.ts`), i.e. ones that actually get a `/creatures/` page to cross-link from -- a
+ * handful of inanimate "conversable" lore props (`skeletonarm`, `skeletonwithloot`,
+ * `libraryresonator`, part of the Resonance Archive puzzle) have dialogue too but no health
+ * behavior and so no creature page to attach it to; they're intentionally left out.
+ */
+export interface NpcDialogue {
+  id: string; // `${domain}:${code}`, matches the owning entity variant's `CreatureRosterEntry`/`LootSourceGroup` id
+  domain: string;
+  code: string;
+  sourceMod: string;
+  sourceDisplayName: string;
+  dialogueFile: string; // bare dialogue file code, e.g. "trader" -- which config/dialogue/<x>.json these lines/rewards came from
+  lines: string[]; // NPC-side lines only (components whose `owner` isn't "player"), lang-resolved, handbook:// links rewritten, de-duplicated, file order preserved
+  rewards: DialogueReward[]; // de-duplicated giveitemstack rewards, file order preserved
+}
+
+/**
+ * One `NpcDialogue.rewards` entry flattened out into its own array, the same "flat array +
+ * ids-into-it" cross-link shape `generated.loot`/`ItemIndexEntry.droppedBy` already uses (see
+ * `LootEntry`) -- lets an item's page list every NPC that can give it as a reward without the NPC
+ * side needing to know about the item side. `ItemIndexEntry.npcRewards` stores indices (as
+ * strings) into this array.
+ */
+export interface DialogueRewardEntry {
+  npcId: string; // the owning NpcDialogue.id, to link back to its /creatures/ page
+  npcDomain: string;
+  npcCode: string;
+  npcDisplayName: string;
+  npcMod: string;
+  domain: string;
+  code: string;
+  kind: "item" | "block";
+  stacksize?: number;
 }
 
 export type TraitType = "positive" | "negative";
@@ -511,4 +616,57 @@ export interface CharacterClassInfo {
   displayName: string;
   traits: string[]; // trait codes, cross-referenced against TraitInfo.code via `traitsById`
   gear: CharacterClassGearItem[];
+}
+
+/** How one piece of `npm run download` (the server install, or a single mod) resolved this run. */
+export type DownloadAction =
+  | "downloaded" // actually fetched from the network this run
+  | "skipped-present" // already present on disk, left untouched (the common case once cached)
+  | "failed"; // lookup/fetch failed; see the console log for the specific error
+
+/** One mod's outcome within a `npm run download` run, written into `downloadTiming.json`. */
+export interface ModDownloadResult {
+  modid: string;
+  action: DownloadAction;
+}
+
+/**
+ * Written by `scripts/download.ts` on every run (`site/_data/generated/downloadTiming.json`) --
+ * one of the three pipeline-phase timing files surfaced on `/<lang>/build/`. Wall-clock duration
+ * is measured around the whole `main()` (server install + every mod), so a cache-hit run (nothing
+ * actually fetched) legitimately reports a small number -- `anyDownloaded` is what distinguishes
+ * "fast because nothing needed fetching" from "fast because something's broken."
+ */
+export interface DownloadTiming {
+  durationMs: number; // wall-clock time for this whole `npm run download` invocation
+  finishedAtIso: string; // UTC timestamp this run finished, for "how stale is this" display
+  serverAction: DownloadAction; // outcome for the vanilla dedicated server install
+  modActions: ModDownloadResult[]; // outcome for each mod in vs-manifest.json, in manifest order
+  anyDownloaded: boolean; // true if the server or at least one mod was freshly fetched this run
+}
+
+/**
+ * Written by `src/ingest/index.ts`'s `main()` (`site/_data/generated/ingestTiming.json`) -- the
+ * second of the three pipeline-phase timing files surfaced on `/<lang>/build/`. Measured around
+ * the entire ingest run (asset loading, patching, every `models/*.ts` extractor, cross-referencing,
+ * and the final `writeGenerated` calls), so it reflects the real end-to-end cost of `npm run ingest`.
+ */
+export interface IngestTiming {
+  durationMs: number; // wall-clock time for this whole `npm run ingest` invocation
+  finishedAtIso: string; // UTC timestamp this run finished
+}
+
+/**
+ * Written by `scripts/build-site.ts` (a thin wrapper around the Eleventy CLI, see that file for
+ * why) to `site/_data/generated/eleventyBuildTiming.json` *after* the wrapped `eleventy` child
+ * process exits. Eleventy has no way to report its own total duration to its own templates (the
+ * number isn't known until the process is already exiting), so this file is always one full
+ * build run stale: whatever `/<lang>/build/` renders came from the *previous* successful
+ * `scripts/build-site.ts` run, not the one producing the page currently being viewed. The page
+ * labels it that way explicitly rather than presenting it as a live measurement of itself.
+ */
+export interface EleventyBuildTiming {
+  durationMs: number; // wall-clock time the wrapped `eleventy` child process took to exit
+  finishedAtIso: string; // UTC timestamp that previous run finished
+  succeeded: boolean; // false if the wrapped eleventy process exited non-zero
 }

@@ -4,6 +4,8 @@ layout: layouts/base.njk
 permalink: "{{ lang }}/trees/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Trees"}]) }}
 <h1>Trees</h1>
 <p class="muted">
   Regular tree/shrub species generate by climate band (temperature, rain, forest density, soil
@@ -13,7 +15,7 @@ permalink: "{{ lang }}/trees/index.html"
   distinct worldgen system with no forest/fertility requirement -- see the separate
   <a href="{{ ('/' ~ lang ~ '/') | url }}fruit-trees/">Fruit Trees</a> page.
 </p>
-<p class="muted">Source: <code>worldgen/treengenproperties.json</code> (climate bands) + <code>worldgen/treegen/&lt;species&gt;.json</code> (block codes per species).</p>
+<p class="muted">Source: <code>worldgen/treengenproperties.json</code> (climate bands) + <code>worldgen/treegen/&lt;species&gt;.json</code> (block codes per species). <a href="{{ ('/' ~ lang ~ '/') | url }}sources/trees/">Full details &rarr;</a></p>
 
 <h2>Species ({{ generated.trees.length }} climate bands)</h2>
 {% call dt.datatable(40, "Search tree species...", ["Species", "Kind", "Temp (°C)", "Rain", "Fertility", "Forest", "Mod"]) %}

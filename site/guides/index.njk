@@ -5,12 +5,14 @@ layout: layouts/base.njk
 permalink: "{{ lang }}/guides/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Help Guides"}]) }}
 <h1>Help Guides</h1>
 <p class="muted">
   The game's own in-game handbook "Guides" tab content -- {{ generated.guides.length }} articles,
   in the same order they appear in-game.
 </p>
-<p class="muted">Source: <code>config/handbook/&lt;NN&gt;-&lt;name&gt;.json</code> (title/text are lang-key references, same mechanism as <a href="{{ ('/' ~ lang ~ '/') | url }}lore/">Books &amp; Lore</a>).</p>
+<p class="muted">Source: <code>config/handbook/&lt;NN&gt;-&lt;name&gt;.json</code> (title/text are lang-key references, same mechanism as <a href="{{ ('/' ~ lang ~ '/') | url }}lore/">Books &amp; Lore</a>). <a href="{{ ('/' ~ lang ~ '/') | url }}sources/guides/">Full details &rarr;</a></p>
 
 {% call dt.datatable(40, "Search guides...", ["Title", "Mod"]) %}
 {% for guide in generated.guides | sort(false, false, "order") %}

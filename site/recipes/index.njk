@@ -5,6 +5,8 @@ permalink: "{{ lang }}/recipes/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
 {% import "macros/recipe.njk" as rc %}
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Recipes"}]) }}
 <h1>Recipes</h1>
 <p class="muted">
   {{ generated.recipes.length }} recipes across {{ generated.recipes | groupby("category") | length }} categories.
@@ -12,7 +14,7 @@ permalink: "{{ lang }}/recipes/index.html"
   titled after the item they produce and labeled <strong>(Item Recipe)</strong> so it's clear
   that's a recipe title, not a second name for the item itself.
 </p>
-<p class="muted">Source: <code>recipes/&lt;category&gt;/**/*.json</code>, one subfolder per recipe category.</p>
+<p class="muted">Source: <code>recipes/&lt;category&gt;/**/*.json</code>, one subfolder per recipe category. <a href="{{ ('/' ~ lang ~ '/') | url }}sources/recipes/">Full details &rarr;</a></p>
 
 {% call dt.datatable(60, "Search recipes...", ["Name", "Category", "Mod", "Ingredients → output"]) %}
 {% for recipe in generated.recipes %}
@@ -20,7 +22,7 @@ permalink: "{{ lang }}/recipes/index.html"
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe | recipeTitle(generated.items) }}</a></td>
     <td><span class="tag">{{ recipe.category }}</span></td>
     <td><span class="tag">{{ recipe.sourceMod }}</span></td>
-    <td>{{ rc.summary(recipe, generated.items) }}</td>
+    <td>{{ rc.summary(lang, recipe, generated.items) }}</td>
   </tr>
 {% endfor %}
 {% endcall %}

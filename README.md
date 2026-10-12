@@ -185,6 +185,89 @@ resolved through the same mechanism as every other display string (including mod
 keys like `betterruins:lore-brickworkerslament-title`), with the game's own `___NEWPAGE___`
 page-break marker preserved.
 
+## Trades (`models/trades.ts`)
+
+`/trades/` has two layers: a flat, sortable table of every individual buy/sell listing across
+every specialization (the discovery/browsing entry point, in the spirit of
+vintagestorypriceguide.com), and per-specialization detail pages (`/trades/<id>/`) with their own
+selling/buying tables plus starting money. Each specialization is one
+`config/tradelists/trader-<specialization>.json` file (vanilla also has `villager-<name>.json`
+tradelists for named NPCs, which this pipeline treats the same way but which don't resolve any
+`traderEntities` — see below). `priceMin`/`priceMax`/`stockMin`/`stockMax` are derived at ingest
+time (`avg - var` / `avg + var`) so templates can show a plain range; the original `priceAvg`/
+`priceVar`/`stockAvg`/`stockVar` fields are kept alongside, not replaced.
+
+**Which concrete trader entity uses which specialization** is resolved from the entity data
+itself, not an explicit field — there isn't one. `entities/humanoid/trader-{male,female}.json`
+declare `variantgroups: [{code: "gender", ...}, {code: "type", states: ["agriculture",
+"artisan", ..., "treasurehunter"]}, {code: "climate", ...}]`, and the entity's own
+`attributes.tradePropsFile: "config/tradelists/trader-{type}"` substitutes that same `type`
+variant value into the tradelist filename — so the `type` variant state *is* the specialization
+code, and that's the only join key that exists. `src/ingest/index.ts` re-expands `entities/` via
+`expandVariants` (rather than reusing `extractLoot`'s `creatureRoster`, which only keeps the
+already-flattened code, not each variant's `groupValues`) and, for every concrete entity variant
+whose `type` value matches a loaded specialization's code, records it as a `TraderEntityRef`
+(`domain` + concrete `code`, e.g. `trader-male-treasurehunter-cold`) on that `TradeList`'s new
+`traderEntities` array — one specialization resolves to several entities (every gender x climate
+combination, 6 for vanilla trader-{male,female}). This isn't hardcoded to the literal string
+"trader": any entity (vanilla or modded) whose `type` variantgroup states overlap a loaded
+specialization code is picked up the same way. The 9 vanilla `trader-*` specializations all
+resolve to entities this way; the 8 `villager-*` tradelists intentionally resolve to none, since
+named villagers aren't assigned a specialization through this `type`-variant mechanism at all.
+Both the flat table and each detail page link `traderEntities` entries to their real
+`/creatures/<domain>/<code>/` page.
+
+## NPC Dialogue (`models/dialogue.ts`)
+
+NPC dialogue trees (`config/dialogue/<name>.json`) were previously out of scope (see
+`models/trades.ts`'s old doc comment) because the real data is a genuine branching state machine —
+a flat `components` array of talk/condition nodes wired together by `jumpTo` targets and
+player/entity variable conditions, not flat flavor text. Rather than render that graph, each NPC's
+dialogue is flattened to the two facts actually useful on a wiki page: every line its side of the
+conversation can say (across every branch, not in any one fixed order), and every item it can hand
+over as a reward (the `giveitemstack` trigger — the only reward-shaped trigger among the ones
+actually observed: attack/closedialogue/giveitemstack/openhairstyling/opentrade/playanimation/
+repairheldarmor/repairheldtool/revealname/spawnentity/takefrominventory/unlockdoor; its mirror
+image, `takefrominventory`, is "player pays the NPC" and isn't a reward). Line text resolves
+through lang keys the same way lore/guide text does (`resolveLangRef`, now shared in `codeUtil.ts`
+rather than duplicated per model), with any embedded `handbook://`/`handbooksearch://` links
+rewritten by the same `rewriteHandbookLinks` helper guide text uses (none actually occur in the
+dialogue data as shipped, but the mechanism is identical so it's reused rather than skipped).
+
+Vanilla ships 24 dialogue files, not just `trader.json`: a `trader`/`treasurehunter` pair shared by
+both trader genders (`entities/humanoid/trader-{male,female}.json`'s `dialogueByType` glob keys —
+`"*-treasurehunter-*"` vs `"*"` — resolved the same `resolveByType` way drops/spawn conditions
+are), a generic `villager` file plus 18 per-named-villager files (`entities/humanoid/
+villager.json`'s own `dialogueByType`, keyed by full concrete variant code rather than a glob), and
+3 files (`skeletonarm`/`skeletonwithloot`/`resonator`) belonging to inanimate "conversable" lore
+props for the Resonance Archive puzzle that have no "health" server behavior and so never get a
+`/creatures/` page — `models/dialogue.ts` only extracts entities that pass the same
+`hasHealthBehavior` check `models/loot.ts` uses for `creatureRoster`, so those 3 are intentionally
+excluded (a `config/dialogue/example.json` template file, pointed to by no real entity, is likewise
+never reached, since extraction walks outward from entity variants to their dialogue file rather
+than inward from dialogue files to a guessed owner). BetterRuins adds two more dialogue files of
+its own (`agriculture`/`luxuries`) via a patch extending the same trader `dialogueByType` map with
+domain-prefixed targets (`betterruins:config/dialogue/agriculture`) — handled for free by the same
+domain-prefix-or-fallback resolution (`splitDomainCode`) every other cross-mod reference uses.
+
+One real bug hit and fixed here: `villager.json` declares its `conversable` behavior two different
+ways depending on *where* you look — a bare `{code: "conversable"}` placeholder sits in its
+`server.behaviors` array (carrying neither `dialogue` nor `dialogueByType`), while the actual
+config lives separately under a top-level `behaviorConfigs.conversable` object. Checking the
+behaviors array first (as every other `*ByType` field in this pipeline does) finds the placeholder
+and wrongly concludes the entity has no dialogue at all. `findConversableConfig` checks
+`behaviorConfigs.conversable` first, falling back to a behaviors-array entry only if it actually
+carries one of the two fields itself — `trader-{male,female}`/`skeletonarm`/`skeletonwithloot`/
+`libraryresonator` only ever use the array form, so both shapes are real and neither predicts the
+other.
+
+Rewards cross-link in both directions the same way loot drops do: `NpcDialogue.rewards` is shown
+directly on the creature's own `/creatures/` page (linking to the reward item's `/items/` page),
+while a second flat array, `generated.dialogueRewards` (mirroring `generated.loot`), lets
+`ItemIndexEntry.npcRewards` store indices into it so a reward item's own page can list every NPC
+that can give it — the exact same "flat array + ids-into-it" shape `ItemIndexEntry.droppedBy`
+already uses for loot.
+
 ## Creatures vs. Items (`/<lang>/creatures/`, `/<lang>/items/`)
 
 Content is organized by *what the thing is*, not by *mechanism*: `/creatures/` is entity-only
@@ -236,17 +319,52 @@ Info page for the visitor-facing version of that caveat.
 
 ## Site features
 
+- **`/<lang>/sources/<id>/`** — one page per top-level listing (items, recipes, creatures,
+  structures, deposits, crops, trees, fruit-trees, paintings, tapestries, clothing, lore, guides,
+  trades, classes, mods), naming the exact raw game-file globs that feed it and a prose
+  explanation of how they're processed, generated from `site/_data/pipelineSources.json`
+  (per-page metadata: id/title/globs/model files) via one shared template
+  (`site/sources/sources.njk`) that dynamically includes a per-id prose partial from
+  `site/_includes/sourcedocs/<id>.njk`. Every top-level listing page links to its own source page
+  (its existing "Source: ..." one-liner gained a "Full details →" link); `/<lang>/sources/` is
+  the index of all of them, also linked from the home page. This is hand-authored documentation
+  *about* the pipeline, not pipeline output itself — unlike `site/_data/generated/`, it's a
+  regular tracked file, not gitignored. Keep it in sync the same way README.md itself needs to
+  stay in sync with real pipeline changes — a new content-type model or a changed glob should
+  update its matching `pipelineSources.json` entry and `sourcedocs/` partial.
+- **`/<lang>/items/`'s coverage caveat is a prominent callout** (`.coverage-note` in
+  `style.css`), not just a muted one-liner — spelling out every concrete way an item/block can
+  earn a page (recipe, drop table, worldgen spawn rule, trade listing, NPC dialogue reward) so
+  it's unambiguous this is a cross-referenced graph, not a registry dump. The same `.coverage-note`
+  style is reused on the structures/creatures/tapestries source pages for their own non-obvious
+  caveats (chance-as-weight, the full living-entity roster, the tapestry reroll mechanic).
+- **`/<lang>/research/`** — `RESEARCH.md` published the same way `INFO.md` → `/info/` already
+  was (`eleventy.config.js`'s `researchHtml` global data, `md.render(readFileSync("RESEARCH.md"))`),
+  referenced from `/info/`. Investigation notes only — nothing on that page is implemented.
+- **Header "Tools" dropdown** (`site/assets/nav.js`, next to the Info link) lists every
+  individual tool (built and WIP) as a direct link, mirroring the home page's own expanded Tools
+  section and `/tools/`'s own per-tool anchors.
+- **Sort state also round-trips through the URL** (`?sort=<colIndex>&dir=asc|desc`, numbered
+  `sort2`/`dir2`/... the same way the filters are) — a sorted view can be bookmarked/shared just
+  like a filtered one now, not just reset on reload.
+- **Smithing/clayforming/knapping recipe layers show one at a time**, via click-to-switch tabs
+  (`site/assets/layers.js`) instead of stacking every layer's `<pre>` block on the page at once —
+  some recipes (`clayoven`) have 16 layers, which was unreadable stacked.
 - **Every listing is one real `<table>`**, not a grid-list of plain links, with pagination, a
-  free-text search box, and — whenever rows carry a `data-category`/`data-mod` — an auto-populated
-  `<select>` filtering on it (hidden only if no row has a value for that dimension at all; a single
-  distinct value still shows the dropdown). Sections with zero rows (e.g. an item with no known
-  recipe) are omitted entirely rather than shown empty.
-- **All filter state lives in the URL** (`?q=`, `?category=`, `?mod=`, `?tag=`, numbered
+  free-text search box, and — whenever rows carry a `data-category`/`data-mod`/`data-tags` — an
+  auto-populated multi-select filter panel for it (a button that opens a checkbox list; hidden only
+  if no row has a value for that dimension at all — a single distinct value still shows it).
+  Checking several boxes within one dimension matches rows with ANY of them (OR within a
+  dimension); category/mod/tag/free-text search are ANDed together across dimensions. Every active
+  value, from any dimension, also shows as a removable chip below the controls row. Sections with
+  zero rows (e.g. an item with no known recipe) are omitted entirely rather than shown empty.
+- **All filter state lives in the URL** (`?q=`, and `?category=`/`?mod=`/`?tag=` as
+  comma-separated lists of active values, e.g. `?category=block,item&tag=tool,weapon`, numbered
   `q2`/`category2`/... for a 2nd+ table on the same page) via `history.replaceState`, so a
   filtered/searched view can be bookmarked, shared, or revisited with back/forward navigation. See
-  `site/assets/datatable.js`. `tag` is a separate exact-match filter dimension (against
-  `data-tags`) from the free-text `q` substring search, used for creature tags — a tag link
-  shouldn't also match unrelated rows whose name/code happens to contain the same substring.
+  `site/assets/datatable.js`. `tag` matches exact tokens split out of the space-separated
+  `data-tags` attribute, not the free-text `q` substring search — a tag link shouldn't also match
+  unrelated rows whose name/code happens to contain the same substring.
 - **Wildcard/placeholder ingredients are clickable**, e.g. a recipe using `leather-normal-*` links
   to `/items/?q=leather-normal-`, pre-filtering the items list to that family.
 - **Recipes without their own name** (alloy, barrel, cooking, knapping, smithing, clayforming never
@@ -265,21 +383,46 @@ Info page for the visitor-facing version of that caveat.
   routing-only prep for a second language later — nothing currently generates non-English content,
   and `LANG_PREFIX` is the only knob, overriding the default `"en"` for local experimentation.
 - **Footer build info**: every page shows when it was generated (stored in UTC, rendered
-  client-side as a relative time string — see `site/assets/build-time.js`), itself the link to
-  the exact commit it was built from (`GITHUB_SHA`/`GITHUB_REPOSITORY`, set automatically by every
-  Actions run; falls back to the local git working tree otherwise, where it's plain unlinked text).
-  The " ago" suffix lives in a separate sibling element so "just now" doesn't read as "just now ago".
+  client-side as a relative time string — see `site/assets/build-time.js`), linking to the site's
+  own **`/<lang>/build/`** page (`site/build/index.njk`) rather than straight to GitHub. The " ago"
+  suffix lives in a separate sibling element so "just now" doesn't read as "just now ago".
+- **`/<lang>/build/`** is the full build/CI detail page the footer links to: repo, branch, commit
+  sha/message/author, and (in CI) a link to the actual GitHub Actions run — all resolved in
+  `eleventy.config.js`'s `buildInfo` global data from `GITHUB_SHA`/`GITHUB_REPOSITORY`/
+  `GITHUB_RUN_ID`/`GITHUB_HEAD_REF`/`GITHUB_REF_NAME` (set automatically by every Actions run) with
+  a local-git (`git log`/`git rev-parse`) fallback for everything except the CI run link itself.
+  `buildInfo.isCi` (true only when `GITHUB_ACTIONS === "true"`) drives a clear "local build — no
+  CI metadata available" state on that page for local/dev builds, instead of either hiding the
+  section or showing something misleadingly CI-flavored.
+- **Pipeline phase timings**, also surfaced on `/<lang>/build/`: each of the three phases
+  (`npm run download`, `npm run ingest`, the Eleventy site build) persists its own wall-clock
+  duration as a small JSON file under `site/_data/generated/` — `downloadTiming.json`
+  (`scripts/download.ts`'s `main()`), `ingestTiming.json` (`src/ingest/index.ts`'s `main()`), and
+  `eleventyBuildTiming.json`. These are three separate process invocations (in CI, three separate
+  workflow steps, possibly minutes apart), so each is written to disk rather than held in memory —
+  see the matching `DownloadTiming`/`IngestTiming`/`EleventyBuildTiming` interfaces in
+  `src/ingest/types.ts`. `downloadTiming.json` also records a per-mod `"downloaded" |
+  "skipped-present" | "failed"` outcome and an overall `anyDownloaded` flag, since a cache-hit
+  download run (the common case in CI) legitimately finishes in a couple of seconds — the flag is
+  what distinguishes that from something being silently broken.
+  **Eleventy can't report its own total duration to its own templates** — the number isn't known
+  until the process is already exiting, after every page (including `/<lang>/build/` itself) has
+  already rendered. Resolved with `scripts/build-site.ts`, a thin wrapper that runs the real
+  `eleventy` CLI as a child process, times the whole invocation from outside it, and writes
+  `eleventyBuildTiming.json` only once that child exits — `npm run build` and the CI "Build site"
+  step both invoke this wrapper instead of `eleventy` directly now. The unavoidable consequence:
+  the number `/<lang>/build/` shows for the site-build phase is always **one full build run
+  stale** (it describes the *previous* successful build, not the one currently rendering that
+  page) — the page labels it that way explicitly rather than presenting it as live.
 
-## Coming soon (`/guides/`, `/trades/`, `/tools/`)
+## Coming soon (`/tools/`)
 
-Three pages are intentionally empty stubs, each explaining in-page what's planned and exactly
-where the underlying game data already lives, rather than silently having no page at all:
+One page is an intentionally empty stub, explaining in-page what's planned and exactly
+where the underlying game data already lives, rather than silently having no page at all
+(`/guides/` and `/trades/` were in this category once but are both now fully implemented —
+`/trades/` has its own section above; `/guides/` is `models/guides.ts`, sourced from
+`config/handbook/00-starterguide.json` through `19-stonelayers.json`):
 
-- **`/guides/`** — the game's own 20 in-game handbook help-guide articles
-  (`config/handbook/00-starterguide.json` through `19-stonelayers.json`).
-- **`/trades/`** — what wandering traders buy/sell, per specialization
-  (`config/tradelists/*.json`, `entities/humanoid/trader-{male,female}.json`,
-  `config/dialogue/trader.json`).
 - **`/tools/`** — interactive tools beyond the generated reference pages: a schematic
   viewer/uploader (likely adapting
   [jgwoolley/vintage-story-schematic-preview](https://github.com/jgwoolley/vintage-story-schematic-preview)),

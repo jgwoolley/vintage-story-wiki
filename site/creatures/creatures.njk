@@ -9,7 +9,8 @@ eleventyComputed:
   title: "{{ source.sourceDisplayName }} - Vintage Story Wiki"
 ---
 {% import "macros/datatable.njk" as dt %}
-<div class="breadcrumb"><a href="{{ ('/' ~ lang ~ '/') | url }}creatures/">&larr; All creatures</a></div>
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Creatures", url: "creatures/"}, {label: source.sourceDisplayName}]) }}
 
 <h1>{{ source.sourceDisplayName }}</h1>
 <p class="muted">
@@ -72,10 +73,42 @@ eleventyComputed:
     <td>
       {% if entry.drop.manMade %}<span class="tag">man-made</span>{% endif %}
       {% if entry.drop.dropModbyStat %}<span class="tag">scales with {{ entry.drop.dropModbyStat }}</span>{% endif %}
+      {% if entry.stackRandomizerCode %}
+        {% set containerParts = entry.stackRandomizerCode.split(':') %}
+        <span class="tag">from <a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ containerParts[0] }}/{{ containerParts[1] | slugify }}/">{{ generated.items | displayName(containerParts[0], containerParts[1]) }}</a></span>
+      {% endif %}
     </td>
   </tr>
 {% endfor %}
 {% endcall %}
 {% else %}
 <p class="muted">No known drops catalogued for this creature.</p>
+{% endif %}
+
+{% set npcDialogue = generated.dialogueById[source.id] %}
+{% if npcDialogue.id %}
+<h2>Dialogue</h2>
+<p class="muted">
+  From <code>config/dialogue/{{ npcDialogue.dialogueFile }}.json</code> &mdash; this is a branching
+  conversation tree, not a fixed script, so these are every line this NPC's side of the
+  conversation can say across all of its branches, not one fixed order.
+</p>
+{% if npcDialogue.lines.length %}
+<ul>
+{% for line in npcDialogue.lines %}
+  <li>{{ line | replace("__LANG__", ('/' ~ lang ~ '/') | url) }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+{% if npcDialogue.rewards.length %}
+<h3>Can give as a reward ({{ npcDialogue.rewards.length }})</h3>
+<ul>
+{% for reward in npcDialogue.rewards %}
+  <li>
+    <a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ reward.domain }}/{{ reward.code | slugify }}/">{{ generated.items | displayName(reward.domain, reward.code) }}</a>
+    {% if reward.stacksize %}&times;{{ reward.stacksize }}{% endif %}
+  </li>
+{% endfor %}
+</ul>
+{% endif %}
 {% endif %}

@@ -16,8 +16,10 @@ import { extractRockStrata } from "./models/rockstrata.js";
 import { extractTapestryInstances } from "./models/tapestryInstances.js";
 import { extractGuides } from "./models/guides.js";
 import { extractTrades } from "./models/trades.js";
+import { extractDialogue } from "./models/dialogue.js";
 import { extractTraits, extractCharacterClasses } from "./models/classes.js";
 import { buildBlockCodeToSchematicIndex, buildSchematicToStructureIndex, findStructuresContaining } from "./structureContents.js";
+import { expandVariants } from "./variantExpander.js";
 import { buildLangResolver } from "./lang.js";
 import { buildItemIndex, attachItemMetadata } from "./crossref.js";
 import { writeGenerated } from "./write.js";
@@ -30,6 +32,13 @@ function loadManifest(): VsManifest {
 }
 
 function main(): void {
+  // Measured around the whole function (asset loading through the final writeGenerated calls)
+  // so `ingestTiming.json` reflects the real end-to-end cost of `npm run ingest` -- surfaced on
+  // `/<lang>/build/` alongside the download and Eleventy-build phase timings. Written last (after
+  // every other writeGenerated call below) so a failed/aborted run never leaves a stale success
+  // number sitting next to data that didn't actually finish regenerating.
+  const ingestStartedAt = Date.now();
+
   const manifest = loadManifest();
   const manifestModIds = new Set(manifest.mods.map((m) => m.modid.toLowerCase()));
 
@@ -216,6 +225,43 @@ function main(): void {
   const trades = extractTrades(index);
   console.log(`  ${trades.length} trader specializations`);
 
+  console.log("== Extracting NPC dialogue ==");
+  const dialogue = extractDialogue(index, lang);
+  const dialogueRewardCount = dialogue.reduce((n, d) => n + d.rewards.length, 0);
+  console.log(`  ${dialogue.length} NPCs with dialogue, ${dialogueRewardCount} reward-granting dialogue lines`);
+
+  // Cross-reference each specialization against the trader entities that actually use it. VS has
+  // no explicit "specialization" field anywhere: `entities/humanoid/trader-{male,female}.json`
+  // declare a `variantgroups` entry `{ code: "type", states: [...specialization codes...] }`, and
+  // `attributes.tradePropsFile: "config/tradelists/trader-{type}"` substitutes that same `type`
+  // variant value into the tradelist filename -- so the specialization code (the `{type}` variant
+  // state, e.g. "treasurehunter") IS the join key. Re-expands entities/ rather than reusing
+  // extractLoot's creatureRoster because CreatureRosterEntry doesn't retain each variant's
+  // groupValues (only the already-flattened code), and we need the `type` value specifically, not
+  // just the concrete code, to know which specialization a variant belongs to. Deliberately not
+  // hardcoded to "trader" -- any entity (vanilla or modded) whose `type` variantgroup states
+  // overlap a loaded specialization code is picked up the same way.
+  console.log("== Cross-referencing trader specializations against trader entity variants ==");
+  const specializationCodes = new Set(trades.map((t) => t.id.split(/:(.+)/)[1]));
+  const traderEntitiesByType = new Map<string, import("./types.js").TraderEntityRef[]>();
+  for (const variant of expandVariants(index, ["entities/"])) {
+    const groups = (variant.json as { variantgroups?: { code: string; states?: string[] }[] }).variantgroups ?? [];
+    const typeGroup = groups.find((g) => g.code === "type" && (g.states ?? []).some((s) => specializationCodes.has(s)));
+    if (!typeGroup) continue;
+    const type = variant.groupValues["type"];
+    if (!type || !specializationCodes.has(type)) continue;
+    const list = traderEntitiesByType.get(type) ?? [];
+    list.push({ domain: variant.domain, code: variant.code });
+    traderEntitiesByType.set(type, list);
+  }
+  for (const trade of trades) {
+    const specialization = trade.id.split(/:(.+)/)[1];
+    trade.traderEntities = traderEntitiesByType.get(specialization) ?? [];
+  }
+  console.log(
+    `  ${trades.filter((t) => t.traderEntities.length).length}/${trades.length} specializations matched to at least one trader entity variant`
+  );
+
   console.log("== Extracting player traits and starting classes ==");
   const traits = extractTraits(index, lang);
   const characterClasses = extractCharacterClasses(index, lang);
@@ -253,6 +299,7 @@ function main(): void {
         rockStrata: [],
         tradesSelling: [],
         tradesBuying: [],
+        npcRewards: [],
       };
       itemIndex.set(key, entry);
     }
@@ -307,6 +354,44 @@ function main(): void {
   }
   console.log(`  item index grown to ${itemIndex.size} after adding traded-only items`);
 
+  // Flattens each NPC's rewards out into their own array (same "flat array + ids-into-it"
+  // cross-link shape generated.loot/ItemIndexEntry.droppedBy already uses) and cross-references
+  // each one back onto the reward item's own /items/ page -- same "give it a page even if nothing
+  // else does" synthesis as every other reverse cross-link above (a reward-only item, e.g. a
+  // locator map, would otherwise have no /items/ page at all).
+  const dialogueRewards: import("./types.js").DialogueRewardEntry[] = [];
+  for (const npc of dialogue) {
+    for (const reward of npc.rewards) {
+      const idx = dialogueRewards.length;
+      dialogueRewards.push({
+        npcId: npc.id,
+        npcDomain: npc.domain,
+        npcCode: npc.code,
+        npcDisplayName: npc.sourceDisplayName,
+        npcMod: npc.sourceMod,
+        domain: reward.domain,
+        code: reward.code,
+        kind: reward.kind,
+        stacksize: reward.stacksize,
+      });
+      ensureSpawnTarget(reward.domain, reward.code, reward.kind).npcRewards.push(String(idx));
+    }
+  }
+  console.log(`  item index grown to ${itemIndex.size} after adding NPC-reward-only items`);
+
+  console.log("== Cross-referencing items against structure schematics ==");
+  // Every item/block in the index -- not just the decor catalog's paintings/tapestries/clothing
+  // -- can be placed inside a worldgen schematic (storage vessels, bookshelves/books, etc.), and
+  // the blockCodeToSchematic/schematicToStructure maps built above for the decor cross-reference
+  // already cover any code, not just decor ones. Run the same lookup for the whole item index
+  // rather than leaving ItemIndexEntry.appearsInStructures permanently empty.
+  let itemsWithStructures = 0;
+  for (const entry of itemIndex.values()) {
+    entry.appearsInStructures = findStructuresContaining(entry.code, blockCodeToSchematic, schematicToStructure);
+    if (entry.appearsInStructures.length) itemsWithStructures++;
+  }
+  console.log(`  ${itemsWithStructures}/${itemIndex.size} items/blocks found in at least one structure's schematics`);
+
   const modSummaries: ModSummary[] = [
     { modid: "game", name: "Vintage Story (vanilla)", version: manifest.serverVersion, side: "Universal", hasCompiledCode: false, isVanilla: true },
     ...mods.map((m) => ({
@@ -332,6 +417,7 @@ function main(): void {
   const fruitTreesById = Object.fromEntries(fruitTrees.map((t) => [t.id, t]));
   const rockStrataById = Object.fromEntries(rockStrata.map((r) => [r.id, r]));
   const traitsById = Object.fromEntries(traits.map((t) => [t.code, t]));
+  const dialogueById = Object.fromEntries(dialogue.map((d) => [d.id, d]));
 
   console.log("== Writing generated data ==");
   writeGenerated("recipes", recipes);
@@ -359,11 +445,20 @@ function main(): void {
   writeGenerated("guides", guides);
   writeGenerated("trades", trades);
   writeGenerated("tradeListingsById", tradeListingsById);
+  writeGenerated("dialogue", dialogue);
+  writeGenerated("dialogueById", dialogueById);
+  writeGenerated("dialogueRewards", dialogueRewards);
   writeGenerated("traits", traits);
   writeGenerated("traitsById", traitsById);
   writeGenerated("classes", characterClasses);
   writeGenerated("items", [...itemIndex.values()]);
   writeGenerated("mods", modSummaries);
+
+  const ingestTiming: import("./types.js").IngestTiming = {
+    durationMs: Date.now() - ingestStartedAt,
+    finishedAtIso: new Date().toISOString(),
+  };
+  writeGenerated("ingestTiming", ingestTiming);
 
   console.log("Done.");
 }

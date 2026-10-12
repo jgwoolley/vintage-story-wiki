@@ -8,7 +8,8 @@ layout: layouts/base.njk
 eleventyComputed:
   title: "{{ guide.title }} - Vintage Story Wiki"
 ---
-<div class="breadcrumb"><a href="{{ ('/' ~ lang ~ '/') | url }}guides/">&larr; All guides</a></div>
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Help Guides", url: "guides/"}, {label: guide.title}]) }}
 
 <h1>{{ guide.title }}</h1>
 <p class="muted">

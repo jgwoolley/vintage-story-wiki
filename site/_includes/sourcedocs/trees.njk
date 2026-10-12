@@ -1,0 +1,9 @@
+<p>
+<code>worldgen/treengenproperties.json</code> lists every tree/shrub generator as a climate band
+(temperature/rain/fertility/forest-density range, each stored 0-255 and normalized to 0-1 here).
+Each generator's own <code>worldgen/treegen/&lt;Generator&gt;.json</code> file is read just for
+its log/leaves block codes, and saplings are matched back to their generator via the sapling
+block's own glob-keyed <code>attributes.treeGenByType</code> -- this is how a species climate band
+ends up cross-linked to the concrete sapling/log/leaves block codes that actually show up on
+those blocks' own item pages.
+</p>

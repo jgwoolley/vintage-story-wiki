@@ -26,8 +26,15 @@ actually in those files, nothing more.
   (structure, possible tapestry), decoded directly from the structure's own schematic data.
 - **Books & Lore** — the full readable text of every in-game book and journal.
 - **Mods** — which mods (beyond vanilla) this build includes.
-- **Help Guides**, **Trades**, **Tools** — planned, not built yet; each page says what's coming
-  and where the underlying game data already lives.
+- **Help Guides** — the game's own in-game handbook articles.
+- **Trades** — every wandering trader's buy/sell listings, in one sortable table.
+- **Classes** — starting character classes, their fixed traits, and starting gear.
+- **Tools** — a couple of small interactive tools, plus a few more planned ones described on that
+  page.
+- **Sources** — exactly which raw game files feed each page above, and how, for anyone curious
+  past "trust me."
+- **Research** — investigation notes for features being considered but not yet built. Nothing on
+  that page is implemented; it's there so the thinking behind a future feature isn't lost.
 
 Every table has a search box, and most have a filter dropdown too — both are saved in the page URL,
 so you can bookmark or share a filtered view. Click a code like `tallgrass-*` or a creature tag

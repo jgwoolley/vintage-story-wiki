@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { execSync } from "node:child_process";
+import { execSync, execFileSync } from "node:child_process";
 import MarkdownIt from "markdown-it";
 
 const md = new MarkdownIt({ html: false, linkify: true });
@@ -25,18 +25,71 @@ function resolveRepoSlug() {
   }
 }
 
+// GITHUB_HEAD_REF is only set for pull_request-triggered runs, and is the PR's actual source
+// branch; GITHUB_REF_NAME is set for every trigger but on a PR run is the synthetic merge ref
+// ("42/merge"), not a real branch name -- prefer HEAD_REF when present. Local (non-CI) builds
+// fall back to the working tree's current branch.
+function resolveBranch() {
+  if (process.env.GITHUB_HEAD_REF) return process.env.GITHUB_HEAD_REF;
+  if (process.env.GITHUB_REF_NAME) return process.env.GITHUB_REF_NAME;
+  try {
+    return execSync("git rev-parse --abbrev-ref HEAD", { encoding: "utf8" }).trim();
+  } catch {
+    return undefined;
+  }
+}
+
+// Subject line + author of the resolved commit, read via `git log` rather than any GitHub env var
+// (Actions doesn't expose the commit message/author directly) -- works the same whether `sha`
+// came from GITHUB_SHA (CI) or the local git fallback, since actions/checkout always leaves that
+// exact commit checked out. \x1f (unit separator) is used as the field delimiter since it can't
+// appear in a normal commit subject/author, so no escaping is needed to split it back apart.
+// execFileSync (not execSync) avoids ever shell-interpolating `sha`, which can come from an
+// externally-set env var (GITHUB_SHA).
+function resolveCommitDetails(sha) {
+  if (!sha) return {};
+  try {
+    const raw = execFileSync("git", ["log", "-1", "--format=%s\x1f%an\x1f%ae", sha], { encoding: "utf8" }).trim();
+    const [commitMessage, commitAuthor, commitAuthorEmail] = raw.split("\x1f");
+    return { commitMessage, commitAuthor, commitAuthorEmail };
+  } catch {
+    return {};
+  }
+}
+
 export default function (eleventyConfig) {
-  // The commit this build was generated from, and when -- rendered in the footer (base.njk) and
-  // linked to the actual commit on GitHub. GITHUB_SHA/GITHUB_REPOSITORY are set automatically by
-  // every Actions run, so this needs no extra CI configuration; local builds fall back to the
-  // working tree's own git state.
+  // The commit this build was generated from, and when -- the footer (base.njk) shows a short
+  // relative-time summary that now links to the site's own `/<lang>/build/` page (site/build/
+  // index.njk) rather than straight to GitHub, since that page is where the full resolved detail
+  // (repo/branch/commit/CI run, plus pipeline timings) actually lives.
+  //
+  // `isCi` distinguishes a real GitHub Actions run from a local `npm run build` -- GITHUB_ACTIONS
+  // is set to the literal string "true" on every Actions runner and never set locally. CI-only
+  // facts (the Actions run link) are simply absent on a local build; commit/branch/repo are still
+  // resolved from the working tree's own git state where possible, since they're useful in local
+  // dev too, but the page makes clear they're not describing a CI run when `isCi` is false.
   eleventyConfig.addGlobalData("buildInfo", () => {
+    const isCi = process.env.GITHUB_ACTIONS === "true";
     const commitSha = resolveCommitSha();
     const repoSlug = resolveRepoSlug();
+    const branch = resolveBranch();
+    const { commitMessage, commitAuthor, commitAuthorEmail } = resolveCommitDetails(commitSha);
+    const runId = process.env.GITHUB_RUN_ID;
     return {
       utcIso: new Date().toISOString(),
+      isCi,
+      repoSlug,
+      branch,
       commitSha,
+      commitShortSha: commitSha ? commitSha.slice(0, 7) : undefined,
+      commitMessage,
+      commitAuthor,
+      commitAuthorEmail,
       commitUrl: commitSha && repoSlug ? `https://github.com/${repoSlug}/commit/${commitSha}` : undefined,
+      runId,
+      // Only meaningful for an actual Actions run -- a local build has no run id to link to even
+      // though it might still resolve a repoSlug (e.g. from `git remote`).
+      runUrl: isCi && runId && repoSlug ? `https://github.com/${repoSlug}/actions/runs/${runId}` : undefined,
     };
   });
 
@@ -46,6 +99,11 @@ export default function (eleventyConfig) {
   // who just wants to look up a crafting recipe. Keep them as two separate files, not variants of
   // the same text.
   eleventyConfig.addGlobalData("infoHtml", () => md.render(readFileSync("INFO.md", "utf8")));
+
+  // The Research page (site/research/index.njk) renders RESEARCH.md the same way -- a hand-written
+  // investigation doc (no code implemented, per its own header) kept at the repo root like
+  // README.md/CLAUDE.md/INFO.md, published so it's actually readable without cloning the repo.
+  eleventyConfig.addGlobalData("researchHtml", () => md.render(readFileSync("RESEARCH.md", "utf8")));
 
   // Lets CI provide the real deployed origin (e.g. "https://<user>.github.io") for building
   // absolute Open Graph/Twitter image URLs, which unlike internal links are supposed to be
@@ -110,6 +168,19 @@ export default function (eleventyConfig) {
   });
 
   eleventyConfig.addFilter("round", (n, digits = 3) => (typeof n === "number" ? Number(n.toFixed(digits)) : n));
+
+  // Formats a millisecond duration (from downloadTiming.json/ingestTiming.json/
+  // eleventyBuildTiming.json, surfaced on /<lang>/build/) as a short human string -- e.g. "842 ms",
+  // "3.4s", "1m 06s" -- rather than showing a raw millisecond count on the page.
+  eleventyConfig.addFilter("durationLabel", (ms) => {
+    if (typeof ms !== "number" || !Number.isFinite(ms)) return "unknown";
+    if (ms < 1000) return `${Math.round(ms)} ms`;
+    const totalSeconds = ms / 1000;
+    if (totalSeconds < 60) return `${totalSeconds.toFixed(1)}s`;
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = Math.round(totalSeconds % 60);
+    return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
+  });
 
   eleventyConfig.addFilter("percent", (n) => (typeof n === "number" ? `${(n * 100).toFixed(2)}%` : n));
 

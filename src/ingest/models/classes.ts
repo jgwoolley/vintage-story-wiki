@@ -1,6 +1,7 @@
 import type { AssetIndex, CharacterClassGearItem, CharacterClassInfo, TraitInfo, TraitType } from "../types.js";
 import type { LangResolver } from "../lang.js";
 import { assetsUnderAnyDomain } from "../assetLoader.js";
+import { rewriteHandbookLinks, stripGameRichText } from "../codeUtil.js";
 
 interface RawTrait {
   code: string;
@@ -29,13 +30,20 @@ export function extractTraits(index: AssetIndex, lang: LangResolver): TraitInfo[
   for (const asset of assetsUnderAnyDomain(index, "config/traits.json")) {
     const raw = asset.json as RawTrait[];
     for (const t of raw) {
+      const rawName = lang.raw(asset.domain, `trait-${t.code}`);
+      const rawDesc = lang.raw(asset.domain, `traitdesc-${t.code}`);
       out.push({
         code: t.code,
         domain: asset.domain,
         sourceMod: asset.modid,
         type: t.type,
-        displayName: lang.raw(asset.domain, `trait-${t.code}`) ?? t.code,
-        description: lang.raw(asset.domain, `traitdesc-${t.code}`),
+        // trait-<code> lang values are authored as game-chat rich text (e.g.
+        // `<font color="#84ff84">• Soldier </font>`), not web HTML -- strip it down to plain text.
+        displayName: rawName ? stripGameRichText(rawName) : t.code,
+        // traitdesc-<code>, when present, DOES contain real anchor tags whose href is a
+        // handbooksearch:// URI (e.g. "bowyer" links to crafting a bow) -- keep the markup (the
+        // template renders this with `| safe`) but rewrite the URI into a real site-relative link.
+        description: rawDesc ? rewriteHandbookLinks(rawDesc) : undefined,
         attributes: t.attributes ?? {},
       });
     }

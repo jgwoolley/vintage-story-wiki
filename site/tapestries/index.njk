@@ -4,6 +4,8 @@ layout: layouts/base.njk
 permalink: "{{ lang }}/tapestries/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Tapestries"}]) }}
 <h1>Tapestries</h1>
 <p class="muted">
   Every real possible tapestry a generated structure could show, decoded directly from each
@@ -11,6 +13,7 @@ permalink: "{{ lang }}/tapestries/index.html"
   pairing, not per block code or wall direction. Source:
   <code>worldgen/schematics/**/*.json</code>'s <code>BlockEntities</code> (see
   <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a> for how this is decoded).
+  <a href="{{ ('/' ~ lang ~ '/') | url }}sources/tapestries/">Full details &rarr;</a>
 </p>
 <p class="muted">
   <strong>This is a possibility list, not a guarantee.</strong> The game rerolls a schematic's
@@ -22,8 +25,9 @@ permalink: "{{ lang }}/tapestries/index.html"
   that specific tapestry, discoverable.
 </p>
 
-{% call dt.datatable(60, "Search ruin, tapestry, or block code...", ["Ruin", "Ruin mod", "Tapestry", "Attribute", "Block", "Direction", "Size", "Authored"]) %}
+{% call dt.datatable(60, "Search ruin, tapestry, or block code...", ["Ruin", "Ruin mod", "Tapestry", "Lore chapter", "Attribute", "Block", "Direction", "Size", "Authored"]) %}
 {% for item in generated.tapestries %}
+  {% set book = generated.lore | findById(item.relatedLoreBookId) %}
   {% for inst in item.tapestryInstances | default([]) %}
     {% set structure = generated.structures | findById(inst.structureId) %}
     {% if structure %}
@@ -32,6 +36,13 @@ permalink: "{{ lang }}/tapestries/index.html"
           <td><a href="{{ ('/' ~ lang ~ '/') | url }}structures/{{ structure.id | slugify }}/">{{ structure.name or structure.code }}</a> <span class="tag">{{ structure.kind }}</span></td>
           <td><span class="tag">{{ structure.sourceMod }}</span></td>
           <td>{{ outcome.displayName }}</td>
+          <td>
+            {% if book.id and outcome.loreChapterId != null %}
+              <a href="{{ ('/' ~ lang ~ '/') | url }}lore/{{ book.domain }}/{{ book.code | slugify }}/#chapter-{{ outcome.loreChapterId }}">{{ book.title }} &mdash; ch. {{ outcome.loreChapterId + 1 }}</a>
+            {% else %}
+              <span class="muted">no lore</span>
+            {% endif %}
+          </td>
           <td><code>{{ outcome.rawType }}</code></td>
           <td><code>{{ inst.blockCode }}</code></td>
           <td>{{ inst.blockCode.split('-').pop() }}</td>

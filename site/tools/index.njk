@@ -1,14 +1,23 @@
 ---
 title: Tools - Vintage Story Wiki
-description: Planned -- interactive tools beyond the generated reference pages.
+description: Interactive tools beyond the generated reference pages -- built and planned.
 layout: layouts/base.njk
 permalink: "{{ lang }}/tools/index.html"
 ---
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Tools"}]) }}
 <h1>Tools</h1>
-<p class="wip-badge">Work in progress</p>
-<p>Planned interactive tools, beyond the generated reference pages this wiki already has:</p>
+<p>Interactive tools beyond the generated reference pages this wiki already has -- some built, some still planned.</p>
 
-<h2>Schematic viewer/uploader</h2>
+<h2 id="trades-price-guide">Trades price guide</h2>
+<p>
+  Every individual buy/sell listing across every wandering trader specialization, flattened into
+  one sortable, filterable table (price/stock shown as a range, not just an average) -- in the
+  spirit of <a href="https://www.vintagestorypriceguide.com/">vintagestorypriceguide.com</a>.
+  <a href="{{ ('/' ~ lang ~ '/') | url }}trades/">Open the trades page &rarr;</a>
+</p>
+
+<h2 id="schematic-vieweruploader">Schematic viewer/uploader</h2>
 <p class="wip-badge">Work in progress</p>
 <p>
   Upload a <code>.json</code> schematic file and view it rendered in the browser, and (longer
@@ -17,14 +26,46 @@ permalink: "{{ lang }}/tools/index.html"
   <a href="https://github.com/jgwoolley/vintage-story-schematic-preview">jgwoolley/vintage-story-schematic-preview</a>.
 </p>
 
-<h2>Painting/tapestry-in-ruins lookup</h2>
+<h2 id="paintingtapestry-in-ruins-lookup">Painting/tapestry-in-ruins lookup</h2>
 <p class="wip-badge">Work in progress</p>
 <p>
   Right now, each <a href="{{ ('/' ~ lang ~ '/') | url }}paintings/">painting</a>/
-  <a href="{{ ('/' ~ lang ~ '/') | url }}tapestries/">tapestry</a> page shows which
+  <a href="{{ ('/' ~ lang ~ '/') | url }}tapestries/">tapestry</a> page (and now, generally, every
+  <a href="{{ ('/' ~ lang ~ '/') | url }}items/">item/block</a> page) shows which
   <a href="{{ ('/' ~ lang ~ '/') | url }}structures/">structures</a> it's found in, built from a
-  flat pass over every schematic's block-code dictionary. A proper lookup still needs to be
-  evaluated against <code>worldgen/storystructures.json</code> and <code>worldgen/structures.json</code>
-  directly, to confirm which specific ruin/story-structure variants actually place a given
-  painting or tapestry (rather than just "some schematic somewhere contains this block code").
+  flat pass over every schematic's block-code dictionary -- confirms the code is somewhere in that
+  schematic, not where or how many times. Tapestries already get a precise, per-instance version
+  of this (see the <a href="{{ ('/' ~ lang ~ '/') | url }}tapestries/">tapestries page</a>, decoded
+  directly from each schematic's block-entity data); a proper lookup for paintings would need the
+  same per-instance decoding, evaluated against <code>worldgen/storystructures.json</code> and
+  <code>worldgen/structures.json</code> directly.
+</p>
+
+<h2 id="alloy-ratio-calculator">Alloy ratio calculator</h2>
+<p class="wip-badge">Work in progress</p>
+<p>
+  A slider per ingot type making up an alloy (e.g. bismuth bronze = copper + bismuth + silver),
+  each slider set to the alloy's target percentage range, that then computes the maximum number of
+  metal bits a crucible can actually smelt at that exact ratio -- accounting for each ingredient
+  being tracked in whole item-stack units (a crucible has 4 inventory slots, so at most 4 distinct
+  stacks of bits can be poured in at once) rather than assuming arbitrary fractional amounts are
+  available. Source data already in this pipeline: alloy recipes
+  (<code>recipes/alloy/*.json</code>, already extracted by <code>models/recipes.ts</code> with
+  each ingredient's <code>minratio</code>/<code>maxratio</code>) and ore/nugget stack sizes (the
+  item index's <code>maxStackSize</code>).
+</p>
+
+<h2 id="worldgen-seedbiome-lookup">World seed / biome lookup</h2>
+<p class="wip-badge">Work in progress</p>
+<p>
+  Plug in a world seed plus the worldgen settings chosen at world creation (climate/forest/
+  geologic-activity sliders, landform/polar-ice-cap toggles, etc.) and get back what that spot
+  actually generates -- biome, temperature, rain, forest density -- without having to create the
+  world first just to look. <code>worldgen/landforms.json</code> already describes the noise
+  parameters landforms are built from, but the actual seeded noise generator that turns a seed +
+  coordinates into a temperature/rain/landform value is implemented in the game's own engine code,
+  not expressed anywhere in the downloadable JSON assets this pipeline reads -- reproducing it
+  client-side would mean reverse-engineering/reimplementing that noise algorithm from the engine
+  source (or an existing community port of it, if one exists), not just reading a config file, so
+  this one's a bigger lift than the other tools above.
 </p>

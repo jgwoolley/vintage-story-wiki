@@ -1,0 +1,9 @@
+<p>
+Each <code>config/handbook/&lt;NN&gt;-&lt;name&gt;.json</code> file is a flat
+<code>{pageCode, title, text}</code> object -- <code>title</code>/<code>text</code> are lang-key
+references, resolved the same way lore book text is. There's no ordering field in the data at
+all; the two-digit numeric filename prefix is the only ordering signal that exists anywhere, so
+it's what this wiki sorts by. Any <code>handbook://</code>/<code>handbooksearch://</code> links
+embedded in the resolved text are rewritten into real site-relative links (to an item page, another
+guide, or a pre-filled items search) -- the same rewriting used for trait descriptions.
+</p>

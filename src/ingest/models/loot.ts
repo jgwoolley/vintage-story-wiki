@@ -12,6 +12,52 @@ interface DropSpec {
   dropModbyStat?: string;
 }
 
+/** One entry of an `ItemStackRandomizer` item's `attributesByType["*-<variant>"].stacks` pool --
+ * NOT a `DropSpec`: its `chance` is a flat relative weight (not a {avg,var} 0-1 probability), and
+ * its `quantity` is its own {avg,var}, both independent of whatever drop table handed out the
+ * container item itself. See the `LootMechanism` doc comment in types.ts. */
+interface StackRandomizerStack {
+  type?: string;
+  code: string;
+  domain: string;
+  quantityAvg?: number;
+  quantityVar?: number;
+  weight: number;
+}
+
+/** Finds every `ItemStackRandomizer`-class itemtype (e.g. `survival/itemtypes/meta/
+ * stackrandomizer.json`) and, for each of its concrete variants (via the same `expandVariants`
+ * used for blocktypes/entities), resolves that variant's `attributesByType` (glob-keyed the same
+ * way as every other `*ByType` field) down to its `stacks` pool. Keyed by `${domain}:${code}` --
+ * e.g. "survival:stackrandomizer-alljonas" -- so a drop's own `${drop.domain}:${drop.code}` can
+ * look itself up directly. */
+function extractStackRandomizerPools(index: AssetIndex): Map<string, StackRandomizerStack[]> {
+  const pools = new Map<string, StackRandomizerStack[]>();
+  const itemVariants = expandVariants(index, ["itemtypes/"]);
+  for (const variant of itemVariants) {
+    const json = variant.json as any;
+    if (String(json.class ?? "").toLowerCase() !== "itemstackrandomizer") continue;
+    const attrs = resolveByType<any>(json.attributesByType, variant.code);
+    const stacks: any[] = Array.isArray(attrs?.stacks) ? attrs.stacks : [];
+    if (!stacks.length) continue;
+    const normalized: StackRandomizerStack[] = [];
+    for (const stack of stacks) {
+      if (!stack?.code) continue;
+      const { domain, bareCode } = splitDomainCode(String(stack.code), variant.domain);
+      normalized.push({
+        type: stack.type,
+        domain,
+        code: bareCode,
+        quantityAvg: stack.quantity?.avg,
+        quantityVar: stack.quantity?.var,
+        weight: typeof stack.chance === "number" ? stack.chance : 1,
+      });
+    }
+    if (normalized.length) pools.set(`${variant.domain}:${variant.code}`, normalized);
+  }
+  return pools;
+}
+
 /** Pulls the handful of entity stats that are broadly useful on a wiki page: health, size,
  * weight, and behavior tags. `maxhealth` lives on the "health" entry of `server.behaviors`,
  * same `*ByType` glob-resolution mechanism used everywhere else for variant-specific values. */
@@ -29,8 +75,12 @@ function pickSpawnField(section: any, field: string, concreteCode: string): any 
 /** Whether an entity is a "living" thing at all (has the "health" server behavior) -- the signal
  * used to decide if a drop-less entity (a trader, villager, locust, ...) still belongs on
  * `/creatures/` (see `extractCreatureRoster`), as opposed to a non-creature utility entity (a
- * boat, thrown projectile, elevator, armor stand, ...) which never has one. */
-function hasHealthBehavior(json: any): boolean {
+ * boat, thrown projectile, elevator, armor stand, ...) which never has one. Exported for
+ * `models/dialogue.ts`, which uses the same signal to decide whether a "conversable" entity is a
+ * real NPC with a `/creatures/` page to cross-link to, as opposed to an inanimate "conversable"
+ * lore prop (e.g. `skeletonarm`/`libraryresonator`, part of the Resonance Archive puzzle) that
+ * never gets a creature page at all. */
+export function hasHealthBehavior(json: any): boolean {
   const behaviors: any[] = json.server?.behaviors ?? [];
   return behaviors.some((b) => String(b?.code ?? "").toLowerCase() === "health");
 }
@@ -95,6 +145,39 @@ function toLootDrop(spec: DropSpec, fallbackDomain: string, groupValues: Record<
 export function extractLoot(index: AssetIndex, lang: LangResolver): { loot: LootEntry[]; creatureRoster: CreatureRosterEntry[] } {
   const out: LootEntry[] = [];
   const creatureRoster: CreatureRosterEntry[] = [];
+  const stackRandomizerPools = extractStackRandomizerPools(index);
+
+  // Pushes `entry` as-is (so a stackRandomizer "box" item, e.g. "stackrandomizer-alljonas",
+  // still gets its own normal loot entry / `/items/` droppedBy link), then -- if `entry.drop`
+  // itself resolves to a known `ItemStackRandomizer` pool -- also synthesizes one additional
+  // `stackRandomizer` entry per pool content, weight-normalized within that pool. See the
+  // `LootMechanism` doc comment in types.ts for why this is additive rather than a replacement.
+  function pushDrop(entry: LootEntry): void {
+    out.push(entry);
+    const pool = stackRandomizerPools.get(`${entry.drop.domain}:${entry.drop.code}`);
+    if (!pool || !pool.length) return;
+    const totalWeight = pool.reduce((sum, stack) => sum + stack.weight, 0) || pool.length;
+    for (const stack of pool) {
+      out.push({
+        sourceKind: entry.sourceKind,
+        sourceDomain: entry.sourceDomain,
+        sourceCode: entry.sourceCode,
+        sourceDisplayName: entry.sourceDisplayName,
+        sourceMod: entry.sourceMod,
+        entityStats: entry.entityStats,
+        mechanism: "stackRandomizer",
+        stackRandomizerCode: `${entry.drop.domain}:${entry.drop.code}`,
+        drop: {
+          type: stack.type,
+          domain: stack.domain,
+          code: stack.code,
+          quantityAvg: stack.quantityAvg,
+          quantityVar: stack.quantityVar,
+          chanceAvg: stack.weight / totalWeight,
+        },
+      });
+    }
+  }
 
   // --- Block drops + panning drops ---
   const blockVariants = expandVariants(index, ["blocktypes/"]);
@@ -104,7 +187,7 @@ export function extractLoot(index: AssetIndex, lang: LangResolver): { loot: Loot
     const drops: DropSpec[] = resolveByType(json.dropsByType, variant.code) ?? json.drops ?? [];
     for (const drop of drops) {
       if (!drop?.code) continue;
-      out.push({
+      pushDrop({
         sourceKind: "block",
         sourceDomain: variant.domain,
         sourceCode: variant.code,
@@ -120,7 +203,7 @@ export function extractLoot(index: AssetIndex, lang: LangResolver): { loot: Loot
       for (const [pattern, entries] of Object.entries(panningDrops)) {
         for (const drop of entries) {
           if (!drop?.code) continue;
-          out.push({
+          pushDrop({
             sourceKind: "block",
             sourceDomain: variant.domain,
             sourceCode: variant.code,
@@ -153,7 +236,7 @@ export function extractLoot(index: AssetIndex, lang: LangResolver): { loot: Loot
     const deathDrops: DropSpec[] = resolveByType(json.dropsByType, variant.code) ?? json.drops ?? [];
     for (const drop of deathDrops) {
       if (!drop?.code) continue;
-      out.push({
+      pushDrop({
         sourceKind: "entity",
         sourceDomain: variant.domain,
         sourceCode: variant.code,
@@ -174,7 +257,7 @@ export function extractLoot(index: AssetIndex, lang: LangResolver): { loot: Loot
     const harvestDrops: DropSpec[] = resolveByType(harvestable?.dropsByType, variant.code) ?? harvestable?.drops ?? [];
     for (const drop of harvestDrops) {
       if (!drop?.code) continue;
-      out.push({
+      pushDrop({
         sourceKind: "entity",
         sourceDomain: variant.domain,
         sourceCode: variant.code,

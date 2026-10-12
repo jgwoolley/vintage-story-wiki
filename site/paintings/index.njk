@@ -4,13 +4,15 @@ layout: layouts/base.njk
 permalink: "{{ lang }}/paintings/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Paintings"}]) }}
 <h1>Paintings</h1>
 <p class="muted">
   Purely decorative placed blocks with no recipe or drop table, so they don't appear anywhere else
   on this wiki &mdash; see the <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a> page for why.
   {{ generated.paintings.length }} catalogued directly from the game's block definitions.
 </p>
-<p class="muted">Source: <code>blocktypes/wood/painting.json</code>.</p>
+<p class="muted">Source: <code>blocktypes/wood/painting.json</code>. <a href="{{ ('/' ~ lang ~ '/') | url }}sources/paintings/">Full details &rarr;</a></p>
 
 {% call dt.datatable(60, "Search paintings...", ["Name", "Mod"]) %}
 {% for item in generated.paintings | sort(false, false, "displayName") %}

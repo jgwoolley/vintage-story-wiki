@@ -1,0 +1,22 @@
+---
+title: Sources - Vintage Story Wiki
+description: How each top-level page was built -- which raw game files feed it, and how.
+layout: layouts/base.njk
+permalink: "{{ lang }}/sources/index.html"
+---
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Sources"}]) }}
+<h1>Sources</h1>
+<p>
+  Every page on this wiki is generated from the game's own raw asset files, never hand-maintained
+  -- this section exists so that's checkable, not just claimed. One page per top-level listing,
+  naming the exact raw file globs it reads and how they're processed into what you see.
+</p>
+<div class="grid-list">
+{% for src in pipelineSources %}
+  <a href="{{ ('/' ~ lang ~ '/') | url }}sources/{{ src.id }}/">
+    <strong>{{ src.title }}</strong>
+    <span class="muted">{{ src.globs.length }} file glob{% if src.globs.length != 1 %}s{% endif %}</span>
+  </a>
+{% endfor %}
+</div>

@@ -48,6 +48,7 @@ export function buildItemIndex(
         rockStrata: [],
         tradesSelling: [],
         tradesBuying: [],
+        npcRewards: [],
       };
       items.set(k, entry);
     }
@@ -119,8 +120,9 @@ export function buildItemIndex(
     ensure(entry.drop.domain, entry.drop.code!, kind, entry.sourceMod).droppedBy.push(String(i));
   });
 
-  // appearsInStructures stays empty in v1: schematic BlockCodes inventories are opaque (see plan)
-  // until voxel data is decoded in a later phase.
+  // appearsInStructures is populated later, in src/ingest/index.ts, once the schematic
+  // BlockCodes-dictionary cross-reference (blockCodeToSchematic/schematicToStructure, built from
+  // structureContents.ts) is in scope -- this function only has recipes/loot available.
 
   return items;
 }
