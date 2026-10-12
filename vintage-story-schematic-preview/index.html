@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VS Schematic Inspector Pro</title>
+
+    <link rel="icon" type="image/svg+xml" href="icons/logo.svg?v=4">
+    <meta name="description" content="A web gui for viewing Vintage Story schematics.">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=4">
+    <meta name="apple-mobile-web-app-title" content="VSSchematicPreview">
+    <meta name="author" content="James Woolley">
+    <meta property="article:published_time" content="2026-01-11T20:50:00Z">
+    <meta property="article:modified_time" content="2026-01-11T20:50:00Z">
+    <meta name="DC.date.issued" content="2026-01-11">
+    <link rel="canonical" href="https://jgwoolley.github.io/vintage-story-schematic-preview/">
+    <meta name="theme-color" content="#2ea44f">
+
+    <meta property="og:title" content="Nf3t VSSchematicPreview">
+    <meta property="og:site_name" content="Nf3t VSSchematicPreview">
+    <meta property="og:description" content="A web gui for viewing Vintage Story schematics.">
+    <meta property="og:type" content="website">
+    <meta property="og:image"
+        content="https://jgwoolley.github.io/vintage-story-schematic-preview/icons/og-image.png?v=4">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:url" content="https://jgwoolley.github.io/vintage-story-schematic-preview/?v=4">
+    <meta property="og:article:author" content="James Woolley">
+
+    <meta property="twitter:title" content="Nf3t VSSchematicPreview">
+    <meta property="twitter:description" content="A web gui for viewing Vintage Story schematics.">
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://jgwoolley.github.io/vintage-story-schematic-preview/?v=4">
+    <meta property="twitter:title" content="Nf3t VSSchematicPreview">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Nf3t VSLauncher",
+      "operatingSystem": "Windows, macOS, Linux",
+      "applicationCategory": "GameApplication",
+      "datePublished": "2026-01-11"
+    }
+    </script>
+    <meta property="twitter:image"
+        content="https://jgwoolley.github.io/vintage-story-schematic-preview/icons/og-image.png?v=4">
+
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #1a1a1a;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        /* Main UI Panel */
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            color: white;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 20px;
+            border-radius: 12px;
+            width: 320px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+            border: 1px solid #444;
+        }
+
+        /* Help & Inspector Panels */
+        #inspector,
+        #helpPanel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 11;
+            color: white;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 20px;
+            border-radius: 12px;
+            width: 280px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            display: none;
+            border-left: 4px solid #0078d4;
+        }
+
+        .control-block {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+
+        /* Search Bar with X Button */
+        .search-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            background: #222;
+            border: 1px solid #444;
+            color: white;
+            padding: 10px 35px 10px 10px;
+            border-radius: 6px;
+            outline: none;
+            font-size: 13px;
+        }
+
+        input[type="text"]:focus {
+            border-color: #0078d4;
+        }
+
+        .clear-search {
+            position: absolute;
+            right: 10px;
+            cursor: pointer;
+            color: #888;
+            font-weight: bold;
+            font-size: 16px;
+            user-select: none;
+        }
+
+        .clear-search:hover {
+            color: white;
+        }
+
+        /* Sliders and Buttons */
+        input[type="range"] {
+            width: 100%;
+            margin-top: 10px;
+            accent-color: #0078d4;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        button {
+            flex: 1;
+            background: #333;
+            color: #eee;
+            border: 1px solid #444;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background: #444;
+            border-color: #666;
+        }
+
+        button.help-btn {
+            background: #0078d4;
+            border: none;
+            margin-bottom: 10px;
+        }
+
+        /* Legend List */
+        #legend {
+            overflow-y: auto;
+            flex-grow: 1;
+            margin-top: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid transparent;
+        }
+
+        .legend-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #555;
+        }
+
+        .legend-item.hidden-block {
+            opacity: 0.2;
+            filter: grayscale(1);
+        }
+
+        .color-box {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .block-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            align-items: center;
+        }
+
+        .block-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 170px;
+            color: #ccc;
+        }
+
+        .block-count {
+            font-family: monospace;
+            background: #222;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        /* Typography */
+        h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #0078d4;
+        }
+
+        p,
+        li {
+            font-size: 12px;
+            color: #bbb;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .trait {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .trait b {
+            color: #fff;
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 10px;
+        }
+
+        #jsonOutput {
+            background: #222;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 11px;
+            white-space: pre-wrap;
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #444;
+            margin-top: 10px;
+        }
+
+        /* Loading Overlay */
+        #loadingOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Schematic Info Badge */
+        #schematicInfo {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #aaa;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+<div id="loadingOverlay">
+        <div class="spinner"></div>
+        <div id="loadingText">Processing Schematic...</div>
+    </div>
+
+    <div id="ui">
+        <button class="help-btn" onclick="toggleHelp()">Guide</button>
+        <strong style="font-size: 1.2em; margin-bottom: 10px;">Schematic Inspector</strong>
+
+        <input type="file" id="fileInput" accept=".json" style="font-size: 11px; margin-bottom: 15px;">
+        <select id="fileSelect">
+            <option value="" selected hidden>-- Select a template --</option>
+            <option value="./schematics/default.json">Default Schematic</option>
+            <optgroup label="Astral Sorcery">
+                <option value="./schematics/ancient_shrine.json">Ancient Shrine</option>
+                <option value="./schematics/desert_shrine.json">Desert Shrine</option>
+                <option value="./schematics/small_shrine.json">Small Shrine</option>
+            </optgroup>
+        </select>
+        <div id="schematicInfo">Size: <span id="sizeValue">-</span></div>
+        <div class="control-block">
+            <div style="display:flex; justify-content: space-between; font-size: 12px;">
+                <span>Layer (Y-Axis):</span>
+                <span id="layerLabel" style="color: #0078d4; font-weight: bold;">All Floors</span>
+            </div>
+            <input type="range" id="layerSlider" min="-1" max="0" value="-1">
+        </div>
+
+        <div class="control-block">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Find block in list...">
+                <span class="clear-search" id="clearSearch">×</span>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button onclick="toggleAll(true)">Show All</button>
+            <button onclick="toggleAll(false)">Hide All</button>
+        </div>
+        <div id="legend"></div>
+    </div>
+
+    <div id="helpPanel">
+        <h3>Instructions</h3>
+        <ul style="padding-left: 15px;">
+            <li><b>Rotate:</b> Left Click + Drag</li>
+            <li><b>Pan:</b> Right Click + Drag</li>
+            <li><b>Zoom:</b> Mouse Wheel</li>
+            <li><b>Inspect:</b> Click any block to see its specific traits.</li>
+            <li><b>Filter:</b> Click blocks in the list to toggle visibility.</li>
+            <li><b>Layers:</b> Use the slider to view the build floor-by-floor.</li>
+            <li><b>Search:</b> Filters the list to find specific materials.</li>
+            <li><b><a href="https://github.com/jgwoolley/vintage-story-schematic-preview/" target="_blank"
+                        rel="noopener noreferrer">Source Link</a></b></li>
+        </ul>
+        <button style="width: 100%;" onclick="toggleHelp()">Close Guide</button>
+    </div>
+
+    <div id="inspector">
+        <h3>Block Traits</h3>
+        <div id="traitContent"></div>
+        <button style="width: 100%; margin-top: 15px;" onclick="closeInspector()">Close</button>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
+
+
+        const Ascii85 = {
+            c_first: 33, // '!'
+            c_last: 117,  // 'u'
+            s_powers: [52200625, 614125, 7225, 85, 1],
+
+            decode(encoded) {
+                // Clean string: remove whitespace and the <~ ~> wrappers if present
+                encoded = encoded.replace(/\s/g, "");
+                if (encoded.startsWith("<~")) encoded = encoded.substring(2);
+                if (encoded.endsWith("~>")) encoded = encoded.substring(0, encoded.length - 2);
+
+                let decodedBytes = [];
+                let count = 0;
+                let value = 0;
+
+                for (let i = 0; i < encoded.length; i++) {
+                    let ch = encoded.charCodeAt(i);
+
+                    if (ch === 122) { // 'z'
+                        if (count !== 0) throw new Error("Character 'z' invalid inside an Ascii85 block.");
+                        this.pushValue(decodedBytes, 0, 0);
+                        // Reset for next block
+                        count = 0;
+                        value = 0;
+                    } else if (ch >= this.c_first && ch <= this.c_last) {
+                        value += (ch - this.c_first) * this.s_powers[count];
+                        count++;
+
+                        if (count === 5) {
+                            this.pushValue(decodedBytes, value, 0);
+                            count = 0;
+                            value = 0;
+                        }
+                    }
+                }
+
+                if (count > 0) {
+                    if (count === 1) throw new Error("The final Ascii85 block must contain more than one character.");
+                    let padding = 5 - count;
+                    for (let i = count; i < 5; i++) {
+                        value += 84 * this.s_powers[i];
+                    }
+                    this.pushValue(decodedBytes, value, padding);
+                }
+
+                return new Uint8Array(decodedBytes).buffer;
+            },
+
+            pushValue(arr, value, padding) {
+                arr.push((value >>> 24) & 0xFF);
+                if (padding === 3) return;
+                arr.push((value >>> 16) & 0xFF);
+                if (padding === 2) return;
+                arr.push((value >>> 8) & 0xFF);
+                if (padding === 1) return;
+                arr.push(value & 0xFF);
+            }
+        };
+
+        class TreeAttributeParser {
+            constructor(buffer) {
+                this.view = new DataView(buffer);
+                this.offset = 0;
+                this.decoder = new TextDecoder();
+            }
+
+            readString() {
+                let length = 0, shift = 0;
+                while (this.offset < this.view.byteLength) {
+                    let byte = this.view.getUint8(this.offset++);
+                    length |= (byte & 0x7f) << shift;
+                    if ((byte & 0x80) === 0) break;
+                    shift += 7;
+                }
+
+                if (length === 0) return "";
+
+                // SAFETY CHECK: Ensure we don't read past the end of the buffer
+                const available = this.view.byteLength - this.offset;
+                const actualLength = Math.min(length, available);
+
+                const strBytes = new Uint8Array(this.view.buffer, this.offset, actualLength);
+                this.offset += actualLength;
+
+                const decoded = this.decoder.decode(strBytes);
+                return actualLength < length ? decoded + "[TRUNCATED]" : decoded;
+            }
+
+            parse() {
+                const result = {};
+                while (this.offset < this.view.byteLength) {
+                    const attrId = this.view.getUint8(this.offset++);
+                    if (attrId === 0) break;
+                    const key = this.readString();
+                    result[key] = this.readAttribute(attrId);
+                }
+                return result;
+            }
+
+            readInt() {
+                let result = 0, shift = 0;
+                while (this.offset < this.view.byteLength) {
+                    let byte = this.view.getUint8(this.offset++);
+                    result |= (byte & 0x7f) << shift;
+                    if ((byte & 0x80) === 0) break;
+                    shift += 7;
+                }
+                return result;
+            }
+
+            readAttribute(id) {
+                switch (id) {
+                    case 1: { const v = this.view.getInt32(this.offset, true); this.offset += 4; return v; }
+                    case 2: { const v = this.view.getBigInt64(this.offset, true); this.offset += 8; return v.toString(); }
+                    case 3: { const v = this.view.getFloat64(this.offset, true); this.offset += 8; return v; }
+                    case 4: { const v = this.view.getFloat32(this.offset, true); this.offset += 4; return v; }
+                    case 5: return this.readString();
+                    case 6: return this.parse(); // Nested TreeAttribute
+                    case 7: { const v = this.view.getFloat64(this.offset, true); this.offset += 8; return v; }
+                    case 8: { // Byte Array - Usually uses Varint length
+                        const len = this.readInt();
+                        const arr = new Uint8Array(this.view.buffer, this.offset, Math.min(len, this.view.byteLength - this.offset));
+                        this.offset += arr.length;
+                        return Array.from(arr);
+                    }
+                    case 9: return this.view.getUint8(this.offset++) !== 0;
+                    case 10: { // String Array - Usually uses Varint length
+                        const len = this.readInt();
+                        return Array.from({ length: len }, () => this.readString());
+                    }
+                    case 11: { // Int Array - OFTEN USES FIXED INT32 LENGTH
+                        const len = this.view.getInt32(this.offset, true);
+                        this.offset += 4;
+                        const arr = [];
+                        for (let i = 0; i < len; i++) {
+                            if (this.offset + 4 <= this.view.byteLength) {
+                                arr.push(this.view.getInt32(this.offset, true));
+                                this.offset += 4;
+                            }
+                        }
+                        return arr;
+                    }
+                    case 12: { // Long Array
+                        const len = this.view.getInt32(this.offset, true); this.offset += 4;
+                        return Array.from({ length: len }, () => {
+                            const v = this.view.getBigInt64(this.offset, true);
+                            this.offset += 8;
+                            return v.toString();
+                        });
+                    }
+                    default:
+                        return `[Type ${id} unknown]`;
+                }
+            }
+        }
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+        const light = new THREE.PointLight(0xffffff, 0.5);
+        camera.add(light);
+        scene.add(camera);
+
+        let blockGroup = new THREE.Group();
+        scene.add(blockGroup);
+        let blockMetadata = new Map();
+        let raycaster = new THREE.Raycaster();
+        let mouse = new THREE.Vector2();
+        let selectedBlock = null;
+        let currentLayer = -1;
+        let searchQuery = "";
+
+        const defaultData = { "GameVersion": "1.21.6", "SizeX": 11, "SizeY": 6, "SizeZ": 11, "BlockCodes": { "11003": "game:rawclay-blue-none", "7904": "game:agedstonebricks-granite", "4647": "game:planks-ebony-we", "6157": "game:clutteredbookshelf", "44": "game:multiblock-monolithic-0-0-n1", "6460": "game:trunk-west", "3260": "game:metalblock-corroded-plain-rusty-iron", "3914": "game:tapestry-west", "13434": "game:groundstorage", "3357": "game:lantern-east", "3839": "game:statictranslocator-broken-west", "13436": "game:clutter", "3211": "game:clutter-devastation", "3356": "game:lantern-north", "73": "game:multiblock-monolithic-n1-0-0", "6532": "game:painting-trout-south", "3359": "game:lantern-west", "4314": "game:door-solid-ebony", "79": "game:multiblock-monolithic-0-p1-0" }, "ItemCodes": { "1317": "game:largegear-temporal", "2748": "game:armor-head-hide-bear-polar", "2749": "game:armor-body-hide-bear-polar", "2750": "game:armor-legs-hide-bear-polar" }, "Indices": [0, 1024, 2048, 3072, 4096, 5120, 6144, 7168, 8192, 9216, 10240, 1048576, 1049600, 1050624, 1051648, 1052672, 1053696, 1054720, 1055744, 1056768, 1057792, 1058816, 2097152, 2098176, 2099200, 2100224, 2101248, 2102272, 2103296, 2104320, 2105344, 2106368, 2107392, 3145728, 3146752, 3147776, 3148800, 3149824, 3150848, 3151872, 3152896, 3153920, 3154944, 3155968, 4194304, 4195328, 4196352, 4197376, 4198400, 4199424, 4200448, 4201472, 4202496, 4203520, 4204544, 5242880, 5243904, 5244928, 5245952, 5246976, 5248000, 5249024, 5250048, 5251072, 5252096, 5253120, 1, 1025, 2049, 3073, 4097, 5121, 6145, 7169, 8193, 9217, 10241, 1048577, 1049601, 1051649, 1052673, 1053697, 1058817, 2097153, 2098177, 2100225, 2101249, 2102273, 2107393, 3145729, 3146753, 3147777, 3148801, 3149825, 3150849, 3155969, 4194305, 4204545, 5242881, 5243905, 5244929, 5245953, 5246977, 5248001, 5249025, 5250049, 5251073, 5252097, 5253121, 2, 1026, 2050, 3074, 4098, 5122, 6146, 7170, 8194, 9218, 10242, 1048578, 1049602, 1056770, 1058818, 2097154, 2098178, 2107394, 3145730, 3146754, 3155970, 4194306, 4204546, 5242882, 5243906, 5244930, 5245954, 5246978, 5248002, 5249026, 5250050, 5251074, 5252098, 5253122, 3, 1027, 2051, 3075, 4099, 5123, 6147, 7171, 8195, 9219, 10243, 1048579, 1049603, 1058819, 2097155, 2098179, 2107395, 3145731, 3146755, 3155971, 4194307, 4204547, 5242883, 5243907, 5244931, 5245955, 5246979, 5248003, 5249027, 5250051, 5251075, 5252099, 5253123, 4, 1028, 2052, 3076, 4100, 5124, 6148, 7172, 8196, 9220, 10244, 1048580, 1049604, 1058820, 2097156, 2098180, 2107396, 3145732, 3146756, 3155972, 4194308, 4204548, 5242884, 5243908, 5244932, 5245956, 5246980, 5248004, 5249028, 5250052, 5251076, 5252100, 5253124, 5, 1029, 2053, 3077, 4101, 5125, 6149, 7173, 8197, 9221, 10245, 1048581, 1049605, 1058821, 2097157, 2098181, 2107397, 3145733, 3154949, 3155973, 4194309, 4204549, 5242885, 5243909, 5244933, 5245957, 5246981, 5248005, 5249029, 5250053, 5251077, 5252101, 5253125, 6, 1030, 2054, 3078, 4102, 5126, 6150, 7174, 8198, 9222, 10246, 1048582, 1050630, 1058822, 2097158, 2098182, 2107398, 3145734, 3155974, 4194310, 4204550, 5242886, 5243910, 5244934, 5245958, 5246982, 5248006, 5249030, 5250054, 5251078, 5252102, 5253126, 7, 1031, 2055, 3079, 4103, 5127, 6151, 7175, 8199, 9223, 10247, 1048583, 1049607, 1058823, 2097159, 2098183, 2107399, 3145735, 3146759, 3154951, 3155975, 4194311, 4204551, 5242887, 5243911, 5244935, 5245959, 5246983, 5248007, 5249031, 5250055, 5251079, 5252103, 5253127, 8, 1032, 2056, 3080, 4104, 5128, 6152, 7176, 8200, 9224, 10248, 1048584, 1049608, 1058824, 2097160, 2098184, 2107400, 3145736, 3146760, 3154952, 3155976, 4194312, 4204552, 5242888, 5243912, 5244936, 5245960, 5246984, 5248008, 5249032, 5250056, 5251080, 5252104, 5253128, 9, 1033, 2057, 3081, 4105, 5129, 6153, 7177, 8201, 9225, 10249, 1048585, 1049609, 1058825, 2097161, 2098185, 2107401, 3145737, 3146761, 3147785, 3150857, 3153929, 3155977, 4194313, 4204553, 5242889, 5243913, 5244937, 5245961, 5246985, 5248009, 5249033, 5250057, 5251081, 5252105, 5253129, 10, 1034, 2058, 3082, 4106, 5130, 6154, 7178, 8202, 9226, 10250, 1048586, 1049610, 1050634, 1051658, 1052682, 1053706, 1054730, 1055754, 1056778, 1057802, 1058826, 2097162, 2098186, 2099210, 2100234, 2101258, 2102282, 2103306, 2104330, 2105354, 2106378, 2107402, 3145738, 3146762, 3147786, 3148810, 3149834, 3150858, 3151882, 3152906, 3153930, 3154954, 3155978, 4194314, 4195338, 4196362, 4197386, 4198410, 4199434, 4200458, 4201482, 4202506, 4203530, 4204554, 5242890, 5243914, 5244938, 5245962, 5246986, 5248010, 5249034, 5250058, 5251082, 5252106, 5253130], "BlockIds": [7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 7904, 7904, 6157, 44, 6460, 3260, 7904, 7904, 6157, 3914, 3914, 13434, 7904, 7904, 6157, 3357, 3914, 3914, 3357, 7904, 7904, 7904, 7904, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 7904, 7904, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 7904, 7904, 6157, 3839, 7904, 7904, 6157, 7904, 7904, 6157, 7904, 7904, 7904, 7904, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 7904, 7904, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 7904, 7904, 6157, 7904, 7904, 6157, 7904, 7904, 6157, 7904, 7904, 7904, 7904, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 7904, 7904, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 7904, 7904, 6157, 7904, 7904, 6157, 7904, 7904, 6157, 7904, 7904, 7904, 7904, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 7904, 7904, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 7904, 7904, 13436, 7904, 7904, 3211, 7904, 7904, 3356, 7904, 7904, 7904, 7904, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 7904, 7904, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 7904, 7904, 13436, 7904, 7904, 13436, 7904, 7904, 7904, 7904, 7904, 7904, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 7904, 7904, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 7904, 7904, 6157, 7904, 7904, 6157, 7904, 7904, 6157, 73, 7904, 7904, 7904, 7904, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 7904, 7904, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 7904, 7904, 6157, 7904, 7904, 6157, 7904, 7904, 6157, 6532, 7904, 7904, 7904, 7904, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 7904, 7904, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 7904, 7904, 6157, 7904, 7904, 6157, 7904, 7904, 6157, 3359, 3359, 3359, 7904, 7904, 7904, 7904, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 4647, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 4314, 4314, 7904, 4314, 4314, 7904, 7904, 7904, 7904, 7904, 7904, 79, 79, 7904, 79, 79, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904, 7904], "DecorIndices": [], "DecorIds": [], "BlockEntities": { "1049601": "!<d@[F*PdP#64c-E,TfC\"onW'!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L,#Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#BDId0rA2sbtEc6&.FCePS!!!!%$#O6pBL-NKCh;?38O!=_Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)U!!!!&#BjNrBjkn$\"DD4[Ad&?[H#R=M!!!", "1052673": "!<d@[F*PdP#64c-E,TfC\"onW'!<d@[F*dB&#64o6@VfsmCI<#NAI<O\"F`(tHG@bi;\"po!]G%GQ5DfU+(#'\"^#Dfg%G!!!!'\"`nKuFE7Zf0E;(Q!!)mG!!#7az!!NdCDfS0\\De!QMDe*DdFE2MACFsaAF*%QgFEqh:%W63*D..64B4YslEbT\"d$#O6pBL-NKCh;?3aZfb", "2098177": "!<d@[F*PdP#64c-E,TfC#64`(!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L,#Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#BDId0rA2+2lEc6&.FCePS!!!!%$#O6pBL-NKCh;?38O!=_Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)U!!!!&#BjNrBjkn$\"DD4[Ad&?[H#R=M!!!", "2100225": "!<d@[F*PdP#64c-E,TfC#64`(!<d@[F*d?%#64o6@VfsmCI<#NAIW`iE+O*4Ed96\\ATMr\"#'+X(FCf=i#n1cnATMF'G%FWuE+K\"U#]OfqF(KB8AH2l:FEqh:%<H#mASkjtBk&`(1,8h", "2101249": "!<d@[F*PdP#64c-E,TfC#64`(!<d@[F*dB&#64o6@VfsmCI<#NAIW`iE+O*4Ed96\\ATMr\"#'+X(FCf=i#n1cnATMF'G%FWuE+K\"U#]OfqF(KB8AH2l:FEqh:%<H#mASkjtBk&`(1,/b", "2102273": "!<d@[F*PdP#64c-E,TfC#64`(!<d@[F*dE'#64o6@VfsmCI<#NAIW9mDfor.F*)>@@:s-S'lml&@;0UnDJ):YEc+9fEaa'(Df,OT!!!-2F*(i2F@:7l@<?4%D?'Y:!!rsGF$b\"iDJ=!$!!*@;Bl[d(Df]%%cNaFN#\\IdkAT2R/=U+p,!!*@;Bl[d(Df]+QcNaFN#\\J3jCiF<6=NJen!!*@;F_,B.Df]%d!!!!\"#\\J3jCiF<6>4TuE!!WaDDK]T/FDl2F!=!ObCi=E:\"98E%\"pK'aDfg%*!AFKS!!!!F\"TSN'z!!!<;AoD^\"AQ*\\hEa`Tl:i^JnErZLO@Wc^/Bl7P`!toEYF*(Aq@r#%^FCAuVDfp)Azz\":8pVF(djWB5D/6&'7$:$=S$u@:Nt?@:NjK!!!!*&nuDUG][M;DII?tGuSKfCLq#V!!", "3146753": "!<d@[F*PdP#64c-E,TfC#QOi)!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L,#Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#BDId0rA2=>nEc6&.FCePS!!!!%$#O6pBL-NKCh;?38O!=_Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)U!!!!&#BjNrBjkn$\"DD4[Ad&?[H#R=M!!!", "3147777": "!<d@[F*PdP#64c-E,TfC#QOi)!<d@[F*d<$#64o6@VfsmCI<#NAINB`DKKH1DCoF.F*%QkD..NtEbSru\"D;XhA-E0RBl7X&B*NEkCj'B1\"U/OT@<6JoEHP]1FF\"&rD.Rd%6#L=OA_Ra;56(", "3148801": "!<d@[F*PdP#64c-E,TfC#QOi)!<d@[F*d?%#64o6@VfsmCI<#NAIW`iE+O*4Ed96\\ATMr\"#'+X(FCf=i#n1cnATMF'G%FWuE+K\"U#]OfqF(KB8AH2l:FEqh:%<H#mASkjtBk&`(0er_", "3149825": "!<d@[F*PdP#64c-E,TfC#QOi)!<d@[F*dB&#64o6@VfsmCI<#NAIW`iE+O*4Ed96\\ATMr\"#'+X(FCf=i#n1cnATMF'G%FWuE+K\"U#]OfqF(KB8AH2l:FEqh:%<H#mASkjtBk&`(0eiY", "3150849": "!<d@[F*PdP#64c-E,TfC#QOi)!<d@[F*dE'#64o6@VfsmCI<#NAINB`DKKH1DCoF.F*%QkD..NtEbSru\"D;XhA-E0RBl7X&B*NEkCj'B1\"U/OT@<6JoEHP]1FF\"&rD.Rd%6#L=OA_Ra;56(", "1049602": "!<d@[F*PgQ#64c-E,TfC\"onW'!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L,#Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#BDId0rA2sbtEc6&.FCePS!!!!%$#O6pBL-NKCh3SH!!!-,Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)U!!!!&#BjNrBjkn$\"DD4[Ad&?[H#R=M!!!", "2098178": "!<d@[F*PgQ#64c-E,TfC#64`(!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L,#Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#BDId0rA2=>nEc6&.FCePS!!!!%$#O6pBL-NKCh3SH!!!-,Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)U!!!!&#BjNrBjkn$\"DD4[Ad&?[H#R=M!!!", "3146754": "!<d@[F*PgQ#64c-E,TfC#QOi)!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L,#Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#BDId0rA2sbtEc6&.FCePS!!!!%$#O6pBL-NKCh3SH!!!-,Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)U!!!!&#BjNrBjkn$\"DD4[Ad&?[H#R=M!!!", "1049603": "!<d@[F*PjR#64c-E,TfC\"onW'!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L,#Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#BDId0rA2XPqEc6&.FCePS!!!!%$#O6pBL-NKCh3SH!!!-,Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)U!!!!&#BjNrBjkn$\"DD4[Ad&?[H#R=M!!!", "2098179": "!<d@[F*PjR#64c-E,TfC#64`(!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L,#Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#BDId0rA248mEc6&.FCePS!!!!%$#O6pBL-NKCh3SH!!!-,Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)U!!!!&#BjNrBjkn$\"DD4[Ad&?[H#R=M!!!", "3146755": "!<d@[F*PjR#64c-E,TfC#QOi)!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L,#Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#BDId0rA2=>nEc6&.FCePS!!!!%$#O6pBL-NKCh3SH!!!-,Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)U!!!!&#BjNrBjkn$\"DD4[Ad&?[H#R=M!!!", "1049604": "!<d@[F*PmS#64c-E,TfC\"onW'!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L,#Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#BDId0rA2+2lEc6&.FCePS!!!!%$#O6pBL-NKCh3SH!!!-,Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)U!!!!&#BjNrBjkn$\"DD4[Ad&?[H#R=M!!!", "2098180": "!<d@[F*PmS#64c-E,TfC#64`(!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L,#Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#BDId0rA2sbtEc6&.FCePS!!!!%$#O6pBL-NKCh3SH!!!-,Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)U!!!!&#BjNrBjkn$\"DD4[Ad&?[H#R=M!!!", "3146756": "!<d@[F*PmS#64c-E,TfC#QOi)!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L,#Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#BDId0rA2+2lEc6&.FCePS!!!!%$#O6pBL-NKCh3SH!!!-,Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)U!!!!&#BjNrBjkn$\"DD4[Ad&?[H#R=M!!!", "1049605": "!<d@[F*PpT#64c-E,TfC\"onW'!<d@[F*d9##64o6@VfsmCI<#NAHu^]F`__:EWlSfH#R=-FCAWpAM%e<@VfU-A8cU\"Ch3_SEc6&.FCePS!!!!%$#O6pBL-NKCh3SH!!!-,Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)Uz", "2098181": "!<d@[F*PpT#64c-E,TfC#64`(!<d@[F*d9##64o6@VfsmCI<#NAJ8QiF`__:E\\1g5G%#H6@<?4%D?U/bH#R=&F)YQ.CGd\\PB4YTV#BFa)@<?'_z\":8pVF(djWB5D/6&'7!<#BFa)@<?'az#mk*[Ci!ZmFCet_\":K6]E+*I$;flGiAH2]1!!EOFAnH*qFBAMC!!!-,De<U&ATV&T!!!!%#B+3dF(KGsz!!", "3154949": "!<d@[F*PpT#64c-E,TfC#QOi)!<d@[F*dQ+#64o6@VfsmCI<#NAIWHaDKKH1DCoaEEcbsu#]4!lATDKnC]nBhCh*\\RCh[d$DJ'/pBl%s(EWlVZCghC+#'\"coEccU1$#O6pBL-NKCh;?38O*7", "1050630": "!<d@[F*PsU#64c-E,TfC\"onW'!<d@[F*d<$#64o6@VfsmCI<#NAHu^]F`__:EWlSfH#R=&@q]:bE\\1j3Df0h'#BFa)@<?'_z\":8pVF(djWB5D,Z!!!!%#BFa)@<?'az#mk*[Ci!ZmFCet_\":K6]E+*I$;flGiAH2]1!!EOFAnH*qFBAMC!!!-,De<U&ATV&T!!!!%#B+3dF(KGsz!!", "2098182": "!<d@[F*PsU#64c-E,TfC#64`(!<d@[F*d9##64o6@VfsmCI<#NAHu^]F`__:EWlSfH#R=(@W-1#/RiF,/T5T>D?L2bDffE0AQSp4!!!-.D.Rd%6#L=OAH2]1!!EOIDffE0AQf'6!!!<3@rH1\"ARfgnA,l`?Eb02uBl[-o@<?&\\!!!!%#B+3dF(KGqz\":&jWAohO*=TAF%!!EOFAnH*qFBSYE!!!!", "1049607": "!<d@[F*Q!V#64c-E,TfC\"onW'!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L,#Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#BDId0rA2sbtEc6&.FCePS!!!!%$#O6pBL-NKCh3SH!!!-,Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)U!!!!&#BjNrBjkn$\"DD4[Ad&?[H#R=M!!!", "2098183": "!<d@[F*Q!V#64c-E,TfC#64`(!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L,#Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#BDId0rA2+2lEc6&.FCePS!!!!%$#O6pBL-NKCh3SH!!!-,Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)U!!!!&#BjNrBjkn$\"DD4[Ad&?[H#R=M!!!", "3146759": "!<d@[F*Q!V#64c-E,TfC#QOi)!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L,#Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#BDId0rA2=>nEc6&.FCePS!!!!%$#O6pBL-NKCh3SH!!!-,Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)U!!!!&#BjNrBjkn$\"DD4[Ad&?[H#R=M!!!", "1049608": "!<d@[F*Q$W#64c-E,TfC\"onW'!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L&!Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#VAnE_Q\":&scFCB9&=9&=$!!EUFATMNNDJ*csz\":&scFCB9&=o\\O&!!rsADes6$@ru9m!!E[MAT2'lE`7'gFCbFP!!!-,De<U&ATV#S!!!!%#B+3dF(KGrz\":&jWAohO*=o\\O&!!NUN@<-'jDKH\"p@;KNZ\"a#$/AMO5c", "2098184": "!<d@[F*Q$W#64c-E,TfC#64`(!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L,#Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#BDId0rA248mEc6&.FCePS!!!!%$#O6pBL-NKCh3SH!!!-,Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)U!!!!&#BjNrBjkn$\"DD4[Ad&?[H#R=M!!!", "3146760": "!<d@[F*Q$W#64c-E,TfC#QOi)!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L,#Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#BDId0rA2sbtEc6&.FCePS!!!!%$#O6pBL-NKCh3SH!!!-,Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)U!!!!&#BjNrBjkn$\"DD4[Ad&?[H#R=M!!!", "1049609": "!<d@[F*Q'X#64c-E,TfC\"onW'!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L,#Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#BDId0rA248mEc6&.FCePS!!!!%$#O6pBL-NKCh;?3ah@l_Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)U!!!!&#BjNrBjkn$\"DD4[Ad&?[H#R=M!!!", "2098185": "!<d@[F*Q'X#64c-E,TfC#64`(!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L,#Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#BDId0rA2=>nEc6&.FCePS!!!!%$#O6pBL-NKCh;?3ah@l_Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)U!!!!&#BjNrBjkn$\"DD4[Ad&?[H#R=M!!!", "3146761": "!<d@[F*Q'X#64c-E,TfC#QOi)!<d@[F*d9##64o6@VfsmCI<#NAJ/KhF`__:Eb/cjDf9E4BOu!l\"U&pmE+L,#Df9E4BOu\"'ATKM6Df9E4BOu!l/TZ#BDId0rA248mEc6&.FCePS!!!!%$#O6pBL-NKCh;?3ah@l_Ec6&.FCeVU!!!!*$\"ImiCh7*uARkcD$Z]ft@;0a\\FCB9&z\":&jWAohO*=9&=$!!EOFAnH*qFBJSD!!!-,De<U&ATV)U!!!!&#BjNrBjkn$\"DD4[Ad&?[H#R=M!!!", "3147785": "!<d@[F*Q'X#64c-E,TfC#QOi)!<d@[F*d<$#64o6@VfsmCI<#NAINB`DKKH1DCp'DF*%QkD..NtEbSru\"D;XhA-E0RBl7X&B*NEkCj'B1\"U/OT@<6JoEHP]1FF\"&rD.Rd%6#L=OA_Ra;^An", "3150857": "!<d@[F*Q'X#64c-E,TfC#QOi)!<d@[F*dE'#64o6@VfsmCI<#NAINB`DKKH1DCp'DF*%QkD..NtEbSru\"D;XhA-E0RBl7X&B*NEkCj'B1\"U/OT@<6JoEHP]1FF\"&rD.Rd%6#L=OA_Ra;^An", "3153929": "!<d@[F*Q'X#64c-E,TfC#QOi)!<d@[F*dN*#64o6@VfsmCI<#NAINB`DKKH1DCp'DF*%QkD..NtEbSru\"D;XhA-E0RBl7X&B*NEkCj'B1\"U/OT@<6JoEHP]1FF\"&rD.Rd%6#L=OA^XNS^An", "1051658": "!<d@[F*Q*Y#64c-E,TfC\"onW'!<d@[F*d?%#64o6@VfsmCI<#NAIrBjDfRFNDes,u/S/C0DKu?lEc6&.FCeTQ@:\\+'aZg(9DfB9*ARkcI%;B^'ATDl`@;]UlATIkQ$uBKeF@:%cE_p[q=9&=$!!*LEAS-$PDf9YmDf]%]!!!!\"$uBKeF@:%cE_p[q=oeU'!!!", "1052682": "!<d@[F*Q*Y#64c-E,TfC\"onW'!<d@[F*dB&#64o6@VfsmCI<#NAIrBjDfRFNDes,u/S/C0DKu?lEc6&.FCeTQ@:\\+'aZg(9DfB9*ARkcI%;B^'ATDl`@;]UlATIhP%<?/qBQQX\\DfSZmF'&DB!!!$/EbT0\"F@:%cE_p[q=TAF%!!*OLBkM+$6uR!a:iCDYs8W-!!!", "1054730": "!<d@[F*Q*Y#64c-E,TfC\"onW'!<d@[F*dH(#64o6@VfsmCI<#NAIrBjDfRFNDes,u/S/C0DKu?lEc6&.FCeTQ@:\\+'aZg(9DfB9*ARkcI%;B^'ATDl`@;]UlATIkQ$uBKeF@:%cE_p[q=9&=$!!*LEAS-$PDf9YmDf]%]!!!!\"$uBKeF@:%cE_p[q=oeU'!!!", "1055754": "!<d@[F*Q*Y#64c-E,TfC\"onW'!<d@[F*dK)#64o6@VfsmCI<#NAIrBjDfRFNDes,u/S/C0DKu?lEc6&.FCeTQ@:\\+'aZg(9DfB9*ARkcI%;B^'ATDl`@;]UlATIhP%<?/qBQQX\\DfSZmF'&DB!!!$/EbT0\"F@:%cE_p[q=TAF%!!*OLBkM+$6uR!a:iCDYs8W-!!!" }, "Entities": ["&4LJYBlnVdEc#`8;flGcA-Ob@1,1C>$31&+z\"q\"dVBl.:#Bl@m1!!WmDG][t78T&-Y<+U;r!!NXHGA^u4<G>t\\:dekp1JV[c<G$B\"=(QM/1N-#d1N[[o\"9rd^89Jrpz\"po!]G%GQ5DfU+(#'\"^#Dfg%6!!!!'\"`nKuFE7Zg0er_0!!!#3$31&,!!!!%$\"ImkA8-.\"Df-5C`'+/+!\\lJ2!<<*\"]a=`>!<<*\"\":8RVDIdI'Bl@lRFJV/$#6HV:!!*'\"!58d?!!*'\"!!EU<Df0*\"FD5Z2@pp<?!!!!%#A@[WA6E>bz\":8aQ@:W2KFCStazz!!\"3.E3+uPBE7Ndz!!\"3.z!$EXSzzzzzzzzz!!\"3.E3+uPBE7Ndz!!\"3.$=RslDfTo@@;]TV\"E\\?fCHhe!!!!32@:OCnG%EsWBl.nkz!!"], "ReplaceMode": 2, "EntranceRotation": -1, "OriginalPos": { "X": 511942, "Z": 511980, "InternalY": 3 } }
+        let currentSchematicData = defaultData;
+
+        // UI Globals
+        window.toggleHelp = () => {
+            const panel = document.getElementById('helpPanel');
+            window.closeInspector();
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        };
+
+        window.closeHelp = () => {
+            document.getElementById('helpPanel').style.display = 'none';
+        };
+
+        window.closeInspector = () => {
+            document.getElementById('inspector').style.display = 'none';
+            if (selectedBlock) {
+                selectedBlock.material.emissive.setHex(0x000000);
+                selectedBlock = null;
+            }
+        };
+
+        // File/Input Handlers
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const overlay = document.getElementById('loadingOverlay');
+
+            overlay.style.display = 'flex'; // Show loading
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    currentSchematicData = data;
+
+                    // Small timeout to allow the UI to render the "Loading" state 
+                    // before the heavy WebGL work begins
+                    setTimeout(() => {
+                        render(data);
+                        overlay.style.display = 'none'; // Hide loading
+                    }, 50);
+
+                } catch (err) {
+                    console.error("Error parsing JSON:", err);
+                    alert("Failed to parse schematic file.");
+                    overlay.style.display = 'none';
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value.toLowerCase();
+            updateLegendUI();
+        });
+
+        document.getElementById('clearSearch').addEventListener('click', () => {
+            searchInput.value = "";
+            searchQuery = "";
+            updateLegendUI();
+        });
+
+        document.getElementById('layerSlider').addEventListener('input', (e) => {
+            currentLayer = parseInt(e.target.value);
+            document.getElementById('layerLabel').innerText = currentLayer === -1 ? "All Floors" : `Floor Y: ${currentLayer}`;
+            applyAllFilters();
+        });
+
+        // Click to Inspect
+        window.addEventListener('click', (event) => {
+            if (event.target.closest('#ui') || event.target.closest('#inspector') || event.target.closest('#helpPanel')) return;
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const visibleBlocks = blockGroup.children.filter(obj => obj.visible);
+            const intersects = raycaster.intersectObjects(visibleBlocks);
+
+            if (selectedBlock) selectedBlock.material.emissive.setHex(0x000000);
+
+            if (intersects.length > 0) {
+                selectedBlock = intersects[0].object;
+                selectedBlock.material.emissive.setHex(0x00ffff);
+                showInspector(selectedBlock.userData);
+            } else { closeInspector(); }
+        });
+
+        function showInspector(traits) {
+            const panel = document.getElementById('inspector');
+            const content = document.getElementById('traitContent');
+            const entityData = currentSchematicData.BlockEntities && currentSchematicData.BlockEntities[traits.packedIndex];
+
+            let entityJsonHtml = ""; // Placeholder for our JSON
+
+            const asciiString = typeof entityData === 'string' ? entityData : (entityData?.Data || entityData?.Attributes);
+
+            if (asciiString) {
+                try {
+                    const binaryData = Ascii85.decode(asciiString);
+                    const parser = new TreeAttributeParser(binaryData);
+                    const result = parser.parse();
+
+                    // Convert the object to a pretty-printed string
+                    const jsonString = JSON.stringify(result, (key, value) =>
+                        typeof value === 'bigint' ? value.toString() : value, 4
+                    );
+                    entityJsonHtml = `
+                <div class="trait"><b>Entity Data:</b></div>
+                <div id="jsonOutput">${jsonString}</div>
+            `;
+                } catch (err) {
+                    console.error(err);
+                    entityJsonHtml = `<div class="trait" style="color:#ff6b6b"><b>Error parsing data:</b><br>${err.message}</div>`;
+                }
+            }
+
+            window.closeHelp();
+
+            panel.style.display = 'block';
+            content.innerHTML = `
+        <div class="trait"><b>Code:</b><br>${traits.blockCode}</div>
+        <div class="trait"><b>Position:</b><br>X:${traits.x}, Y:${traits.y}, Z:${traits.z}</div>
+        ${entityJsonHtml}
+    `;
+        }
+
+        function render(data) {
+            blockGroup.clear();
+            blockMetadata.clear();
+            currentSchematicData = data;
+
+            const slider = document.getElementById('layerSlider');
+            slider.max = data.SizeY - 1;
+            slider.value = -1;
+            currentLayer = -1;
+            document.getElementById('layerLabel').innerText = "All Floors";
+
+            const geometry = new THREE.BoxGeometry(0.92, 0.92, 0.92);
+
+            data.BlockIds.forEach((id) => {
+                const code = data.BlockCodes[id] || "unknown";
+                if (!blockMetadata.has(code)) {
+                    blockMetadata.set(code, { color: stringToColor(code), visible: true, count: 0 });
+                }
+                blockMetadata.get(code).count++;
+            });
+
+            data.Indices.forEach((packedIndex, i) => {
+                const x = packedIndex & 0x3FF;
+                const z = (packedIndex >> 10) & 0x3FF;
+                const y = (packedIndex >> 20) & 0x3FF;
+                const code = data.BlockCodes[data.BlockIds[i]];
+                const material = new THREE.MeshLambertMaterial({ color: blockMetadata.get(code).color });
+                const cube = new THREE.Mesh(geometry, material);
+                cube.position.set(x - data.SizeX / 2, y, z - data.SizeZ / 2);
+                cube.userData = { blockCode: code, x, y, z, packedIndex };
+                blockGroup.add(cube);
+            });
+
+            const infoBox = document.getElementById('schematicInfo');
+            const sizeValue = document.getElementById('sizeValue');
+
+            // Show Schematic Size
+            if (data.SizeX && data.SizeY && data.SizeZ) {
+                sizeValue.textContent = `${data.SizeX}x × ${data.SizeY}y × ${data.SizeZ}z`;
+                infoBox.style.display = 'block';
+            }
+
+            updateLegendUI();
+            camera.position.set(data.SizeX * 1.5, data.SizeY + 10, data.SizeZ * 1.5);
+            controls.target.set(0, data.SizeY / 2, 0);
+            controls.update();
+        }
+
+        function applyAllFilters() {
+            blockGroup.children.forEach(mesh => {
+                const typeVisible = blockMetadata.get(mesh.userData.blockCode).visible;
+                const layerVisible = (currentLayer === -1 || mesh.userData.y === currentLayer);
+                mesh.visible = typeVisible && layerVisible;
+            });
+        }
+
+        function updateLegendUI() {
+            const container = document.getElementById('legend');
+            container.innerHTML = '';
+            const sortedEntries = [...blockMetadata.entries()]
+                .filter(([code]) => code.toLowerCase().includes(searchQuery))
+                .sort((a, b) => b[1].count - a[1].count);
+
+            sortedEntries.forEach(([code, data]) => {
+                const item = document.createElement('div');
+                item.className = `legend-item ${data.visible ? '' : 'hidden-block'}`;
+                item.onclick = () => {
+                    data.visible = !data.visible;
+                    applyAllFilters();
+                    updateLegendUI();
+                };
+                const cleanName = code.replace('game:', '').replace(/-/g, ' ');
+                item.innerHTML = `
+                    <div class="color-box" style="background: ${data.color}"></div>
+                    <div class="block-info">
+                        <div class="block-name" title="${code}">${cleanName}</div>
+                        <div class="block-count">x${data.count}</div>
+                    </div>`;
+                container.appendChild(item);
+            });
+        }
+
+        window.toggleAll = (v) => { blockMetadata.forEach(m => m.visible = v); applyAllFilters(); updateLegendUI(); };
+        function stringToColor(str) { let h = 0; for (let i = 0; i < str.length; i++) h = str.charCodeAt(i) + ((h << 5) - h); return `hsl(${Math.abs(h) % 360}, 60%, 55%)`; }
+        function animate() { requestAnimationFrame(animate); if (selectedBlock) selectedBlock.material.emissiveIntensity = (Math.sin(Date.now() * 0.005) + 1.5) * 0.5; renderer.render(scene, camera); }
+
+        render(defaultData);
+        animate();
+
+        const fileSelectElement = document.getElementById('fileSelect');
+            if(fileSelectElement) {
+                fileSelectElement.addEventListener('change', async (event) => {
+                    if (!event.target.value) {
+                        return;
+                    }
+                    // FIXED: Await the fetch, then await the JSON parsing
+                    const response = await fetch(event.target.value);
+                    const data = await response.json();
+                    render(data);
+                });
+                    
+        }
+    </script>
+</body>
+
+</html>
