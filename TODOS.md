@@ -19,6 +19,10 @@
     3. RESEARCH: The following may require code from https://github.com/jgwoolley/vintage-story-schematic-preview. I eventually want to integrate this functionality (both ability to upload a schematic as well as view the schematic in the browser).
     4. RESEARCH: resolution of clutter objects
 
+# phase
+
+- broken link: https://jgwoolley.github.io/vintage-story-wiki/undefined/items/betterruins/br-schematic-shipwright/
+
 # Phase 
 
 not sure about how tapestries links directly to structures.
