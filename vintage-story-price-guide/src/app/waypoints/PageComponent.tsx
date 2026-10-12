@@ -97,13 +97,14 @@ export default function WayPointComponent() {
         setOpenEditDialog(true);
     }, [setEditRow, setOpenEditDialog]);
 
-    // This useEffect will now handle clearing source/destination if waypoints shrink
     useEffect(() => {
-        if (waypoints.length <= 2) {
-            setSourceNode(undefined);
-            setDestinationNode(undefined);
-        }
-    }, [waypoints]); // Only re-run if waypoints array reference changes
+        setSourceNode(current =>
+            current && waypoints.some(waypoint => waypoint.data.id === current.data.id) ? current : undefined
+        );
+        setDestinationNode(current =>
+            current && waypoints.some(waypoint => waypoint.data.id === current.data.id) ? current : undefined
+        );
+    }, [waypoints]);
 
     const elements = useWayPointEdges({ waypoints });
     useWayPointGraph({
