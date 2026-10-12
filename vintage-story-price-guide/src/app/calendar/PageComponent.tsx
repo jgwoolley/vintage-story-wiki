@@ -80,7 +80,7 @@ export default function PageComponent() {
 
             <p>{`${daysPerMonth * 0.8} real life hours per month.`}</p>
             <p>{`${daysPerMonth * 0.8 * 12} real life hours per year.`}</p>
-            <p>{(year * 12 * daysPerMonth) + (month.index * daysPerMonth) + (dayOfMonth)} hours</p>
+            <p>{((year * 12 * daysPerMonth) + (month.index * daysPerMonth) + dayOfMonth) * 0.8} hours</p>
             
             <h3>Calendar</h3>
             
