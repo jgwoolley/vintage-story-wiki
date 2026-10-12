@@ -7,6 +7,7 @@ on:
     paths:
       - '*.html'
       - 'icons/**'
+      - 'schematics/**'
       - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
