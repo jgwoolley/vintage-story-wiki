@@ -8,7 +8,6 @@
     { "modid": "nf3ttranslocatorfindercmd", "version": "2.0.0" },
     { "modid": "nf3ttranslocatornavigator", "version": "2.0.0" },
     { "modid": "nf3tblueprintcopy", "version": "1.0.0" },
-    { "modid": "nf3tsponge", "version": "2.0.0" },
-    { "modid": "nf3tschematiclocator", "version": "1.0.3" }
+    { "modid": "nf3tsponge", "version": "2.0.0" }
   ]
 }
