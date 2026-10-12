@@ -7,11 +7,13 @@ permalink: "{{ lang }}/trees/index.html"
 <h1>Trees</h1>
 <p class="muted">
   Regular tree/shrub species generate by climate band (temperature, rain, forest density, soil
-  fertility, terrain height); fruit tree varieties are a flat temperature/rain band with no forest
-  or fertility requirement. Both are read directly from the game's worldgen rules, same caveat as
+  fertility, terrain height), read directly from the game's worldgen rules, same caveat as
   <a href="{{ ('/' ~ lang ~ '/') | url }}crops/">Crops</a>: these are the conditions a
-  <em>chunk</em> must meet, not a promise any single spot generates one.
+  <em>chunk</em> must meet, not a promise any single spot generates one. Fruit trees are a
+  distinct worldgen system with no forest/fertility requirement -- see the separate
+  <a href="{{ ('/' ~ lang ~ '/') | url }}fruit-trees/">Fruit Trees</a> page.
 </p>
+<p class="muted">Source: <code>worldgen/treengenproperties.json</code> (climate bands) + <code>worldgen/treegen/&lt;species&gt;.json</code> (block codes per species).</p>
 
 <h2>Species ({{ generated.trees.length }} climate bands)</h2>
 {% call dt.datatable(40, "Search tree species...", ["Species", "Kind", "Temp (°C)", "Rain", "Fertility", "Forest", "Mod"]) %}
@@ -24,18 +26,6 @@ permalink: "{{ lang }}/trees/index.html"
     <td>{% if t.minFertility != null or t.maxFertility != null %}{{ (t.minFertility if t.minFertility != null else 0) | round(2) }}&ndash;{{ (t.maxFertility if t.maxFertility != null else 1) | round(2) }}{% endif %}</td>
     <td>{% if t.minForest != null or t.maxForest != null %}{{ (t.minForest if t.minForest != null else 0) | round(2) }}&ndash;{{ (t.maxForest if t.maxForest != null else 1) | round(2) }}{% endif %}</td>
     <td><span class="tag">{{ t.sourceMod }}</span></td>
-  </tr>
-{% endfor %}
-{% endcall %}
-
-<h2>Fruit varieties ({{ generated.fruitTrees.length }})</h2>
-{% call dt.datatable(40, "Search fruit varieties...", ["Fruit", "Temp (°C)", "Rain", "Mod"]) %}
-{% for ft in generated.fruitTrees | sort(false, false, "variety") %}
-  <tr data-search="{{ ft.variety }} {{ ft.fruitItemCode }}" data-mod="{{ ft.sourceMod }}">
-    <td>{% if ft.fruitItemCode %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ ft.domain }}/{{ ft.fruitItemCode | slugify }}/">{{ generated.items | displayName(ft.domain, ft.fruitItemCode) }}</a>{% else %}{{ ft.variety }}{% endif %}</td>
-    <td>{{ ft.minTemp }}&ndash;{{ ft.maxTemp }}</td>
-    <td>{{ ft.minRain }}&ndash;{{ ft.maxRain }}</td>
-    <td><span class="tag">{{ ft.sourceMod }}</span></td>
   </tr>
 {% endfor %}
 {% endcall %}

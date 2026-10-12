@@ -10,6 +10,7 @@ permalink: "{{ lang }}/paintings/index.html"
   on this wiki &mdash; see the <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a> page for why.
   {{ generated.paintings.length }} catalogued directly from the game's block definitions.
 </p>
+<p class="muted">Source: <code>blocktypes/wood/painting.json</code>.</p>
 
 {% call dt.datatable(60, "Search paintings...", ["Name", "Mod"]) %}
 {% for item in generated.paintings | sort(false, false, "displayName") %}

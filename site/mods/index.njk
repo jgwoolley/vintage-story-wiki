@@ -5,20 +5,32 @@ permalink: "{{ lang }}/mods/index.html"
 ---
 <h1>Mods</h1>
 <p>This wiki was generated from vanilla game data plus the following installed mods.</p>
+<p class="muted">Source: each mod's own <code>modinfo.json</code> (name/version/side/type/website/authors/description); the mod name links out to its mods.vintagestory.at listing when that's been cached by <code>npm run download</code> (re-run it to pick this up for mods downloaded before this existed).</p>
 
 <table>
-  <thead><tr><th>Mod</th><th>Version</th><th>Side</th><th>Notes</th></tr></thead>
+  <thead><tr><th>Mod</th><th>Version</th><th>Side</th><th>Type</th><th>Authors</th><th>Notes</th></tr></thead>
   <tbody>
   {% for mod in generated.mods %}
     <tr>
-      <td>{{ mod.name }} <span class="tag">{{ mod.modid }}</span></td>
+      <td>
+        {% if mod.assetid %}<a href="https://mods.vintagestory.at/show/mod/{{ mod.assetid }}">{{ mod.name }}</a>{% else %}{{ mod.name }}{% endif %}
+        <span class="tag">{{ mod.modid }}</span>
+        {% if mod.website %}&middot; <a href="{{ mod.website }}">source</a>{% endif %}
+      </td>
       <td>{{ mod.version }}</td>
       <td>{{ mod.side }}</td>
+      <td>{% if mod.type %}<span class="tag">{{ mod.type }}</span>{% endif %}</td>
+      <td>{{ mod.authors | default([]) | join(", ") }}</td>
       <td>
         {% if mod.isVanilla %}<span class="muted">vanilla</span>{% endif %}
         {% if mod.hasCompiledCode %}<span class="warning">ships compiled code (.dll) &mdash; custom behavior not captured</span>{% endif %}
       </td>
     </tr>
+    {% if mod.description %}
+    <tr>
+      <td colspan="6"><span class="muted">{{ mod.description | lineBreaks | safe }}</span></td>
+    </tr>
+    {% endif %}
   {% endfor %}
   </tbody>
 </table>

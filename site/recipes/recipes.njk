@@ -35,7 +35,7 @@ eleventyComputed:
               {% else %}
                 <a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ ing.domain }}/{{ ing.code | slugify }}/">{{ generated.items | displayName(ing.domain, ing.code) }}</a>
               {% endif %}
-            {% elif ing.tags %}{{ ing.tags | join(", ") }}{% endif %}
+            {% elif ing.tags %}{% for t in ing.tags %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/?tag={{ t | urlencode }}">{{ t | tagLabel }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
           </div>
         {% endif %}
       {% endfor %}
@@ -64,7 +64,7 @@ eleventyComputed:
             <a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ ing.domain }}/{{ ing.code | slugify }}/">{{ generated.items | displayName(ing.domain, ing.code) }}</a>
           {% endif %}
         {% elif ing.tags %}
-          any <span class="tag">{{ ing.tags | join(", ") }}</span>
+          any {% for t in ing.tags %}<a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}items/?tag={{ t | urlencode }}">{{ t | tagLabel }}</a>{% endfor %}
         {% elif ing.validStacks %}
           {% for v in ing.validStacks %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ v.domain }}/{{ v.code | slugify }}/">{{ generated.items | displayName(v.domain, v.code) }}</a>{% if not loop.last %} or {% endif %}{% endfor %}
         {% endif %}

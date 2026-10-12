@@ -12,6 +12,7 @@ permalink: "{{ lang }}/recipes/index.html"
   titled after the item they produce and labeled <strong>(Item Recipe)</strong> so it's clear
   that's a recipe title, not a second name for the item itself.
 </p>
+<p class="muted">Source: <code>recipes/&lt;category&gt;/**/*.json</code>, one subfolder per recipe category.</p>
 
 {% call dt.datatable(60, "Search recipes...", ["Name", "Category", "Mod", "Ingredients → output"]) %}
 {% for recipe in generated.recipes %}

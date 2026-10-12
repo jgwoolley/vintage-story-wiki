@@ -93,6 +93,14 @@ export default function (eleventyConfig) {
   // plain substring usable as an /items/ search query, by dropping the "*"/"{...}" parts.
   eleventyConfig.addFilter("wildcardQuery", (code) => String(code ?? "").replace(/\{[^}]*\}/g, "").replace(/\*/g, ""));
 
+  // A recipe ingredient's tag-based slot (e.g. `tags: ["tool-hammer"]`) shows this instead of the
+  // raw tag string, e.g. "tool-hammer" -> "hammer (tool)" -- the raw tag itself is still what's
+  // used for the ?tag= filter link (see items/index.njk's data-tags), only the label changes.
+  eleventyConfig.addFilter("tagLabel", (tag) => {
+    const m = /^tool-(.+)$/.exec(tag ?? "");
+    return m ? `${m[1]} (tool)` : tag;
+  });
+
   eleventyConfig.addFilter("round", (n, digits = 3) => (typeof n === "number" ? Number(n.toFixed(digits)) : n));
 
   eleventyConfig.addFilter("percent", (n) => (typeof n === "number" ? `${(n * 100).toFixed(2)}%` : n));

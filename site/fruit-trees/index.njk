@@ -1,0 +1,26 @@
+---
+title: Fruit Trees - Vintage Story Wiki
+layout: layouts/base.njk
+permalink: "{{ lang }}/fruit-trees/index.html"
+---
+{% import "macros/datatable.njk" as dt %}
+<h1>Fruit Trees</h1>
+<p class="muted">
+  Fruit tree varieties are a distinct worldgen system from regular
+  <a href="{{ ('/' ~ lang ~ '/') | url }}trees/">tree species</a> -- a flat temperature/rain band
+  per variety, with no forest-density or soil-fertility requirement, read directly from the
+  game's worldgen rules.
+</p>
+<p class="muted">Source: <code>blocktypes/plant/fruittreebranch.json</code>'s <code>attributes.worldgen</code> array.</p>
+
+<h2>Fruit varieties ({{ generated.fruitTrees.length }})</h2>
+{% call dt.datatable(40, "Search fruit varieties...", ["Fruit", "Temp (°C)", "Rain", "Mod"]) %}
+{% for ft in generated.fruitTrees | sort(false, false, "variety") %}
+  <tr data-search="{{ ft.variety }} {{ ft.fruitItemCode }}" data-mod="{{ ft.sourceMod }}">
+    <td>{% if ft.fruitItemCode %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ ft.domain }}/{{ ft.fruitItemCode | slugify }}/">{{ generated.items | displayName(ft.domain, ft.fruitItemCode) }}</a>{% else %}{{ ft.variety }}{% endif %}</td>
+    <td>{{ ft.minTemp }}&ndash;{{ ft.maxTemp }}</td>
+    <td>{{ ft.minRain }}&ndash;{{ ft.maxRain }}</td>
+    <td><span class="tag">{{ ft.sourceMod }}</span></td>
+  </tr>
+{% endfor %}
+{% endcall %}

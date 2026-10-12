@@ -13,6 +13,26 @@ permalink: "{{ lang }}/deposits/index.html"
   -- a "near surface" deposit can still occasionally be found deeper, and these are the conditions
   a <em>chunk</em> must meet, not a promise any single spot within it generates something.
 </p>
+<p class="muted">Source: <code>worldgen/deposits/**/*.json</code>.</p>
+
+<h2>How rock type is determined</h2>
+<p class="muted">
+  Deposits above describe what occurs <em>inside</em> a given rock type -- not how that base rock
+  type itself ends up at a given spot. That's a separate worldgen rule
+  (<code>worldgen/rockstrata.json</code>): each rock type is placed by its own layered noise
+  function, compared against a per-rock threshold, not a simple depth band, climate rule, or
+  fixed global ordering. <code>genDir</code> says which direction that rock's layer fills from.
+</p>
+{% call dt.datatable(40, "Search rock types...", ["Rock", "Group", "Fill direction", "Mod"]) %}
+{% for rs in generated.rockStrata | sort(false, false, "blockCode") %}
+  <tr data-search="{{ rs.blockCode }}" data-category="{{ rs.rockGroup }}" data-mod="{{ rs.sourceMod }}">
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ rs.domain }}/{{ rs.blockCode | slugify }}/">{{ generated.items | displayName(rs.domain, rs.blockCode) }}</a></td>
+    <td>{% if rs.rockGroup %}<span class="tag">{{ rs.rockGroup }}</span>{% endif %}</td>
+    <td>{% if rs.genDir == "BottomUp" %}Bottom-up (near bedrock){% elif rs.genDir == "TopDown" %}Top-down (near surface){% endif %}</td>
+    <td><span class="tag">{{ rs.sourceMod }}</span></td>
+  </tr>
+{% endfor %}
+{% endcall %}
 
 <h2>Ore / gem / rock deposits ({{ generated.deposits.length }})</h2>
 {% call dt.datatable(40, "Search deposits...", ["Deposit", "Category", "Host rock(s)", "Depth", "Mod"]) %}

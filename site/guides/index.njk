@@ -1,20 +1,22 @@
 ---
 title: Help Guides - Vintage Story Wiki
-description: Planned -- the game's own in-game handbook/help guide content.
+description: The game's own in-game handbook help-guide articles.
 layout: layouts/base.njk
 permalink: "{{ lang }}/guides/index.html"
 ---
+{% import "macros/datatable.njk" as dt %}
 <h1>Help Guides</h1>
-<p class="wip-badge">Work in progress</p>
-<p>
-  Not yet extracted. The game ships 20 topical help-guide articles (starter guide, progression
-  guide, knapping, clayforming, meal cooking, charcoal burning, farming, food preservation, animal
-  husbandry, panning, smelting, smithing, prospecting, temporal stability, armor, mechanical
-  power, steel making, coke ovens, weather, stone layers) as the in-game handbook's own guide
-  pages.
-</p>
 <p class="muted">
-  Source data: <code>assets/survival/config/handbook/*.json</code> (one file per guide, numbered
-  00-19). Each guide's text is itself a sequence of lang-key references, resolved the same way
-  item/block descriptions already are elsewhere on this wiki.
+  The game's own in-game handbook "Guides" tab content -- {{ generated.guides.length }} articles,
+  in the same order they appear in-game.
 </p>
+<p class="muted">Source: <code>config/handbook/&lt;NN&gt;-&lt;name&gt;.json</code> (title/text are lang-key references, same mechanism as <a href="{{ ('/' ~ lang ~ '/') | url }}lore/">Books &amp; Lore</a>).</p>
+
+{% call dt.datatable(40, "Search guides...", ["Title", "Mod"]) %}
+{% for guide in generated.guides | sort(false, false, "order") %}
+  <tr data-search="{{ guide.id }}" data-mod="{{ guide.sourceMod }}">
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}guides/{{ guide.domain }}/{{ guide.id | slugify }}/">{{ guide.title }}</a></td>
+    <td><span class="tag">{{ guide.sourceMod }}</span></td>
+  </tr>
+{% endfor %}
+{% endcall %}

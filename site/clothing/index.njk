@@ -11,6 +11,7 @@ permalink: "{{ lang }}/clothing/index.html"
   page for why. {{ generated.clothing.length }} catalogued directly from the game's item
   definitions.
 </p>
+<p class="muted">Source: <code>itemtypes/wearable/seraph/*.json</code>.</p>
 
 {% call dt.datatable(60, "Search clothing...", ["Name", "Mod"]) %}
 {% for item in generated.clothing | sort(false, false, "displayName") %}

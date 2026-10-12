@@ -17,6 +17,10 @@ export interface ModInfo {
   name: string;
   version: string;
   side: string; // "Client" | "Server" | "Universal", as declared in modinfo.json
+  type?: string; // modinfo.json's own "type" field, e.g. "Code" | "content"
+  website?: string; // modinfo.json's own "website" field, when the author set one
+  assetid?: number; // mods.vintagestory.at's numeric asset id, cached by `npm run download` -- always present once cached; `https://mods.vintagestory.at/show/mod/<assetid>` always resolves, unlike guessing a slug from modid
+  urlalias?: string; // mods.vintagestory.at's own slug, when the author set one -- NOT reliably equal to this mod's own `modid` (confirmed false for at least one real mod), so never assume it is
   authors?: string[];
   description?: string;
   dependencies?: Record<string, string>; // modid -> version requirement
@@ -239,6 +243,11 @@ export interface ItemIndexEntry {
   spawnBlockPatches: string[]; // BlockPatchSpawnInfo ids (crops/flowers/mushrooms/etc -- climate band this grows in)
   spawnTrees: string[]; // TreeSpawnInfo ids (regular tree/shrub species -- climate band this grows in)
   spawnFruitTrees: string[]; // FruitTreeSpawnInfo ids (fruit tree varieties -- climate band this grows in)
+  rockStrata: string[]; // RockStrataInfo ids -- for bare rock blocks, the noise rule governing where this rock type forms
+  tags?: string[]; // the item/blocktype's own top-level `tags` (e.g. "tool-hammer") -- lets a recipe ingredient's tag-based slot (IngredientSpec.tags) cross-link to every item/block declaring that same tag
+  maxStackSize?: number; // the item/blocktype's own top-level `maxstacksize`; absent in the raw JSON for many items (engine-side default, not recoverable from JSON alone) -- never guessed
+  tradesSelling: string[]; // TradeListing ids (direction "selling") -- traders who sell this item to the player
+  tradesBuying: string[]; // TradeListing ids (direction "buying") -- traders who buy this item from the player
 }
 
 /** An ore/gem/rock deposit (`worldgen/deposits/**`): which rock(s) host it, and at which grades. */
@@ -253,6 +262,20 @@ export interface DepositInfo {
   generator?: string; // worldgen generator algorithm name, as given in the raw deposit JSON
   triesPerChunk?: number;
   yPosRel?: { avg?: number; var?: number }; // typical depth as a fraction of world height (1.0 = surface, 0.0 = bottom)
+}
+
+/**
+ * How a base rock type (not an ore/gem deposit -- see `DepositInfo` for those) is itself placed
+ * into the world (`worldgen/rockstrata.json`): a layered-noise rule compared against per-variant
+ * thresholds, not a simple depth band, climate rule, or fixed global ordering.
+ */
+export interface RockStrataInfo {
+  id: string;
+  domain: string;
+  sourceMod: string;
+  blockCode: string; // e.g. "rock-andesite"
+  rockGroup?: string; // "Volcanic" | "Sedimentary" | "Metamorphic" | "Igneous"
+  genDir?: string; // "BottomUp" (anchored near bedrock) | "TopDown" (anchored near the surface)
 }
 
 /** A flat worldgen placement rule for crops/flowers/mushrooms/ferns/berry bushes/etc. */
@@ -343,6 +366,53 @@ export interface ModSummary {
   name: string;
   version: string;
   side: string;
+  type?: string; // modinfo.json's own "type" field, e.g. "Code" | "content"
+  website?: string; // modinfo.json's own "website" field, when the author set one
+  assetid?: number; // links to https://mods.vintagestory.at/show/mod/<assetid> -- see ModInfo for why this, not modid, is used
+  description?: string;
+  authors?: string[];
   hasCompiledCode: boolean;
   isVanilla: boolean;
+}
+
+/**
+ * One in-game handbook help-guide article (`config/handbook/<NN>-<name>.json`). `title`/`text` are
+ * lang keys (same pattern as `models/lore.ts`), with `text` resolving to trusted HTML containing
+ * `handbook://`/`handbooksearch://` cross-links -- `models/guides.ts` rewrites the ones it
+ * recognizes (item/block codes, other guides) into real site-relative paths (lang-prefix-free,
+ * templates splice in `{{ lang }}` via a `__LANG__` placeholder -- see `site/guides/guides.njk`).
+ */
+export interface GuideInfo {
+  id: string; // pageCode, e.g. "craftinginfo-starterguide"
+  domain: string;
+  sourceMod: string;
+  title: string;
+  html: string; // resolved text, with recognized handbook:// links rewritten; unrecognized ones left inert
+  order: number; // from the two-digit numeric filename prefix -- the only ordering signal that exists
+}
+
+/** One entry in a trader's buy or sell list (`config/tradelists/<specialization>.json`). */
+export interface TradeListing {
+  id: string; // `${tradeList.id}#selling#<i>` or `#buying#<i>` -- unique, used by ItemIndexEntry.tradesSelling/tradesBuying
+  tradeListId: string; // the owning TradeList's id, to link back to the trader's own page
+  direction: "selling" | "buying";
+  domain: string;
+  code: string;
+  itemKind: "item" | "block";
+  stacksize?: number;
+  stockAvg?: number;
+  stockVar?: number;
+  priceAvg?: number;
+  priceVar?: number;
+}
+
+/** One trader specialization's full buy/sell list. */
+export interface TradeList {
+  id: string; // specialization code, e.g. "artisan"
+  domain: string;
+  sourceMod: string;
+  moneyAvg?: number;
+  moneyVar?: number;
+  selling: TradeListing[];
+  buying: TradeListing[];
 }

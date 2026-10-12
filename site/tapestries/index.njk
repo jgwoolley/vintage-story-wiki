@@ -17,6 +17,7 @@ permalink: "{{ lang }}/tapestries/index.html"
   book instead. Further parsing of placement-time state would be needed to determine a tapestry's
   true individual name/content.
 </p>
+<p class="muted">Source: <code>blocktypes/cloth/tapestry.json</code>.</p>
 
 {% call dt.datatable(60, "Search tapestries...", ["Name", "Mod"]) %}
 {% for item in generated.tapestries | sort(false, false, "displayName") %}

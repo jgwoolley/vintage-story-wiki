@@ -6,6 +6,7 @@ permalink: "{{ lang }}/structures/index.html"
 {% import "macros/datatable.njk" as dt %}
 <h1>Generated Structures</h1>
 <p class="muted">{{ generated.structures.length }} structure/village/story-structure definitions.</p>
+<p class="muted">Source: <code>worldgen/structures.json</code>, <code>worldgen/villages.json</code>, <code>worldgen/storystructures.json</code>, and hook-generated structures.</p>
 
 {% call dt.datatable(60, "Search structures...", ["Name", "Kind", "Mod"]) %}
 {% for structure in generated.structures | sort(false, false, "code") %}

@@ -5,11 +5,12 @@ permalink: "{{ lang }}/items/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
 <h1>Items &amp; Blocks</h1>
-<p class="muted">{{ generated.items.length }} distinct items/blocks referenced by recipes or loot tables.</p>
+<p class="muted">{{ generated.items.length }} distinct items/blocks referenced by recipes, drops, or worldgen spawn rules.</p>
+<p class="muted">Source: cross-referenced from recipes (<code>recipes/**/*.json</code>), drop tables (entity/block loot), and worldgen spawn data -- not a full walk of every item/block the game defines. See each item's own page for exactly which of those apply.</p>
 
 {% call dt.datatable(60, "Search items & blocks...", ["Name", "Kind", "Mod"]) %}
 {% for item in generated.items | sort(false, false, "displayName") %}
-  <tr data-search="{{ item.domain }}:{{ item.code }}" data-category="{{ item.kind }}" data-mod="{{ item.sourceMod }}">
+  <tr data-search="{{ item.domain }}:{{ item.code }}" data-category="{{ item.kind }}" data-mod="{{ item.sourceMod }}" data-tags="{{ item.tags | default([]) | join(' ') }}">
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ item.domain }}/{{ item.code | slugify }}/">{{ item.displayName }}</a></td>
     <td><span class="tag">{{ item.kind }}</span></td>
     <td><span class="tag">{{ item.sourceMod }}</span></td>

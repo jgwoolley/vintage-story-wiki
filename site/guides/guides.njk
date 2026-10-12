@@ -1,0 +1,19 @@
+---
+pagination:
+  data: generated.guides
+  size: 1
+  alias: guide
+permalink: "{{ lang }}/guides/{{ guide.domain }}/{{ guide.id | slugify }}/index.html"
+layout: layouts/base.njk
+eleventyComputed:
+  title: "{{ guide.title }} - Vintage Story Wiki"
+---
+<div class="breadcrumb"><a href="{{ ('/' ~ lang ~ '/') | url }}guides/">&larr; All guides</a></div>
+
+<h1>{{ guide.title }}</h1>
+<p class="muted">
+  <code>{{ guide.id }}</code>
+  &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ guide.sourceMod }}</a>
+</p>
+
+<div class="card">{{ guide.html | replace("__LANG__", ('/' ~ lang ~ '/') | url) | safe }}</div>

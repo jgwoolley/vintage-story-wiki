@@ -1,22 +1,10 @@
-
 # Phase 
 
 - Make top navbar be an accordian: Vintage Story Wiki / Home, VintageStory Wiki / Creatures, etc.
-- Also be clearer about what file each one of these sections comes from.
-- If fruit trees are completely seperate make them completely seperate.
-- Also add Help guides
-- Also add trades
-- Able to click " hammer (tool) " in recipies to see which tools apply to that (filter the /items page with only hammers in this case)
-- Make sure item / blocks say how many can stack
-- read info from mods's json details. Allow click into mods.vintagetory.ad.
 
 # Phase 
 
 - Dialouge w/ NPCS add too (along with rewards). That way you can tie a NPC / entity to a item
-
-# Phase
-
-- How rock type is determined + link to deposites
 
 # Phase
 

@@ -6,6 +6,7 @@ permalink: "{{ lang }}/lore/index.html"
 {% import "macros/datatable.njk" as dt %}
 <h1>Books &amp; Lore</h1>
 <p class="muted">{{ generated.lore.length }} readable books/journals/tapestry chapters, with their full in-game text.</p>
+<p class="muted">Source: <code>config/lore/*.json</code> (title/text are lang-key references).</p>
 
 {% call dt.datatable(60, "Search books & lore...", ["Title", "Category", "Mod"]) %}
 {% for book in generated.lore | sort(false, false, "title") %}

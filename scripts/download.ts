@@ -4,7 +4,7 @@
 // instead of curl+jq, and the pure-JS `tar` package instead of shelling out to a system `tar`
 // binary -- the whole pipeline (download/ingest/build) now runs on Node alone, no OS-provided
 // tool required, so CI only needs a Node runtime, not any particular OS toolset.
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, createWriteStream } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync, createWriteStream } from "node:fs";
 import { pipeline } from "node:stream/promises";
 import { join } from "node:path";
 import * as tar from "tar";
@@ -127,7 +127,21 @@ async function installMod(spec: string, opts: Options): Promise<void> {
   console.log(`==> Looking up mod '${modid}'${version ? ` version ${version}` : ""}`);
   const res = await fetch(`https://mods.vintagestory.at/api/mod/${modid}`);
   if (!res.ok) throw new Error(`Could not reach mods.vintagestory.at for '${modid}': ${res.status} ${res.statusText}`);
-  const data = (await res.json()) as { mod?: { releases?: ModRelease[] } };
+  const data = (await res.json()) as { mod?: { releases?: ModRelease[]; assetid?: number; urlalias?: string | null } };
+
+  // The local modid (from this mod's own modinfo.json) is NOT reliably the same as the public
+  // listing's slug -- confirmed false for at least one real mod (urlalias was null; modid/urlalias
+  // only happened to match for the two originally-tested mods). `assetid` is always present and
+  // `https://mods.vintagestory.at/show/mod/<assetid>` is confirmed to resolve for every mod, so
+  // that's what gets linked to -- cache it here (ingest itself never touches the network).
+  if (data.mod?.assetid !== undefined) {
+    mkdirSync(opts.modsDir, { recursive: true });
+    writeFileSync(
+      join(opts.modsDir, `${modid.toLowerCase()}.meta.json`),
+      JSON.stringify({ assetid: data.mod.assetid, urlalias: data.mod.urlalias ?? undefined }, null, 2)
+    );
+  }
+
   const releases = data.mod?.releases ?? [];
   const release = version ? releases.find((r) => r.modversion === version) : releases[0];
 

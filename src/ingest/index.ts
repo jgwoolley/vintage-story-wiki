@@ -12,9 +12,12 @@ import { extractLoreBooks } from "./models/lore.js";
 import { extractDeposits } from "./models/deposits.js";
 import { extractBlockPatchSpawns } from "./models/blockpatches.js";
 import { extractTrees, extractFruitTrees } from "./models/trees.js";
+import { extractRockStrata } from "./models/rockstrata.js";
+import { extractGuides } from "./models/guides.js";
+import { extractTrades } from "./models/trades.js";
 import { buildBlockCodeToSchematicIndex, buildSchematicToStructureIndex, findStructuresContaining } from "./structureContents.js";
 import { buildLangResolver } from "./lang.js";
-import { buildItemIndex } from "./crossref.js";
+import { buildItemIndex, attachItemMetadata } from "./crossref.js";
 import { writeGenerated } from "./write.js";
 
 const SERVER_ASSETS_DIR = "vs_server/assets";
@@ -167,6 +170,18 @@ function main(): void {
   const { fruitTrees, codeToFruitTreeIds } = extractFruitTrees(index);
   console.log(`  ${fruitTrees.length} fruit tree varieties, covering ${codeToFruitTreeIds.size} concrete item codes`);
 
+  console.log("== Extracting rock strata (base rock-type placement) ==");
+  const { rockStrata, codeToRockStrataIds } = extractRockStrata(index);
+  console.log(`  ${rockStrata.length} rock strata variants`);
+
+  console.log("== Extracting help guides ==");
+  const guides = extractGuides(index, lang);
+  console.log(`  ${guides.length} guides`);
+
+  console.log("== Extracting trader buy/sell lists ==");
+  const trades = extractTrades(index);
+  console.log(`  ${trades.length} trader specializations`);
+
   console.log("== Building item index ==");
   const itemIndex = buildItemIndex(recipes, loot, lang);
   console.log(`  ${itemIndex.size} distinct items/blocks referenced`);
@@ -196,6 +211,9 @@ function main(): void {
         spawnBlockPatches: [],
         spawnTrees: [],
         spawnFruitTrees: [],
+        rockStrata: [],
+        tradesSelling: [],
+        tradesBuying: [],
       };
       itemIndex.set(key, entry);
     }
@@ -218,6 +236,10 @@ function main(): void {
     const [domain, code] = key.split(/:(.+)/) as [string, string];
     ensureSpawnTarget(domain, code, "item").spawnFruitTrees.push(...fruitTreeIds);
   }
+  for (const [key, rockStrataIds] of codeToRockStrataIds) {
+    const [domain, code] = key.split(/:(.+)/) as [string, string];
+    ensureSpawnTarget(domain, code).rockStrata.push(...rockStrataIds);
+  }
   console.log(`  item index grown to ${itemIndex.size} after adding spawn-only blocks`);
 
   // A block that drops something when broken/interacted with is, likewise, a fact about that
@@ -229,9 +251,38 @@ function main(): void {
   }
   console.log(`  item index grown to ${itemIndex.size} after adding block-drop-only blocks`);
 
+  attachItemMetadata(itemIndex, index, ensureSpawnTarget);
+  console.log(`  item index grown to ${itemIndex.size} after adding tagged-tool-only items`);
+
+  // Cross-reference each trade listing back onto the item it lists, same "give it a page even if
+  // nothing else does" synthesis as everything else above -- a traded-only item (no recipe, no
+  // drop, no worldgen spawn) would otherwise have no /items/ page at all.
+  const tradeListingsById: Record<string, import("./types.js").TradeListing> = {};
+  for (const trade of trades) {
+    for (const listing of [...trade.selling, ...trade.buying]) {
+      tradeListingsById[listing.id] = listing;
+      const entry = ensureSpawnTarget(listing.domain, listing.code, listing.itemKind);
+      if (listing.direction === "selling") entry.tradesSelling.push(listing.id);
+      else entry.tradesBuying.push(listing.id);
+    }
+  }
+  console.log(`  item index grown to ${itemIndex.size} after adding traded-only items`);
+
   const modSummaries: ModSummary[] = [
     { modid: "game", name: "Vintage Story (vanilla)", version: manifest.serverVersion, side: "Universal", hasCompiledCode: false, isVanilla: true },
-    ...mods.map((m) => ({ modid: m.modid, name: m.name, version: m.version, side: m.side, hasCompiledCode: m.hasCompiledCode, isVanilla: false })),
+    ...mods.map((m) => ({
+      modid: m.modid,
+      name: m.name,
+      version: m.version,
+      side: m.side,
+      type: m.type,
+      website: m.website,
+      assetid: m.assetid,
+      description: m.description,
+      authors: m.authors,
+      hasCompiledCode: m.hasCompiledCode,
+      isVanilla: false,
+    })),
   ];
 
   const recipesById = Object.fromEntries(recipes.map((r) => [r.id, r]));
@@ -239,6 +290,7 @@ function main(): void {
   const blockPatchesById = Object.fromEntries(blockPatches.map((p) => [p.id, p]));
   const treesById = Object.fromEntries(trees.map((t) => [t.id, t]));
   const fruitTreesById = Object.fromEntries(fruitTrees.map((t) => [t.id, t]));
+  const rockStrataById = Object.fromEntries(rockStrata.map((r) => [r.id, r]));
 
   console.log("== Writing generated data ==");
   writeGenerated("recipes", recipes);
@@ -261,6 +313,11 @@ function main(): void {
   writeGenerated("treesById", treesById);
   writeGenerated("fruitTrees", fruitTrees);
   writeGenerated("fruitTreesById", fruitTreesById);
+  writeGenerated("rockStrata", rockStrata);
+  writeGenerated("rockStrataById", rockStrataById);
+  writeGenerated("guides", guides);
+  writeGenerated("trades", trades);
+  writeGenerated("tradeListingsById", tradeListingsById);
   writeGenerated("items", [...itemIndex.values()]);
   writeGenerated("mods", modSummaries);
 

@@ -1,6 +1,6 @@
-import type { ItemIndexEntry, LootEntry, NormalizedRecipe } from "./types.js";
+import type { AssetIndex, ItemIndexEntry, LootEntry, NormalizedRecipe } from "./types.js";
 import type { LangResolver } from "./lang.js";
-import { substitutePlaceholders } from "./variantExpander.js";
+import { expandVariants, substitutePlaceholders } from "./variantExpander.js";
 
 function key(domain: string, code: string): string {
   return `${domain}:${code}`;
@@ -45,6 +45,9 @@ export function buildItemIndex(
         spawnBlockPatches: [],
         spawnTrees: [],
         spawnFruitTrees: [],
+        rockStrata: [],
+        tradesSelling: [],
+        tradesBuying: [],
       };
       items.set(k, entry);
     }
@@ -120,4 +123,50 @@ export function buildItemIndex(
   // until voxel data is decoded in a later phase.
 
   return items;
+}
+
+/**
+ * Attaches each item/block's own `tags` and `maxstacksize`, read straight off its itemtype/
+ * blocktype definition's top level (not `attributes.*`) -- a one-time full walk over every
+ * itemtypes/blocktypes file, since nothing else in this pipeline loads them for general metadata
+ * (`models/decor.ts`/`loot.ts`/`trees.ts` each only read a narrow, unrelated slice). `tags` is
+ * what lets a recipe ingredient's tag-based slot (e.g. `tags: ["tool-hammer"]`) cross-link to
+ * every item/block declaring that same tag.
+ *
+ * Only ~23 base files in the whole game declare a `tags` array at all (confirmed by grep -- all
+ * tools), so unlike a full registry walk this is small and deliberate: any concrete tagged
+ * variant not already in the index gets synthesized one via `ensure` (same "give it a page even
+ * though nothing else points to it" pattern as `ensureSpawnTarget`) -- without this, a real gap
+ * surfaces for exactly the motivating case: the "hammer" tool itself (`hammer-<metal>`) is never
+ * a recipe *output* the normal crossref walk can resolve (its grid recipe's own wildcard
+ * ingredient, `hammerhead-*`, has no `allowedVariants` of its own for `crossref.ts` to resolve
+ * the `{metal}` placeholder against), so it would otherwise never get an `/items/` page at all,
+ * defeating the point of a clickable "tool-hammer" tag. `maxstacksize` is absent for a meaningful
+ * fraction of items/blocks in the raw JSON (an engine-side default in that case) -- left
+ * undefined, never guessed.
+ */
+export function attachItemMetadata(
+  items: Map<string, ItemIndexEntry>,
+  index: AssetIndex,
+  ensure: (domain: string, code: string, kind: "item" | "block") => ItemIndexEntry
+): void {
+  const batches: { kind: "item" | "block"; prefix: string }[] = [
+    { kind: "item", prefix: "itemtypes/" },
+    { kind: "block", prefix: "blocktypes/" },
+  ];
+  for (const { kind, prefix } of batches) {
+    for (const variant of expandVariants(index, [prefix])) {
+      const json = variant.json as { tags?: string[]; maxstacksize?: number };
+      const tags = Array.isArray(json.tags) && json.tags.length ? json.tags : undefined;
+      const maxStackSize = typeof json.maxstacksize === "number" ? json.maxstacksize : undefined;
+      if (!tags && maxStackSize === undefined) continue;
+
+      const existing = items.get(key(variant.domain, variant.code));
+      const entry = existing ?? (tags ? ensure(variant.domain, variant.code, kind) : undefined);
+      if (!entry) continue;
+
+      if (tags) entry.tags = tags;
+      if (maxStackSize !== undefined) entry.maxStackSize = maxStackSize;
+    }
+  }
 }

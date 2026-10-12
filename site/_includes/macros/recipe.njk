@@ -6,9 +6,9 @@
     <a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ ing.domain }}/{{ ing.code | slugify }}/">{{ items | displayName(ing.domain, ing.code) }}</a>
   {%- endif -%}
 {%- elif ing.tags and ing.isTool -%}
-  {{ (ing.tags[0] | replace("tool-", "")) }} (tool)
+  <a href="{{ ('/' ~ lang ~ '/') | url }}items/?tag={{ ing.tags[0] | urlencode }}">{{ ing.tags[0] | tagLabel }}</a>
 {%- elif ing.tags -%}
-  any {{ ing.tags | join(", ") }}
+  any {% for t in ing.tags %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/?tag={{ t | urlencode }}">{{ t | tagLabel }}</a>{% if not loop.last %}, {% endif %}{% endfor %}
 {%- elif ing.validStacks and ing.validStacks.length -%}
   {%- for v in ing.validStacks -%}
     <a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ v.domain }}/{{ v.code | slugify }}/">{{ items | displayName(v.domain, v.code) }}</a>{% if not loop.last %} or {% endif %}
