@@ -21,7 +21,7 @@ export const tradesRoute: RouteInfo = {
 export const wayPointRoute: RouteInfo = {
     name: 'Vintage Story WayPoint Tool',
     shortName: 'WayPoints',
-    description: 'Are you a clockmaker whose daliance with translocators has massively reduced the time it takes to get from point A to point B, but planning the optimal route has taken its tole on your sanity? Look no furhter than the WayPoint tool!',
+    description: 'Are you a clockmaker whose dalliance with translocators has massively reduced the time it takes to get from point A to point B, but planning the optimal route has taken its toll on your sanity? Look no further than the WayPoint tool!',
     href:'/waypoints',
     IconComponent: MapIcon,
 }
