@@ -59,7 +59,7 @@ See example
     </ProjectReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3">
         <Private>false</Private>
-    </ProjectReference>
+    </PackageReference>
     <PackageReference Include="protobuf-net" Version="3.2.30">
         <Private>false</Private>
     </ProjectReference>
