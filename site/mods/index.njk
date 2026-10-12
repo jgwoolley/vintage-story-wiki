@@ -13,6 +13,7 @@ permalink: "{{ lang }}/mods/index.html"
   {% for mod in generated.mods %}
     <tr>
       <td>
+        {% if mod.logoUrl %}<img src="{{ mod.logoUrl }}" alt="" class="mod-icon" width="24" height="24" loading="lazy">{% endif %}
         {% if mod.assetid %}<a href="https://mods.vintagestory.at/show/mod/{{ mod.assetid }}">{{ mod.name }}</a>{% else %}{{ mod.name }}{% endif %}
         <span class="tag">{{ mod.modid }}</span>
         {% if mod.website %}&middot; <a href="{{ mod.website }}">source</a>{% endif %}

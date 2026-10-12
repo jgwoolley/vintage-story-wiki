@@ -1,0 +1,52 @@
+---
+title: Classes - Vintage Story Wiki
+description: Starting character classes, their fixed traits, and starting gear.
+layout: layouts/base.njk
+permalink: "{{ lang }}/classes/index.html"
+---
+{% import "macros/datatable.njk" as dt %}
+<h1>Classes</h1>
+<p class="muted">
+  A character class is chosen once at world start and is permanent for that character -- it fixes
+  a set of positive/negative <a href="{{ ('/' ~ lang ~ '/') | url }}classes/#traits">traits</a>
+  (stat modifiers) and a set of starting gear.
+</p>
+<p class="muted">Source: <code>config/characterclasses.json</code>, <code>config/traits.json</code>.</p>
+
+{% call dt.datatable(20, "Search classes...", ["Class", "Traits", "Gear", "Mod"]) %}
+{% for cls in generated.classes %}
+  <tr data-search="{{ cls.displayName }} {{ cls.code }} {{ cls.traits | join(' ') }}" data-mod="{{ cls.sourceMod }}" data-mod-label="{{ generated.mods | modName(cls.sourceMod) }}">
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}classes/{{ cls.domain }}/{{ cls.code | slugify }}/">{{ cls.displayName }}</a></td>
+    <td>
+      {% for code in cls.traits %}
+        {% set trait = generated.traitsById[code] %}
+        {% if trait.code %}<span class="tag {% if trait.type == 'positive' %}tag-positive{% else %}tag-negative{% endif %}">{{ trait.displayName }}</span>{% endif %}
+      {% endfor %}
+    </td>
+    <td>{{ cls.gear.length }} items</td>
+    <td><span class="tag">{{ cls.sourceMod }}</span></td>
+  </tr>
+{% endfor %}
+{% endcall %}
+
+<h2 id="traits">All traits</h2>
+<p class="muted">
+  Every trait that can appear on a class above. <code>attributes</code> are the raw stat
+  modifiers the game applies (e.g. <code>walkspeed: 0.1</code> means +10% walk speed); shown here
+  as a labeled, signed value rather than converted to a fixed unit, since the modifier meaning
+  varies per key.
+</p>
+{% call dt.datatable(40, "Search traits...", ["Trait", "Type", "Effects", "Notes"]) %}
+{% for trait in generated.traits %}
+  <tr data-search="{{ trait.displayName }} {{ trait.code }}" data-category="{{ trait.type }}">
+    <td>{{ trait.displayName }}</td>
+    <td><span class="tag {% if trait.type == 'positive' %}tag-positive{% else %}tag-negative{% endif %}">{{ trait.type }}</span></td>
+    <td>
+      {% for key, value in trait.attributes %}
+        <div><code>{{ key | restrictionLabel }}</code>: {% if value >= 0 %}+{% endif %}{{ value }}</div>
+      {% endfor %}
+    </td>
+    <td>{% if trait.description %}{{ trait.description | safe }}{% endif %}</td>
+  </tr>
+{% endfor %}
+{% endcall %}

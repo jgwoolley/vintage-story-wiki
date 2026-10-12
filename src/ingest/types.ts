@@ -21,6 +21,7 @@ export interface ModInfo {
   website?: string; // modinfo.json's own "website" field, when the author set one
   assetid?: number; // mods.vintagestory.at's numeric asset id, cached by `npm run download` -- always present once cached; `https://mods.vintagestory.at/show/mod/<assetid>` always resolves, unlike guessing a slug from modid
   urlalias?: string; // mods.vintagestory.at's own slug, when the author set one -- NOT reliably equal to this mod's own `modid` (confirmed false for at least one real mod), so never assume it is
+  logoUrl?: string; // mods.vintagestory.at's own CDN logo image URL, cached by `npm run download` alongside assetid/urlalias -- absent for mods downloaded before this existed, or that never set a logo
   authors?: string[];
   description?: string;
   dependencies?: Record<string, string>; // modid -> version requirement
@@ -412,6 +413,7 @@ export interface ModSummary {
   type?: string; // modinfo.json's own "type" field, e.g. "Code" | "content"
   website?: string; // modinfo.json's own "website" field, when the author set one
   assetid?: number; // links to https://mods.vintagestory.at/show/mod/<assetid> -- see ModInfo for why this, not modid, is used
+  logoUrl?: string; // see ModInfo.logoUrl
   description?: string;
   authors?: string[];
   hasCompiledCode: boolean;
@@ -458,4 +460,55 @@ export interface TradeList {
   moneyVar?: number;
   selling: TradeListing[];
   buying: TradeListing[];
+}
+
+export type TraitType = "positive" | "negative";
+
+/**
+ * One player trait (`config/traits.json`): a named bundle of stat modifiers assigned to a
+ * character class at world start (see `CharacterClassInfo.traits`), never obtainable or
+ * changeable afterward. `attributes` are raw stat-modifier key/value pairs exactly as the game
+ * defines them (e.g. `"walkspeed": 0.1` = +10% walk speed, `"maxhealthExtraPoints": -2` = -2 flat
+ * health points) -- deliberately not normalized into a fixed schema since the key set is
+ * open-ended and varies per trait; rendered generically (label the key, show the signed raw
+ * value) rather than hardcoding a glossary entry per possible key.
+ */
+export interface TraitInfo {
+  code: string;
+  domain: string;
+  sourceMod: string;
+  type: TraitType;
+  displayName: string;
+  /** Flavor/mechanical text from a `traitdesc-<code>` lang key -- only defined for traits that
+   * unlock something non-numeric (e.g. "bowyer" unlocks bow crafting); most traits have none,
+   * since their effect is fully described by `attributes`. */
+  description?: string;
+  attributes: Record<string, number>;
+}
+
+/** A starting-equipment reference on a `CharacterClassInfo` -- resolved to a display name at
+ * ingest time (same as everywhere else gear/drops reference an item) rather than looked up live
+ * in a template, since clothing never joins the main item index (see README) and so has no
+ * generic cross-reference filter available at render time. */
+export interface CharacterClassGearItem {
+  domain: string;
+  code: string;
+  displayName: string;
+  missingTranslation: boolean;
+}
+
+/**
+ * A player starting class (`config/characterclasses.json`) -- purely a character-creation choice
+ * (fixed trait bundle + starting gear set), not tied to any recipe/loot/worldgen data, so (like
+ * paintings/tapestries/clothing) it's extracted as its own standalone catalog rather than forced
+ * through the recipe/loot item index.
+ */
+export interface CharacterClassInfo {
+  id: string; // `${domain}:${code}`
+  code: string;
+  domain: string;
+  sourceMod: string;
+  displayName: string;
+  traits: string[]; // trait codes, cross-referenced against TraitInfo.code via `traitsById`
+  gear: CharacterClassGearItem[];
 }

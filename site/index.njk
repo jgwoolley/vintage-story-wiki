@@ -90,6 +90,11 @@ permalink: "{{ lang }}/index.html"
     <span class="muted">What wandering traders buy and sell, per specialization.</span>
     <span class="muted">{{ generated.trades.length }} entries</span>
   </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}classes/">
+    <strong>Classes</strong>
+    <span class="muted">Starting character classes, their fixed traits, and starting gear.</span>
+    <span class="muted">{{ generated.classes.length }} entries</span>
+  </a>
 </div>
 
 <h2>Coming soon</h2>

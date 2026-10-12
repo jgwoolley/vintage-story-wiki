@@ -127,18 +127,27 @@ async function installMod(spec: string, opts: Options): Promise<void> {
   console.log(`==> Looking up mod '${modid}'${version ? ` version ${version}` : ""}`);
   const res = await fetch(`https://mods.vintagestory.at/api/mod/${modid}`);
   if (!res.ok) throw new Error(`Could not reach mods.vintagestory.at for '${modid}': ${res.status} ${res.statusText}`);
-  const data = (await res.json()) as { mod?: { releases?: ModRelease[]; assetid?: number; urlalias?: string | null } };
+  const data = (await res.json()) as {
+    mod?: { releases?: ModRelease[]; assetid?: number; urlalias?: string | null; logofile?: string | null };
+  };
 
   // The local modid (from this mod's own modinfo.json) is NOT reliably the same as the public
-  // listing's slug -- confirmed false for at least one real mod (urlalias was null; modid/urlalias
+  // listing's slug (confirmed false for at least one real mod -- urlalias was null; modid/urlalias
   // only happened to match for the two originally-tested mods). `assetid` is always present and
   // `https://mods.vintagestory.at/show/mod/<assetid>` is confirmed to resolve for every mod, so
   // that's what gets linked to -- cache it here (ingest itself never touches the network).
+  // `logofile` is likewise a ready-to-use absolute CDN image URL (confirmed, not a relative path
+  // needing a base joined on) -- cached the same way rather than downloading the image itself,
+  // since the mods.vintagestory.at CDN already serves it directly.
   if (data.mod?.assetid !== undefined) {
     mkdirSync(opts.modsDir, { recursive: true });
     writeFileSync(
       join(opts.modsDir, `${modid.toLowerCase()}.meta.json`),
-      JSON.stringify({ assetid: data.mod.assetid, urlalias: data.mod.urlalias ?? undefined }, null, 2)
+      JSON.stringify(
+        { assetid: data.mod.assetid, urlalias: data.mod.urlalias ?? undefined, logoUrl: data.mod.logofile ?? undefined },
+        null,
+        2
+      )
     );
   }
 

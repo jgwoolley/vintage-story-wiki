@@ -17,6 +17,12 @@ document aimed at visitors; `CLAUDE.md` is for a future AI coding session pickin
    dedicated server into `vs_server/` and mod `.zip` files into `Mods/` (both gitignored) via
    Node's built-in `fetch`, the mods.vintagestory.at API, and the pure-JS `tar` package for
    extraction — the whole pipeline is plain Node/npm, no OS-provided tool is ever shelled out to.
+   Alongside each mod zip it caches `Mods/<modid>.meta.json` (`assetid`, `urlalias`, `logoUrl`)
+   from the API response, since `assetid` is the only reliable way to link to a mod's
+   mods.vintagestory.at listing (a mod's own `modid` isn't reliably the same as that listing's
+   slug) and `logoUrl` is a ready-to-use CDN image URL rendered on `/mods/` — ingest itself never
+   touches the network, so re-run `npm run download` to pick either up for mods fetched before
+   this caching existed.
 3. **`npm run ingest`** (`src/ingest/`) reads those raw game assets and produces normalized JSON
    under `site/_data/generated/` — recipes, loot/drop tables, worldgen structures, a decor
    catalog (paintings/tapestries/clothing), readable book content, and a cross-referenced item
@@ -150,6 +156,25 @@ consistent with "organize by what the thing is" (see Creatures vs. Items below).
   ideal — it confirms a structure's schematic *contains* the block code somewhere, not that a
   specific ruin/story-structure variant from `worldgen/storystructures.json`/`structures.json` was
   directly evaluated (see `/tools/`).
+
+## Classes & Traits (`models/classes.ts`)
+
+`/classes/` catalogs the 6 player starting classes (`config/characterclasses.json`: commoner,
+hunter, malefactor, clockmaker, blackguard, tailor) and the 26 traits (`config/traits.json`) they
+draw from. Like paintings/tapestries/clothing, this is a standalone catalog rather than something
+forced through the recipe/loot item index — a class is a character-creation choice, not a
+craftable/droppable thing. Both source files are single flat JSON arrays (no variant expansion, no
+`*ByType` glob keys — the only two content types in this pipeline that simple). Trait display names
+come from `trait-<code>` lang keys; most traits have no `traitdesc-<code>` flavor text at all (only
+the ones that unlock something non-numeric, like `bowyer` unlocking bow crafting, do) — a trait's
+real effect is its raw `attributes` stat-modifier map (e.g. `"walkspeed": 0.1`), rendered generically
+(label the key via the same camelCase-to-Title-Case `restrictionLabel` filter structures use, show
+the signed raw value) rather than hardcoded per possible key, since the key set is open-ended.
+Starting gear codes in `characterclasses.json` are bare (no domain prefix) — resolved against the
+class file's own domain, same assumption `models/trades.ts` makes for its listing codes — and link
+to the matching `/clothing/` page by display name resolved at ingest time, since clothing never
+joins the main item index and so has no generic item cross-reference filter available in a
+template.
 
 ## Books & Lore (`models/lore.ts`)
 

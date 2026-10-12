@@ -66,10 +66,12 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   separate, parallel carve-out that never joins the item index at all — they get their own
   dedicated top-level pages (`/paintings/`, `/tapestries/`, `/clothing/`) instead, each backed by
   its own filtered array (`generated.paintings`/`tapestries`/`clothing`, split from the combined
-  `generated.decor` in `src/ingest/index.ts` right after cross-referencing). If you're asked to
-  surface some other spawn-only/recipe-less content type, pick whichever of these two patterns
-  fits (joins the item index vs. gets its own dedicated page) — don't force it through
-  `crossref.ts`'s recipe/loot walk either way.
+  `generated.decor` in `src/ingest/index.ts` right after cross-referencing). Character classes/
+  traits (`models/classes.ts` → `/classes/`) are the same "own dedicated page, never joins the
+  item index" pattern again — a class is a character-creation choice, not a craftable/droppable
+  thing. If you're asked to surface some other spawn-only/recipe-less content type, pick whichever
+  of these two patterns fits (joins the item index vs. gets its own dedicated page) — don't force
+  it through `crossref.ts`'s recipe/loot walk either way.
 - **Content is organized by what the thing is, not by mechanism.** `/creatures/` is entity-only
   (stats, spawn conditions, own drop table); a block's drops live directly on that block's own
   `/items/` page (a "Drops" section, forward direction) rather than a separate per-source listing.
@@ -133,10 +135,31 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
 - **Every field in `src/ingest/types.ts` is documented** (inline `//` or leading `/** */` per
   interface) — keep this true for any new/changed field. This is the single source of truth for
   what each generated JSON shape actually means; don't let it drift into "self-explanatory" silence.
-- **WIP stub page pattern**: `/guides/`, `/trades/`, `/tools/` are empty placeholder pages for
-  content not extracted yet — a `.wip-badge`-styled note plus prose saying exactly which raw game
-  files the real implementation would read (see those three `index.njk` files for the pattern:
-  explain what's planned and where the data already lives, don't just say "coming soon").
+- **WIP stub page pattern**: `/tools/` is the one remaining empty placeholder page for content not
+  extracted yet — a `.wip-badge`-styled note plus prose saying exactly which raw game files the
+  real implementation would read (see `site/tools/index.njk` for the pattern: explain what's
+  planned and where the data already lives, don't just say "coming soon"). `/guides/` and
+  `/trades/` *used* to be stubs but are now fully implemented (`models/guides.ts`,
+  `models/trades.ts`) — don't assume this list is still accurate without checking `site/<dir>/`
+  for a real `.njk` detail page first.
+- **Mods can inject lang keys into a different domain's namespace**: a mod's own `lang/en.json`
+  can author a key as a literal `"<domain>:<realkey>"` string (the colon is part of the flat key,
+  not a nested object) to place that string under a *different* domain's lookup (confirmed real
+  and common: BetterRuins does this for 367 keys, Stone Quarry for 32, mostly to put handbook
+  guide/lore text under `"game:"` so vanilla-style `handbook://` links can reference it without a
+  domain prefix). `lang.ts`'s `buildLangResolver` redistributes any such key into its target
+  domain's bucket before splitting exact/wildcard — a real bug, fixed, that made Stone Quarry's
+  handbook guides render raw unresolved key strings instead of their actual text. If a domain's
+  lang lookups look suspiciously incomplete, check for `"otherdomain:key"`-shaped keys in that
+  mod's own lang file before assuming the string is missing entirely.
+- **A worldgen structure's `chance` field (`worldgen/structures.json`) is sometimes a relative
+  weight, not an independent 0–1 probability** — confirmed real: `undergroundruin`'s small/medium/
+  large size variants share one `code` with `chance: 130/50/10`, which blindly `| percent`-formatted
+  renders as a nonsensical "13000.00%". True generator semantics for this weight-vs-probability
+  split aren't available in the locally-cloned `vssurvivalmod` (likely live in VSEssentialsMod,
+  not cloned) — `structures.njk` works around it by only formatting as a percent when
+  `chance <= 1`, otherwise labeling it a relative weight. If you touch structure chance display
+  again, keep that branch rather than assuming it's always a clean probability.
 - **The whole download/ingest/build pipeline is pure Node/npm** — `scripts/download.ts` uses the
   pure-JS `tar` package, not a shelled-out system binary. If you add a new external-tool
   dependency to any script, prefer an npm package over shelling out, to keep this property true.

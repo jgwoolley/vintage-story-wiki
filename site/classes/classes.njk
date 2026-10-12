@@ -1,0 +1,48 @@
+---
+pagination:
+  data: generated.classes
+  size: 1
+  alias: cls
+permalink: "{{ lang }}/classes/{{ cls.domain }}/{{ cls.code | slugify }}/index.html"
+layout: layouts/base.njk
+eleventyComputed:
+  title: "{{ cls.displayName }} - Vintage Story Wiki"
+---
+<div class="breadcrumb"><a href="{{ ('/' ~ lang ~ '/') | url }}classes/">&larr; All classes</a></div>
+
+<h1>{{ cls.displayName }}</h1>
+<p class="muted">
+  <code>{{ cls.domain }}:{{ cls.code }}</code>
+  &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ cls.sourceMod }}</a>
+</p>
+
+<h2>Traits</h2>
+{% if cls.traits.length %}
+<table>
+  <thead><tr><th>Trait</th><th>Type</th><th>Effects</th><th>Notes</th></tr></thead>
+  <tbody>
+  {% for code in cls.traits %}
+    {% set trait = generated.traitsById[code] %}
+    {% if trait.code %}
+    <tr>
+      <td>{{ trait.displayName }}</td>
+      <td><span class="tag {% if trait.type == 'positive' %}tag-positive{% else %}tag-negative{% endif %}">{{ trait.type }}</span></td>
+      <td>
+        {% for key, value in trait.attributes %}
+          <div><code>{{ key | restrictionLabel }}</code>: {% if value >= 0 %}+{% endif %}{{ value }}</div>
+        {% endfor %}
+      </td>
+      <td>{% if trait.description %}{{ trait.description | safe }}{% endif %}</td>
+    </tr>
+    {% endif %}
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}<p class="muted">No traits -- a neutral starting point.</p>{% endif %}
+
+<h2>Starting gear ({{ cls.gear.length }})</h2>
+<ul class="grid-list">
+{% for item in cls.gear %}
+  <li><a href="{{ ('/' ~ lang ~ '/') | url }}clothing/{{ item.domain }}/{{ item.code | slugify }}/">{{ item.displayName }}</a></li>
+{% endfor %}
+</ul>

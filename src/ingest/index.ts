@@ -16,6 +16,7 @@ import { extractRockStrata } from "./models/rockstrata.js";
 import { extractTapestryInstances } from "./models/tapestryInstances.js";
 import { extractGuides } from "./models/guides.js";
 import { extractTrades } from "./models/trades.js";
+import { extractTraits, extractCharacterClasses } from "./models/classes.js";
 import { buildBlockCodeToSchematicIndex, buildSchematicToStructureIndex, findStructuresContaining } from "./structureContents.js";
 import { buildLangResolver } from "./lang.js";
 import { buildItemIndex, attachItemMetadata } from "./crossref.js";
@@ -215,6 +216,11 @@ function main(): void {
   const trades = extractTrades(index);
   console.log(`  ${trades.length} trader specializations`);
 
+  console.log("== Extracting player traits and starting classes ==");
+  const traits = extractTraits(index, lang);
+  const characterClasses = extractCharacterClasses(index, lang);
+  console.log(`  ${traits.length} traits, ${characterClasses.length} starting classes`);
+
   console.log("== Building item index ==");
   const itemIndex = buildItemIndex(recipes, loot, lang);
   console.log(`  ${itemIndex.size} distinct items/blocks referenced`);
@@ -311,6 +317,7 @@ function main(): void {
       type: m.type,
       website: m.website,
       assetid: m.assetid,
+      logoUrl: m.logoUrl,
       description: m.description,
       authors: m.authors,
       hasCompiledCode: m.hasCompiledCode,
@@ -324,6 +331,7 @@ function main(): void {
   const treesById = Object.fromEntries(trees.map((t) => [t.id, t]));
   const fruitTreesById = Object.fromEntries(fruitTrees.map((t) => [t.id, t]));
   const rockStrataById = Object.fromEntries(rockStrata.map((r) => [r.id, r]));
+  const traitsById = Object.fromEntries(traits.map((t) => [t.code, t]));
 
   console.log("== Writing generated data ==");
   writeGenerated("recipes", recipes);
@@ -351,6 +359,9 @@ function main(): void {
   writeGenerated("guides", guides);
   writeGenerated("trades", trades);
   writeGenerated("tradeListingsById", tradeListingsById);
+  writeGenerated("traits", traits);
+  writeGenerated("traitsById", traitsById);
+  writeGenerated("classes", characterClasses);
   writeGenerated("items", [...itemIndex.values()]);
   writeGenerated("mods", modSummaries);
 

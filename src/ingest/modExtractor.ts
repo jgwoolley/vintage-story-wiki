@@ -35,11 +35,13 @@ export function loadMod(zipFileName: string): ExtractedMod {
   const metaPath = join(MODS_DIR, `${modid}.meta.json`);
   let assetid: number | undefined;
   let urlalias: string | undefined;
+  let logoUrl: string | undefined;
   if (existsSync(metaPath)) {
     try {
-      const meta = JSON5.parse(readFileSync(metaPath, "utf8")) as { assetid?: number; urlalias?: string };
+      const meta = JSON5.parse(readFileSync(metaPath, "utf8")) as { assetid?: number; urlalias?: string; logoUrl?: string };
       assetid = meta.assetid;
       urlalias = meta.urlalias;
+      logoUrl = meta.logoUrl;
     } catch {
       // Malformed/missing cache file -- just means no outbound link, not a fatal ingest error.
     }
@@ -54,6 +56,7 @@ export function loadMod(zipFileName: string): ExtractedMod {
     website: modinfoRaw.website as string | undefined,
     assetid,
     urlalias,
+    logoUrl,
     authors: (modinfoRaw.authors as string[]) ?? [],
     description: modinfoRaw.description as string | undefined,
     dependencies: (modinfoRaw.dependencies as Record<string, string>) ?? {},
