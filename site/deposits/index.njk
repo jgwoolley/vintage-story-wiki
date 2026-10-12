@@ -25,7 +25,7 @@ permalink: "{{ lang }}/deposits/index.html"
 </p>
 {% call dt.datatable(40, "Search rock types...", ["Rock", "Group", "Fill direction", "Mod"]) %}
 {% for rs in generated.rockStrata | sort(false, false, "blockCode") %}
-  <tr data-search="{{ rs.blockCode }}" data-category="{{ rs.rockGroup }}" data-mod="{{ rs.sourceMod }}">
+  <tr data-search="{{ rs.blockCode }}" data-category="{{ rs.rockGroup }}" data-mod="{{ rs.sourceMod }}" data-mod-label="{{ generated.mods | modName(rs.sourceMod) }}">
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ rs.domain }}/{{ rs.blockCode | slugify }}/">{{ generated.items | displayName(rs.domain, rs.blockCode) }}</a></td>
     <td>{% if rs.rockGroup %}<span class="tag">{{ rs.rockGroup }}</span>{% endif %}</td>
     <td>{% if rs.genDir == "BottomUp" %}Bottom-up (near bedrock){% elif rs.genDir == "TopDown" %}Top-down (near surface){% endif %}</td>
@@ -37,7 +37,7 @@ permalink: "{{ lang }}/deposits/index.html"
 <h2>Ore / gem / rock deposits ({{ generated.deposits.length }})</h2>
 {% call dt.datatable(40, "Search deposits...", ["Deposit", "Category", "Host rock(s)", "Depth", "Mod"]) %}
 {% for dep in generated.deposits | sort(false, false, "code") %}
-  <tr data-search="{{ dep.hostRocks | join(' ') }}" data-category="{{ dep.category }}" data-mod="{{ dep.sourceMod }}">
+  <tr data-search="{{ dep.hostRocks | join(' ') }}" data-category="{{ dep.category }}" data-mod="{{ dep.sourceMod }}" data-mod-label="{{ generated.mods | modName(dep.sourceMod) }}">
     <td>{{ dep.code }}</td>
     <td><span class="tag">{{ dep.category }}</span></td>
     <td>

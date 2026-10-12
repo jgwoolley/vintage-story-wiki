@@ -17,7 +17,7 @@ permalink: "{{ lang }}/trades/index.html"
 
 {% call dt.datatable(40, "Search trade specializations...", ["Specialization", "Selling", "Buying", "Mod"]) %}
 {% for trade in generated.trades | sort(false, false, "id") %}
-  <tr data-search="{{ trade.id }}" data-mod="{{ trade.sourceMod }}">
+  <tr data-search="{{ trade.id }}" data-mod="{{ trade.sourceMod }}" data-mod-label="{{ generated.mods | modName(trade.sourceMod) }}">
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}trades/{{ trade.id | slugify }}/">{{ trade.id.split(':')[1] }}</a></td>
     <td>{{ trade.selling.length }} items</td>
     <td>{{ trade.buying.length }} items</td>

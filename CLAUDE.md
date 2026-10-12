@@ -77,6 +77,15 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   item) routes each row to `/creatures/...` or `/items/...` depending on `loot.sourceKind` — if you
   add another cross-link into loot data, check `sourceKind` the same way rather than assuming one
   target page type.
+- **`generated.creatures` is not "every entity with a drop table."** A real bug: deriving the
+  creature list purely from `loot.json`'s entity-kind entries silently excludes any living
+  creature with no drops at all (traders, villagers, locusts, ...). `models/loot.ts`'s
+  `extractLoot` also returns a `creatureRoster` (every `entities/**/*.json` variant with the
+  "health" server behavior — the same signal that correctly excludes non-creature utility
+  entities like boats/arrows/elevators, which never have one) that `index.ts` seeds
+  `generated.creatures` from *first*, merging in real drops on top where they exist. If you add
+  another entity-derived content type, seed from the full roster the same way, not from loot
+  entries alone.
 - **Entity spawn conditions live under `json.server.spawnconditions`** (or `...spawnconditionsByType`
   for glob-keyed variants), not top-level `json.spawnconditions` — a real bug hit once already
   (`src/ingest/models/loot.ts`, `extractEntitySpawnInfo`). If entity-derived data looks
@@ -85,9 +94,19 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
 - **`resolveByType` (`src/ingest/variantExpander.ts`) must pick the most specific pattern match**,
   not whichever glob/regex key happens to appear last in the source file. This was a real bug
   (wrong bear hitbox sizes) before being fixed — if you touch this function, keep that property.
+- **Entity drops can be glob-keyed (`dropsByType`) too, not just a flat `drops` array** — a real
+  bug, fixed: `models/loot.ts`'s entity-drop extraction (both death drops and the harvestable
+  behavior's drops) originally only read `json.drops`/`harvestable.drops`, mirroring the pattern
+  but missing the `resolveByType(json.dropsByType, code) ?? json.drops ?? []` fallback that
+  block drops already had. Silently zeroed out real drops for any entity whose drops vary by
+  variant (confirmed: shiver/bowtorn/drifter's harvestable drops, locust's death drops). If you
+  add another drop-reading code path, use the same two-step fallback, not just the flat array.
 - **Datatable pattern**: any listing page uses the `datatable(pageSize, placeholder, headers)`
   macro (`site/_includes/macros/datatable.njk`) wrapping
-  `<tr data-search data-category data-mod data-tags>` rows. All filter/search state round-trips
+  `<tr data-search data-category data-mod data-mod-label data-tags>` rows. `data-mod-label`
+  (optional) is the human mod name shown in the dropdown (`{{ generated.mods | modName(x.sourceMod) }}`)
+  while `data-mod` stays the modid the filter actually matches on — add both together, every
+  `data-mod=` row in `site/` does. All filter/search state round-trips
   through URL query params (`q`, `category`, `mod`, `tag`, and numbered `q2`/`category2`/... for a
   second table on the same page) via `site/assets/datatable.js` — not just read once on load.
   Category/mod `<select>` filters only hide when a page's rows carry *no* value at all for that

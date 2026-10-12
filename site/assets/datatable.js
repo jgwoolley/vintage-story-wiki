@@ -33,9 +33,18 @@
     // row has a mod). A single distinct value still shows the dropdown -- a visible "All mods /
     // game" filter confirms mod/category filtering exists on this page at all, and starts being
     // immediately useful the moment a second mod/category value shows up, with no further changes.
-    function populateSelect(select, attr, allLabel) {
+    // `labelAttr`, when given, names a sibling data-* attribute holding a human-readable label for
+    // the option text (e.g. `data-mod-label="BetterRuins"` alongside the matching
+    // `data-mod="betterruins"`) -- filtering still happens on `attr`'s raw value either way.
+    function populateSelect(select, attr, allLabel, labelAttr) {
       if (!select) return [];
-      const values = [...new Set(items.map((el) => el.dataset[attr]).filter(Boolean))].sort();
+      const labelsByValue = new Map();
+      for (const el of items) {
+        const value = el.dataset[attr];
+        if (!value || labelsByValue.has(value)) continue;
+        labelsByValue.set(value, (labelAttr && el.dataset[labelAttr]) || value);
+      }
+      const values = [...labelsByValue.keys()].sort();
       if (values.length < 1) {
         select.style.display = "none";
         return [];
@@ -47,14 +56,14 @@
       for (const value of values) {
         const opt = document.createElement("option");
         opt.value = value;
-        opt.textContent = value;
+        opt.textContent = labelsByValue.get(value);
         select.appendChild(opt);
       }
       return values;
     }
 
     const categoryValues = populateSelect(categorySelect, "category", "All categories");
-    const modValues = populateSelect(modSelect, "mod", "All mods");
+    const modValues = populateSelect(modSelect, "mod", "All mods", "modLabel");
 
     // Restore filter state from the URL -- must happen after the <option>s exist, since setting
     // .value to a not-yet-present option is a no-op.

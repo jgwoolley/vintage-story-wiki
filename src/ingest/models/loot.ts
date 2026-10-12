@@ -1,4 +1,4 @@
-import type { AssetIndex, EntitySpawnInfo, EntityStats, LootEntry } from "../types.js";
+import type { AssetIndex, CreatureRosterEntry, EntitySpawnInfo, EntityStats, LootEntry } from "../types.js";
 import type { LangResolver } from "../lang.js";
 import { expandVariants, resolveByType, substitutePlaceholders } from "../variantExpander.js";
 import { splitDomainCode } from "../codeUtil.js";
@@ -24,6 +24,15 @@ function pickSpawnField(section: any, field: string, concreteCode: string): any 
   if (!section) return undefined;
   if (section[field] !== undefined) return section[field];
   return resolveByType(section[`${field}ByType`], concreteCode);
+}
+
+/** Whether an entity is a "living" thing at all (has the "health" server behavior) -- the signal
+ * used to decide if a drop-less entity (a trader, villager, locust, ...) still belongs on
+ * `/creatures/` (see `extractCreatureRoster`), as opposed to a non-creature utility entity (a
+ * boat, thrown projectile, elevator, armor stand, ...) which never has one. */
+function hasHealthBehavior(json: any): boolean {
+  const behaviors: any[] = json.server?.behaviors ?? [];
+  return behaviors.some((b) => String(b?.code ?? "").toLowerCase() === "health");
 }
 
 function extractEntitySpawnInfo(json: any, concreteCode: string): EntitySpawnInfo | undefined {
@@ -83,8 +92,9 @@ function toLootDrop(spec: DropSpec, fallbackDomain: string, groupValues: Record<
   };
 }
 
-export function extractLoot(index: AssetIndex, lang: LangResolver): LootEntry[] {
+export function extractLoot(index: AssetIndex, lang: LangResolver): { loot: LootEntry[]; creatureRoster: CreatureRosterEntry[] } {
   const out: LootEntry[] = [];
+  const creatureRoster: CreatureRosterEntry[] = [];
 
   // --- Block drops + panning drops ---
   const blockVariants = expandVariants(index, ["blocktypes/"]);
@@ -132,7 +142,15 @@ export function extractLoot(index: AssetIndex, lang: LangResolver): LootEntry[] 
     const sourceDisplayName = lang.displayName("entity", variant.domain, variant.code).name;
     const entityStats = extractEntityStats(json, variant.code);
 
-    const deathDrops: DropSpec[] = json.drops ?? [];
+    if (hasHealthBehavior(json)) {
+      creatureRoster.push({ domain: variant.domain, code: variant.code, sourceDisplayName, sourceMod: variant.sourceModid, entityStats });
+    }
+
+    // A real bug, fixed: this only ever read the flat `drops` array, same as block drops do --
+    // but unlike the block-drop extraction above, it never fell back to the *ByType glob-keyed
+    // form (confirmed real entities use it, e.g. locust.json's top-level `dropsByType`), so any
+    // entity whose death drops vary by variant silently got none at all.
+    const deathDrops: DropSpec[] = resolveByType(json.dropsByType, variant.code) ?? json.drops ?? [];
     for (const drop of deathDrops) {
       if (!drop?.code) continue;
       out.push({
@@ -151,7 +169,9 @@ export function extractLoot(index: AssetIndex, lang: LangResolver): LootEntry[] 
     const harvestable = behaviors.find(
       (b) => String(b?.code ?? b?.name ?? "").toLowerCase() === "harvestable"
     );
-    const harvestDrops: DropSpec[] = harvestable?.drops ?? [];
+    // Same bug, same fix: the harvestable behavior's drops can likewise be glob-keyed
+    // (`dropsByType`, confirmed on shiver/bowtorn/drifter) instead of a flat `drops` array.
+    const harvestDrops: DropSpec[] = resolveByType(harvestable?.dropsByType, variant.code) ?? harvestable?.drops ?? [];
     for (const drop of harvestDrops) {
       if (!drop?.code) continue;
       out.push({
@@ -167,5 +187,5 @@ export function extractLoot(index: AssetIndex, lang: LangResolver): LootEntry[] 
     }
   }
 
-  return out;
+  return { loot: out, creatureRoster };
 }

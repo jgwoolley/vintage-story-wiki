@@ -44,6 +44,7 @@ function resolveOutcome(lang: LangResolver, domain: string, prefix: TapestryPref
   const chapterId = config.loreChapterIds[baseCode];
   const displayName = lang.tapestryName(domain, prefix, type) ?? type;
   return {
+    rawType: type,
     baseCode,
     displayName,
     loreChapterId: chapterId !== undefined && chapterId >= 0 ? chapterId : undefined,

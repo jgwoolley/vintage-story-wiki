@@ -10,7 +10,7 @@ permalink: "{{ lang }}/lore/index.html"
 
 {% call dt.datatable(60, "Search books & lore...", ["Title", "Category", "Mod"]) %}
 {% for book in generated.lore | sort(false, false, "title") %}
-  <tr data-category="{{ book.category }}" data-mod="{{ book.sourceMod }}">
+  <tr data-category="{{ book.category }}" data-mod="{{ book.sourceMod }}" data-mod-label="{{ generated.mods | modName(book.sourceMod) }}">
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}lore/{{ book.domain }}/{{ book.code | slugify }}/">{{ book.title }}</a></td>
     <td><span class="tag">{{ book.category }}</span></td>
     <td><span class="tag">{{ book.sourceMod }}</span></td>

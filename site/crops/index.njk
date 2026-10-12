@@ -20,7 +20,7 @@ permalink: "{{ lang }}/crops/index.html"
 <h2>Crops / flowers / mushrooms / etc. ({{ generated.blockPatches.length }})</h2>
 {% call dt.datatable(40, "Search spawn patches...", ["Blocks", "Category", "Temp (°C)", "Rain", "Mod"]) %}
 {% for patch in generated.blockPatches | sort(false, false, "category") %}
-  <tr data-search="{{ patch.blockCodes | join(' ') }}" data-category="{{ patch.category }}" data-mod="{{ patch.sourceMod }}">
+  <tr data-search="{{ patch.blockCodes | join(' ') }}" data-category="{{ patch.category }}" data-mod="{{ patch.sourceMod }}" data-mod-label="{{ generated.mods | modName(patch.sourceMod) }}">
     <td>{% for c in patch.blockCodes %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ patch.domain }}/{{ c | slugify }}/">{{ generated.items | displayName(patch.domain, c) }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</td>
     <td><span class="tag">{{ patch.category }}</span></td>
     <td>{% if patch.minTemp != null or patch.maxTemp != null %}{{ patch.minTemp if patch.minTemp != null else "any" }}&ndash;{{ patch.maxTemp if patch.maxTemp != null else "any" }}{% endif %}</td>

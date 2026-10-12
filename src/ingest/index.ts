@@ -84,8 +84,8 @@ function main(): void {
   console.log(`  ${recipes.length} normalized recipes`);
 
   console.log("== Extracting loot ==");
-  const loot = extractLoot(index, lang);
-  console.log(`  ${loot.length} loot entries`);
+  const { loot, creatureRoster } = extractLoot(index, lang);
+  console.log(`  ${loot.length} loot entries, ${creatureRoster.length} living entities (health behavior)`);
 
   // Groups the flat loot entries by their source block/entity -- one row per thing that drops
   // something. Split in two: "creatures" (entity sources, kept as their own page since they also
@@ -113,7 +113,27 @@ function main(): void {
     return [...byKey.values()];
   }
   const lootGroups = groupLoot(loot);
-  const creatures = lootGroups.filter((g) => g.sourceKind === "entity");
+  const creaturesWithDrops = new Map(lootGroups.filter((g) => g.sourceKind === "entity").map((g) => [g.id, g]));
+  // Every living entity gets a /creatures/ row, drops or not -- a trader/villager/locust/etc.
+  // with no drop table was previously invisible, silently excluded by deriving the creature list
+  // from loot.json alone (see CreatureRosterEntry's doc comment). Real drops (when they exist)
+  // are merged in from the entity-kind loot groups above by matching domain:code.
+  const creatures: import("./types.js").LootSourceGroup[] = creatureRoster.map((c) => {
+    const id = `${c.domain}:${c.code}`;
+    const existing = creaturesWithDrops.get(id);
+    return (
+      existing ?? {
+        id,
+        sourceDomain: c.domain,
+        sourceCode: c.code,
+        sourceDisplayName: c.sourceDisplayName,
+        sourceKind: "entity",
+        sourceMod: c.sourceMod,
+        entityStats: c.entityStats,
+        entries: [],
+      }
+    );
+  });
   const blockDrops = lootGroups.filter((g) => g.sourceKind === "block");
   const blockDropsById = Object.fromEntries(blockDrops.map((g) => [g.id, g]));
 

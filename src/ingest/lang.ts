@@ -85,11 +85,31 @@ function composeTapestryName(lang: DomainLang | undefined, prefix: "tapestry" | 
 
 /** Loads lang/en.json for every active domain (own-domain first, vanilla game/lang as shared fallback). */
 export function buildLangResolver(index: AssetIndex, lang = "en"): LangResolver {
-  const perDomain = new Map<string, DomainLang>();
+  // Mods can author a lang key as a literal "<domain>:<realkey>" string inside their *own*
+  // lang/en.json, to inject it into a different domain's namespace (confirmed real and common,
+  // not a one-off: BetterRuins does this for 367 keys, Stone Quarry for 32, mostly to put handbook
+  // guide/lore text under "game:" so vanilla-style handbook:// links can reference it without a
+  // domain prefix). A bare per-domain load misses these entirely -- redistribute any such key into
+  // its target domain's raw map (merged with that domain's own file) before splitting
+  // exact/wildcard, so e.g. `lang.raw("stonequarry", "stonequarry-quarryguide-title")`, which
+  // falls back to the "game" domain, actually finds a key that was never really filed under
+  // "stonequarry" at all.
+  const rawByDomain = new Map<string, Record<string, string>>();
   for (const asset of index.values()) {
-    if (asset.relPath === `lang/${lang}.json`) {
-      perDomain.set(asset.domain, splitExactAndWildcard(asset.json as Record<string, string>));
+    if (asset.relPath !== `lang/${lang}.json`) continue;
+    const fileMap = asset.json as Record<string, string>;
+    for (const [key, value] of Object.entries(fileMap)) {
+      const colon = key.indexOf(":");
+      const targetDomain = colon === -1 ? asset.domain : key.slice(0, colon);
+      const targetKey = colon === -1 ? key : key.slice(colon + 1);
+      const bucket = rawByDomain.get(targetDomain) ?? {};
+      bucket[targetKey] = value;
+      rawByDomain.set(targetDomain, bucket);
     }
+  }
+  const perDomain = new Map<string, DomainLang>();
+  for (const [domain, raw] of rawByDomain) {
+    perDomain.set(domain, splitExactAndWildcard(raw));
   }
   const vanillaFallback = perDomain.get("game");
 

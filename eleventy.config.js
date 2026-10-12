@@ -72,6 +72,14 @@ export default function (eleventyConfig) {
     return item ? item.displayName : code;
   });
 
+  // Every `data-mod="<modid>"` row (the datatable mod filter's matching value) should also carry
+  // a `data-mod-label="<human name>"` so the <select> shows "BetterRuins" instead of "betterruins"
+  // -- see datatable.js's populateSelect, which reads this sibling attribute for the option text.
+  eleventyConfig.addFilter("modName", (mods, modid) => {
+    const mod = mods.find((m) => m.modid === modid);
+    return mod ? mod.name : modid;
+  });
+
   eleventyConfig.addFilter("findById", (list, id) => list.find((x) => x.id === id));
 
   // Several recipe categories (alloy, barrel, cooking, knapping, smithing, clayforming) never
@@ -127,7 +135,7 @@ export default function (eleventyConfig) {
     maxSpawnDistX: "Maximum X-axis distance from spawn, in blocks.",
     minSpawnDistZ: "Minimum Z-axis distance from spawn, in blocks.",
     maxSpawnDistZ: "Maximum Z-axis distance from spawn, in blocks.",
-    chance: "Probability this is attempted at a given candidate location/chunk, before any global frequency multiplier from world-creation settings.",
+    chance: "How likely this is attempted at a given candidate location/chunk/attempt, before any global frequency multiplier from world-creation settings. When several entries share the same code (e.g. a structure's small/medium/large size variants), this is actually a relative weight among those siblings rather than an independent probability -- confirmed real game data has values over 1 in exactly that case, so a value like 130 isn't a literal 13000%.",
     placement: "Where this is anchored: on the terrain surface, buried underground, or a specific ruin/story layer.",
     minSpawnDistance: "Minimum distance from the world spawn point, in blocks, before this structure is allowed to generate at all.",
     minGroupDistance: "Minimum distance enforced between two instances of this same structure, in blocks, so copies don't generate too close together.",

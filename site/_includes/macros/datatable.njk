@@ -11,8 +11,12 @@
   datatable on the same page) so a filtered view can be bookmarked/shared and survives
   back/forward navigation -- see datatable.js.
   Pass `headers` for the <thead> and have the caller emit
-  <tr data-search="..." data-category="..." data-mod="..." data-tags="..."><td>...</td>...</tr>
-  rows (any of the four data-* attributes can be omitted when not meaningful for that listing).
+  <tr data-search="..." data-category="..." data-mod="..." data-mod-label="..." data-tags="...">
+  <td>...</td>...</tr> rows (any of these data-* attributes can be omitted when not meaningful
+  for that listing). `data-mod` is the modid the filter matches on; `data-mod-label` (optional) is
+  the human-readable name shown in the dropdown instead (e.g. "BetterRuins" instead of
+  "betterruins") -- see the `modName` filter in `eleventy.config.js`, used as
+  `{{ generated.mods | modName(x.sourceMod) }}`. Falls back to the raw modid when omitted.
   When the caller produces zero rows, the whole widget (including any surrounding heading the page
   itself wraps around it) should be skipped by the page template -- this macro itself always
   renders the table shell since it doesn't know the row count up front.

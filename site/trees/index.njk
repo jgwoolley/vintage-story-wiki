@@ -18,7 +18,7 @@ permalink: "{{ lang }}/trees/index.html"
 <h2>Species ({{ generated.trees.length }} climate bands)</h2>
 {% call dt.datatable(40, "Search tree species...", ["Species", "Kind", "Temp (°C)", "Rain", "Fertility", "Forest", "Mod"]) %}
 {% for t in generated.trees | sort(false, false, "generator") %}
-  <tr data-search="{{ t.generator }} {{ t.logBlockCode }} {{ t.leavesBlockCode }}" data-category="{{ 'shrub' if t.isShrub else 'tree' }}" data-mod="{{ t.sourceMod }}">
+  <tr data-search="{{ t.generator }} {{ t.logBlockCode }} {{ t.leavesBlockCode }}" data-category="{{ 'shrub' if t.isShrub else 'tree' }}" data-mod="{{ t.sourceMod }}" data-mod-label="{{ generated.mods | modName(t.sourceMod) }}">
     <td>{% if t.saplingCodes and t.saplingCodes.length %}{{ generated.items | displayName(t.domain, t.saplingCodes[0]) }}{% else %}{{ t.generator }}{% endif %}{% if t.habitat %} <span class="tag">{{ t.habitat }}</span>{% endif %}</td>
     <td><span class="tag">{{ "shrub" if t.isShrub else "tree" }}</span></td>
     <td>{% if t.minTemp != null or t.maxTemp != null %}{{ t.minTemp if t.minTemp != null else "any" }}&ndash;{{ t.maxTemp if t.maxTemp != null else "any" }}{% endif %}</td>

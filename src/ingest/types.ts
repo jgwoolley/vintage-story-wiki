@@ -192,6 +192,21 @@ export interface LootSourceGroup {
   entries: LootEntry[];
 }
 
+/**
+ * Every "living" entity (has the "health" server behavior), regardless of whether it has a drop
+ * table -- `generated.loot`/`LootSourceGroup` only cover entities that actually drop something,
+ * which silently excluded real creatures with none (traders, villagers, locusts, ...) from
+ * `/creatures/`. This is the complete roster `index.ts` seeds that page from; real drops (if any)
+ * get merged in on top by matching `domain:code`.
+ */
+export interface CreatureRosterEntry {
+  domain: string;
+  code: string;
+  sourceDisplayName: string;
+  sourceMod: string;
+  entityStats: EntityStats;
+}
+
 export type StructureKind = "structure" | "village" | "storystructure" | "hookgenerated";
 
 /** One schematic file (or glob of them) a structure can place, with header-only metadata (no voxel decode). */
@@ -364,7 +379,8 @@ export interface DecorItem {
 
 /** One resolved possible identity for a tapestry/wallcarving instance -- see `TapestryInstance`. */
 export interface TapestryOutcome {
-  baseCode: string; // e.g. "temporality" (the "type" attribute with its trailing piece-number digits stripped)
+  rawType: string; // the actual block-entity "type" attribute value for this outcome, e.g. "temporality1" -- what's literally stored in the schematic's BlockEntities data
+  baseCode: string; // e.g. "temporality" (rawType with its trailing piece-number digits stripped)
   displayName: string; // e.g. "Dangers of Temporality (tapestry)" -- composed from two lang keys, see lang.ts
   loreChapterId?: number; // index into the matching lore book's `pages` array; absent for non-lore-tied base codes (loreChapterIds[code] === -1)
   size?: string; // e.g. "3x1" -- the multi-tile shape (tapestry.json/wallcarving.json's own "sizes" attribute); shared by every member of a reroll group

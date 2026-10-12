@@ -58,6 +58,7 @@ eleventyComputed:
 </table>
 {% endif %}
 
+{% if source.entries.length %}
 <h2>Drops ({{ source.entries.length }})</h2>
 {% call dt.datatable(20, "Search drops...", ["Mechanism", "Drop", "Chance / Quantity", "Notes"]) %}
 {% for entry in source.entries %}
@@ -75,3 +76,6 @@ eleventyComputed:
   </tr>
 {% endfor %}
 {% endcall %}
+{% else %}
+<p class="muted">No known drops catalogued for this creature.</p>
+{% endif %}

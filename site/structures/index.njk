@@ -10,7 +10,7 @@ permalink: "{{ lang }}/structures/index.html"
 
 {% call dt.datatable(60, "Search structures...", ["Name", "Kind", "Mod"]) %}
 {% for structure in generated.structures | sort(false, false, "code") %}
-  <tr data-category="{{ structure.kind }}" data-mod="{{ structure.sourceMod }}">
+  <tr data-category="{{ structure.kind }}" data-mod="{{ structure.sourceMod }}" data-mod-label="{{ generated.mods | modName(structure.sourceMod) }}">
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}structures/{{ structure.id | slugify }}/">{{ structure.name or structure.code }}</a></td>
     <td><span class="tag">{{ structure.kind }}</span></td>
     <td><span class="tag">{{ structure.sourceMod }}</span></td>

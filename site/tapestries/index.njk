@@ -22,16 +22,17 @@ permalink: "{{ lang }}/tapestries/index.html"
   that specific tapestry, discoverable.
 </p>
 
-{% call dt.datatable(60, "Search ruin, tapestry, or block code...", ["Ruin", "Ruin mod", "Tapestry", "Block", "Direction", "Size", "Authored"]) %}
+{% call dt.datatable(60, "Search ruin, tapestry, or block code...", ["Ruin", "Ruin mod", "Tapestry", "Attribute", "Block", "Direction", "Size", "Authored"]) %}
 {% for item in generated.tapestries %}
   {% for inst in item.tapestryInstances | default([]) %}
     {% set structure = generated.structures | findById(inst.structureId) %}
     {% if structure %}
       {% for outcome in inst.outcomes %}
-        <tr data-search="{{ structure.name or structure.code }} {{ outcome.displayName }} {{ inst.blockCode }}" data-category="{{ inst.blockCode.split('-').pop() }}" data-mod="{{ structure.sourceMod }}">
+        <tr data-search="{{ structure.name or structure.code }} {{ outcome.displayName }} {{ outcome.rawType }} {{ inst.blockCode }}" data-category="{{ inst.blockCode.split('-').pop() }}" data-mod="{{ structure.sourceMod }}" data-mod-label="{{ generated.mods | modName(structure.sourceMod) }}">
           <td><a href="{{ ('/' ~ lang ~ '/') | url }}structures/{{ structure.id | slugify }}/">{{ structure.name or structure.code }}</a> <span class="tag">{{ structure.kind }}</span></td>
           <td><span class="tag">{{ structure.sourceMod }}</span></td>
           <td>{{ outcome.displayName }}</td>
+          <td><code>{{ outcome.rawType }}</code></td>
           <td><code>{{ inst.blockCode }}</code></td>
           <td>{{ inst.blockCode.split('-').pop() }}</td>
           <td>{{ outcome.size or "" }}</td>

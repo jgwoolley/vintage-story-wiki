@@ -1,14 +1,21 @@
 # Phase 
 
+not sure about how tapestries links directly to structures.
+
+how does tapestry -> lore mapping happen?
+something similar to tapestry for storage vesels
+resolution of clutter objects
+I feel like the dropped by mechanism should have a bit more of an explination -> go to item recipe list
+
+# Phase 
+
 - Make top navbar be an accordian: Vintage Story Wiki / Home, VintageStory Wiki / Creatures, etc.
-- Have mods show icons
-- stonequary help guides not appearing (is localization broken?)
 - No name for metalblock-corroded-riveted-{metal}
 - Multiple Tags should be selectable
-- Resolve Mod selection to human name.
 - Understand Jonas Parts&Frames STack Randomizer
 - Don't love the presentation for the tapestries
 - Main trading page should just have all trades like https://www.vintagestorypriceguide.com/ (integrate more of those tools)
+- Instead of clicking "build 1 sec ago" and it going straight to github, make it go to a build page that gives more details about the git commit (resolved from Github env variables where possible). Add timings for each step ()
 
 # Phase 
 

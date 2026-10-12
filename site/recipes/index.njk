@@ -16,7 +16,7 @@ permalink: "{{ lang }}/recipes/index.html"
 
 {% call dt.datatable(60, "Search recipes...", ["Name", "Category", "Mod", "Ingredients → output"]) %}
 {% for recipe in generated.recipes %}
-  <tr data-category="{{ recipe.category }}" data-mod="{{ recipe.sourceMod }}">
+  <tr data-category="{{ recipe.category }}" data-mod="{{ recipe.sourceMod }}" data-mod-label="{{ generated.mods | modName(recipe.sourceMod) }}">
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe | recipeTitle(generated.items) }}</a></td>
     <td><span class="tag">{{ recipe.category }}</span></td>
     <td><span class="tag">{{ recipe.sourceMod }}</span></td>

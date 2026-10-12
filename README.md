@@ -165,11 +165,17 @@ page-break marker preserved.
 Content is organized by *what the thing is*, not by *mechanism*: `/creatures/` is entity-only
 (health, hitbox, tags, spawn conditions, and its own drop table), while every block's drops —
 "this block drops X when broken" — live directly on that block's own `/items/` page instead of a
-separate listing, right alongside what produces/consumes it. `src/ingest/index.ts` groups the flat
-loot entries by source (`LootSourceGroup`) and splits the result: entity-kind groups become
-`generated.creatures`; block-kind groups become `generated.blockDrops`/`blockDropsById`, looked up
-live by each item page via its own `domain:code` (no stored id list needed, same pattern as the
-deposit/blockpatch lookups below). A block that only drops something, with no recipe or worldgen
+separate listing, right alongside what produces/consumes it. `/creatures/` is **not** just "every
+entity that happens to have a drop table" — that definition silently excluded real creatures with
+none at all (traders, villagers, locusts, ...). `models/loot.ts`'s `extractLoot` also returns a
+`creatureRoster` (every entity variant with the "health" server behavior, i.e. actually alive,
+regardless of drops — this is also what correctly excludes non-creature utility entities like
+boats/arrows/elevators, which never have one); `src/ingest/index.ts` seeds `generated.creatures`
+from that complete roster first, then merges in real drop entries (grouped the same way as
+before, `LootSourceGroup`) where they exist, leaving `entries: []` where they don't rather than
+omitting the creature entirely. Block-kind groups become `generated.blockDrops`/
+`blockDropsById`, looked up live by each item page via its own `domain:code` (no stored id list
+needed, same pattern as the deposit/blockpatch lookups below). A block that only drops something, with no recipe or worldgen
 reference of its own (confirmed: the large majority of block drop sources), still gets synthesized
 an `/items/` page via `ensureSpawnTarget` — the same "give it a page even though nothing else
 points to it" pattern already used for spawn-only blocks. Entity stats (health
