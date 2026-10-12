@@ -1,6 +1,14 @@
 # Phase 
 
 - Make top navbar be an accordian: Vintage Story Wiki / Home, VintageStory Wiki / Creatures, etc.
+- Have mods show icons
+- stonequary help guides not appearing (is localization broken?)
+- No name for metalblock-corroded-riveted-{metal}
+- Multiple Tags should be selectable
+- Resolve Mod selection to human name.
+- Understand Jonas Parts&Frames STack Randomizer
+- Don't love the presentation for the tapestries
+- Main trading page should just have all trades like https://www.vintagestorypriceguide.com/ (integrate more of those tools)
 
 # Phase 
 
@@ -25,6 +33,7 @@ Localization for any language should be supported.
 - The following may require code from https://github.com/jgwoolley/vintage-story-schematic-preview. I eventually want to integrate this functionality (both ability to upload a schematic as well as view the schematic in the browser).
 - Lookup which paintings/tapestry specifically spawn in specific ruins. Make sure they are evaluated against the storystructures.json / structures.json
 - see if you can get book spawning information anywhere
+- https://www.vintagestorypriceguide.com/ (integrate more of those tools)
 
 # Phase 07
 

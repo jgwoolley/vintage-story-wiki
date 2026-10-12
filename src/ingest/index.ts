@@ -13,6 +13,7 @@ import { extractDeposits } from "./models/deposits.js";
 import { extractBlockPatchSpawns } from "./models/blockpatches.js";
 import { extractTrees, extractFruitTrees } from "./models/trees.js";
 import { extractRockStrata } from "./models/rockstrata.js";
+import { extractTapestryInstances } from "./models/tapestryInstances.js";
 import { extractGuides } from "./models/guides.js";
 import { extractTrades } from "./models/trades.js";
 import { buildBlockCodeToSchematicIndex, buildSchematicToStructureIndex, findStructuresContaining } from "./structureContents.js";
@@ -145,6 +146,18 @@ function main(): void {
     if (item.kind !== "tapestry") continue;
     const book = loreBooks.find((b) => b.code === "tapestry" && b.domain === item.domain);
     if (book) item.relatedLoreBookId = book.id;
+  }
+
+  console.log("== Resolving tapestry/wallcarving instances in worldgen schematics ==");
+  const tapestryInstances = extractTapestryInstances(schematicsByDomain, schematicToStructure, index, lang);
+  console.log(`  ${tapestryInstances.length} resolved instances`);
+  // Wallcarvings aren't in the decor catalog yet (no page to attach them to) -- only tapestry-*
+  // instances find a match here; wallcarving-* ones are computed (same shared mechanism, nearly
+  // free to support) but currently unused, ready for whenever a /wallcarvings/ page exists.
+  for (const item of decorCatalog) {
+    if (item.kind !== "tapestry") continue;
+    const matches = tapestryInstances.filter((t) => t.blockCode === item.code);
+    if (matches.length) item.tapestryInstances = matches;
   }
 
   // Paintings/tapestries/clothing each get their own top-level page/nav entry rather than one

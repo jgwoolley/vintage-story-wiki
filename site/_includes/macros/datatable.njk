@@ -16,6 +16,9 @@
   When the caller produces zero rows, the whole widget (including any surrounding heading the page
   itself wraps around it) should be skipped by the page template -- this macro itself always
   renders the table shell since it doesn't know the row count up front.
+  Every header is clickable to sort the (filtered) rows by that column's cell text (numeric-aware;
+  click again to reverse, a 3rd click returns to unsorted) -- see datatable.js, no data-* opt-in
+  needed, this applies to every datatable automatically.
 #}
 {% macro datatable(pageSize, placeholder, headers) %}
 <div class="datatable" data-page-size="{{ pageSize or 50 }}">
@@ -25,7 +28,7 @@
     <select class="datatable-mod-filter" aria-label="Filter by mod"></select>
   </div>
   <table>
-    {% if headers %}<thead><tr>{% for h in headers %}<th>{{ h | safe }}</th>{% endfor %}</tr></thead>{% endif %}
+    {% if headers %}<thead><tr>{% for h in headers %}<th class="datatable-sortable" data-col="{{ loop.index0 }}"><span class="datatable-th-label">{{ h | safe }}</span></th>{% endfor %}</tr></thead>{% endif %}
     <tbody data-datatable-items>
       {{ caller() }}
     </tbody>

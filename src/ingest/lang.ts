@@ -9,6 +9,10 @@ export interface LangResolver {
   /** Plain lang-key lookup with no "item-"/"block-" prefix added, for keys referenced literally
    * elsewhere in the asset data (e.g. a lore config's "title" and "pieces" fields). */
   raw(domain: string, key: string): string | undefined;
+  /** Resolves a tapestry/wallcarving "type" runtime attribute value (e.g. "temporality1") to its
+   * display name, the same two-key composition `BlockTapestry.GetPlacedBlockName` uses: a glob
+   * match on `"<prefix>-" + type` plugged into the `"<prefix>-name"` template. */
+  tapestryName(domain: string, prefix: "tapestry" | "wallcarving", type: string): string | undefined;
 }
 
 /** Entities don't use a plain "entity-<code>" key -- the game looks them up as "item-creature-<code>". */
@@ -65,6 +69,20 @@ function composeOreName(lang: DomainLang | undefined, code: string): string | un
   return template.replace("{0}", mineralName);
 }
 
+/**
+ * Tapestries/wallcarvings don't resolve via a flat "<prefix>-<type>" key either -- mirrors
+ * `BlockTapestry.GetPlacedBlockName`/`GetHeldItemName` (confirmed against
+ * anegostudios/vssurvivalmod's Block/BlockTapestry.cs): `Lang.GetMatching("<prefix>-" + type)`
+ * (a glob match, e.g. "tapestry-nightfall*" -> "Nightfall") plugged into the
+ * `"<prefix>-name"` template (e.g. "{0} (tapestry)").
+ */
+function composeTapestryName(lang: DomainLang | undefined, prefix: "tapestry" | "wallcarving", type: string): string | undefined {
+  const matched = lookup(lang, `${prefix}-${type}`);
+  const template = lookup(lang, `${prefix}-name`);
+  if (!matched || !template) return undefined;
+  return template.replace("{0}", matched);
+}
+
 /** Loads lang/en.json for every active domain (own-domain first, vanilla game/lang as shared fallback). */
 export function buildLangResolver(index: AssetIndex, lang = "en"): LangResolver {
   const perDomain = new Map<string, DomainLang>();
@@ -91,6 +109,10 @@ export function buildLangResolver(index: AssetIndex, lang = "en"): LangResolver 
     },
     raw(domain, key) {
       return lookup(perDomain.get(domain), key) ?? lookup(vanillaFallback, key);
+    },
+    tapestryName(domain, prefix, type) {
+      const domainLang = perDomain.get(domain);
+      return composeTapestryName(domainLang, prefix, type) ?? composeTapestryName(vanillaFallback, prefix, type);
     },
   };
 }

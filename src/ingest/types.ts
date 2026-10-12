@@ -355,9 +355,36 @@ export interface DecorItem {
   foundInStructures: string[];
   /** For tapestries: the lore book id whose chapters this tapestry can display (picked at
    * placement time via a runtime "type" attribute, not encoded in the block code itself -- see
-   * README). Undefined for everything else. A tapestry's *specific* chapter/name per placed
-   * instance is not yet resolved -- see TODOS.md, needs further parsing of placement-time state. */
+   * README). Undefined for everything else. */
   relatedLoreBookId?: string;
+  /** For tapestries/wallcarvings only: per-structure resolved outcomes, decoded directly from
+   * each worldgen schematic's block-entity attributes (see `models/tapestryInstances.ts`). */
+  tapestryInstances?: TapestryInstance[];
+}
+
+/** One resolved possible identity for a tapestry/wallcarving instance -- see `TapestryInstance`. */
+export interface TapestryOutcome {
+  baseCode: string; // e.g. "temporality" (the "type" attribute with its trailing piece-number digits stripped)
+  displayName: string; // e.g. "Dangers of Temporality (tapestry)" -- composed from two lang keys, see lang.ts
+  loreChapterId?: number; // index into the matching lore book's `pages` array; absent for non-lore-tied base codes (loreChapterIds[code] === -1)
+  size?: string; // e.g. "3x1" -- the multi-tile shape (tapestry.json/wallcarving.json's own "sizes" attribute); shared by every member of a reroll group
+}
+
+/**
+ * One placed tapestry/wallcarving block-entity instance, decoded from a worldgen schematic's
+ * `BlockEntities` data (Ascii85 + TreeAttribute, see `site/assets/schematicDecode.js`). The
+ * schematic's own stored "type" attribute is just one deterministic sample -- the game rerolls it
+ * to a uniformly random member of the same `tapestryGroups`/`wallcarvingGroups` entry when the
+ * schematic is actually placed into a world (`BlockTapestry.OnLoadCollectibleMappings`), unless
+ * `preserveType` is set. `outcomes` lists every real possibility, not just the stored one.
+ */
+export interface TapestryInstance {
+  id: string; // `${structureId}#${schematicKey}#${packedIndex}`
+  structureId: string;
+  blockCode: string; // concrete code, e.g. "tapestry-west"
+  storedBaseCode: string; // what this schematic file literally has baked in (always one of `outcomes`)
+  rerolls: boolean; // false when the group has exactly one member (e.g. "gate1") -- always shows storedBaseCode, no "could show" hedge needed
+  outcomes: TapestryOutcome[]; // every member of the reroll group; just [storedBaseCode]'s outcome when rerolls is false
 }
 
 /** One row on the `/mods/` page. */

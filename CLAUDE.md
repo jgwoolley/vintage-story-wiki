@@ -94,8 +94,11 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   dimension — a single distinct value still shows the dropdown (so it works for free the moment a
   2nd value appears later, e.g. a new mod). `tag` is a 4th, separate filter dimension (exact-token
   match against space-separated `data-tags`, not the free-text `q` substring search) with no
-  `<select>` — it renders as a removable chip only when a `tag` param is active. Follow this
-  pattern for any new listing page rather than inventing a new table/filter shape.
+  `<select>` — it renders as a removable chip only when a `tag` param is active. Every header is
+  also click-to-sort automatically (numeric-aware, 3-state: asc/desc/unsorted) — no per-column
+  opt-in needed, it's driven by the rendered `<td>` text, not sync'd to the URL (unlike the
+  filters). Follow this pattern for any new listing page rather than inventing a new table/filter
+  shape.
 - **Wildcard codes are clickable everywhere**: a code like `tallgrass-*` or `leather-normal-*`
   should link to `/<lang>/items/?q=<code | wildcardQuery | urlencode>` (see `wildcardQuery` filter
   in `eleventy.config.js` — strips `*`/`{...}` down to a literal prefix the datatable's substring

@@ -6,24 +6,39 @@ permalink: "{{ lang }}/tapestries/index.html"
 {% import "macros/datatable.njk" as dt %}
 <h1>Tapestries</h1>
 <p class="muted">
-  Purely decorative placed blocks with no recipe or drop table, so they don't appear anywhere else
-  on this wiki &mdash; see the <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a> page for why.
-  {{ generated.tapestries.length }} catalogued directly from the game's block definitions.
+  Every real possible tapestry a generated structure could show, decoded directly from each
+  worldgen schematic's own block-entity data &mdash; one row per (structure, possible tapestry)
+  pairing, not per block code or wall direction. Source:
+  <code>worldgen/schematics/**/*.json</code>'s <code>BlockEntities</code> (see
+  <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a> for how this is decoded).
 </p>
 <p class="muted">
-  Tapestries have no fixed text of their own &mdash; a placed tapestry shows one chapter of the
-  "Tapestry" lore book, picked at placement time, not encoded in its block code. This wiki doesn't
-  yet resolve which specific chapter any one placed tapestry shows; each entry below links to the
-  book instead. Further parsing of placement-time state would be needed to determine a tapestry's
-  true individual name/content.
+  <strong>This is a possibility list, not a guarantee.</strong> The game rerolls a schematic's
+  authored tapestry to a uniformly random member of the same theme group when it's actually placed
+  into a world (unless the schematic pins it), and separately: roughly <strong>60% of the time a
+  given placement doesn't spawn at all</strong>, and of the ~40% that do, roughly
+  <strong>75% turn out rotten</strong> (no name, no lore, no drop -- just "Rotten Tapestry"). So
+  for any one row below, the realistic odds are roughly 60% nothing, ~30% a rotten blank, and ~10%
+  that specific tapestry, discoverable.
 </p>
-<p class="muted">Source: <code>blocktypes/cloth/tapestry.json</code>.</p>
 
-{% call dt.datatable(60, "Search tapestries...", ["Name", "Mod"]) %}
-{% for item in generated.tapestries | sort(false, false, "displayName") %}
-  <tr data-search="{{ item.domain }}:{{ item.code }}" data-mod="{{ item.sourceMod }}">
-    <td><a href="{{ ('/' ~ lang ~ '/') | url }}tapestries/{{ item.domain }}/{{ item.code | slugify }}/">{{ item.displayName }}</a></td>
-    <td><span class="tag">{{ item.sourceMod }}</span></td>
-  </tr>
+{% call dt.datatable(60, "Search ruin, tapestry, or block code...", ["Ruin", "Ruin mod", "Tapestry", "Block", "Direction", "Size", "Authored"]) %}
+{% for item in generated.tapestries %}
+  {% for inst in item.tapestryInstances | default([]) %}
+    {% set structure = generated.structures | findById(inst.structureId) %}
+    {% if structure %}
+      {% for outcome in inst.outcomes %}
+        <tr data-search="{{ structure.name or structure.code }} {{ outcome.displayName }} {{ inst.blockCode }}" data-category="{{ inst.blockCode.split('-').pop() }}" data-mod="{{ structure.sourceMod }}">
+          <td><a href="{{ ('/' ~ lang ~ '/') | url }}structures/{{ structure.id | slugify }}/">{{ structure.name or structure.code }}</a> <span class="tag">{{ structure.kind }}</span></td>
+          <td><span class="tag">{{ structure.sourceMod }}</span></td>
+          <td>{{ outcome.displayName }}</td>
+          <td><code>{{ inst.blockCode }}</code></td>
+          <td>{{ inst.blockCode.split('-').pop() }}</td>
+          <td>{{ outcome.size or "" }}</td>
+          <td>{% if outcome.baseCode == inst.storedBaseCode %}<span class="tag">authored</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+    {% endif %}
+  {% endfor %}
 {% endfor %}
 {% endcall %}

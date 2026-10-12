@@ -130,6 +130,50 @@
       history.replaceState(null, "", location.pathname + (qs ? `?${qs}` : "") + location.hash);
     }
 
+    // Column sort: click a <th> to sort the (filtered) rows by that column's cell text, numeric-
+    // aware (so e.g. a "Chance" column sorts as numbers, not lexicographically). Not persisted to
+    // the URL -- purely a client-side view convenience, reset on reload like pagination already is.
+    let sortColIndex = null;
+    let sortDir = 1;
+
+    function cellText(el, colIndex) {
+      return (el.children[colIndex]?.textContent || "").trim();
+    }
+
+    function compareRows(a, b) {
+      const av = cellText(a, sortColIndex);
+      const bv = cellText(b, sortColIndex);
+      const an = parseFloat(av);
+      const bn = parseFloat(bv);
+      const bothNumeric = !isNaN(an) && !isNaN(bn) && /^-?[\d.]+%?$/.test(av) && /^-?[\d.]+%?$/.test(bv);
+      const cmp = bothNumeric ? an - bn : av.localeCompare(bv, undefined, { numeric: true, sensitivity: "base" });
+      return cmp * sortDir;
+    }
+
+    const headerCells = Array.from(root.querySelectorAll("thead [data-col]"));
+    function updateHeaderIndicators() {
+      for (const th of headerCells) {
+        const active = Number(th.dataset.col) === sortColIndex;
+        th.classList.toggle("datatable-sorted", active);
+        th.dataset.sortDir = active ? (sortDir === 1 ? "asc" : "desc") : "";
+      }
+    }
+    for (const th of headerCells) {
+      th.addEventListener("click", () => {
+        const col = Number(th.dataset.col);
+        if (sortColIndex === col) {
+          // 1st click: ascending. 2nd click (same column): descending. 3rd click: back to unsorted.
+          sortDir = sortDir === 1 ? -1 : 0;
+          if (sortDir === 0) { sortColIndex = null; sortDir = 1; }
+        } else {
+          sortColIndex = col;
+          sortDir = 1;
+        }
+        updateHeaderIndicators();
+        render();
+      });
+    }
+
     function render() {
       const query = (searchInput?.value || "").trim().toLowerCase();
       const matches = items.filter(
@@ -139,6 +183,7 @@
           matchesSelect(el, modSelect, "mod") &&
           matchesTag(el)
       );
+      if (sortColIndex !== null) matches.sort(compareRows);
       const totalPages = Math.max(1, Math.ceil(matches.length / pageSize));
       if (page > totalPages) page = totalPages;
       if (page < 1) page = 1;

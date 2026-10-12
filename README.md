@@ -127,13 +127,21 @@ consistent with "organize by what the thing is" (see Creatures vs. Items below).
 - **Flavor text**, pulled from `itemdesc-`/`blockdesc-` lang keys when the game defines one. Most
   don't — paintings have zero flavor text anywhere in the base game, and only ~24% of clothing
   items have any. That's accurate to the game, not missing data.
-- **Tapestries are a special case**: they have no flat description key at all, but *do* have real
-  readable content — each placed tapestry shows one of 18 chapters from the "Tapestry" lore book
-  (`loreChapterIds`), picked by a runtime attribute at placement time, not encoded in the block
-  code. The tapestry page cross-links to the full book (see Books & Lore below) instead of showing
-  nothing, but doesn't yet resolve *which specific chapter* a given placed instance shows — true
-  per-instance tapestry names need further parsing of placement-time state (see `/tools/`, a WIP
-  page, for the planned follow-up).
+- **Tapestries are fully resolved per placement**, not just linked to a lore book: `models/
+  tapestryInstances.ts` decodes each worldgen schematic's own `BlockEntities` data (Ascii85 +
+  `TreeAttribute` binary parse — a port of `vsapi`'s own format, verified against real downloaded
+  schematic data) to read the placed tapestry's `type` runtime attribute directly, then resolves
+  every real possible outcome by finding which `tapestryGroups`/`wallcarvingGroups` entry it
+  belongs to (the game rerolls to a uniformly random member of that group at world-placement time
+  unless the schematic pins it — see `BlockTapestry.OnLoadCollectibleMappings` in
+  `vssurvivalmod`). The decoder itself lives at `site/assets/schematicDecode.js`, not under
+  `src/ingest/` — plain dependency-free ES module JS, directly `<script>`-loadable, since the
+  planned `/tools/` schematic viewer (see "Coming soon" below) will need the exact same decode
+  logic client-side; `tapestryInstances.ts` just imports that same file. `/tapestries/` is one
+  flat, sortable table of every (structure, possible tapestry) pairing this produces — not a page
+  per block code/direction, since direction/code aren't the interesting axis here. Scoped to
+  schematics actually referenced by world generation only (`structureContents.ts`'s existing
+  index), never a blanket scan of every `.json` under `worldgen/schematics/`.
 - **"Found in structures"**, built from `structureContents.ts`: one pass over every schematic's
   block-code dictionary, cross-referenced against which structures reference which schematic
   files. Works for paintings/tapestries (real placed blocks); clothing items correctly show zero

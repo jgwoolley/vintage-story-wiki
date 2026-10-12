@@ -20,8 +20,10 @@ actually in those files, nothing more.
 - **Deposits** — every ore/gem/rock deposit: which rock hosts it, and roughly how deep.
 - **Crops** — wild crops, flowers, mushrooms, and the climate each needs.
 - **Trees** — tree/shrub species and fruit tree varieties, by climate band.
-- **Paintings** / **Tapestries** / **Clothing** — purely decorative content, including flavor text
-  where the game has any, and which structures you can find paintings/tapestries in.
+- **Paintings** / **Clothing** — purely decorative content, including flavor text where the game
+  has any, and which structures you can find paintings in.
+- **Tapestries** — every real possible tapestry a generated structure could show, one row per
+  (structure, possible tapestry), decoded directly from the structure's own schematic data.
 - **Books & Lore** — the full readable text of every in-game book and journal.
 - **Mods** — which mods (beyond vanilla) this build includes.
 - **Help Guides**, **Trades**, **Tools** — planned, not built yet; each page says what's coming
@@ -45,9 +47,10 @@ almost anywhere and it'll jump you straight to a pre-filtered list.
   (separately) a few registries — like paintings, decor, ore, and wild crops — that have neither.
   A small number of other items that the game itself marks as "not for the in-game handbook" may
   still be missing. If something's absent, that's more likely than not the reason.
-- **Tapestries don't yet show their true individual name.** Which chapter a placed tapestry
-  displays is picked at placement time, not stored in its block code — this wiki links to the
-  whole lore book instead of the one chapter, for now.
+- **Tapestry outcomes are possibilities, not promises.** Roughly 60% of the time a given placement
+  doesn't spawn at all, and of the ones that do, roughly 75% turn out "rotten" (no name, no lore,
+  no drop). So for any one row on the Tapestries page, expect it to actually show up, intact and
+  readable, only a fraction of the time.
 - **Mods with their own compiled code** (shown as such on the Mods page) can add behavior this
   wiki simply can't see, since it only reads JSON data, not code.
 
