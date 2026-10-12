@@ -3,4 +3,4 @@ cp *.html public/
 cp schematics/*.json public/schematics/
 cp -r icons/ public/
 
-python3 -m http.server
+python3 -m http.server --directory public
