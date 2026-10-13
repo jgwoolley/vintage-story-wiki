@@ -1,0 +1,36 @@
+---
+title: Calendar - Vintage Story Wiki
+description: Convert an in-game date to elapsed game days and real-life hours, to time animal births and trader restocks.
+layout: layouts/base.njk
+permalink: "{{ lang }}/tools/calendar/index.html"
+---
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Tools", url: "tools/"}, {label: "Calendar"}]) }}
+<h1>Calendar</h1>
+<p class="muted">
+  Having trouble keeping track of when your sheep give birth, or when traders restock? Enter your
+  world's days-per-month setting and an in-game date to see how much game time has elapsed and how
+  long that is in real life (one game day is 0.8 real hours at the default settings). Ported from
+  the standalone vintage-story-price-guide project.
+</p>
+
+<form id="calForm" class="schematic-row-fields" onsubmit="return false">
+  <label class="schematic-field">Days per month <input type="number" id="calDpm" value="9" min="1" step="1"></label>
+  <label class="schematic-field">Year <input type="number" id="calYear" value="0" min="0" step="1"></label>
+  <label class="schematic-field">Month
+    <select id="calMonth">
+      {% for m in ["January","February","March","April","May","June","July","August","September","October","November","December"] %}
+      <option value="{{ loop.index0 }}"{% if loop.index0 == 4 %} selected{% endif %}>{{ m }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="schematic-field">Day <input type="number" id="calDay" value="0" min="0" step="1"></label>
+</form>
+
+<ul id="calResults">
+  <li id="calPerMonth"></li>
+  <li id="calPerYear"></li>
+  <li id="calElapsed"></li>
+</ul>
+
+<script src="{{ '/' | url }}assets/calendar.js" defer></script>

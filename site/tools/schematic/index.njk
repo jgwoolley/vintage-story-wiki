@@ -1,0 +1,94 @@
+---
+title: Schematic viewer - Vintage Story Wiki
+description: Upload a Vintage Story schematic .json and inspect it in 3D in the browser -- block legend, floor-by-floor slider, per-block entity data.
+layout: layouts/base.njk
+permalink: "{{ lang }}/tools/schematic/index.html"
+---
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Tools", url: "tools/"}, {label: "Schematic viewer"}]) }}
+<h1>Schematic viewer</h1>
+<p class="muted">
+  Open one of the bundled sample schematics, or upload any Vintage Story schematic
+  <code>.json</code> (e.g. exported with <code>/we export</code>). Everything is decoded in your
+  browser -- nothing is uploaded anywhere. Click blocks in the list to toggle them, drag the slider
+  to look floor by floor, and click a block in the 3D view to see its position and (decoded)
+  block-entity attributes.
+</p>
+
+<div class="schematic-tool" id="schematicTool" data-samples-base="{{ '/' | url }}assets/schematics/" data-items-url="{{ ('/' ~ lang ~ '/') | url }}items/" data-block-names="{{ '/' | url }}assets/blockNames.json">
+  <div id="loadingOverlay" class="schematic-loading" hidden>
+    <div class="spinner"></div>
+    <div id="loadingText">Processing schematic...</div>
+  </div>
+
+  <aside id="ui" class="schematic-panel">
+    <strong class="schematic-title">Schematic viewer</strong>
+
+    <label class="schematic-dropzone" id="dropzone" for="fileInput">
+      <strong>Upload a schematic</strong>
+      <span class="muted">Drop a <code>.json</code> file here, or click to browse</span>
+      <input type="file" id="fileInput" accept=".json,application/json" hidden>
+    </label>
+    <label class="schematic-field">Or pick a sample schematic
+      <select id="fileSelect">
+        <option value="" selected hidden>-- Select a template --</option>
+        <option value="default.json">Default Schematic</option>
+        <optgroup label="Astral Sorcery">
+          <option value="ancient_shrine.json">Ancient Shrine</option>
+          <option value="desert_shrine.json">Desert Shrine</option>
+          <option value="small_shrine.json">Small Shrine</option>
+        </optgroup>
+      </select>
+    </label>
+    <div id="schematicInfo" class="muted" hidden>Size: <span id="sizeValue">-</span></div>
+    <p id="schematicError" class="schematic-error" role="alert" hidden></p>
+
+    <div class="control-block">
+      <div class="schematic-row">
+        <span>Layer (Y-axis):</span>
+        <span id="layerLabel" class="schematic-accent">All Floors</span>
+      </div>
+      <input type="range" id="layerSlider" min="-1" max="0" value="-1" disabled>
+      <div class="button-group" role="group" aria-label="Layer display mode">
+        <button type="button" class="layer-mode active" data-mode="single" aria-pressed="true">One layer</button>
+        <button type="button" class="layer-mode" data-mode="below" aria-pressed="false" id="belowMode">Layer N and below</button>
+      </div>
+      <div class="button-group" role="group" aria-label="Auto-play">
+        <button type="button" id="autoPlay" aria-pressed="false" disabled>&#9654; Auto-play</button>
+        <select id="autoPlaySpeed" aria-label="Seconds per floor">
+          <option value="1000">1s</option>
+          <option value="2000" selected>2s</option>
+          <option value="4000">4s</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="control-block search-container">
+      <input type="text" id="searchInput" placeholder="Find block in list..." aria-label="Find block in list">
+      <button type="button" class="clear-search" id="clearSearch" aria-label="Clear search">&times;</button>
+    </div>
+
+    <div class="button-group">
+      <button type="button" id="showAll">Show All</button>
+      <button type="button" id="hideAll">Hide All</button>
+      <button type="button" id="resetView">Reset view</button>
+    </div>
+    <div id="legend"></div>
+  </aside>
+
+  <div class="schematic-stage">
+    <div id="viewport" class="schematic-viewport" aria-live="polite"></div>
+    <p class="muted schematic-hint">
+      Rotate: left-drag &middot; Pan: right-drag &middot; Zoom: wheel &middot; Inspect: click a block.
+      Source: <a href="https://github.com/jgwoolley/vintage-story-schematic-preview/">vintage-story-schematic-preview</a>
+      (history merged into this repo).
+    </p>
+    <div id="inspector" class="schematic-panel" hidden>
+      <h3>Block Traits</h3>
+      <div id="traitContent"></div>
+      <button type="button" id="closeInspector">Close</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="{{ '/' | url }}assets/schematicViewer.js"></script>

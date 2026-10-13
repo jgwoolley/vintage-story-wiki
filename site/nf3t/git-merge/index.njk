@@ -1,0 +1,198 @@
+---
+title: Git merge command generator - Vintage Story Wiki
+description: Generate the git commands to merge several GitHub repos, with full history, into subfolders of one repo.
+layout: layouts/base.njk
+permalink: "{{ lang }}/nf3t/git-merge/index.html"
+---
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "NF3t tools", url: "nf3t/"}, {label: "Git merge commands"}]) }}
+<h1>Git merge command generator</h1>
+<p class="muted">Merge several GitHub repos, with full history, into subfolders of one repo. Everything runs in your browser.</p>
+<div class="gm">
+  
+  <div class="card gm-card">
+    <label for="urls">GitHub project URLs</label>
+    <textarea id="urls" spellcheck="false">- https://github.com/jgwoolley/vintage-story-wiki
+    - https://github.com/jgwoolley/vintage-story-price-guide
+    - https://github.com/jgwoolley/vintage-story-schematic-preview</textarea>
+    <div class="hint">Paste URLs in any form (https, <code>git@github.com:</code>, <code>ssh://</code>), one per line or in a markdown list. The <b>first</b> is the destination; the rest are merged into it as subfolders named after each repo.</div>
+    <ul class="repos" id="repos"></ul>
+  </div>
+
+  <div class="card gm-card">
+    <div class="grid">
+      <div>
+        <label for="proto">Clone protocol</label>
+        <select id="proto">
+          <option value="ssh-url" selected>ssh://git@github.com/owner/repo.git</option>
+          <option value="ssh-scp">git@github.com:owner/repo.git</option>
+          <option value="https">https://github.com/owner/repo.git</option>
+        </select>
+      </div>
+      <div>
+        <label for="branch">Default branch of sources</label>
+        <input type="text" id="branch" value="main">
+      </div>
+      <div>
+        <label for="moveBranch">Branch for the move (in each source)</label>
+        <input type="text" id="moveBranch" value="move-to-subfolder">
+      </div>
+      <div>
+        <label for="mergeBranch">Branch for the merge (in destination)</label>
+        <input type="text" id="mergeBranch" value="merge-subprojects">
+      </div>
+      <div>
+        <label for="workdir">Working directory</label>
+        <input type="text" id="workdir" value="~/src">
+      </div>
+    </div>
+    <div style="margin-top:14px; display:flex; gap:20px; flex-wrap:wrap;">
+      <label class="check"><input type="checkbox" id="pushSrc" checked> Push the move branch of each source</label>
+      <label class="check"><input type="checkbox" id="pushDest" checked> Push the merge branch of the destination</label>
+      <label class="check"><input type="checkbox" id="setE"> Add <code>set -e</code> (stop on first error)</label>
+    </div>
+  </div>
+
+  <div class="card gm-card">
+    <div class="out-head">
+      <h2>Generated commands</h2>
+      <button id="copy" type="button">Copy</button>
+    </div>
+    <div id="error" class="error"></div>
+    <pre id="out"></pre>
+  </div>
+
+  <div class="card gm-card">
+    <ul class="notes">
+      <li>Each source's default branch is left untouched. The move happens on a new branch.</li>
+      <li>The move shows up as one commit of renames, so use <code>git log --follow</code> on files in the subfolders.</li>
+      <li>Any <code>.github/workflows/</code> in a source ends up nested and won't run. Move it to the destination's root <code>.github/workflows/</code>.</li>
+      <li>Pushing the move branch is needed so the destination can fetch it from GitHub.</li>
+    </ul>
+  </div>
+</div>
+
+{% raw %}
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var RE = /(?:https?:\/\/|ssh:\/\/git@|git@)github\.com[\/:]([\w.-]+)\/([\w.-]+?)(?:\.git)?(?:\/[^\s)\]"'<>,]*)?(?=[\s)\]"'<>,]|$)/g;
+
+  function parse(text) {
+    var seen = {}, repos = [], m;
+    RE.lastIndex = 0;
+    while ((m = RE.exec(text)) !== null) {
+      var key = (m[1] + '/' + m[2]).toLowerCase();
+      if (seen[key]) continue;
+      seen[key] = true;
+      repos.push({ owner: m[1], name: m[2] });
+    }
+    return repos;
+  }
+
+  function cloneUrl(r, proto) {
+    if (proto === 'https') return 'https://github.com/' + r.owner + '/' + r.name + '.git';
+    if (proto === 'ssh-scp') return 'git@github.com:' + r.owner + '/' + r.name + '.git';
+    return 'ssh://git@github.com/' + r.owner + '/' + r.name + '.git';
+  }
+
+  function generate() {
+    var repos = parse($('urls').value);
+    var list = $('repos'); list.innerHTML = '';
+    var out = $('out'), err = $('error');
+    err.textContent = '';
+
+    repos.forEach(function (r, i) {
+      var li = document.createElement('li');
+      var tag = document.createElement('span');
+      tag.className = 'tag ' + (i === 0 ? 'dest' : 'src');
+      tag.textContent = i === 0 ? 'destination' : 'source';
+      li.appendChild(tag);
+      li.appendChild(document.createTextNode(r.owner + '/' + r.name));
+      list.appendChild(li);
+    });
+
+    if (repos.length < 2) {
+      out.textContent = '';
+      err.textContent = repos.length === 0
+        ? 'No GitHub URLs found.'
+        : 'Add at least one source repo after the destination.';
+      return;
+    }
+
+    var names = {}, duplicateNames = [];
+    repos.forEach(function (r) {
+      var key = r.name.toLowerCase();
+      if (names[key] && duplicateNames.indexOf(r.name) === -1) duplicateNames.push(r.name);
+      names[key] = true;
+    });
+    if (duplicateNames.length > 0) {
+      out.textContent = '';
+      err.textContent = 'Repository names must be unique across all URLs. Duplicate name(s): ' + duplicateNames.join(', ');
+      return;
+    }
+
+    var proto = $('proto').value;
+    var branch = $('branch').value.trim() || 'main';
+    var moveBranch = $('moveBranch').value.trim() || 'move-to-subfolder';
+    var mergeBranch = $('mergeBranch').value.trim() || 'merge-subprojects';
+    var workdir = $('workdir').value.trim() || '.';
+    var pushSrc = $('pushSrc').checked, pushDest = $('pushDest').checked;
+
+    var dest = repos[0], sources = repos.slice(1);
+    var L = [];
+    if ($('setE').checked) { L.push('set -e', ''); }
+    L.push('mkdir -p ' + workdir + ' && cd ' + workdir, '');
+
+    sources.forEach(function (s, i) {
+      L.push('# --- ' + (i + 1) + '. ' + s.name + ': move files into a subfolder on a new branch (' + branch + ' untouched) ---');
+      L.push('git clone ' + cloneUrl(s, proto));
+      L.push('cd ' + s.name);
+      L.push('git switch -c ' + moveBranch + ' ' + branch);
+      L.push('mkdir ' + s.name);
+      L.push('git ls-tree --name-only HEAD | while read -r f; do git mv "$f" ' + s.name + '/; done');
+      L.push('git commit -m "Move files into ' + s.name + '/"');
+      if (pushSrc) L.push('git push -u origin ' + moveBranch);
+      L.push('cd ..', '');
+    });
+
+    L.push('# --- ' + (sources.length + 1) + '. ' + dest.name + ': merge the moved branches on a new branch ---');
+    L.push('git clone ' + cloneUrl(dest, proto));
+    L.push('cd ' + dest.name);
+    L.push('git switch -c ' + mergeBranch);
+    sources.forEach(function (s) {
+      L.push('');
+      L.push('git remote add ' + s.name + ' ' + cloneUrl(s, proto));
+      L.push('git fetch ' + s.name + ' ' + moveBranch);
+      L.push('git merge --allow-unrelated-histories ' + s.name + '/' + moveBranch + ' \\');
+      L.push('  -m "Merge ' + s.name + ' into ' + s.name + '/"');
+    });
+    L.push('');
+    sources.forEach(function (s) { L.push('git remote remove ' + s.name); });
+    if (pushDest) { L.push(''); L.push('git push -u origin ' + mergeBranch); }
+
+    out.textContent = L.join('\n');
+  }
+
+  ['urls', 'proto', 'branch', 'moveBranch', 'mergeBranch', 'workdir', 'pushSrc', 'pushDest', 'setE']
+    .forEach(function (id) {
+      $(id).addEventListener(id === 'urls' || $(id).type === 'text' ? 'input' : 'change', generate);
+    });
+
+  $('copy').addEventListener('click', function () {
+    var btn = $('copy'), text = $('out').textContent;
+    function done() { btn.textContent = 'Copied!'; setTimeout(function () { btn.textContent = 'Copy'; }, 1200); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else { fallback(); }
+    function fallback() {
+      var r = document.createRange(); r.selectNodeContents($('out'));
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      try { document.execCommand('copy'); done(); } catch (e) {}
+    }
+  });
+
+  generate();
+})();
+</script>
+{% endraw %}

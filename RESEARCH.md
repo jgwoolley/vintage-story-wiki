@@ -96,6 +96,10 @@ shown as an actual 3D shape instead?
 
 ## 3. Integrating jgwoolley/vintage-story-schematic-preview (upload + in-browser viewing)
 
+**Status: upload + bundled samples implemented** (`/tools/schematic/`, as an adapter on the shared
+`voxelViewer.js`). Still open: browsing this wiki's own `worldgen/schematics/**` in the viewer.
+The findings below are the pre-implementation notes.
+
 **The question**: what would it take to pull in upload + browser-side viewing from the external
 schematic-preview project, beyond the decode logic already adapted earlier this project?
 
@@ -199,6 +203,73 @@ the existing catalogs (items, decor, etc.)?
    `type` block-entity attribute) or fixed per schematic instance — if it's the former, the same
    `tapestryInstances.ts`-style per-instance block-entity decode approach would apply directly; if
    fixed, a simpler static extraction suffices.
+
+## 5. Tool-only builds: regenerating just the non-ingest pages
+
+**Status: not researched yet** -- notes on what the investigation will need.
+
+**The question**: today `npm run build` = `ingest` (minutes of asset parsing) + Eleventy over everything.
+The tool pages (`/tools/schematic/`, `/tools/waypoints/`, `/tools/calendar/`, `/nf3t/`) and shared
+assets are pure client-side and don't need ingest data. Could a change to only those be built and
+deployed without re-running ingest -- and could the build be split so those are "the only thing that
+generates"?
+
+**What I expect to need to find out**:
+- Which templates actually read `generated.*`. Known: the footer/header use only `buildInfo` (global
+  data, not ingest), but `/assets/blockNames.json` (schematic viewer legend names) comes from ingest,
+  the home page counts come from ingest, and `/trades/` obviously does. Need a full audit to see what a
+  "tools-only" page set can include without `generated` being present (Eleventy errors or renders
+  empty on a missing `generated` global).
+- How to select a subset: an env flag (`TOOLS_ONLY=1`) feeding `eleventyConfig.ignores`/a second
+  config file with its own `input` globs, versus a separate Eleventy invocation over `site/tools` +
+  `site/assets` only. The second keeps the full-site config untouched but duplicates layout/filter setup.
+- Whether it should still be able to render the shared header/footer without `generated.mods` etc.
+- CI side (`.github/workflows/build-deploy.yml`): GitHub Pages deploys a whole artifact, so a tools-only
+  build can't just overwrite part of the live site unless the previous `_site` (or the cached
+  `site/_data/generated`) is restored first. Options: cache the generated JSON (already cached
+  `vs_server/`/`Mods/`) keyed on the manifest + `src/ingest/**` hash, and skip ingest on a hit; or
+  keep a tools-only local script (the new `npm run rebuild` already skips ingest) for dev only.
+- Sitemap/`robots.txt` generation (now an `eleventy.after` hook over `results`) must still produce a
+  full sitemap, or be skipped, in a partial build.
+- The timing files (`downloadTiming`/`ingestTiming`/`eleventyBuildTiming`) assume all three phases ran;
+  a partial build should keep the previous ingest numbers rather than blanking them.
+
+## 6. Chiseled block viewer (similar to the schematic viewer)
+
+**Status: WIP, not researched yet.** A matching stub section is on `/tools/`.
+
+**The idea**: view chiseled blocks (sub-block voxel shapes made with the chisel) in 3D, like the
+schematic viewer. As I understand it, chiseled block shape data lives in the block entity attributes, so
+it is stored inside schematics, and the qptech chisel mod's blocks could be viewed the same way.
+
+**What I expect to need to find out** (all unverified guesses):
+- The attribute layout of the vanilla chiseled block's block entity (likely a microblock entity with a
+  list of packed voxel cuboids plus a material list and a rotation) -- verify against the cloned
+  `vssurvivalmod/` (look for the micro/chisel block entity and its `FromTreeAttributes`) and against
+  real decoded blobs from existing schematics via `schematicDecode.js`'s `decodeBlockEntity`.
+- How cuboids are packed (min/max xyz in 0-16 space, material index, flags) and how the material index
+  maps back to block codes (to color/name them via `blockNames.json`).
+- qptech's chisel mod: which mod it is exactly, whether it stores the same attribute layout or its own
+  format, and whether it can be added to `vs-manifest.json` so ingest sees its blocks and lang strings.
+- Rendering: `voxelViewer.js` only draws unit cubes. Chisel cuboids are boxes, so either extend the
+  viewer to accept sized boxes (preferred: one `InstancedMesh` of scaled boxes) or voxelize at 16x per
+  block (up to 4096 cubes per block, too heavy for whole schematics).
+- Inputs: a chiseled block inside a larger schematic (click it in the schematic viewer to open it?), a
+  standalone item/block stack's attributes, or an uploaded export. Which sources contain chiseled blocks
+  in the wiki's own data (ruins/structures) so there are samples to test with.
+- Rotation/flip handling and any per-face material overrides.
+
+## 7. vs-mod-updater (separate repo, not merged)
+
+The user's Python `vs-mod-updater` lives in its own repo, <https://github.com/jgwoolley/vs-mod-updater>.
+A local copy was briefly placed in this checkout but is being removed; the current plan is to **keep the
+two projects separate** rather than merge the updater into this one (at least for now), so nothing here
+depends on it. `scripts/download.ts` already implements the overlapping part in TypeScript: resolving a
+mod via `mods.vintagestory.at/api/mod/<id>`, picking a release, downloading and skipping when present.
+What the updater has beyond that (per its README): checking installed mods for newer releases,
+recursively installing declared dependencies, and never leaving duplicate versions. If this is revisited,
+the question is whether to port those behaviors to TypeScript (keeping the pipeline pure Node, per
+CLAUDE.md) or leave the Python tool as a companion. No earlier note in this file referred to the updater.
 
 ## Vintage Story temperature from seed
 

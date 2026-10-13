@@ -36,7 +36,8 @@ a:hover { text-decoration: underline; }
   padding: 0.75rem 1.5rem;
   border-bottom: 1px solid var(--border);
 }
-.site-header .brand { font-weight: 700; font-size: 1.1rem; color: var(--fg); }
+.site-header .brand { font-weight: 700; font-size: 1.1rem; color: var(--fg); display: inline-flex; align-items: center; gap: 0.5rem; }
+.app-icon { width: 1.6rem; height: 1.6rem; flex-shrink: 0; }
 .site-header nav { display: flex; gap: 1rem; flex-wrap: wrap; }
 .site-header .nav-info { margin-left: auto; }
 
@@ -65,6 +66,7 @@ a:hover { text-decoration: underline; }
   padding: 0.4rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
+.nav-dropdown .nav-dropdown-panel-right { left: auto; right: 0; }
 .nav-dropdown-panel[hidden] { display: none; }
 .nav-dropdown-panel:not([hidden]) { display: flex; }
 .nav-dropdown-panel a {
@@ -443,3 +445,105 @@ th.datatable-sorted[data-sort-dir="desc"] .datatable-th-label::after { content: 
 .readme-content ul, .readme-content ol { padding-left: 1.5rem; }
 .readme-content li { margin: 0.3rem 0; }
 .readme-content a { word-break: break-word; }
+
+/* ---- Schematic viewer (site/tools/schematic/index.njk) ---- */
+.schematic-tool { display: grid; grid-template-columns: minmax(0, 18rem) minmax(0, 1fr); gap: 1rem; align-items: start; position: relative; }
+@media (max-width: 800px) { .schematic-tool { grid-template-columns: minmax(0, 1fr); } }
+.schematic-panel { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.9rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.schematic-panel[hidden] { display: none; }
+.schematic-title { font-size: 1.1em; }
+.schematic-field { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85em; }
+.schematic-row { display: flex; justify-content: space-between; font-size: 0.85em; }
+.schematic-accent { color: var(--accent); font-weight: bold; }
+.schematic-error { color: #c0392b; font-size: 0.85em; margin: 0; }
+.schematic-stage { position: relative; min-width: 0; }
+.schematic-viewport { height: min(70vh, 640px); min-height: 320px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); overflow: hidden; }
+.schematic-viewport canvas { display: block; width: 100%; height: 100%; }
+.schematic-hint { font-size: 0.8em; }
+.schematic-tool #inspector { position: absolute; top: 0.6rem; right: 0.6rem; width: min(18rem, calc(100% - 1.2rem)); max-height: 60%; overflow: auto; }
+.schematic-json { font-size: 0.75em; white-space: pre-wrap; max-height: 14rem; overflow: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem; margin: 0.3rem 0 0; }
+.schematic-tool .search-container { position: relative; display: flex; align-items: center; }
+.schematic-tool .search-container input { width: 100%; padding-right: 2rem; }
+.schematic-tool .clear-search { position: absolute; right: 0.3rem; background: none; border: 0; cursor: pointer; color: var(--muted); font-size: 1.1em; }
+#legend { display: flex; flex-direction: column; gap: 0.3rem; max-height: 22rem; overflow-y: auto; }
+.legend-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0.5rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); cursor: pointer; font: inherit; font-size: 0.85em; text-align: left; }
+.legend-item:hover { border-color: var(--accent); }
+.legend-item.hidden-block { opacity: 0.35; filter: grayscale(1); }
+.legend-item .color-box { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+.legend-item .block-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.legend-item .block-count { font-family: monospace; font-size: 0.85em; color: var(--muted); }
+.schematic-loading { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; background: color-mix(in srgb, var(--bg) 80%, transparent); }
+.schematic-loading[hidden] { display: none; }
+.schematic-loading .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: schematic-spin 1s linear infinite; }
+@keyframes schematic-spin { to { transform: rotate(360deg); } }
+
+/* ---- Tools: waypoints + calendar ---- */
+.schematic-row-fields { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: end; margin: 0.8rem 0; }
+.button-like { display: inline-block; padding: 0.35rem 0.7rem; border: 1px solid var(--border); border-radius: 6px; background: var(--card); cursor: pointer; font-size: 0.9em; }
+.waypoint-map-container { height: min(55vh, 460px); border: 1px solid var(--border); border-radius: 8px; background: var(--card); overflow: hidden; }
+.waypoint-map { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+.waypoint-map .wp-link { stroke: var(--muted); stroke-dasharray: 6 4; }
+.waypoint-map .wp-path { stroke: var(--accent); stroke-linecap: round; }
+.waypoint-map .wp-node { cursor: pointer; }
+.waypoint-map circle { fill: var(--muted); stroke: var(--fg); stroke-width: 0.5; }
+.waypoint-map circle.wp-onpath { fill: var(--accent); }
+.waypoint-map circle.wp-source { fill: #2e8b57; }
+.waypoint-map circle.wp-dest { fill: #c0392b; }
+.waypoint-map text { fill: var(--fg); pointer-events: none; }
+.wp-actions { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.wp-dialog { background: var(--card); color: var(--fg); border: 1px solid var(--border); border-radius: 8px; max-width: min(24rem, calc(100vw - 2rem)); }
+.wp-dialog form { display: flex; flex-direction: column; gap: 0.6rem; }
+
+/* Shared button look for the tool pages (schematic, waypoints, calendar), matching .datatable-nav buttons. */
+.button-group { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; margin: 0.6rem 0; }
+.button-group button, .schematic-row-fields button, .wp-actions button, .schematic-panel button:not(.legend-item):not(.clear-search), .wp-dialog button, .button-like {
+  padding: 0.3rem 0.75rem; background: var(--card); color: var(--fg); border: 1px solid var(--border);
+  border-radius: 6px; cursor: pointer; font: inherit; font-size: 0.85rem;
+}
+.button-group button:hover:not(:disabled), .schematic-row-fields button:hover:not(:disabled), .wp-actions button:hover:not(:disabled),
+.schematic-panel button:not(.legend-item):not(.clear-search):hover:not(:disabled), .wp-dialog button:hover:not(:disabled), .button-like:hover { border-color: var(--accent); }
+
+/* Form controls on the tool pages: inputs/selects match the wiki's card + border look. */
+.schematic-tool input[type="text"], .schematic-tool select, .schematic-field input:not([type="checkbox"]):not([type="range"]), .schematic-field select, .wp-dialog input[type="text"], .wp-dialog input[type="number"], .wp-dialog select {
+  padding: 0.35rem 0.6rem; background: var(--card); color: var(--fg); border: 1px solid var(--border);
+  border-radius: 6px; font: inherit; font-size: 0.9rem; min-width: 0; max-width: 100%;
+}
+.schematic-tool input[type="text"]:focus, .schematic-tool select:focus, .schematic-field input:focus, .schematic-field select:focus { outline: none; border-color: var(--accent); }
+.schematic-tool input[type="range"] { width: 100%; accent-color: var(--accent); }
+.schematic-dropzone {
+  display: flex; flex-direction: column; align-items: center; gap: 0.2rem; text-align: center;
+  padding: 1rem 0.75rem; border: 2px dashed var(--border); border-radius: 8px; background: var(--bg);
+  cursor: pointer; font-size: 0.85rem; transition: border-color 0.15s, background 0.15s;
+}
+.schematic-dropzone:hover, .schematic-dropzone.dragover, .schematic-dropzone:focus-within { border-color: var(--accent); background: var(--card); }
+.schematic-panel button.layer-mode.active { border-color: var(--accent); background: var(--accent); color: #fff; }
+.schematic-panel button.active, .schematic-panel #autoPlay[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: #fff; }
+.voxel-autoplay-speed, #autoPlaySpeed { padding: 0.25rem 0.4rem; background: var(--card); color: var(--fg); border: 1px solid var(--border); border-radius: 4px; font: inherit; font-size: 0.85rem; }
+.card-icon { display: inline-block; width: 1.4em; text-align: center; }
+
+/* ---- Git merge command generator (site/nf3t/git-merge/index.njk) ---- */
+.gm .gm-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+.gm label { display: block; font-weight: 600; margin-bottom: 0.35rem; }
+.gm textarea, .gm input[type=text], .gm select {
+  width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg); color: var(--fg); font: inherit; font-size: 0.9rem;
+}
+.gm textarea:focus, .gm input[type=text]:focus, .gm select:focus { outline: none; border-color: var(--accent); }
+.gm textarea { min-height: 120px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; }
+.gm .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0.75rem; }
+.gm .hint { color: var(--muted); font-size: 0.82rem; margin-top: 0.4rem; }
+.gm .check { display: flex; align-items: center; gap: 0.5rem; font-weight: 400; margin: 0; }
+.gm .check input { width: auto; }
+.gm .repos { margin: 0.5rem 0 0; padding: 0; list-style: none; font-size: 0.88rem; }
+.gm .repos li { padding: 0.2rem 0; }
+.gm .tag { display: inline-block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; padding: 0.05rem 0.5rem; border-radius: 99px; margin-right: 0.5rem; color: #fff; border: 0; }
+.gm .tag.dest { background: #8250df; }
+.gm .tag.src { background: #1a7f37; }
+.gm .out-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.gm .out-head h2 { font-size: 1.05rem; margin: 0; }
+.gm button { padding: 0.3rem 0.75rem; background: var(--card); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font: inherit; font-size: 0.85rem; }
+.gm button:hover { border-color: var(--accent); }
+.gm pre { margin: 0; padding: 0.9rem; background: #16130f; color: #ece6d8; border-radius: 8px; overflow-x: auto; font-size: 0.82rem; line-height: 1.55; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre; }
+.gm .error { color: #c0392b; font-weight: 600; }
+.gm ul.notes { margin: 0; padding-left: 1.25rem; color: var(--muted); font-size: 0.88rem; }
+.gm ul.notes li { margin: 0.25rem 0; }

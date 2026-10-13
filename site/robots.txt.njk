@@ -1,0 +1,9 @@
+---
+permalink: robots.txt
+eleventyExcludeFromCollections: true
+---
+User-agent: *
+Allow: /
+{% if siteUrl %}
+Sitemap: {{ siteUrl }}{{ '/sitemap.xml' | url }}
+{% endif %}

@@ -190,6 +190,12 @@
       // code, or an entity's tags, as well as its display name), so a deep link by code/tag
       // still finds the right rows even though that text isn't necessarily shown in the row.
       const haystack = `${el.textContent} ${el.dataset.search || ""}`.toLowerCase();
+      // A `*` in the query is a glob wildcard (e.g. a recipe ingredient code "jug-*-fired"
+      // linked here via ?q=), matched as a regex; anything else is a plain substring search.
+      if (query.includes("*")) {
+        const pattern = query.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");
+        return new RegExp(pattern).test(haystack);
+      }
       return haystack.includes(query);
     }
 
