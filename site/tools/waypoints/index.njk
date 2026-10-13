@@ -1,0 +1,68 @@
+---
+title: WayPoint planner - Vintage Story Wiki
+description: Plan the shortest route between waypoints, with translocator links costing nothing, and export /waypoint commands.
+layout: layouts/base.njk
+permalink: "{{ lang }}/tools/waypoints/index.html"
+---
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Tools", url: "tools/"}, {label: "WayPoints"}]) }}
+<h1>WayPoint planner</h1>
+<p class="muted">
+  A clockmaker's best friend: add your waypoints (ground coordinates X/Z plus height), link pairs
+  joined by a translocator, then pick a source and destination to find the cheapest route.
+  Walking costs the straight-line distance; a translocator link costs nothing. Everything is
+  stored only in this browser (export a JSON file to back it up or move it elsewhere).
+  Ported from the standalone vintage-story-price-guide project.
+</p>
+
+<div class="button-group">
+  <button type="button" id="wpAdd">Add WayPoint</button>
+  <button type="button" id="wpFit">Fit map</button>
+  <button type="button" id="wpExport">Export JSON</button>
+  <label class="button-like">Import JSON <input type="file" id="wpImport" accept=".json" hidden></label>
+  <button type="button" id="wpClear">Clear all</button>
+</div>
+<p id="wpStatus" class="muted" role="status"></p>
+
+<div id="wpMap" class="waypoint-map-container"></div>
+<p class="muted">Drag to pan, scroll to zoom, click a dot to edit it. Dashed lines are translocator links; the highlighted line is the current route.</p>
+<p id="wpEmpty" class="muted">No waypoints yet &mdash; add one to get started.</p>
+
+<h2>Route</h2>
+<div class="schematic-row-fields">
+  <label class="schematic-field">From <select id="wpSource"></select></label>
+  <label class="schematic-field">To <select id="wpDest"></select></label>
+  <button type="button" id="wpSwap">Swap</button>
+</div>
+<p id="wpPathTotal" class="muted"></p>
+<table>
+  <thead><tr><th>#</th><th>From</th><th>To</th><th>Distance</th></tr></thead>
+  <tbody id="wpPathBody"></tbody>
+</table>
+
+<h2>WayPoints</h2>
+<table>
+  <thead><tr><th>Label</th><th>X, Y, Z</th><th>Translocator to</th><th>Actions</th></tr></thead>
+  <tbody id="wpTableBody"></tbody>
+</table>
+
+<dialog id="wpDialog" class="wp-dialog">
+  <form id="wpForm" method="dialog">
+    <h3 id="wpDialogTitle">Edit WayPoint</h3>
+    <label class="schematic-field">Label <input type="text" id="wpLabel"></label>
+    <label class="schematic-field">X <input type="number" id="wpX" step="any"></label>
+    <label class="schematic-field">Z <input type="number" id="wpZ" step="any"></label>
+    <label class="schematic-field">Height (Y) <input type="number" id="wpHeight" step="any"></label>
+    <label class="schematic-field">Translocator link <select id="wpConnection"></select></label>
+    <label class="schematic-field">Color <input type="text" id="wpColor"></label>
+    <label class="schematic-field">Icon <input type="text" id="wpIcon"></label>
+    <label><input type="checkbox" id="wpPinned"> Pinned</label>
+    <div class="button-group">
+      <button type="submit">Save</button>
+      <button type="button" id="wpCancel">Cancel</button>
+      <button type="button" id="wpDelete">Delete</button>
+    </div>
+  </form>
+</dialog>
+
+<script type="module" src="{{ '/' | url }}assets/waypointsPage.js"></script>

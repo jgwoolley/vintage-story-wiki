@@ -124,6 +124,36 @@ document.querySelectorAll(".voxel-recipe").forEach((root) => {
   });
   root.querySelector(".voxel-viewer-reset")?.addEventListener("click", () => viewer.resetView());
 
+  // Auto-play: step through the layers on a timer by clicking the next layer tab (layers.js turns
+  // that into the "layerchange" the rest of this file already follows). "All layers" disables the
+  // tabs, so starting playback there switches to "One layer" first.
+  const playButton = root.querySelector(".voxel-autoplay");
+  const speedSelect = root.querySelector(".voxel-autoplay-speed");
+  let timer = null;
+  function stopPlaying() {
+    clearInterval(timer);
+    timer = null;
+    if (playButton) {
+      playButton.innerHTML = "&#9654; Play";
+      setPressed(playButton, false);
+    }
+  }
+  function startPlaying() {
+    if (state.view === "3d" && state.mode === "all") {
+      state.mode = "single";
+      apply();
+    }
+    playButton.innerHTML = "&#9632; Pause";
+    setPressed(playButton, true);
+    timer = setInterval(() => layerTabs[(state.layer + 1) % layerTabs.length]?.click(), Number(speedSelect.value));
+  }
+  playButton?.addEventListener("click", () => (timer ? stopPlaying() : startPlaying()));
+  speedSelect?.addEventListener("change", () => {
+    if (!timer) return;
+    stopPlaying();
+    startPlaying();
+  });
+
   controlsEl.hidden = false;
   apply();
 });

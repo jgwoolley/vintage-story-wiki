@@ -21,6 +21,8 @@ import { extractTraits, extractCharacterClasses } from "./models/classes.js";
 import { buildBlockCodeToSchematicIndex, buildSchematicToStructureIndex, findStructuresContaining } from "./structureContents.js";
 import { expandVariants } from "./variantExpander.js";
 import { buildLangResolver } from "./lang.js";
+import { extractBlockNames } from "./models/blockNames.js";
+import type { IngestStepTiming } from "./types.js";
 import { buildItemIndex, attachItemMetadata, attachDescriptionsAndCodeRefs, includeManifestItems } from "./crossref.js";
 import { writeGenerated } from "./write.js";
 
@@ -29,6 +31,21 @@ const VANILLA_DOMAINS = ["game", "survival", "creative"];
 
 function loadManifest(): VsManifest {
   return JSON.parse(readFileSync("vs-manifest.json", "utf8"));
+}
+
+// Per-step timing: every `step("...")` call (replacing the old bare "== ... ==" console headings)
+// closes the previous step's clock and starts the next, so each phase's duration lands in
+// `ingestTiming.steps` -- surfaced on `/<lang>/build/`.
+const stepTimings: IngestStepTiming[] = [];
+let currentStep: { name: string; startedAt: number } | undefined;
+function endStep(): void {
+  if (currentStep) stepTimings.push({ name: currentStep.name, durationMs: Date.now() - currentStep.startedAt });
+  currentStep = undefined;
+}
+function step(name: string): void {
+  endStep();
+  console.log(`== ${name} ==`);
+  currentStep = { name, startedAt: Date.now() };
 }
 
 function main(): void {
@@ -42,7 +59,7 @@ function main(): void {
   const manifest = loadManifest();
   const manifestModIds = new Set(manifest.mods.map((m) => m.modid.toLowerCase()));
 
-  console.log("== Resolving mods ==");
+  step("Resolving mods");
   const mods: (ModInfo & { domains: string[]; rootDir: string })[] = [];
   for (const zipFile of listModZips()) {
     const { info, extractedDir } = loadMod(zipFile);
@@ -59,13 +76,13 @@ function main(): void {
 
   const activeModIds = new Set(["game", ...mods.map((m) => m.modid.toLowerCase())]);
 
-  console.log("== Building asset sources ==");
+  step("Building asset sources");
   const sources: AssetSource[] = [
     ...VANILLA_DOMAINS.map((domain) => ({ domain, modid: "game", rootDir: `${SERVER_ASSETS_DIR}/${domain}` })),
     ...mods.flatMap((mod) => mod.domains.map((domain) => ({ domain, modid: mod.modid, rootDir: `${mod.rootDir}/${domain}` }))),
   ];
 
-  console.log("== Indexing schematic files (headers only, voxel data stays unparsed) ==");
+  step("Indexing schematic files (headers only, voxel data stays unparsed)");
   const schematicsByDomain = new Map<string, SchematicFile[]>();
   for (const source of sources) {
     const existing = schematicsByDomain.get(source.domain) ?? [];
@@ -73,12 +90,12 @@ function main(): void {
   }
   console.log(`  ${[...schematicsByDomain.values()].reduce((n, files) => n + files.length, 0)} schematic files indexed`);
 
-  console.log("== Loading assets (JSON5) ==");
+  step("Loading assets (JSON5)");
   const { index, report } = loadAssets(sources);
   console.log(`  loaded ${report.filesLoaded} files, ${report.parseErrors.length} parse errors, ${report.overrides.length} overrides`);
   for (const err of report.parseErrors.slice(0, 20)) console.log(`  parse error: ${err.file}: ${err.error}`);
 
-  console.log("== Applying patches ==");
+  step("Applying patches");
   const allPatches = collectPatches(index);
   const activePatches = filterPatches(allPatches, activeModIds);
   const patchReport = applyPatches(index, activePatches);
@@ -89,11 +106,11 @@ function main(): void {
 
   const lang = buildLangResolver(index);
 
-  console.log("== Extracting recipes ==");
+  step("Extracting recipes");
   const recipes = extractRecipes(index);
   console.log(`  ${recipes.length} normalized recipes`);
 
-  console.log("== Extracting loot ==");
+  step("Extracting loot");
   const { loot, creatureRoster } = extractLoot(index, lang);
   console.log(`  ${loot.length} loot entries, ${creatureRoster.length} living entities (health behavior)`);
 
@@ -147,15 +164,15 @@ function main(): void {
   const blockDrops = lootGroups.filter((g) => g.sourceKind === "block");
   const blockDropsById = Object.fromEntries(blockDrops.map((g) => [g.id, g]));
 
-  console.log("== Extracting structures ==");
+  step("Extracting structures");
   const structures = extractStructures(index, schematicsByDomain);
   console.log(`  ${structures.length} structures`);
 
-  console.log("== Extracting decor catalog (paintings/tapestries/clothing) ==");
+  step("Extracting decor catalog (paintings/tapestries/clothing)");
   const decorCatalog = extractDecorCatalog(index, lang);
   console.log(`  ${decorCatalog.length} decor items`);
 
-  console.log("== Cross-referencing decor items against structure schematics ==");
+  step("Cross-referencing decor items against structure schematics");
   const blockCodeToSchematic = buildBlockCodeToSchematicIndex(schematicsByDomain);
   const schematicToStructure = buildSchematicToStructureIndex(structures);
   let decorWithStructures = 0;
@@ -165,7 +182,7 @@ function main(): void {
   }
   console.log(`  ${decorWithStructures}/${decorCatalog.length} decor items found in at least one structure's schematics`);
 
-  console.log("== Extracting lore books ==");
+  step("Extracting lore books");
   const loreBooks = extractLoreBooks(index, lang);
   console.log(`  ${loreBooks.length} books/lore pieces`);
 
@@ -178,7 +195,7 @@ function main(): void {
     if (book) item.relatedLoreBookId = book.id;
   }
 
-  console.log("== Resolving tapestry/wallcarving instances in worldgen schematics ==");
+  step("Resolving tapestry/wallcarving instances in worldgen schematics");
   const tapestryInstances = extractTapestryInstances(schematicsByDomain, schematicToStructure, index, lang);
   console.log(`  ${tapestryInstances.length} resolved instances`);
   // Wallcarvings aren't in the decor catalog yet (no page to attach them to) -- only tapestry-*
@@ -197,35 +214,35 @@ function main(): void {
   const tapestries = decorCatalog.filter((d) => d.kind === "tapestry");
   const clothing = decorCatalog.filter((d) => d.kind === "clothing");
 
-  console.log("== Extracting ore/gem/rock deposits ==");
+  step("Extracting ore/gem/rock deposits");
   const { deposits, codeToDepositIds } = extractDeposits(index);
   console.log(`  ${deposits.length} deposits, covering ${codeToDepositIds.size} concrete block codes`);
 
-  console.log("== Extracting crop/flower/mushroom/etc. spawn patches ==");
+  step("Extracting crop/flower/mushroom/etc. spawn patches");
   const { patches: blockPatches, codeToPatchIds } = extractBlockPatchSpawns(index);
   console.log(`  ${blockPatches.length} patches, covering ${codeToPatchIds.size} concrete block codes`);
 
-  console.log("== Extracting tree/shrub species spawn data ==");
+  step("Extracting tree/shrub species spawn data");
   const { trees, codeToTreeIds } = extractTrees(index);
   console.log(`  ${trees.length} species climate bands, covering ${codeToTreeIds.size} concrete block codes`);
 
-  console.log("== Extracting fruit tree variety spawn data ==");
+  step("Extracting fruit tree variety spawn data");
   const { fruitTrees, codeToFruitTreeIds } = extractFruitTrees(index);
   console.log(`  ${fruitTrees.length} fruit tree varieties, covering ${codeToFruitTreeIds.size} concrete item codes`);
 
-  console.log("== Extracting rock strata (base rock-type placement) ==");
+  step("Extracting rock strata (base rock-type placement)");
   const { rockStrata, codeToRockStrataIds } = extractRockStrata(index);
   console.log(`  ${rockStrata.length} rock strata variants`);
 
-  console.log("== Extracting help guides ==");
+  step("Extracting help guides");
   const guides = extractGuides(index, lang);
   console.log(`  ${guides.length} guides`);
 
-  console.log("== Extracting trader buy/sell lists ==");
+  step("Extracting trader buy/sell lists");
   const trades = extractTrades(index);
   console.log(`  ${trades.length} trader specializations`);
 
-  console.log("== Extracting NPC dialogue ==");
+  step("Extracting NPC dialogue");
   const dialogue = extractDialogue(index, lang);
   const dialogueRewardCount = dialogue.reduce((n, d) => n + d.rewards.length, 0);
   console.log(`  ${dialogue.length} NPCs with dialogue, ${dialogueRewardCount} reward-granting dialogue lines`);
@@ -241,7 +258,7 @@ function main(): void {
   // just the concrete code, to know which specialization a variant belongs to. Deliberately not
   // hardcoded to "trader" -- any entity (vanilla or modded) whose `type` variantgroup states
   // overlap a loaded specialization code is picked up the same way.
-  console.log("== Cross-referencing trader specializations against trader entity variants ==");
+  step("Cross-referencing trader specializations against trader entity variants");
   const specializationCodes = new Set(trades.map((t) => t.id.split(/:(.+)/)[1]));
   const traderEntitiesByType = new Map<string, import("./types.js").TraderEntityRef[]>();
   for (const variant of expandVariants(index, ["entities/"])) {
@@ -262,12 +279,12 @@ function main(): void {
     `  ${trades.filter((t) => t.traderEntities.length).length}/${trades.length} specializations matched to at least one trader entity variant`
   );
 
-  console.log("== Extracting player traits and starting classes ==");
+  step("Extracting player traits and starting classes");
   const traits = extractTraits(index, lang);
   const characterClasses = extractCharacterClasses(index, lang);
   console.log(`  ${traits.length} traits, ${characterClasses.length} starting classes`);
 
-  console.log("== Building item index ==");
+  step("Building item index");
   const itemIndex = buildItemIndex(recipes, loot, lang);
   console.log(`  ${itemIndex.size} distinct items/blocks referenced`);
 
@@ -385,7 +402,7 @@ function main(): void {
   }
   console.log(`  item index grown to ${itemIndex.size} after adding NPC-reward-only items`);
 
-  console.log("== Cross-referencing items against structure schematics ==");
+  step("Cross-referencing items against structure schematics");
   // Every item/block in the index -- not just the decor catalog's paintings/tapestries/clothing
   // -- can be placed inside a worldgen schematic (storage vessels, bookshelves/books, etc.), and
   // the blockCodeToSchematic/schematicToStructure maps built above for the decor cross-reference
@@ -398,7 +415,7 @@ function main(): void {
   }
   console.log(`  ${itemsWithStructures}/${itemIndex.size} items/blocks found in at least one structure's schematics`);
 
-  console.log("== Attaching item descriptions + C# class references ==");
+  step("Attaching item descriptions + C# class references");
   attachDescriptionsAndCodeRefs(itemIndex, index, lang);
   const itemValues = [...itemIndex.values()];
   console.log(
@@ -433,7 +450,10 @@ function main(): void {
   const traitsById = Object.fromEntries(traits.map((t) => [t.code, t]));
   const dialogueById = Object.fromEntries(dialogue.map((d) => [d.id, d]));
 
-  console.log("== Writing generated data ==");
+  step("Extracting block display names (schematic viewer legend)");
+  const blockNames = extractBlockNames(index, lang);
+
+  step("Writing generated data");
   writeGenerated("recipes", recipes);
   writeGenerated("recipesById", recipesById);
   writeGenerated("loot", loot);
@@ -467,10 +487,13 @@ function main(): void {
   writeGenerated("classes", characterClasses);
   writeGenerated("items", [...itemIndex.values()]);
   writeGenerated("mods", modSummaries);
+  writeGenerated("blockNames", blockNames);
 
+  endStep();
   const ingestTiming: import("./types.js").IngestTiming = {
     durationMs: Date.now() - ingestStartedAt,
     finishedAtIso: new Date().toISOString(),
+    steps: stepTimings,
   };
   writeGenerated("ingestTiming", ingestTiming);
 

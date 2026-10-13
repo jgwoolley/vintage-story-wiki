@@ -7,6 +7,7 @@
     "download": "tsx scripts/download.ts",
     "ingest": "tsx src/ingest/index.ts",
     "build": "npm run ingest && tsx scripts/build-site.ts",
+    "rebuild": "tsx scripts/build-site.ts",
     "serve": "npm run ingest && eleventy --serve",
     "clean": "rm -rf .scratch _site site/_data/generated",
     "typecheck": "tsc --noEmit"

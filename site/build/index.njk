@@ -85,11 +85,11 @@ permalink: "{{ lang }}/build/index.html"
       {% endif %}
     </p>
     <table>
-      <thead><tr><th>What</th><th>Outcome</th></tr></thead>
+      <thead><tr><th>What</th><th>Outcome</th><th>Took</th></tr></thead>
       <tbody>
-        <tr><td>Vintage Story server</td><td>{{ dl.serverAction }}</td></tr>
+        <tr><td>Vintage Story server</td><td>{{ dl.serverAction }}</td><td>{% if dl.serverDurationMs != null %}{{ dl.serverDurationMs | durationLabel }}{% endif %}</td></tr>
         {% for mod in dl.modActions %}
-          <tr><td>{{ mod.modid }}</td><td>{{ mod.action }}</td></tr>
+          <tr><td>{{ mod.modid }}</td><td>{{ mod.action }}</td><td>{% if mod.durationMs != null %}{{ mod.durationMs | durationLabel }}{% endif %}</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -103,6 +103,16 @@ permalink: "{{ lang }}/build/index.html"
 {% if ing.finishedAtIso %}
   <div class="card">
     <p>Took <strong>{{ ing.durationMs | durationLabel }}</strong>, finished <code>{{ ing.finishedAtIso }}</code> UTC.</p>
+    {% if ing.steps.length %}
+    <table>
+      <thead><tr><th>Step</th><th>Took</th></tr></thead>
+      <tbody>
+        {% for st in ing.steps %}
+          <tr><td>{{ st.name }}</td><td>{{ st.durationMs | durationLabel }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
   </div>
 {% else %}
   <p class="card muted">Not available &mdash; <code>npm run ingest</code> hasn't been run yet in this checkout.</p>

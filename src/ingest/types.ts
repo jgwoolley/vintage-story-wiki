@@ -671,6 +671,7 @@ export type DownloadAction =
 export interface ModDownloadResult {
   modid: string;
   action: DownloadAction;
+  durationMs: number; // wall-clock time spent on just this mod (lookup + fetch + extract, or the skip-check)
 }
 
 /**
@@ -684,6 +685,7 @@ export interface DownloadTiming {
   durationMs: number; // wall-clock time for this whole `npm run download` invocation
   finishedAtIso: string; // UTC timestamp this run finished, for "how stale is this" display
   serverAction: DownloadAction; // outcome for the vanilla dedicated server install
+  serverDurationMs: number; // wall-clock time spent on just the server install step
   modActions: ModDownloadResult[]; // outcome for each mod in vs-manifest.json, in manifest order
   anyDownloaded: boolean; // true if the server or at least one mod was freshly fetched this run
 }
@@ -697,6 +699,13 @@ export interface DownloadTiming {
 export interface IngestTiming {
   durationMs: number; // wall-clock time for this whole `npm run ingest` invocation
   finishedAtIso: string; // UTC timestamp this run finished
+  steps: IngestStepTiming[]; // per-step breakdown, in run order (one per "== ... ==" console section)
+}
+
+/** One named phase of the ingest run (e.g. "Loading assets (JSON5)") and how long it took. */
+export interface IngestStepTiming {
+  name: string; // the step's console heading, without the "== ==" decoration
+  durationMs: number; // wall-clock time from this step starting to the next one starting
 }
 
 /**
