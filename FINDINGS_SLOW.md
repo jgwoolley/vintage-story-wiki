@@ -51,4 +51,6 @@ These are minor compared with the fix above.
 
 ## "Not available" for Eleventy build time
 
-This is expected behavior, not a bug. `site/_data/generated/` is gitignored, and nothing carries `eleventyBuildTiming.json` between CI runs. The deployed page therefore never has a previous build's number to show. Fixing it would mean caching or restoring that file in the workflow. It has not been done.
+This was expected behavior, not a bug. `site/_data/generated/` is gitignored, and nothing carried `eleventyBuildTiming.json` between CI runs, so the deployed page never had a previous build's number.
+
+Fixed in `.github/workflows/build-deploy.yml`. The file is restored with `actions/cache/restore` before "Build site" and saved with `actions/cache/save` afterwards. Each run saves under a unique `eleventy-timing-<run_id>` key and restores the newest entry by the `eleventy-timing-` prefix. The first CI run after this change still shows "Not available"; the run after that shows the first run's time. The figure is still one build stale, as the page already says.

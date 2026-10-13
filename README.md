@@ -457,6 +457,9 @@ Info page for the visitor-facing version of that caveat.
   the number `/<lang>/build/` shows for the site-build phase is always **one full build run
   stale** (it describes the *previous* successful build, not the one currently rendering that
   page) — the page labels it that way explicitly rather than presenting it as live.
+  In CI the file is carried between runs with `actions/cache/restore` + `actions/cache/save`
+  (unique `eleventy-timing-<run_id>` key, restored by the `eleventy-timing-` prefix) around the
+  "Build site" step, since `site/_data/generated/` is gitignored and otherwise starts empty.
 
 ## Clutter, crop nutrients and alloy calculator
 

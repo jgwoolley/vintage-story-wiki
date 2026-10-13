@@ -51,6 +51,16 @@ jobs:
       - name: Ingest game data
         run: npm run ingest
 
+      # Carry the previous run's eleventyBuildTiming.json into this build so /<lang>/build/ can show
+      # it (the file is gitignored and nothing else persists it between runs). Cache entries are
+      # immutable, so each run saves under a unique key and restores the newest by prefix.
+      - name: Restore previous Eleventy build timing
+        uses: actions/cache/restore@v4
+        with:
+          path: site/_data/generated/eleventyBuildTiming.json
+          key: eleventy-timing-${{ github.run_id }}
+          restore-keys: eleventy-timing-
+
       - name: Build site
         # GitHub Pages project sites (no custom domain) serve from
         # https://<user>.github.io/<repo>/ rather than the domain root, so every internal
@@ -64,6 +74,12 @@ jobs:
           PATH_PREFIX: /${{ github.event.repository.name }}/
           SITE_URL: https://${{ github.repository_owner }}.github.io
         run: npx tsx scripts/build-site.ts
+
+      - name: Save Eleventy build timing for the next run
+        uses: actions/cache/save@v4
+        with:
+          path: site/_data/generated/eleventyBuildTiming.json
+          key: eleventy-timing-${{ github.run_id }}
 
       - name: Upload Pages artifact
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
