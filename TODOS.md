@@ -2,6 +2,7 @@
 
 ## In Progress 
 
+- In build info show a graph or highlight ms vs s higher values in red?
 - Is it possible to find the nutrition type for each crop + add that as an option for sorting
 - Agricultural trader not localized "agriculture trader"? prices should be listed as min + max. stock as well should be min and max.
 - item's "Found in structure", should probably be a table. Most things should be a table rather than bullet list.

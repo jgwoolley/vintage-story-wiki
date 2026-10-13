@@ -134,23 +134,24 @@ export class TreeAttributeParser {
       }
       case 9: return this.view.getUint8(this.offset++) !== 0;
       case 10: { // String Array - Usually uses Varint length
-        const len = this.readInt();
+        // Clamp to the bytes left (each string takes >= 1): a misaligned/garbage length must not
+        // spin through billions of iterations (it once cost ~4s per microblock entity).
+        const len = Math.min(this.readInt() >>> 0, this.view.byteLength - this.offset);
         return Array.from({ length: len }, () => this.readString());
       }
       case 11: { // Int Array - OFTEN USES FIXED INT32 LENGTH
         const len = this.view.getInt32(this.offset, true);
         this.offset += 4;
         const arr = [];
-        for (let i = 0; i < len; i++) {
-          if (this.offset + 4 <= this.view.byteLength) {
-            arr.push(this.view.getInt32(this.offset, true));
-            this.offset += 4;
-          }
+        // Stop as soon as the buffer is exhausted -- a garbage `len` used to keep looping to ~2^31.
+        for (let i = 0; i < len && this.offset + 4 <= this.view.byteLength; i++) {
+          arr.push(this.view.getInt32(this.offset, true));
+          this.offset += 4;
         }
         return arr;
       }
       case 12: { // Long Array
-        const len = this.view.getInt32(this.offset, true); this.offset += 4;
+        const len = Math.max(0, Math.min(this.view.getInt32(this.offset, true), (this.view.byteLength - this.offset - 4) >> 3)); this.offset += 4;
         return Array.from({ length: len }, () => {
           const v = this.view.getBigInt64(this.offset, true);
           this.offset += 8;
