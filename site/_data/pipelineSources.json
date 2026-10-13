@@ -42,8 +42,8 @@
     "id": "deposits",
     "title": "Deposits",
     "listingUrl": "deposits/",
-    "modelFiles": ["src/ingest/models/deposits.ts"],
-    "globs": ["worldgen/deposits/**/*.json"]
+    "modelFiles": ["src/ingest/models/deposits.ts", "src/ingest/models/rockstrata.ts"],
+    "globs": ["worldgen/deposits/**/*.json", "worldgen/rockstrata.json"]
   },
   {
     "id": "crops",

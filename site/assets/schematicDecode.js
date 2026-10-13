@@ -1,8 +1,8 @@
 // Decodes a Vintage Story schematic's `BlockEntities` values: each is an Ascii85-encoded binary
 // blob holding one placed block's runtime attributes (a `TreeAttribute`, vsapi's tag-length-value
-// attribute-tree format -- see `TreeAttribute.cs`/`Ascii85.cs` in anegostudios/vsapi). Ported
-// verbatim from jgwoolley/vintage-story-schematic-preview's index.html, minus its THREE.js/DOM
-// rendering -- this file is pure ArrayBuffer/DataView/TextDecoder logic, so it runs unmodified in
+// attribute-tree format -- see `TreeAttribute.cs`/`Ascii85.cs` in anegostudios/vsapi). Originally
+// ported from jgwoolley/vintage-story-schematic-preview's index.html, since rewritten against
+// vsapi's real per-type `FromBytes` layouts (the port had several wrong). This file is pure ArrayBuffer/DataView/TextDecoder logic, so it runs unmodified in
 // both Node (the ingest pipeline, via a plain relative import) and the browser (a future
 // interactive schematic viewer, via <script type="module" src="...">). Do not add any
 // Node-specific (`node:*`, `require`) or DOM-specific API to this file -- that's the whole point
@@ -71,6 +71,13 @@ export class TreeAttributeParser {
     this.view = new DataView(buffer);
     this.offset = 0;
     this.decoder = new TextDecoder();
+    this.depth = 0;
+  }
+
+  parseNested() {
+    if (this.depth > 30) throw new Error("TreeAttribute nesting beyond the game's depth limit of 30");
+    this.depth++;
+    try { return this.parse(); } finally { this.depth--; }
   }
 
   readString() {
@@ -88,7 +95,7 @@ export class TreeAttributeParser {
     const available = this.view.byteLength - this.offset;
     const actualLength = Math.min(length, available);
 
-    const strBytes = new Uint8Array(this.view.buffer, this.offset, actualLength);
+    const strBytes = new Uint8Array(this.view.buffer, this.view.byteOffset + this.offset, actualLength);
     this.offset += actualLength;
 
     const decoded = this.decoder.decode(strBytes);
@@ -117,49 +124,63 @@ export class TreeAttributeParser {
     return result;
   }
 
+  // Layout per vsapi's TreeAttribute.cs / *Attribute.cs `FromBytes` (a C# BinaryReader stream: LE
+  // fixed-width numbers, 7-bit-varint-prefixed UTF-8 strings). Ids: 1 int, 2 long, 3 double, 4 float,
+  // 5 string, 6 tree, 7 itemstack, 8 byte[] (uint16 length), 9 bool, 10 string[], 11 int[], 12 float[],
+  // 13 double[], 14 tree[], 15 long[], 16 bool[] (arrays 10-16: int32 count). An id the real game
+  // doesn't register throws there (AttributeIdMapping lookup), so it throws here too rather than
+  // guessing and misaligning the rest of the blob.
+  //
+  // Every count is clamped to the bytes left (`maxCount`): a garbage count must not spin through
+  // billions of iterations (it once cost ~4s per microblock entity).
+  maxCount(count, elementBytes) {
+    return Math.max(0, Math.min(count, Math.floor((this.view.byteLength - this.offset) / elementBytes)));
+  }
+
+  readArray(elementBytes, readOne) {
+    const declared = this.view.getInt32(this.offset, true);
+    this.offset += 4;
+    const count = this.maxCount(declared, elementBytes);
+    const out = new Array(count);
+    for (let i = 0; i < count; i++) out[i] = readOne();
+    return out;
+  }
+
   readAttribute(id) {
+    const v = this.view;
     switch (id) {
-      case 1: { const v = this.view.getInt32(this.offset, true); this.offset += 4; return v; }
-      case 2: { const v = this.view.getBigInt64(this.offset, true); this.offset += 8; return v.toString(); }
-      case 3: { const v = this.view.getFloat64(this.offset, true); this.offset += 8; return v; }
-      case 4: { const v = this.view.getFloat32(this.offset, true); this.offset += 4; return v; }
+      case 1: { const x = v.getInt32(this.offset, true); this.offset += 4; return x; }
+      case 2: { const x = v.getBigInt64(this.offset, true); this.offset += 8; return x.toString(); }
+      case 3: { const x = v.getFloat64(this.offset, true); this.offset += 8; return x; }
+      case 4: { const x = v.getFloat32(this.offset, true); this.offset += 4; return x; }
       case 5: return this.readString();
-      case 6: return this.parse(); // Nested TreeAttribute
-      case 7: { const v = this.view.getFloat64(this.offset, true); this.offset += 8; return v; }
-      case 8: { // Byte Array - Usually uses Varint length
-        const len = this.readInt();
-        const arr = new Uint8Array(this.view.buffer, this.offset, Math.min(len, this.view.byteLength - this.offset));
-        this.offset += arr.length;
+      case 6: return this.parseNested();
+      case 7: { // ItemstackAttribute: bool isNull, then (class, id, stacksize, stack attributes tree)
+        if (v.getUint8(this.offset++) !== 0) return null;
+        const itemClass = v.getInt32(this.offset, true);
+        const itemId = v.getInt32(this.offset + 4, true);
+        const stackSize = v.getInt32(this.offset + 8, true);
+        this.offset += 12;
+        // `id` is the game's runtime collectible id; in a schematic it indexes ItemCodes/BlockCodes.
+        return { itemClass: itemClass === 0 ? "block" : "item", id: itemId, stackSize, attributes: this.parseNested() };
+      }
+      case 8: { // ByteArrayAttribute: uint16 length
+        const len = Math.min(v.getUint16(this.offset, true), v.byteLength - this.offset - 2);
+        this.offset += 2;
+        const arr = new Uint8Array(v.buffer, v.byteOffset + this.offset, len);
+        this.offset += len;
         return Array.from(arr);
       }
-      case 9: return this.view.getUint8(this.offset++) !== 0;
-      case 10: { // String Array - Usually uses Varint length
-        // Clamp to the bytes left (each string takes >= 1): a misaligned/garbage length must not
-        // spin through billions of iterations (it once cost ~4s per microblock entity).
-        const len = Math.min(this.readInt() >>> 0, this.view.byteLength - this.offset);
-        return Array.from({ length: len }, () => this.readString());
-      }
-      case 11: { // Int Array - OFTEN USES FIXED INT32 LENGTH
-        const len = this.view.getInt32(this.offset, true);
-        this.offset += 4;
-        const arr = [];
-        // Stop as soon as the buffer is exhausted -- a garbage `len` used to keep looping to ~2^31.
-        for (let i = 0; i < len && this.offset + 4 <= this.view.byteLength; i++) {
-          arr.push(this.view.getInt32(this.offset, true));
-          this.offset += 4;
-        }
-        return arr;
-      }
-      case 12: { // Long Array
-        const len = Math.max(0, Math.min(this.view.getInt32(this.offset, true), (this.view.byteLength - this.offset - 4) >> 3)); this.offset += 4;
-        return Array.from({ length: len }, () => {
-          const v = this.view.getBigInt64(this.offset, true);
-          this.offset += 8;
-          return v.toString();
-        });
-      }
+      case 9: return v.getUint8(this.offset++) !== 0;
+      case 10: return this.readArray(1, () => this.readString()); // each string takes >= 1 byte
+      case 11: return this.readArray(4, () => { const x = v.getInt32(this.offset, true); this.offset += 4; return x; });
+      case 12: return this.readArray(4, () => { const x = v.getFloat32(this.offset, true); this.offset += 4; return x; });
+      case 13: return this.readArray(8, () => { const x = v.getFloat64(this.offset, true); this.offset += 8; return x; });
+      case 14: return this.readArray(1, () => this.parseNested());
+      case 15: return this.readArray(8, () => { const x = v.getBigInt64(this.offset, true); this.offset += 8; return x.toString(); });
+      case 16: return this.readArray(1, () => v.getUint8(this.offset++) !== 0);
       default:
-        return `[Type ${id} unknown]`;
+        throw new Error(`Unknown TreeAttribute type ${id} at offset ${this.offset}`);
     }
   }
 }

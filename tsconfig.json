@@ -12,5 +12,5 @@
     "outDir": "dist",
     "noEmit": true
   },
-  "include": ["src/**/*.ts", "scripts/**/*.ts", "eleventy.config.js"]
+  "include": ["src/**/*.ts", "scripts/**/*.ts", "test/**/*.ts", "eleventy.config.js"]
 }

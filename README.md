@@ -148,8 +148,7 @@ consistent with "organize by what the thing is" (see Creatures vs. Items below).
   unless the schematic pins it — see `BlockTapestry.OnLoadCollectibleMappings` in
   `vssurvivalmod`). The decoder itself lives at `site/assets/schematicDecode.js`, not under
   `src/ingest/` — plain dependency-free ES module JS, directly `<script>`-loadable, since the
-  planned `/tools/` schematic viewer (see "Coming soon" below) will need the exact same decode
-  logic client-side; `tapestryInstances.ts` just imports that same file. `/tapestries/` is one
+  `/tools/schematic/` viewer (see "Tools" below) needs the exact same decode logic client-side; `tapestryInstances.ts` just imports that same file. `/tapestries/` is one
   flat, sortable table of every (structure, possible tapestry) pairing this produces — not a page
   per block code/direction, since direction/code aren't the interesting axis here. Scoped to
   schematics actually referenced by world generation only (`structureContents.ts`'s existing
@@ -498,6 +497,22 @@ animal variants).
 - Storage vessels, chests, trunks, baskets and cluttered bookshelves are forced into the item index through
   `vs-manifest.json` `includeItems` globs, so their pages list the structures they appear in.
 
+## Testing
+
+`npm test` runs `test/*.test.ts` with Node's built-in runner via `tsx --test` (no extra
+dependency), and CI runs `npm run typecheck` + `npm test` right after `npm ci`. Currently covers
+`site/assets/schematicDecode.js`: Ascii85, each `TreeAttribute` type code, hostile array lengths
+(regression for the slow-ingest bug in `FINDINGS_SLOW.md`), flat tapestry/clutter blobs, and the
+committed `site/tools/schematic/samples/default.json`. Blobs are built by hand in the tests rather
+than copied from game files. The attribute layouts were
+checked against `vsapi`'s `*Attribute.cs` `FromBytes` (ids 1-16, incl. type 7 ItemStack, which decodes to
+`{itemClass, id, stackSize, attributes}`; `id` indexes the schematic's own `ItemCodes`/`BlockCodes`, no
+running game needed). An id the game doesn't register throws, as it would in-game. `npm run decode-stats`
+(`scripts/decode-stats.ts`, opt-in since it needs the gitignored game data) scans every local schematic and
+prints the throw rate, which should stay 0. `tapestryInstances.ts`/`clutterInstances.ts` skip a blob that
+fails to decode, but count it in a shared `DecodeStats` (`schematicHeader.ts`) that `index.ts` logs per step
+(`decoded N/N block entities`, plus a `WARNING` with examples if any failed; it never aborts the ingest).
+
 ## Tools (`/tools/`)
 
 Three interactive, fully client-side tools were merged in (with git history) from the user's former
@@ -505,7 +520,8 @@ standalone projects `vintage-story-schematic-preview` and `vintage-story-price-g
 
 - **`/tools/schematic/`** — `site/tools/schematic/index.njk` + `site/assets/schematicViewer.js`.
   A schematic adapter on `voxelViewer.js` (`Indices`/`BlockIds` → voxels; legend, floor slider,
-  click-to-inspect with `schematicDecode.js` decoding block-entity blobs). Upload any schematic
+  click-to-inspect with `schematicDecode.js` decoding block-entity blobs; its legend names come from
+  `generated.blockNames` (`models/blockNames.ts`, served as `/assets/blockNames.json`)). Upload any schematic
   `.json`, or pick a bundled sample from `site/tools/schematic/samples/` (copied to
   `/assets/schematics/` by an `eleventy.config.js` passthrough). Browsing the wiki's own
   `worldgen/schematics/**` in it is not done (see RESEARCH.md topic 3).

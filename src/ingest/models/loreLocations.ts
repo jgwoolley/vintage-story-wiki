@@ -17,8 +17,8 @@ import type { LoreBook, LoreFindMethod } from "./lore.js";
  *    (BetterRuins adds one per text). ("random loot")
  *
  * The block-entity values are read by regex over the *raw* decoded bytes rather than through the
- * attribute-tree parser: inventories nest item stacks whose layout the parser doesn't model, but
- * `discoveryCode`/`loreCode` are always a key followed by a length-prefixed string, which is what the
+ * attribute-tree parser: this predates the parser modelling item stacks (type 7) and was kept because
+ * it works; `discoveryCode`/`loreCode` are always a key followed by a length-prefixed string, which is what the
  * pattern below matches. (~1s over every vanilla + BetterRuins schematic.)
  */
 export function attachLoreLocations(

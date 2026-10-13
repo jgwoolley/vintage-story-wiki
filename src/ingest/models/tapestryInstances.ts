@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import type { AssetIndex, TapestryInstance, TapestryOutcome } from "../types.js";
 import type { LangResolver } from "../lang.js";
-import type { SchematicFile } from "../schematicHeader.js";
-import { readSchematicBlockCodes } from "../schematicHeader.js";
+import type { DecodeStats, SchematicFile } from "../schematicHeader.js";
+import { readSchematicBlockCodes, recordDecodeFailure } from "../schematicHeader.js";
 import { assetsUnderAnyDomain } from "../assetLoader.js";
 // Canonical decode module lives under site/assets/ (not src/ingest/) so it stays directly
 // <script>-loadable for a future browser-side schematic viewer with zero changes -- see
@@ -65,7 +65,8 @@ export function extractTapestryInstances(
   schematicsByDomain: Map<string, SchematicFile[]>,
   schematicToStructure: Map<string, Set<string>>,
   index: AssetIndex,
-  lang: LangResolver
+  lang: LangResolver,
+  stats?: DecodeStats
 ): TapestryInstance[] {
   const configs: Record<TapestryPrefix, PrefixConfig | undefined> = {
     tapestry: loadPrefixConfig(index, "tapestry"),
@@ -102,17 +103,21 @@ export function extractTapestryInstances(
     try {
       data = JSON.parse(readFileSync(fullPath, "utf8"));
     } catch {
+      if (stats) stats.unreadable++;
       continue; // malformed/unreadable -- skip rather than fail the whole ingest
     }
     const blockEntities = data.BlockEntities;
     if (!blockEntities) continue;
+    if (stats) stats.schematics++;
 
     for (const [packedIndex, blob] of Object.entries(blockEntities)) {
+      if (stats) stats.entities++;
       let decoded: { blockCode?: string; type?: string };
       try {
         decoded = decodeBlockEntity(blob);
-      } catch {
-        continue; // not every block entity is a tapestry-shaped tree -- a decode failure here just means "not relevant"
+      } catch (e) {
+        recordDecodeFailure(stats, `${schematicKey} #${packedIndex}`, e);
+        continue; // skip the one blob rather than fail the whole ingest; counted in `stats`
       }
       const blockCode = decoded.blockCode;
       const type = decoded.type;

@@ -4,10 +4,15 @@
 
 export const Ascii85: {
   decode(encoded: string): ArrayBuffer;
+  pushValue(arr: number[], value: number, padding: number): void;
 };
 
 export class TreeAttributeParser {
   constructor(buffer: ArrayBuffer);
+  offset: number;
+  readString(): string;
+  readInt(): number;
+  readAttribute(id: number): unknown;
   parse(): Record<string, unknown>;
 }
 

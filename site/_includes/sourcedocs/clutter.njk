@@ -22,3 +22,9 @@ key is shown by its raw type string and flagged.
 contain; some clutter is also scattered by <code>stackrandomizer-clutter</code>/loot mechanisms at
 world generation, which isn't visible in schematic data.</p>
 </div>
+<div class="coverage-note">
+<p><strong>Decoder.</strong> The <code>TreeAttribute</code> layouts follow the game's own
+<code>vsapi</code> source (<code>site/assets/schematicDecode.js</code>). Every block entity in the
+vanilla and BetterRuins schematics decodes without error (<code>npm run decode-stats</code>), and
+<code>npm test</code> pins each attribute type.</p>
+</div>

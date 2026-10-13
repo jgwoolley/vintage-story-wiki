@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import type { AssetSource, ModInfo, ModSummary, VsManifest } from "./types.js";
 import { loadMod, listModZips } from "./modExtractor.js";
 import { loadAssets } from "./assetLoader.js";
-import { listSchematicFiles, type SchematicFile } from "./schematicHeader.js";
+import { listSchematicFiles, newDecodeStats, type DecodeStats, type SchematicFile } from "./schematicHeader.js";
 import { collectPatches, filterPatches, applyPatches } from "./patchEngine.js";
 import { extractRecipes } from "./models/recipes.js";
 import { extractLoot } from "./models/loot.js";
@@ -49,6 +49,15 @@ function step(name: string): void {
   endStep();
   console.log(`== ${name} ==`);
   currentStep = { name, startedAt: Date.now() };
+}
+
+/** Prints how many schematic block entities an extractor decoded; warns (never aborts) on any failure. */
+function reportDecodeStats(label: string, s: DecodeStats): void {
+  console.log(`  ${label}: decoded ${s.entities - s.failures}/${s.entities} block entities in ${s.schematics} schematics`);
+  if (s.failures || s.unreadable) {
+    console.warn(`  WARNING (${label}): ${s.failures} block entities failed to decode, ${s.unreadable} schematics unreadable`);
+    for (const ex of s.examples) console.warn(`    e.g. ${ex}`);
+  }
 }
 
 function main(): void {
@@ -207,8 +216,10 @@ function main(): void {
   }
 
   step("Resolving tapestry/wallcarving instances in worldgen schematics");
-  const tapestryInstances = extractTapestryInstances(schematicsByDomain, schematicToStructure, index, lang);
+  const decodeStats = newDecodeStats();
+  const tapestryInstances = extractTapestryInstances(schematicsByDomain, schematicToStructure, index, lang, decodeStats);
   console.log(`  ${tapestryInstances.length} resolved instances`);
+  reportDecodeStats("tapestry", decodeStats);
   // Wallcarvings aren't in the decor catalog yet (no page to attach them to) -- only tapestry-*
   // instances find a match here; wallcarving-* ones are computed (same shared mechanism, nearly
   // free to support) but currently unused, ready for whenever a /wallcarvings/ page exists.
@@ -219,7 +230,9 @@ function main(): void {
   }
 
   step("Resolving clutter types (ShapeFromAttributes) in worldgen schematics");
-  const clutter = extractClutterTypes(schematicsByDomain, schematicToStructure, structures, lang);
+  const clutterDecodeStats = newDecodeStats();
+  const clutter = extractClutterTypes(schematicsByDomain, schematicToStructure, structures, lang, clutterDecodeStats);
+  reportDecodeStats("clutter", clutterDecodeStats);
   console.log(`  ${clutter.length} distinct clutter types (${clutter.filter((c) => c.missingTranslation).length} without a lang key)`);
 
   // Paintings/tapestries/clothing each get their own top-level page/nav entry rather than one

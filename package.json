@@ -10,7 +10,9 @@
     "rebuild": "tsx scripts/build-site.ts",
     "serve": "npm run ingest && eleventy --serve",
     "clean": "rm -rf .scratch _site site/_data/generated",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "decode-stats": "tsx scripts/decode-stats.ts"
   },
   "dependencies": {
     "@11ty/eleventy": "^3.0.0",

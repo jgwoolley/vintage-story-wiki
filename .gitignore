@@ -7,3 +7,5 @@ site/_data/generated
 dist
 *.log
 vssurvivalmod/
+vsapi/
+vsessentialsmod/

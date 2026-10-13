@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import type { ClutterType, NormalizedStructure } from "../types.js";
 import type { LangResolver } from "../lang.js";
-import type { SchematicFile } from "../schematicHeader.js";
-import { readSchematicBlockCodes } from "../schematicHeader.js";
+import type { DecodeStats, SchematicFile } from "../schematicHeader.js";
+import { readSchematicBlockCodes, recordDecodeFailure } from "../schematicHeader.js";
 // Same canonical (browser-loadable) decoder the tapestry model uses -- see tapestryInstances.ts.
 import { decodeBlockEntity } from "../../../site/assets/schematicDecode.js";
 
@@ -22,7 +22,8 @@ export function extractClutterTypes(
   schematicsByDomain: Map<string, SchematicFile[]>,
   schematicToStructure: Map<string, Set<string>>,
   structures: NormalizedStructure[],
-  lang: LangResolver
+  lang: LangResolver,
+  stats?: DecodeStats
 ): ClutterType[] {
   const fullPathByKey = new Map<string, string>();
   for (const [domain, files] of schematicsByDomain) {
@@ -42,18 +43,22 @@ export function extractClutterTypes(
     try {
       data = JSON.parse(readFileSync(fullPath, "utf8"));
     } catch {
+      if (stats) stats.unreadable++;
       continue;
     }
     if (!data.BlockEntities) continue;
+    if (stats) stats.schematics++;
     const domain = schematicKey.slice(0, schematicKey.indexOf(":"));
 
     // Count per type within this schematic first, then fan out to every structure using it.
     const counts = new Map<string, { blockCode: string; count: number }>();
-    for (const blob of Object.values(data.BlockEntities)) {
+    for (const [packedIndex, blob] of Object.entries(data.BlockEntities)) {
+      if (stats) stats.entities++;
       let decoded: { blockCode?: string; type?: string };
       try {
         decoded = decodeBlockEntity(blob);
-      } catch {
+      } catch (e) {
+        recordDecodeFailure(stats, `${schematicKey} #${packedIndex}`, e);
         continue;
       }
       if (!decoded.blockCode || typeof decoded.type !== "string" || !decoded.type) continue;

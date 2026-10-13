@@ -2,8 +2,6 @@
 
 ## In Progress
 
-- Can you make weapon durability
-
 # Phase
 
 Can you make sure that documentation hasn't driffted, like source documents + such?

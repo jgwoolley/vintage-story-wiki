@@ -295,6 +295,12 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   separate process invocations (separate CI workflow steps, possibly minutes apart), so
   `downloadTiming.json`/`ingestTiming.json`/`eleventyBuildTiming.json` (see `src/ingest/types.ts`)
   are the only thing that survives between them.
+- **Tests: `npm test`** (`node:test` via `tsx --test test/*.test.ts`, run in CI after `npm ci`). Today
+  it only covers `site/assets/schematicDecode.js`. `schematicDecode.js` follows vsapi's real
+  `*Attribute.cs` `FromBytes` layouts (the old port had type 7/8/10/12+ wrong, misdecoding ~half of all
+  block entities); `npm run decode-stats` scans the local corpus and should report 0 throws. The ingest
+  callers skip a failed blob but count it (`DecodeStats`); watch the ingest log for `WARNING (tapestry|clutter)`.
+  Build test blobs by hand, don't commit game schematics. Keep `README.md`'s Testing section in sync.
 - **Git is read-only for Claude.** Read operations (`git status`, `log`, `diff`, `show`, `blame`,
   ...) are fine. Never run anything that writes to the repo's git state: no `commit`, `add`,
   `stash`, `checkout`/`switch`, `reset`, `restore`, `rebase`, `merge`, `branch`, `tag`, `push`, and so on.

@@ -7,6 +7,34 @@ export interface SchematicFile {
   fullPath: string;
 }
 
+/**
+ * Tally of block-entity decode outcomes, filled in by the extractors that decode schematic blobs
+ * (`tapestryInstances.ts`, `clutterInstances.ts`) and reported by `index.ts`. They skip a blob that
+ * fails to decode rather than abort the ingest, so without this a decoder regression would be silent.
+ */
+export interface DecodeStats {
+  /** Schematic files whose BlockEntities were read (passed the cheap block-code pre-filter). */
+  schematics: number;
+  /** Schematic files that could not be read or JSON-parsed at all. */
+  unreadable: number;
+  /** Block entity blobs attempted. */
+  entities: number;
+  /** Blobs whose decode threw. */
+  failures: number;
+  /** Up to 3 "<schematic path> #<packed index>: <message>" examples, for the log. */
+  examples: string[];
+}
+
+export function newDecodeStats(): DecodeStats {
+  return { schematics: 0, unreadable: 0, entities: 0, failures: 0, examples: [] };
+}
+
+export function recordDecodeFailure(stats: DecodeStats | undefined, where: string, e: unknown): void {
+  if (!stats) return;
+  stats.failures++;
+  if (stats.examples.length < 3) stats.examples.push(`${where}: ${(e as Error).message}`);
+}
+
 /** Lists schematic files (paths only, no parsing) so glob matching doesn't require loading voxel data. */
 export function listSchematicFiles(domain: string, domainRootDir: string): SchematicFile[] {
   const base = join(domainRootDir, "worldgen", "schematics");
