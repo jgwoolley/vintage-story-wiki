@@ -366,7 +366,7 @@ Info page for the visitor-facing version of that caveat.
     the 2D view is all that shows.
   - `site/assets/voxelViewer.js` is the **generic renderer core** (`createVoxelViewer(container,
     {voxels})` → `setStyle`/`pick`/`resetView`/`dispose`). It knows nothing about recipes and is
-    meant to be reused by the planned schematic viewer (RESEARCH.md topic 3). It uses one
+    reused by the schematic viewer (`site/assets/schematicViewer.js`, see "Tools" below). It uses one
     `InstancedMesh` per opacity with per-instance colors and renders on demand only.
     `site/assets/recipeVoxels.js` is the recipe-specific adapter: `pattern[layer][row][col]` →
     `y = layer` (Layer 1 at the bottom), `z = row`, `x = col`.
@@ -441,7 +441,10 @@ Info page for the visitor-facing version of that caveat.
   `eleventyBuildTiming.json`. These are three separate process invocations (in CI, three separate
   workflow steps, possibly minutes apart), so each is written to disk rather than held in memory —
   see the matching `DownloadTiming`/`IngestTiming`/`EleventyBuildTiming` interfaces in
-  `src/ingest/types.ts`. `downloadTiming.json` also records a per-mod `"downloaded" |
+  `src/ingest/types.ts`. Each phase also breaks down per step: ingest records one duration per
+  `step("...")` section (`ingestTiming.steps`), download records a duration for the server install and
+  each mod; both are shown as tables on the build page. (`npm run rebuild` re-runs only the Eleventy
+  build, reusing the existing generated data.) `downloadTiming.json` also records a per-mod `"downloaded" |
   "skipped-present" | "failed"` outcome and an overall `anyDownloaded` flag, since a cache-hit
   download run (the common case in CI) legitimately finishes in a couple of seconds — the flag is
   what distinguishes that from something being silently broken.
@@ -455,18 +458,32 @@ Info page for the visitor-facing version of that caveat.
   stale** (it describes the *previous* successful build, not the one currently rendering that
   page) — the page labels it that way explicitly rather than presenting it as live.
 
-## Coming soon (`/tools/`)
+## Tools (`/tools/`)
 
-One page is an intentionally empty stub, explaining in-page what's planned and exactly
+Three interactive, fully client-side tools were merged in (with git history) from the user's former
+standalone projects `vintage-story-schematic-preview` and `vintage-story-price-guide`:
+
+- **`/tools/schematic/`** — `site/tools/schematic/index.njk` + `site/assets/schematicViewer.js`.
+  A schematic adapter on `voxelViewer.js` (`Indices`/`BlockIds` → voxels; legend, floor slider,
+  click-to-inspect with `schematicDecode.js` decoding block-entity blobs). Upload any schematic
+  `.json`, or pick a bundled sample from `site/tools/schematic/samples/` (copied to
+  `/assets/schematics/` by an `eleventy.config.js` passthrough). Browsing the wiki's own
+  `worldgen/schematics/**` in it is not done (see RESEARCH.md topic 3).
+- **`/tools/waypoints/`** — `waypoints.js` (pure logic: distance, Dijkstra route, import/export
+  validation), `waypointMap.js` (SVG map), `waypointsPage.js` (DOM wiring); state lives in
+  `localStorage`. This replaces the price guide's React/MUI/Cytoscape implementation with no
+  library dependency.
+- **`/tools/calendar/`** — `calendar.js`, a small game-date → elapsed days / real hours converter.
+
+The price guide's Next.js trades page was *not* ported: `/trades/` (`models/trades.ts`) supersedes it.
+
+One page is still an intentionally empty stub, explaining in-page what's planned and exactly
 where the underlying game data already lives, rather than silently having no page at all
 (`/guides/` and `/trades/` were in this category once but are both now fully implemented —
 `/trades/` has its own section above; `/guides/` is `models/guides.ts`, sourced from
 `config/handbook/00-starterguide.json` through `19-stonelayers.json`):
 
-- **`/tools/`** — interactive tools beyond the generated reference pages: a schematic
-  viewer/uploader (likely adapting
-  [jgwoolley/vintage-story-schematic-preview](https://github.com/jgwoolley/vintage-story-schematic-preview)),
-  and a proper painting/tapestry-in-ruins lookup evaluated directly against
+- **`/tools/`** — the remaining planned tools: a proper painting/tapestry-in-ruins lookup evaluated directly against
   `worldgen/storystructures.json`/`structures.json` (see the "Decor catalog" caveat above).
 
 ## Why not run the game engine directly?

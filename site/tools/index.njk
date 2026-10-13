@@ -17,13 +17,27 @@ permalink: "{{ lang }}/tools/index.html"
   <a href="{{ ('/' ~ lang ~ '/') | url }}trades/">Open the trades page &rarr;</a>
 </p>
 
-<h2 id="schematic-vieweruploader">Schematic viewer/uploader</h2>
-<p class="wip-badge">Work in progress</p>
+<h2 id="schematic-vieweruploader">Schematic viewer</h2>
 <p>
-  Upload a <code>.json</code> schematic file and view it rendered in the browser, and (longer
-  term) browse this wiki's own structure schematics the same way instead of just dimensions/block
-  counts. Likely needs adapting code from
+  Upload a <code>.json</code> schematic (or open a bundled sample) and inspect it in 3D: block
+  legend with show/hide, a floor-by-floor slider, and click-to-inspect with decoded block-entity
+  data. Merged in from
   <a href="https://github.com/jgwoolley/vintage-story-schematic-preview">jgwoolley/vintage-story-schematic-preview</a>.
+  Browsing this wiki's own structure schematics in the viewer is still a planned follow-up.
+  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/">Open the schematic viewer &rarr;</a>
+</p>
+
+<h2 id="waypoint-planner">WayPoint planner</h2>
+<p>
+  Track waypoints and translocator links on a map and find the cheapest route between any two.
+  Ported from the vintage-story-price-guide project.
+  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/waypoints/">Open the WayPoint planner &rarr;</a>
+</p>
+
+<h2 id="calendar">Calendar</h2>
+<p>
+  Convert an in-game date into elapsed game days and real-life hours.
+  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/calendar/">Open the calendar &rarr;</a>
 </p>
 
 <h2 id="paintingtapestry-in-ruins-lookup">Painting/tapestry-in-ruins lookup</h2>
@@ -39,6 +53,17 @@ permalink: "{{ lang }}/tools/index.html"
   directly from each schematic's block-entity data); a proper lookup for paintings would need the
   same per-instance decoding, evaluated against <code>worldgen/storystructures.json</code> and
   <code>worldgen/structures.json</code> directly.
+</p>
+
+<h2 id="chiseled-block-viewer">Chiseled block viewer</h2>
+<p class="wip-badge">Work in progress</p>
+<p>
+  A viewer like the <a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/">schematic viewer</a>,
+  but for chiseled blocks &mdash; the sub-block (1/16th) shapes made with the chisel. Their shape
+  is stored as block-entity data inside schematics (the same Ascii85/TreeAttribute blobs the
+  schematic viewer already decodes), so the plan is to render those in 3D from the wiki's own
+  schematics or an uploaded file, and ideally also cover qptech's chisel mod. See the
+  <a href="{{ ('/' ~ lang ~ '/') | url }}research/">research page</a> for what still needs to be worked out.
 </p>
 
 <h2 id="alloy-ratio-calculator">Alloy ratio calculator</h2>

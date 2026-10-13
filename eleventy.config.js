@@ -1,4 +1,5 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { execSync, execFileSync } from "node:child_process";
 import MarkdownIt from "markdown-it";
 
@@ -156,8 +157,9 @@ export default function (eleventyConfig) {
   });
 
   // Turns a wildcard/placeholder ingredient code (e.g. "leather-normal-*", "plank-{wood}") into a
-  // plain substring usable as an /items/ search query, by dropping the "*"/"{...}" parts.
-  eleventyConfig.addFilter("wildcardQuery", (code) => String(code ?? "").replace(/\{[^}]*\}/g, "").replace(/\*/g, ""));
+  // search query for /items/: "*" is kept and "{...}" placeholders become "*", since datatable.js
+  // treats "*" in a query as a glob ("jug-*-fired" must match "jug-blue-fired").
+  eleventyConfig.addFilter("wildcardQuery", (code) => String(code ?? "").replace(/\{[^}]*\}/g, "*"));
 
   // A recipe ingredient's tag-based slot (e.g. `tags: ["tool-hammer"]`) shows this instead of the
   // raw tag string, e.g. "tool-hammer" -> "hammer (tool)" -- the raw tag itself is still what's
@@ -267,6 +269,25 @@ export default function (eleventyConfig) {
     "node_modules/three/build/three.core.min.js": "assets/vendor/three/three.core.min.js",
     "node_modules/three/examples/jsm/controls/OrbitControls.js": "assets/vendor/three/addons/OrbitControls.js",
     "node_modules/three/LICENSE": "assets/vendor/three/LICENSE",
+    // Sample schematics for the schematic viewer (fetched client-side by assets/schematicViewer.js).
+    "site/tools/schematic/samples": "assets/schematics",
+  });
+
+  // sitemap.xml: written after the build from the real list of output pages. (A Nunjucks template
+  // over `collections.all` only saw ~40 of the ~12,900 pages -- paginated pages aren't all in it.)
+  // Needs SITE_URL (an absolute origin); without it (local builds) no sitemap is written.
+  eleventyConfig.on("eleventy.after", ({ dir, results }) => {
+    const origin = process.env.SITE_URL;
+    if (!origin) return;
+    const prefix = (process.env.PATH_PREFIX || "/").replace(/\/?$/, "/");
+    const urls = results
+      .map((r) => r.url)
+      .filter((u) => u && u.endsWith("/") && u.startsWith(`/${process.env.LANG_PREFIX || "en"}/`))
+      .map((u) => `  <url><loc>${origin}${prefix.replace(/\/$/, "")}${u}</loc></url>`);
+    writeFileSync(
+      join(dir.output, "sitemap.xml"),
+      `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`,
+    );
   });
 
   return {

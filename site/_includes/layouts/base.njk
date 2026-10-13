@@ -8,8 +8,11 @@ description: A statically-generated wiki of Vintage Story crafting recipes, drop
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ title or "Vintage Story Wiki" }}</title>
   <meta name="description" content="{{ description }}">
-  <meta name="theme-color" content="#8a5a2b">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#128214;</text></svg>">
+  <meta name="theme-color" content="#16130f">
+  <link rel="icon" type="image/svg+xml" href="{{ '/' | url }}assets/icon.svg">
+  <link rel="apple-touch-icon" href="{{ '/' | url }}assets/apple-touch-icon.png">
+  <link rel="manifest" href="{{ '/' | url }}manifest.webmanifest">
+  {% if siteUrl %}<link rel="canonical" href="{{ siteUrl }}{{ page.url | url }}">{% endif %}
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Vintage Story Wiki">
@@ -18,18 +21,22 @@ description: A statically-generated wiki of Vintage Story crafting recipes, drop
   <meta property="og:image" content="{{ siteUrl }}{{ '/' | url }}assets/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Vintage Story Wiki: recipes, drops, structures, decor and lore generated from the game's own data">
+  <meta property="og:locale" content="{{ lang }}">
   {% if siteUrl %}<meta property="og:url" content="{{ siteUrl }}{{ page.url | url }}">{% endif %}
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{{ title or 'Vintage Story Wiki' }}">
   <meta name="twitter:description" content="{{ description }}">
   <meta name="twitter:image" content="{{ siteUrl }}{{ '/' | url }}assets/og-image.png">
+  <meta name="twitter:image:alt" content="Vintage Story Wiki: recipes, drops, structures, decor and lore generated from the game's own data">
+  {% if siteUrl and page.url == ('/' ~ lang ~ '/') | url %}<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Vintage Story Wiki","url":"{{ siteUrl }}{{ page.url | url }}","description":"{{ description }}","inLanguage":"{{ lang }}"}</script>{% endif %}
 
-  <link rel="stylesheet" href="{{ '/' | url }}assets/style.css">
-  <script src="{{ '/' | url }}assets/datatable.js" defer></script>
-  <script src="{{ '/' | url }}assets/build-time.js" defer></script>
-  <script src="{{ '/' | url }}assets/nav.js" defer></script>
-  <script src="{{ '/' | url }}assets/layers.js" defer></script>
+  <link rel="stylesheet" href="{{ '/' | url }}assets/style.css?v={{ buildInfo.utcIso }}">
+  <script src="{{ '/' | url }}assets/datatable.js?v={{ buildInfo.utcIso }}" defer></script>
+  <script src="{{ '/' | url }}assets/build-time.js?v={{ buildInfo.utcIso }}" defer></script>
+  <script src="{{ '/' | url }}assets/nav.js?v={{ buildInfo.utcIso }}" defer></script>
+  <script src="{{ '/' | url }}assets/layers.js?v={{ buildInfo.utcIso }}" defer></script>
   {#- Bare-specifier mapping for the vendored Three.js (see eleventy.config.js passthrough). Costs
       nothing on pages that never import it; must precede any <script type="module">. -#}
   <script type="importmap">
@@ -41,7 +48,7 @@ description: A statically-generated wiki of Vintage Story crafting recipes, drop
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="{{ ('/' ~ lang ~ '/') | url }}">Vintage Story Wiki</a>
+    <a class="brand" href="{{ ('/' ~ lang ~ '/') | url }}"><img src="{{ '/' | url }}assets/icon.svg" alt="" class="app-icon">Vintage Story Wiki</a>
     <nav>
       <a href="{{ ('/' ~ lang ~ '/') | url }}items/">Items</a>
       <a href="{{ ('/' ~ lang ~ '/') | url }}recipes/">Recipes</a>
@@ -50,14 +57,26 @@ description: A statically-generated wiki of Vintage Story crafting recipes, drop
       <button type="button" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Tools</button>
       <div class="nav-dropdown-panel" hidden>
         <a href="{{ ('/' ~ lang ~ '/') | url }}trades/">Trades price guide</a>
-        <a href="{{ ('/' ~ lang ~ '/') | url }}tools/#schematic-vieweruploader">Schematic viewer/uploader <span class="wip-badge">WIP</span></a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/">Schematic viewer</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}tools/waypoints/">WayPoint planner</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}tools/calendar/">Calendar</a>
         <a href="{{ ('/' ~ lang ~ '/') | url }}tools/#paintingtapestry-in-ruins-lookup">Painting/tapestry lookup <span class="wip-badge">WIP</span></a>
         <a href="{{ ('/' ~ lang ~ '/') | url }}tools/#alloy-ratio-calculator">Alloy ratio calculator <span class="wip-badge">WIP</span></a>
         <a href="{{ ('/' ~ lang ~ '/') | url }}tools/#worldgen-seedbiome-lookup">World seed/biome lookup <span class="wip-badge">WIP</span></a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}nf3t/">Other NF3t tools</a>
         <a href="{{ ('/' ~ lang ~ '/') | url }}tools/">All tools &rarr;</a>
       </div>
     </div>
-    <a class="nav-info" href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a>
+    <div class="nav-dropdown nav-info">
+      <button type="button" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">More</button>
+      <div class="nav-dropdown-panel nav-dropdown-panel-right" hidden>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}info/">About this wiki</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}research/">Research</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}build/">Build information</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">Mods</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}nf3t/">NF3t tools</a>
+      </div>
+    </div>
   </header>
   <main class="content">
     {{ content | safe }}

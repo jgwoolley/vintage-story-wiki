@@ -2,12 +2,17 @@
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#2b1f14"/>
-      <stop offset="100%" stop-color="#1b1812"/>
+      <stop offset="100%" stop-color="#16130f"/>
     </linearGradient>
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
-  <text x="100" y="260" font-family="Georgia, 'Segoe UI', serif" font-size="110" fill="#ece6d8">📖</text>
-  <text x="100" y="360" font-family="'Segoe UI', system-ui, sans-serif" font-size="72" font-weight="700" fill="#ece6d8">Vintage Story Wiki</text>
-  <text x="100" y="420" font-family="'Segoe UI', system-ui, sans-serif" font-size="34" fill="#d08f4e">Recipes &#8226; Drops &#8226; Structures &#8226; Decor &#8226; Lore</text>
-  <text x="100" y="470" font-family="'Segoe UI', system-ui, sans-serif" font-size="26" fill="#a69a82">Generated directly from the game's own data</text>
+  <g transform="translate(90 170) scale(0.5)">
+  <rect width="512" height="512" rx="96" fill="#16130f"/>
+  <rect x="16" y="16" width="480" height="480" rx="84" fill="none" stroke="#3a3226" stroke-width="8"/>
+  <path fill="#c99a44" fill-rule="evenodd" d="M217.9 102.7 L227.8 58.0 L284.2 58.0 L294.1 102.7 L337.5 120.6 L376.1 96.1 L415.9 135.9 L391.4 174.5 L409.3 217.9 L454.0 227.8 L454.0 284.2 L409.3 294.1 L391.4 337.5 L415.9 376.1 L376.1 415.9 L337.5 391.4 L294.1 409.3 L284.2 454.0 L227.8 454.0 L217.9 409.3 L174.5 391.4 L135.9 415.9 L96.1 376.1 L120.6 337.5 L102.7 294.1 L58.0 284.2 L58.0 227.8 L102.7 217.9 L120.6 174.5 L96.1 135.9 L135.9 96.1 L174.5 120.6 Z M318 256 a62 62 0 1 0 -124 0 a62 62 0 1 0 124 0 Z"/>
+</g>
+  <text x="390" y="290" font-family="'Segoe UI', system-ui, sans-serif" font-size="64" font-weight="700" fill="#ece6d8">Vintage Story Wiki</text>
+  <text x="390" y="360" font-family="'Segoe UI', system-ui, sans-serif" font-size="30" fill="#c99a44">Recipes &#8226; Drops &#8226; Structures &#8226; Decor &#8226; Lore</text>
+  <text x="390" y="410" font-family="'Segoe UI', system-ui, sans-serif" font-size="26" fill="#a69a82">Generated directly from the game's own data</text>
+  <text x="390" y="455" font-family="'Segoe UI', system-ui, sans-serif" font-size="26" fill="#a69a82">Plus a 3D schematic viewer and waypoint planner</text>
 </svg>

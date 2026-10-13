@@ -6,7 +6,7 @@ permalink: "{{ lang }}/index.html"
 <h1>Vintage Story Wiki</h1>
 <p>
   A statically-generated reference for Vintage Story, built directly from the game's own asset
-  data for the installed mod set rather than hand-maintained &mdash; see the
+  data for a <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">selected list of mods</a> rather than hand-maintained &mdash; see the
   <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a> page for how it works and what that
   means for coverage.
 </p>
@@ -14,12 +14,12 @@ permalink: "{{ lang }}/index.html"
 <h2>Crafting</h2>
 <div class="grid-list">
   <a href="{{ ('/' ~ lang ~ '/') | url }}items/">
-    <strong>Items &amp; Blocks</strong>
+    <strong><span class="card-icon" aria-hidden="true">🧱</span> Items &amp; Blocks</strong>
     <span class="muted">What produces, uses, or drops each item or block.</span>
     <span class="muted">{{ generated.items.length }} entries</span>
   </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}recipes/">
-    <strong>Recipes</strong>
+    <strong><span class="card-icon" aria-hidden="true">📜</span> Recipes</strong>
     <span class="muted">Every crafting, smithing, cooking, and alloy recipe.</span>
     <span class="muted">{{ generated.recipes.length }} entries</span>
   </a>
@@ -28,32 +28,32 @@ permalink: "{{ lang }}/index.html"
 <h2>Creatures &amp; World</h2>
 <div class="grid-list">
   <a href="{{ ('/' ~ lang ~ '/') | url }}creatures/">
-    <strong>Creatures</strong>
+    <strong><span class="card-icon" aria-hidden="true">🐺</span> Creatures</strong>
     <span class="muted">Health, drops, and the conditions each creature needs to spawn.</span>
     <span class="muted">{{ generated.creatures.length }} entries</span>
   </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}structures/">
-    <strong>Structures</strong>
+    <strong><span class="card-icon" aria-hidden="true">🏰</span> Structures</strong>
     <span class="muted">Generated ruins, villages, and story structures, and where they spawn.</span>
     <span class="muted">{{ generated.structures.length }} entries</span>
   </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}deposits/">
-    <strong>Deposits</strong>
+    <strong><span class="card-icon" aria-hidden="true">⛏️</span> Deposits</strong>
     <span class="muted">Which rock hosts which ore/gem, and at what depth.</span>
     <span class="muted">{{ generated.deposits.length }} entries</span>
   </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}crops/">
-    <strong>Crops</strong>
+    <strong><span class="card-icon" aria-hidden="true">🌾</span> Crops</strong>
     <span class="muted">Wild crops, flowers, mushrooms, and the climate each needs.</span>
     <span class="muted">{{ generated.blockPatches.length }} entries</span>
   </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}trees/">
-    <strong>Trees</strong>
+    <strong><span class="card-icon" aria-hidden="true">🌲</span> Trees</strong>
     <span class="muted">Tree/shrub species, by climate band.</span>
     <span class="muted">{{ generated.trees.length }} species</span>
   </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}fruit-trees/">
-    <strong>Fruit Trees</strong>
+    <strong><span class="card-icon" aria-hidden="true">🍎</span> Fruit Trees</strong>
     <span class="muted">Fruit tree varieties, a separate worldgen system from regular trees.</span>
     <span class="muted">{{ generated.fruitTrees.length }} varieties</span>
   </a>
@@ -62,36 +62,36 @@ permalink: "{{ lang }}/index.html"
 <h2>Decor &amp; Lore</h2>
 <div class="grid-list">
   <a href="{{ ('/' ~ lang ~ '/') | url }}paintings/">
-    <strong>Paintings</strong>
+    <strong><span class="card-icon" aria-hidden="true">🖼️</span> Paintings</strong>
     <span class="muted">Placed decorative art, and which structures contain them.</span>
     <span class="muted">{{ generated.paintings.length }} entries</span>
   </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}tapestries/">
-    <strong>Tapestries</strong>
+    <strong><span class="card-icon" aria-hidden="true">🧵</span> Tapestries</strong>
     <span class="muted">Every possible tapestry a structure could show, per structure, decoded from schematic data.</span>
   </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}clothing/">
-    <strong>Clothing</strong>
+    <strong><span class="card-icon" aria-hidden="true">👕</span> Clothing</strong>
     <span class="muted">Cosmetic wearables and their flavor text.</span>
     <span class="muted">{{ generated.clothing.length }} entries</span>
   </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}lore/">
-    <strong>Books &amp; Lore</strong>
+    <strong><span class="card-icon" aria-hidden="true">📖</span> Books &amp; Lore</strong>
     <span class="muted">The full readable text of every in-game book and journal.</span>
     <span class="muted">{{ generated.lore.length }} entries</span>
   </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}guides/">
-    <strong>Help Guides</strong>
+    <strong><span class="card-icon" aria-hidden="true">💡</span> Help Guides</strong>
     <span class="muted">The game's own in-game handbook articles.</span>
     <span class="muted">{{ generated.guides.length }} entries</span>
   </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}trades/">
-    <strong>Trades</strong>
+    <strong><span class="card-icon" aria-hidden="true">⚖️</span> Trades</strong>
     <span class="muted">What wandering traders buy and sell, per specialization.</span>
     <span class="muted">{{ generated.trades.length }} entries</span>
   </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}classes/">
-    <strong>Classes</strong>
+    <strong><span class="card-icon" aria-hidden="true">🛡️</span> Classes</strong>
     <span class="muted">Starting character classes, their fixed traits, and starting gear.</span>
     <span class="muted">{{ generated.classes.length }} entries</span>
   </a>
@@ -101,40 +101,56 @@ permalink: "{{ lang }}/index.html"
 <p class="muted">Interactive tools beyond the generated reference pages -- some built, some still planned. See <a href="{{ ('/' ~ lang ~ '/') | url }}tools/">the tools page</a> for full descriptions.</p>
 <div class="grid-list">
   <a href="{{ ('/' ~ lang ~ '/') | url }}trades/">
-    <strong>Trades price guide</strong>
+    <strong><span class="card-icon" aria-hidden="true">🪙</span> Trades price guide</strong>
     <span class="muted">Every trader's buy/sell listings, flattened into one sortable table.</span>
   </a>
-  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/#schematic-vieweruploader">
-    <strong>Schematic viewer/uploader <span class="wip-badge">WIP</span></strong>
-    <span class="muted">Upload and view a .json schematic file in the browser.</span>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/">
+    <strong><span class="card-icon" aria-hidden="true">🧊</span> Schematic viewer</strong>
+    <span class="muted">Upload and view a .json schematic file in 3D in the browser.</span>
+  </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/waypoints/">
+    <strong><span class="card-icon" aria-hidden="true">🧭</span> WayPoint planner</strong>
+    <span class="muted">Map your waypoints and translocators, and find the cheapest route.</span>
+  </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/calendar/">
+    <strong><span class="card-icon" aria-hidden="true">📅</span> Calendar</strong>
+    <span class="muted">Convert an in-game date to elapsed game days and real-life hours.</span>
   </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}tools/#paintingtapestry-in-ruins-lookup">
-    <strong>Painting/tapestry-in-ruins lookup <span class="wip-badge">WIP</span></strong>
+    <strong><span class="card-icon" aria-hidden="true">🔍</span> Painting/tapestry-in-ruins lookup <span class="wip-badge">WIP</span></strong>
     <span class="muted">Which specific ruin variants place a given painting or tapestry.</span>
   </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}tools/#alloy-ratio-calculator">
-    <strong>Alloy ratio calculator <span class="wip-badge">WIP</span></strong>
+    <strong><span class="card-icon" aria-hidden="true">🧪</span> Alloy ratio calculator <span class="wip-badge">WIP</span></strong>
     <span class="muted">Max crucible bits for a target alloy ratio, given item-stack limits.</span>
   </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}tools/#worldgen-seedbiome-lookup">
-    <strong>World seed/biome lookup <span class="wip-badge">WIP</span></strong>
+    <strong><span class="card-icon" aria-hidden="true">🌍</span> World seed/biome lookup <span class="wip-badge">WIP</span></strong>
     <span class="muted">Plug in a seed + worldgen settings, get the biome/temperature/rain there.</span>
   </a>
 </div>
 
-<h2>Reference</h2>
+<h2>More</h2>
 <div class="grid-list">
   <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">
-    <strong>Mods</strong>
+    <strong><span class="card-icon" aria-hidden="true">🧩</span> Mods</strong>
     <span class="muted">Which mods, beyond vanilla, this build includes.</span>
     <span class="muted">{{ generated.mods.length }} installed</span>
   </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}research/">
+    <strong><span class="card-icon" aria-hidden="true">🔬</span> Research</strong>
+    <span class="muted">Investigation notes for features being considered or in progress.</span>
+  </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}nf3t/">
+    <strong><span class="card-icon" aria-hidden="true">🧰</span> NF3t tools</strong>
+    <span class="muted">Other browser-based tools by the same author: NF2T, Schedule I and Valheim.</span>
+  </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}info/">
-    <strong>Info</strong>
+    <strong><span class="card-icon" aria-hidden="true">ℹ️</span> Info</strong>
     <span class="muted">Why this wiki exists, and how to use it.</span>
   </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}sources/">
-    <strong>Sources</strong>
+    <strong><span class="card-icon" aria-hidden="true">📂</span> Sources</strong>
     <span class="muted">Exactly which raw game files feed each page, and how.</span>
   </a>
 </div>

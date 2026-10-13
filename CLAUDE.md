@@ -164,6 +164,8 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   click-to-sort automatically (numeric-aware, 3-state: asc/desc/unsorted) — no per-column opt-in
   needed, it's driven by the rendered `<td>` text, not sync'd to the URL (unlike the filters).
   Follow this pattern for any new listing page rather than inventing a new table/filter shape.
+- **`wildcardQuery` keeps `*`** (and turns `{...}` into `*`), and `datatable.js` treats a `*` in a
+  search query as a glob — stripping it gave `jug--fired`, which matched nothing. Don't strip wildcards again.
 - **Wildcard codes are clickable everywhere**: a code like `tallgrass-*` or `leather-normal-*`
   should link to `/<lang>/items/?q=<code | wildcardQuery | urlencode>` (see `wildcardQuery` filter
   in `eleventy.config.js` — strips `*`/`{...}` down to a literal prefix the datatable's substring
@@ -191,13 +193,15 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
 - **Every field in `src/ingest/types.ts` is documented** (inline `//` or leading `/** */` per
   interface) — keep this true for any new/changed field. This is the single source of truth for
   what each generated JSON shape actually means; don't let it drift into "self-explanatory" silence.
-- **WIP stub page pattern**: `/tools/` is the one remaining empty placeholder page for content not
-  extracted yet — a `.wip-badge`-styled note plus prose saying exactly which raw game files the
-  real implementation would read (see `site/tools/index.njk` for the pattern: explain what's
-  planned and where the data already lives, don't just say "coming soon"). `/guides/` and
-  `/trades/` *used* to be stubs but are now fully implemented (`models/guides.ts`,
-  `models/trades.ts`) — don't assume this list is still accurate without checking `site/<dir>/`
-  for a real `.njk` detail page first.
+- **WIP stub page pattern**: `/tools/` still carries WIP sections (painting lookup, alloy calculator,
+  seed/biome lookup) for content not built yet — a `.wip-badge`-styled note plus prose saying exactly
+  which raw game files the real implementation would read (see `site/tools/index.njk`: explain what's
+  planned and where the data already lives, don't just say "coming soon"). The schematic viewer,
+  WayPoint planner and Calendar under `/tools/` are real pages, merged from the user's former
+  `vintage-story-schematic-preview` / `vintage-story-price-guide` projects; their pure-client JS is in
+  `site/assets/` (`schematicViewer.js`, `waypoints*.js`, `calendar.js`). The price guide's trades page was
+  deliberately not ported (`/trades/` supersedes it). `/guides/` and `/trades/` *used* to be stubs but are
+  now fully implemented — don't assume this list is still accurate without checking `site/<dir>/`.
 - **"Source" documentation pages (`/<lang>/sources/<id>/`)**: every top-level listing has a
   matching entry in `site/_data/pipelineSources.json` (globs + model file paths) and a prose
   partial at `site/_includes/sourcedocs/<id>.njk`, rendered through one shared pagination
@@ -234,10 +238,9 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
 - **3D voxel rendering has one shared core, `site/assets/voxelViewer.js`** (Three.js, vendored
   from `node_modules` via `eleventy.config.js` passthrough + the importmap in `base.njk`, never a
   CDN). It's generic: callers pass `{x,y,z,color}` voxels and restyle via `setStyle(fn)`.
-  `recipeVoxels.js` is the recipe adapter. When the schematic viewer from the user's separate
-  `vintage-story-schematic-preview` project gets merged in, write a schematic adapter (decoded
+  `recipeVoxels.js` is the recipe adapter. The schematic viewer (`schematicViewer.js`) is the schematic adapter (decoded
   `Indices`/`BlockIds` → voxels, packed index `x = i & 0x3FF, z = (i >> 10) & 0x3FF, y = (i >> 20) & 0x3FF`)
-  on top of this core. Don't port that project's own one-`Mesh`-per-block Three.js r136 renderer
+  on this core. Don't reintroduce the old project's one-`Mesh`-per-block Three.js r136 renderer
   as a second 3D code path. Smithing patterns are NOT always 1 layer (22 of 48 have 2–5); don't
   special-case by category, branch on `pattern.length`.
 - **Recipe voxel-pattern layers (smithing/clayforming/knapping) show one layer at a time**,

@@ -193,7 +193,9 @@ async function main(): Promise<void> {
   const startedAt = Date.now();
   const opts = parseArgs(process.argv.slice(2));
 
+  const serverStartedAt = Date.now();
   const serverAction = await installServer(opts);
+  const serverDurationMs = Date.now() - serverStartedAt;
   const modActions: ModDownloadResult[] = [];
   for (const spec of opts.mods) {
     const modid = spec.includes(":") ? spec.split(":")[0] : spec;
@@ -201,6 +203,7 @@ async function main(): Promise<void> {
     // run or leave no timing data behind -- record it as "failed" (same as installMod's own
     // handled not-found case) and keep going with the rest of the manifest.
     let action: DownloadAction;
+    const modStartedAt = Date.now();
     try {
       action = await installMod(spec, opts);
     } catch (err) {
@@ -208,13 +211,14 @@ async function main(): Promise<void> {
       process.exitCode = 1;
       action = "failed";
     }
-    modActions.push({ modid, action });
+    modActions.push({ modid, action, durationMs: Date.now() - modStartedAt });
   }
 
   const timing: DownloadTiming = {
     durationMs: Date.now() - startedAt,
     finishedAtIso: new Date().toISOString(),
     serverAction,
+    serverDurationMs,
     modActions,
     anyDownloaded: serverAction === "downloaded" || modActions.some((m) => m.action === "downloaded"),
   };

@@ -29,8 +29,8 @@ actually in those files, nothing more.
 - **Help Guides** — the game's own in-game handbook articles.
 - **Trades** — every wandering trader's buy/sell listings, in one sortable table.
 - **Classes** — starting character classes, their fixed traits, and starting gear.
-- **Tools** — a couple of small interactive tools, plus a few more planned ones described on that
-  page.
+- **Tools** — small interactive tools: a 3D schematic viewer (upload your own), a WayPoint route
+  planner, and a game-calendar converter, plus a few more planned ones described on that page.
 - **Sources** — exactly which raw game files feed each page above, and how, for anyone curious
   past "trust me."
 - **Research** — investigation notes for features being considered but not yet built. Nothing on
