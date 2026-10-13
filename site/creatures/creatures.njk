@@ -102,13 +102,16 @@ eleventyComputed:
 {% endif %}
 {% if npcDialogue.rewards.length %}
 <h3>Can give as a reward ({{ npcDialogue.rewards.length }})</h3>
-<ul>
+<table>
+  <thead><tr><th>Item</th><th>Stack size</th></tr></thead>
+  <tbody>
 {% for reward in npcDialogue.rewards %}
-  <li>
-    <a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ reward.domain }}/{{ reward.code | slugify }}/">{{ generated.items | displayName(reward.domain, reward.code) }}</a>
-    {% if reward.stacksize %}&times;{{ reward.stacksize }}{% endif %}
-  </li>
+  <tr>
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ reward.domain }}/{{ reward.code | slugify }}/">{{ generated.items | displayName(reward.domain, reward.code) }}</a></td>
+    <td>{% if reward.stacksize %}&times;{{ reward.stacksize }}{% endif %}</td>
+  </tr>
 {% endfor %}
-</ul>
+  </tbody>
+</table>
 {% endif %}
 {% endif %}

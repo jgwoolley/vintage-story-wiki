@@ -43,8 +43,11 @@ eleventyComputed:
 {% else %}<p class="muted">No traits -- a neutral starting point.</p>{% endif %}
 
 <h2>Starting gear ({{ cls.gear.length }})</h2>
-<ul class="grid-list">
+<table>
+  <thead><tr><th>Item</th></tr></thead>
+  <tbody>
 {% for item in cls.gear %}
-  <li><a href="{{ ('/' ~ lang ~ '/') | url }}clothing/{{ item.domain }}/{{ item.code | slugify }}/">{{ item.displayName }}</a></li>
+  <tr><td><a href="{{ ('/' ~ lang ~ '/') | url }}clothing/{{ item.domain }}/{{ item.code | slugify }}/">{{ item.displayName }}</a></td></tr>
 {% endfor %}
-</ul>
+  </tbody>
+</table>

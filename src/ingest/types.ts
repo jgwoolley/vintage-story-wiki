@@ -248,6 +248,22 @@ export interface SchematicSummary {
   maxQuantity?: number;
 }
 
+/**
+ * A "clutter" block's placed `type` (`blocktypes/clutter.json`'s `ShapeFromAttributes` behavior --
+ * one block code whose identity is a per-instance block-entity attribute, e.g. "skull/human-crystal"),
+ * decoded from worldgen schematics (`models/clutterInstances.ts`). One entry per distinct type.
+ */
+export interface ClutterType {
+  id: string; // the raw `type` (merged across domains)
+  type: string; // the raw `type` attribute value, e.g. "skull/human-crystal"
+  domain: string;
+  displayName: string; // localized via `clutter-<type with "/" -> "-">`; falls back to `type` when no lang key exists
+  missingTranslation: boolean;
+  sourceMod: string; // mod of the first structure the type was seen in
+  blockCodes: string[]; // which clutter block code(s) carry it: "clutter" | "clutter-devastation" | "clutter-aquatic"
+  structures: { structureId: string; count: number }[]; // structures whose schematics place it, and how many times
+}
+
 /** One world-generated structure, normalized across all 4 `StructureKind` registries. */
 export interface NormalizedStructure {
   id: string; // unique, including a `#<index>` suffix when the same code is reused across size/depth variants
@@ -355,6 +371,16 @@ export interface RockStrataInfo {
 }
 
 /** A flat worldgen placement rule for crops/flowers/mushrooms/ferns/berry bushes/etc. */
+/** A farmable crop's growth/soil requirements (`cropProps` in `blocktypes/plant/crop/<type>.json`). */
+export interface CropProps {
+  requiredNutrient?: "N" | "P" | "K" | string; // which soil nutrient (nitrogen/phosphorus/potassium) the crop draws on
+  nutrientConsumption?: number; // how much of that nutrient one growth cycle uses up
+  growthStages?: number;
+  totalGrowthMonths?: number;
+  coldDamageBelow?: number; // °C below which the crop takes frost damage
+  heatDamageAbove?: number; // °C above which the crop takes heat damage
+}
+
 export interface BlockPatchSpawnInfo {
   id: string;
   domain: string;
@@ -369,6 +395,7 @@ export interface BlockPatchSpawnInfo {
   maxForest?: number;
   minFertility?: number; // 0-1 scale
   maxFertility?: number;
+  crop?: CropProps; // only for crop patches (`crop-<type>-<stage>` blocks): that crop's `cropProps`
   chance?: number;
   placement?: string; // e.g. "OnSurfacePlusUnderTrees" -- raw placement-string value from the worldgen rule
 }
@@ -538,6 +565,10 @@ export interface TraderEntityRef {
 /** One trader specialization's full buy/sell list. */
 export interface TradeList {
   id: string; // specialization code, e.g. "artisan"
+  // Human-readable trader name, e.g. "Agriculture trader": the first matching trader entity's
+  // localized name with its trailing climate qualifier ("(cold)") dropped; falls back to the
+  // capitalized specialization code when no entity variant matches.
+  displayName: string;
   domain: string;
   sourceMod: string;
   moneyAvg?: number;

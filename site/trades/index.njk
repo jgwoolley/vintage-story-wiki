@@ -12,7 +12,7 @@ permalink: "{{ lang }}/trades/index.html"
   Every individual buy/sell listing across every wandering trader specialization, in one flat
   table -- filter by direction (selling/buying) or mod, sort any column, or jump to a
   specialization's own page for its starting money and dedicated selling/buying tables.
-  Price/stock are shown as a min&ndash;max range (average &plusmn; variance under the hood).
+  Price and stock each have separate min and max columns (average &plusmn; variance under the hood).
 </p>
 <p class="muted">
   The "Trader" column links to the specialization's detail page and, where known, to one of the
@@ -22,18 +22,20 @@ permalink: "{{ lang }}/trades/index.html"
 </p>
 <p class="muted">Source: <code>config/tradelists/trader-&lt;specialization&gt;.json</code> cross-referenced against <code>entities/humanoid/trader-{male,female}.json</code>. <a href="{{ ('/' ~ lang ~ '/') | url }}sources/trades/">Full details &rarr;</a></p>
 
-{% call dt.datatable(60, "Search traded items or specializations...", ["Item", "Trader", "Direction", "Price", "Stock", "Mod"]) %}
+{% call dt.datatable(60, "Search traded items or specializations...", ["Item", "Trader", "Direction", "Price min", "Price max", "Stock min", "Stock max", "Mod"]) %}
 {% for trade in generated.trades | sort(false, false, "id") %}
   {% for listing in trade.selling %}
   <tr data-search="{{ listing.domain }}:{{ listing.code }} {{ generated.items | displayName(listing.domain, listing.code) }} {{ trade.id }}" data-category="{{ listing.direction }}" data-mod="{{ trade.sourceMod }}" data-mod-label="{{ generated.mods | modName(trade.sourceMod) }}">
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ listing.domain }}/{{ listing.code | slugify }}/">{{ generated.items | displayName(listing.domain, listing.code) }}</a></td>
     <td>
-      <a href="{{ ('/' ~ lang ~ '/') | url }}trades/{{ trade.id | slugify }}/">{{ trade.id.split(':')[1] }}</a>
+      <a href="{{ ('/' ~ lang ~ '/') | url }}trades/{{ trade.id | slugify }}/">{{ trade.displayName }}</a>
       {% if trade.traderEntities.length %} <a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}creatures/{{ trade.traderEntities[0].domain }}/{{ trade.traderEntities[0].code | slugify }}/" title="{{ trade.traderEntities.length }} matching trader entity variant(s)">entity</a>{% endif %}
     </td>
     <td>Selling</td>
-    <td>{% if listing.priceMin != null %}{{ listing.priceMin | round(2) }}{% if listing.priceMax != listing.priceMin %}&ndash;{{ listing.priceMax | round(2) }}{% endif %}{% endif %}</td>
-    <td>{% if listing.stockMin != null %}{{ listing.stockMin | round(2) }}{% if listing.stockMax != listing.stockMin %}&ndash;{{ listing.stockMax | round(2) }}{% endif %}{% endif %}{% if listing.stacksize %} &times;{{ listing.stacksize }}{% endif %}</td>
+    <td>{% if listing.priceMin != null %}{{ listing.priceMin | round(2) }}{% endif %}</td>
+    <td>{% if listing.priceMax != null %}{{ listing.priceMax | round(2) }}{% endif %}</td>
+    <td>{% if listing.stockMin != null %}{{ listing.stockMin | round(2) }}{% endif %}</td>
+    <td>{% if listing.stockMax != null %}{{ listing.stockMax | round(2) }}{% endif %}{% if listing.stacksize %} &times;{{ listing.stacksize }}{% endif %}</td>
     <td><span class="tag">{{ trade.sourceMod }}</span></td>
   </tr>
   {% endfor %}
@@ -41,12 +43,14 @@ permalink: "{{ lang }}/trades/index.html"
   <tr data-search="{{ listing.domain }}:{{ listing.code }} {{ generated.items | displayName(listing.domain, listing.code) }} {{ trade.id }}" data-category="{{ listing.direction }}" data-mod="{{ trade.sourceMod }}" data-mod-label="{{ generated.mods | modName(trade.sourceMod) }}">
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ listing.domain }}/{{ listing.code | slugify }}/">{{ generated.items | displayName(listing.domain, listing.code) }}</a></td>
     <td>
-      <a href="{{ ('/' ~ lang ~ '/') | url }}trades/{{ trade.id | slugify }}/">{{ trade.id.split(':')[1] }}</a>
+      <a href="{{ ('/' ~ lang ~ '/') | url }}trades/{{ trade.id | slugify }}/">{{ trade.displayName }}</a>
       {% if trade.traderEntities.length %} <a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}creatures/{{ trade.traderEntities[0].domain }}/{{ trade.traderEntities[0].code | slugify }}/" title="{{ trade.traderEntities.length }} matching trader entity variant(s)">entity</a>{% endif %}
     </td>
     <td>Buying</td>
-    <td>{% if listing.priceMin != null %}{{ listing.priceMin | round(2) }}{% if listing.priceMax != listing.priceMin %}&ndash;{{ listing.priceMax | round(2) }}{% endif %}{% endif %}</td>
-    <td>{% if listing.stockMin != null %}{{ listing.stockMin | round(2) }}{% if listing.stockMax != listing.stockMin %}&ndash;{{ listing.stockMax | round(2) }}{% endif %}{% endif %}{% if listing.stacksize %} &times;{{ listing.stacksize }}{% endif %}</td>
+    <td>{% if listing.priceMin != null %}{{ listing.priceMin | round(2) }}{% endif %}</td>
+    <td>{% if listing.priceMax != null %}{{ listing.priceMax | round(2) }}{% endif %}</td>
+    <td>{% if listing.stockMin != null %}{{ listing.stockMin | round(2) }}{% endif %}</td>
+    <td>{% if listing.stockMax != null %}{{ listing.stockMax | round(2) }}{% endif %}{% if listing.stacksize %} &times;{{ listing.stacksize }}{% endif %}</td>
     <td><span class="tag">{{ trade.sourceMod }}</span></td>
   </tr>
   {% endfor %}

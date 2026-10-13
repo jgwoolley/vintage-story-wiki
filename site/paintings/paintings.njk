@@ -25,14 +25,20 @@ eleventyComputed:
 
 <h2>Found in structures ({{ item.foundInStructures.length }})</h2>
 {% if item.foundInStructures.length %}
-<ul>
+<table>
+  <thead><tr><th>Structure</th><th>Kind</th></tr></thead>
+  <tbody>
   {% for structureId in item.foundInStructures %}
     {% set structure = generated.structures | findById(structureId) %}
-    {% if structure %}
-    <li><a href="{{ ('/' ~ lang ~ '/') | url }}structures/{{ structure.id | slugify }}/">{{ structure.name or structure.code }}</a> <span class="tag">{{ structure.kind }}</span></li>
+    {% if structure.id %}
+    <tr>
+      <td><a href="{{ ('/' ~ lang ~ '/') | url }}structures/{{ structure.id | slugify }}/">{{ structure.name or structure.code }}</a></td>
+      <td><span class="tag">{{ structure.kind }}</span></td>
+    </tr>
     {% endif %}
   {% endfor %}
-</ul>
+  </tbody>
+</table>
 {% else %}
 <p class="muted">Not found inside any decoded structure schematic.</p>
 {% endif %}

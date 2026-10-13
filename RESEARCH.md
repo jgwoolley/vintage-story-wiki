@@ -152,6 +152,10 @@ schematic-preview project, beyond the decode logic already adapted earlier this 
 
 ## 4. Resolution of "clutter" objects
 
+**Status: partly implemented.** Clutter types are now decoded per structure from schematic block entities and shown on
+`/clutter/` (`models/clutterInstances.ts`). Not done: the lore bookshelf's lore content, and clutter placed by
+`stackrandomizer-clutter` loot mechanisms (not visible in schematic data). The notes below predate this.
+
 **The question**: what are "clutter" blocks/items, and how/whether they should be resolved into
 the existing catalogs (items, decor, etc.)?
 

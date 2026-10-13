@@ -6,13 +6,13 @@ pagination:
 permalink: "{{ lang }}/trades/{{ trade.id | slugify }}/index.html"
 layout: layouts/base.njk
 eleventyComputed:
-  title: "{{ trade.id.split(':')[1] }} trader - Vintage Story Wiki"
+  title: "{{ trade.displayName }} - Vintage Story Wiki"
 ---
 {% import "macros/datatable.njk" as dt %}
 {% import "macros/breadcrumb.njk" as bc %}
-{{ bc.trail(lang, [{label: "Trades", url: "trades/"}, {label: trade.id.split(':')[1] ~ " trader"}]) }}
+{{ bc.trail(lang, [{label: "Trades", url: "trades/"}, {label: trade.displayName}]) }}
 
-<h1>{{ trade.id.split(':')[1] }} trader</h1>
+<h1>{{ trade.displayName }}</h1>
 <p class="muted">
   {% if trade.moneyAvg != null %}Starts with {{ trade.moneyAvg }}{% if trade.moneyVar %} &plusmn; {{ trade.moneyVar }}{% endif %} coins to spend.{% endif %}
   &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ trade.sourceMod }}</a>
@@ -26,23 +26,27 @@ eleventyComputed:
 {% endif %}
 
 <h2>Selling ({{ trade.selling.length }})</h2>
-{% call dt.datatable(20, "Search what this trader sells...", ["Item", "Price", "Stock"]) %}
+{% call dt.datatable(20, "Search what this trader sells...", ["Item", "Price min", "Price max", "Stock min", "Stock max"]) %}
 {% for listing in trade.selling %}
   <tr data-search="{{ listing.code }}">
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ listing.domain }}/{{ listing.code | slugify }}/">{{ generated.items | displayName(listing.domain, listing.code) }}</a></td>
-    <td>{% if listing.priceAvg != null %}{{ listing.priceAvg }}{% if listing.priceVar %} &plusmn; {{ listing.priceVar }}{% endif %}{% endif %}</td>
-    <td>{% if listing.stockAvg != null %}{{ listing.stockAvg }}{% if listing.stockVar %} &plusmn; {{ listing.stockVar }}{% endif %}{% endif %}{% if listing.stacksize %} &times;{{ listing.stacksize }}{% endif %}</td>
+    <td>{% if listing.priceMin != null %}{{ listing.priceMin | round(2) }}{% endif %}</td>
+    <td>{% if listing.priceMax != null %}{{ listing.priceMax | round(2) }}{% endif %}</td>
+    <td>{% if listing.stockMin != null %}{{ listing.stockMin | round(2) }}{% endif %}</td>
+    <td>{% if listing.stockMax != null %}{{ listing.stockMax | round(2) }}{% endif %}{% if listing.stacksize %} &times;{{ listing.stacksize }}{% endif %}</td>
   </tr>
 {% endfor %}
 {% endcall %}
 
 <h2>Buying ({{ trade.buying.length }})</h2>
-{% call dt.datatable(20, "Search what this trader buys...", ["Item", "Price", "Stock"]) %}
+{% call dt.datatable(20, "Search what this trader buys...", ["Item", "Price min", "Price max", "Stock min", "Stock max"]) %}
 {% for listing in trade.buying %}
   <tr data-search="{{ listing.code }}">
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ listing.domain }}/{{ listing.code | slugify }}/">{{ generated.items | displayName(listing.domain, listing.code) }}</a></td>
-    <td>{% if listing.priceAvg != null %}{{ listing.priceAvg }}{% if listing.priceVar %} &plusmn; {{ listing.priceVar }}{% endif %}{% endif %}</td>
-    <td>{% if listing.stockAvg != null %}{{ listing.stockAvg }}{% if listing.stockVar %} &plusmn; {{ listing.stockVar }}{% endif %}{% endif %}{% if listing.stacksize %} &times;{{ listing.stacksize }}{% endif %}</td>
+    <td>{% if listing.priceMin != null %}{{ listing.priceMin | round(2) }}{% endif %}</td>
+    <td>{% if listing.priceMax != null %}{{ listing.priceMax | round(2) }}{% endif %}</td>
+    <td>{% if listing.stockMin != null %}{{ listing.stockMin | round(2) }}{% endif %}</td>
+    <td>{% if listing.stockMax != null %}{{ listing.stockMax | round(2) }}{% endif %}{% if listing.stacksize %} &times;{{ listing.stacksize }}{% endif %}</td>
   </tr>
 {% endfor %}
 {% endcall %}

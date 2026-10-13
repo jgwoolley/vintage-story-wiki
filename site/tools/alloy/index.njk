@@ -1,0 +1,47 @@
+---
+title: Alloy calculator - Vintage Story Wiki
+description: Pick an alloy ratio with sliders and see the most metal bits a 4-slot crucible can hold at that ratio.
+layout: layouts/base.njk
+permalink: "{{ lang }}/tools/alloy/index.html"
+---
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Tools", url: "tools/"}, {label: "Alloy calculator"}]) }}
+<h1>Alloy ratio calculator</h1>
+<p class="muted">
+  Choose an alloy, then drag each metal's slider to the share you want. The calculator works out
+  the most metal <strong>bits</strong> a crucible can hold at that ratio: a crucible has 4 inventory
+  slots, and each slot holds one stack of a single kind of bit (up to that bit's max stack size), so
+  more distinct metals and lopsided ratios use slots unevenly. 20 bits make one ingot. Allowed ranges
+  come from the game's alloy recipes; stack sizes come from the item data.
+</p>
+
+<div class="schematic-row-fields">
+  <label class="schematic-field">Alloy <select id="alAlloy"></select></label>
+  <button type="button" id="alMid">Reset to midpoints</button>
+</div>
+
+<div id="alSliders"></div>
+<p id="alRatioNote" class="muted"></p>
+
+<h2>Result</h2>
+<p id="alSummary"></p>
+<table>
+  <thead><tr><th>Metal</th><th>Share</th><th>Allowed</th><th>Bits</th><th>Slots</th></tr></thead>
+  <tbody id="alBody"></tbody>
+</table>
+
+<script type="application/json" id="alloyData">[
+{%- set first = true -%}
+{%- for recipe in generated.recipes -%}
+  {%- if recipe.category == "alloy" -%}
+{% if not first %},{% endif %}{% set first = false %}
+  {"name": {{ (generated.items | displayName(recipe.output.domain, recipe.output.code)) | dump | safe }},
+   "ingredients": [
+    {%- for ing in recipe.ingredients %}
+     {"name": {{ (generated.items | displayName(ing.domain, ing.code)) | dump | safe }}, "min": {{ ing.minratio }}, "max": {{ ing.maxratio }}, "stack": {{ generated.items | bitStackSize(ing.code) }}}{% if not loop.last %},{% endif %}
+    {%- endfor %}
+   ]}
+  {%- endif -%}
+{%- endfor %}
+]</script>
+<script src="{{ '/' | url }}assets/alloyCalculator.js" defer></script>
