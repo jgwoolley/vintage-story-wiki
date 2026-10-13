@@ -1,0 +1,45 @@
+---
+pagination:
+  data: generated.books
+  size: 1
+  alias: book
+permalink: "{{ lang }}/books/{{ book.domain }}/{{ book.code | slugify }}/index.html"
+layout: layouts/base.njk
+eleventyComputed:
+  title: "{{ book.title }} - Vintage Story Wiki"
+---
+{% import "macros/breadcrumb.njk" as bc %}
+{% import "macros/loretext.njk" as lt %}
+{{ bc.trail(lang, [{label: "Books", url: "books/"}, {label: book.title}]) }}
+
+<h1>{{ book.title }}</h1>
+<p class="muted">
+  Lore section: <a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}lore/?q={{ book.category | urlencode }}">{{ book.category }}</a>
+  <code>{{ book.domain }}:{{ book.code }}</code>
+  &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ book.sourceMod }}</a>
+</p>
+{% set section = generated.loreSections | findById(book.category) %}
+{% if section.id and section.description %}<p>{{ section.description }}</p>{% endif %}
+{% if section.id and section.bookIds.length > 1 %}
+<p class="muted">Also in this section:
+  {% for otherId in section.bookIds %}{% if otherId != book.id %}
+    {% set other = generated.books | findById(otherId) %}
+    {% if other.id %}<a href="{{ ('/' ~ lang ~ '/') | url }}books/{{ other.domain }}/{{ other.code | slugify }}/">{{ other.title }}</a>{% if not loop.last %}, {% endif %}{% endif %}
+  {% endif %}{% endfor %}
+</p>
+{% endif %}
+
+<h2>Found in structures ({{ book.foundInStructures.length }})</h2>
+{% if book.foundInStructures.length %}
+<p class="muted">
+  <strong>bookshelf</strong>: a lore bookshelf for this section; <strong>placed</strong>: this exact book sits in a container or on the ground;
+  <strong>random loot</strong>: a loot roll in the structure can produce it. Read from the structure's schematics, so it shows where the game
+  <em>can</em> put it, not a drop chance.
+</p>
+{{ lt.locations(lang, generated.structures, book.foundInStructures) }}
+{% else %}
+<p class="muted">No structure's schematics reference this text, so the game doesn't place it during worldgen (it may come from an item, a quest, or another mod).</p>
+{% endif %}
+
+<h2>Text</h2>
+{{ lt.pages(book) }}

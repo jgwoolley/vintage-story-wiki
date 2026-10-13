@@ -1,0 +1,34 @@
+---
+title: Traders - Vintage Story Wiki
+description: Wandering trader specializations, their starting money, and what each one buys and sells.
+layout: layouts/base.njk
+permalink: "{{ lang }}/traders/index.html"
+---
+{% import "macros/datatable.njk" as dt %}
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Traders"}]) }}
+<h1>Traders</h1>
+<p class="muted">
+  Each trader specialization (and named villager) has its own trade list: some starting coins and
+  a set of things it sells and buys. For one flat, sortable table of every individual listing
+  across all of them, see the <a href="{{ ('/' ~ lang ~ '/') | url }}trades/">Trades price guide</a>.
+</p>
+<p class="muted">
+  The "Entities" column lists the concrete trader entities that use the specialization -- resolved from the
+  trader entity's own <code>variantgroups</code> (its <code>type</code> state is the specialization code), not an
+  explicit field in the game data.
+</p>
+<p class="muted">Source: <code>config/tradelists/trader-&lt;specialization&gt;.json</code> cross-referenced against <code>entities/humanoid/trader-{male,female}.json</code>. <a href="{{ ('/' ~ lang ~ '/') | url }}sources/traders/">Full details &rarr;</a></p>
+
+{% call dt.datatable(30, "Search traders...", ["Trader", "Starting coins", "Sells", "Buys", "Entities", "Mod"]) %}
+{% for trade in generated.trades | sort(false, false, "id") %}
+  <tr data-search="{{ trade.displayName }} {{ trade.id }}" data-mod="{{ trade.sourceMod }}" data-mod-label="{{ generated.mods | modName(trade.sourceMod) }}">
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}traders/{{ trade.id | slugify }}/">{{ trade.displayName }}</a></td>
+    <td>{% if trade.moneyAvg != null %}{{ trade.moneyAvg }}{% endif %}</td>
+    <td>{{ trade.selling.length }}</td>
+    <td>{{ trade.buying.length }}</td>
+    <td>{% if trade.traderEntities.length %}<a href="{{ ('/' ~ lang ~ '/') | url }}creatures/{{ trade.traderEntities[0].domain }}/{{ trade.traderEntities[0].code | slugify }}/">{{ trade.traderEntities.length }} variant{% if trade.traderEntities.length != 1 %}s{% endif %}</a>{% endif %}</td>
+    <td><span class="tag">{{ trade.sourceMod }}</span></td>
+  </tr>
+{% endfor %}
+{% endcall %}

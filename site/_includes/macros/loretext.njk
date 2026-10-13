@@ -1,0 +1,34 @@
+{#
+  A lore text's pages, one `.card` per `pieces` entry with a stable `#chapter-N` anchor. The card
+  matching the URL fragment is highlighted via `.card:target` (style.css), so deep links like
+  `.../lore/survival/tapestry/#chapter-4` land on, and visibly mark, that chapter.
+#}
+{% macro pages(book) %}
+{% for page in book.pages %}
+  <div class="card" id="chapter-{{ loop.index0 }}">
+    {% for subpage in page %}
+      <div class="book-page">{{ subpage | lineBreaks | safe }}</div>
+      {% if not loop.last %}<hr>{% endif %}
+    {% endfor %}
+  </div>
+{% endfor %}
+{% endmacro %}
+
+{# Structures a lore text/section is found in, with how. Takes `lang`/`structures` explicitly (macros don't see page globals). #}
+{% macro locations(lang, structures, locations) %}
+<table>
+  <thead><tr><th>Structure</th><th>Kind</th><th>How it is found</th></tr></thead>
+  <tbody>
+  {% for loc in locations %}
+    {% set structure = structures | findById(loc.structureId) %}
+    {% if structure.id %}
+    <tr>
+      <td><a href="{{ ('/' ~ lang ~ '/') | url }}structures/{{ structure.id | slugify }}/">{{ structure.name or structure.code }}</a></td>
+      <td><span class="tag">{{ structure.kind }}</span></td>
+      <td>{% for v in loc.via %}<span class="tag">{{ v }}</span> {% endfor %}</td>
+    </tr>
+    {% endif %}
+  {% endfor %}
+  </tbody>
+</table>
+{% endmacro %}

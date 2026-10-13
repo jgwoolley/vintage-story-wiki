@@ -1,0 +1,28 @@
+---
+title: Books - Vintage Story Wiki
+description: Every readable in-game book, journal and note, the lore section it belongs to, and the structures it can be found in.
+layout: layouts/base.njk
+permalink: "{{ lang }}/books/index.html"
+---
+{% import "macros/datatable.njk" as dt %}
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Books"}]) }}
+<h1>Books</h1>
+<p class="muted">
+  {{ generated.books.length }} readable books, journals and notes, with their full in-game text. Each one belongs to a
+  <a href="{{ ('/' ~ lang ~ '/') | url }}lore/">lore section</a> (filter by "Category" to see one section's books) and the
+  "Structures" column counts the world structures whose schematics contain it. Tapestry and wallcarving chapters aren't books --
+  they live under <a href="{{ ('/' ~ lang ~ '/') | url }}lore/">Lore</a>.
+</p>
+<p class="muted">Source: <code>config/lore/*.json</code> (title/text are lang-key references), located via worldgen schematics. <a href="{{ ('/' ~ lang ~ '/') | url }}sources/books/">Full details &rarr;</a></p>
+
+{% call dt.datatable(60, "Search books...", ["Title", "Section", "Structures", "Mod"]) %}
+{% for book in generated.books | sort(false, false, "title") %}
+  <tr data-search="{{ book.title }} {{ book.code }} {{ book.category }}" data-category="{{ book.category }}" data-mod="{{ book.sourceMod }}" data-mod-label="{{ generated.mods | modName(book.sourceMod) }}">
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}books/{{ book.domain }}/{{ book.code | slugify }}/">{{ book.title }}</a></td>
+    <td><a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}lore/?q={{ book.category | urlencode }}">{{ book.category }}</a></td>
+    <td>{{ book.foundInStructures.length }}</td>
+    <td><span class="tag">{{ book.sourceMod }}</span></td>
+  </tr>
+{% endfor %}
+{% endcall %}

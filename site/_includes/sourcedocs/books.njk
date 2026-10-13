@@ -1,0 +1,20 @@
+<p>
+Each <code>config/lore/&lt;code&gt;.json</code> file is just a title lang-key reference and an
+ordered array of "piece" lang-key references -- the real prose lives in the lang file itself, not
+inline in these files, resolved the same way every other display string is (including
+mod-domain-prefixed keys like <code>betterruins:lore-brickworkerslament-title</code>). The game's
+own <code>___NEWPAGE___</code> marker inside a piece's text splits it into multiple book pages.
+</p>
+<p>
+<strong>Where a book can be found</strong> is read from the schematics of every structure that references them
+(<code>models/loreLocations.ts</code>), using three signals:
+</p>
+<ul>
+<li><strong>bookshelf</strong> &mdash; a <code>clutteredbookshelfwithlore</code> block entity's <code>loreCode</code> names a lore <em>section</em>; any book in that section can come off the shelf.</li>
+<li><strong>placed</strong> &mdash; a container or ground-storage block entity already holding a specific lore book stores its <code>discoveryCode</code>, which is that book's own <code>code</code>.</li>
+<li><strong>random loot</strong> &mdash; a <code>stackrandomizer-&lt;code or section&gt;</code> entry in the schematic's <code>ItemCodes</code> (BetterRuins adds one per text) can roll into a container.</li>
+</ul>
+<p>
+The block-entity values are matched by pattern over the raw decoded bytes (inventories nest item stacks the
+attribute-tree parser doesn't model). This shows where the game <em>can</em> place a book, not a drop chance.
+</p>

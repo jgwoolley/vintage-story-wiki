@@ -1,0 +1,16 @@
+<p>
+Each <code>config/tradelists/trader-&lt;specialization&gt;.json</code> (and
+<code>villager-&lt;name&gt;.json</code>) file is a flat <code>{money, selling, buying}</code>
+object; entries repeating the same item under different cosmetic <code>attributes</code> (e.g. a
+tapestry listed many times under different "type" values) are collapsed to one listing, since
+those variations are randomized/cosmetic rather than distinct tradeable things.
+</p>
+<p>
+There's no explicit field anywhere linking a specialization to the trader entity that actually
+uses it -- <code>entities/humanoid/trader-{male,female}.json</code>'s own <code>variantgroups</code>
+declares a <code>type</code> dimension whose states <em>are</em> the specialization codes, and the
+entity's <code>attributes.tradePropsFile</code> substitutes that same value into the tradelist
+filename. Every concrete entity variant whose <code>type</code> matches a loaded specialization's
+code is linked back to it; the 8 <code>villager-*</code> tradelists intentionally resolve to no
+entity, since named villagers aren't assigned a specialization through this mechanism at all.
+</p>
