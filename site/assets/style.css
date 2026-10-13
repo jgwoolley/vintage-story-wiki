@@ -520,3 +520,30 @@ th.datatable-sorted[data-sort-dir="desc"] .datatable-th-label::after { content: 
 .schematic-panel button.active, .schematic-panel #autoPlay[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: #fff; }
 .voxel-autoplay-speed, #autoPlaySpeed { padding: 0.25rem 0.4rem; background: var(--card); color: var(--fg); border: 1px solid var(--border); border-radius: 4px; font: inherit; font-size: 0.85rem; }
 .card-icon { display: inline-block; width: 1.4em; text-align: center; }
+
+/* ---- Git merge command generator (site/nf3t/git-merge/index.njk) ---- */
+.gm .gm-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+.gm label { display: block; font-weight: 600; margin-bottom: 0.35rem; }
+.gm textarea, .gm input[type=text], .gm select {
+  width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg); color: var(--fg); font: inherit; font-size: 0.9rem;
+}
+.gm textarea:focus, .gm input[type=text]:focus, .gm select:focus { outline: none; border-color: var(--accent); }
+.gm textarea { min-height: 120px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; }
+.gm .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0.75rem; }
+.gm .hint { color: var(--muted); font-size: 0.82rem; margin-top: 0.4rem; }
+.gm .check { display: flex; align-items: center; gap: 0.5rem; font-weight: 400; margin: 0; }
+.gm .check input { width: auto; }
+.gm .repos { margin: 0.5rem 0 0; padding: 0; list-style: none; font-size: 0.88rem; }
+.gm .repos li { padding: 0.2rem 0; }
+.gm .tag { display: inline-block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; padding: 0.05rem 0.5rem; border-radius: 99px; margin-right: 0.5rem; color: #fff; border: 0; }
+.gm .tag.dest { background: #8250df; }
+.gm .tag.src { background: #1a7f37; }
+.gm .out-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.gm .out-head h2 { font-size: 1.05rem; margin: 0; }
+.gm button { padding: 0.3rem 0.75rem; background: var(--card); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font: inherit; font-size: 0.85rem; }
+.gm button:hover { border-color: var(--accent); }
+.gm pre { margin: 0; padding: 0.9rem; background: #16130f; color: #ece6d8; border-radius: 8px; overflow-x: auto; font-size: 0.82rem; line-height: 1.55; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre; }
+.gm .error { color: #c0392b; font-weight: 600; }
+.gm ul.notes { margin: 0; padding-left: 1.25rem; color: var(--muted); font-size: 0.88rem; }
+.gm ul.notes li { margin: 0.25rem 0; }

@@ -1,71 +1,16 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Git Merge Command Generator</title>
-<style>
-  :root {
-    --bg: #f6f7f9; --card: #ffffff; --text: #1c2128; --muted: #656d76;
-    --border: #d0d7de; --accent: #0969da; --code-bg: #0d1117; --code-text: #e6edf3;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0d1117; --card: #161b22; --text: #e6edf3; --muted: #8b949e;
-      --border: #30363d; --accent: #58a6ff; --code-bg: #010409; --code-text: #e6edf3;
-    }
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; padding: 24px 16px 48px; background: var(--bg); color: var(--text);
-    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  }
-  main { max-width: 860px; margin: 0 auto; }
-  h1 { font-size: 1.4rem; margin: 0 0 4px; }
-  p.lead { margin: 0 0 20px; color: var(--muted); }
-  .card {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 10px; padding: 16px; margin-bottom: 16px;
-  }
-  label { display: block; font-weight: 600; margin-bottom: 6px; }
-  textarea, input[type=text], select {
-    width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px;
-    background: var(--bg); color: var(--text); font: inherit;
-  }
-  textarea { min-height: 120px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
-  .hint { color: var(--muted); font-size: 13px; margin-top: 6px; }
-  .check { display: flex; align-items: center; gap: 8px; font-weight: 400; margin: 0; }
-  .check input { width: auto; }
-  .repos { margin: 8px 0 0; padding: 0; list-style: none; font-size: 14px; }
-  .repos li { padding: 3px 0; }
-  .tag {
-    display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase;
-    padding: 1px 7px; border-radius: 99px; margin-right: 8px; color: #fff;
-  }
-  .tag.dest { background: #8250df; } .tag.src { background: #1a7f37; }
-  .out-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-  .out-head h2 { font-size: 1.05rem; margin: 0; }
-  button {
-    background: var(--accent); color: #fff; border: 0; border-radius: 6px;
-    padding: 7px 14px; font: inherit; font-weight: 600; cursor: pointer;
-  }
-  pre {
-    margin: 0; padding: 14px; background: var(--code-bg); color: var(--code-text);
-    border-radius: 8px; overflow-x: auto; font-size: 13px; line-height: 1.55;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre;
-  }
-  .error { color: #cf222e; font-weight: 600; }
-  ul.notes { margin: 0; padding-left: 20px; color: var(--muted); font-size: 14px; }
-  ul.notes li { margin: 4px 0; }
-</style>
-</head>
-<body>
-<main>
-  <h1>Git Merge Command Generator</h1>
-  <p class="lead">Merge several GitHub repos, with full history, into subfolders of one repo. Everything runs in your browser.</p>
-
-  <div class="card">
+---
+title: Git merge command generator - Vintage Story Wiki
+description: Generate the git commands to merge several GitHub repos, with full history, into subfolders of one repo.
+layout: layouts/base.njk
+permalink: "{{ lang }}/nf3t/git-merge/index.html"
+---
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "NF3t tools", url: "nf3t/"}, {label: "Git merge commands"}]) }}
+<h1>Git merge command generator</h1>
+<p class="muted">Merge several GitHub repos, with full history, into subfolders of one repo. Everything runs in your browser.</p>
+<div class="gm">
+  
+  <div class="card gm-card">
     <label for="urls">GitHub project URLs</label>
     <textarea id="urls" spellcheck="false">- https://github.com/jgwoolley/vintage-story-wiki
     - https://github.com/jgwoolley/vintage-story-price-guide
@@ -74,7 +19,7 @@
     <ul class="repos" id="repos"></ul>
   </div>
 
-  <div class="card">
+  <div class="card gm-card">
     <div class="grid">
       <div>
         <label for="proto">Clone protocol</label>
@@ -108,7 +53,7 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="card gm-card">
     <div class="out-head">
       <h2>Generated commands</h2>
       <button id="copy" type="button">Copy</button>
@@ -117,7 +62,7 @@
     <pre id="out"></pre>
   </div>
 
-  <div class="card">
+  <div class="card gm-card">
     <ul class="notes">
       <li>Each source's default branch is left untouched. The move happens on a new branch.</li>
       <li>The move shows up as one commit of renames, so use <code>git log --follow</code> on files in the subfolders.</li>
@@ -125,8 +70,9 @@
       <li>Pushing the move branch is needed so the destination can fetch it from GitHub.</li>
     </ul>
   </div>
-</main>
+</div>
 
+{% raw %}
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
@@ -249,5 +195,4 @@
   generate();
 })();
 </script>
-</body>
-</html>
+{% endraw %}
