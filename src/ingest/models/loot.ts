@@ -17,8 +17,9 @@ interface DropSpec {
  * NOT a `DropSpec`: its `chance` is a flat relative weight (not a {avg,var} 0-1 probability), and
  * its `quantity` is its own {avg,var}, both independent of whatever drop table handed out the
  * container item itself. See the `LootMechanism` doc comment in types.ts. */
-interface StackRandomizerStack {
+export interface StackRandomizerStack {
   type?: string;
+  attributes?: Record<string, unknown>;
   code: string;
   domain: string;
   quantityAvg?: number;
@@ -32,7 +33,7 @@ interface StackRandomizerStack {
  * way as every other `*ByType` field) down to its `stacks` pool. Keyed by `${domain}:${code}` --
  * e.g. "survival:stackrandomizer-alljonas" -- so a drop's own `${drop.domain}:${drop.code}` can
  * look itself up directly. */
-function extractStackRandomizerPools(index: AssetIndex): Map<string, StackRandomizerStack[]> {
+export function extractStackRandomizerPools(index: AssetIndex): Map<string, StackRandomizerStack[]> {
   const pools = new Map<string, StackRandomizerStack[]>();
   const itemVariants = expandVariants(index, ["itemtypes/"]);
   for (const variant of itemVariants) {
@@ -47,6 +48,7 @@ function extractStackRandomizerPools(index: AssetIndex): Map<string, StackRandom
       const { domain, bareCode } = splitDomainCode(String(stack.code), variant.domain);
       normalized.push({
         type: stack.type,
+        attributes: stack.attributes && typeof stack.attributes === "object" ? stack.attributes : undefined,
         domain,
         code: bareCode,
         quantityAvg: stack.quantity?.avg,

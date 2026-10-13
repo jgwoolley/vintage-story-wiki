@@ -92,6 +92,18 @@ npm run serve      # same, with a local dev server + live reload
   blocks/entities drop it), resolving recipe-level wildcard/template placeholders (e.g.
   `plank-{wood}`) into concrete linked items.
 
+## Random-stack placeholders and handbook links
+
+`ItemStackRandomizer` items (`stackrandomizer-*`, the placeholders world-generated chests hold in
+schematics' `ItemCodes`) get an item page with a "Can generate" pool and every result a "Can be generated
+by" back-link (`ItemIndexEntry.randomPool`/`generatedBy`, built in `src/ingest/index.ts` from
+`extractStackRandomizerPools` in `models/loot.ts`; chances are weight / pool total, stack `attributes` such as
+a clutter `type` are kept). "Found in structures" for items also reads the schematic `ItemCodes`
+dictionary (`buildItemCodeToSchematicIndex`).
+`rewriteHandbookLinks` (`codeUtil.ts`) turns `handbook://item-/block-<[domain:]code>` and guide `pageCode`
+links (any mod's) into site paths and records every item/block it linked in `handbookItemRefs`; `index.ts`
+then gives each real referenced item/block a page so those links never dead-end.
+
 ## Display names (`lang.ts`)
 
 Resolving a correct display name turned out to need several fixes verified against the actual

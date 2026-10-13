@@ -1,6 +1,6 @@
 import type { NormalizedStructure } from "./types.js";
 import type { SchematicFile } from "./schematicHeader.js";
-import { readSchematicBlockCodes } from "./schematicHeader.js";
+import { readSchematicBlockCodes, readSchematicItemCodes } from "./schematicHeader.js";
 
 function bareCodeOf(raw: string): string {
   return raw.includes(":") ? raw.slice(raw.indexOf(":") + 1) : raw;
@@ -12,11 +12,27 @@ function bareCodeOf(raw: string): string {
  * lookups without re-scanning the schematic files per lookup.
  */
 export function buildBlockCodeToSchematicIndex(schematicsByDomain: Map<string, SchematicFile[]>): Map<string, Set<string>> {
+  return buildCodeToSchematicIndex(schematicsByDomain, readSchematicBlockCodes);
+}
+
+/**
+ * Same as `buildBlockCodeToSchematicIndex` but over each schematic's `ItemCodes` dictionary: the
+ * items placed inside containers (chests, vessels, ...), notably the `stackrandomizer-*` items that
+ * world generation rolls into real loot. Kept separate because those codes are item codes, not blocks.
+ */
+export function buildItemCodeToSchematicIndex(schematicsByDomain: Map<string, SchematicFile[]>): Map<string, Set<string>> {
+  return buildCodeToSchematicIndex(schematicsByDomain, readSchematicItemCodes);
+}
+
+function buildCodeToSchematicIndex(
+  schematicsByDomain: Map<string, SchematicFile[]>,
+  readCodes: (fullPath: string) => string[]
+): Map<string, Set<string>> {
   const index = new Map<string, Set<string>>();
   for (const [domain, files] of schematicsByDomain) {
     for (const file of files) {
       const schematicKey = `${domain}:worldgen/schematics/${file.relPath}.json`;
-      for (const raw of readSchematicBlockCodes(file.fullPath)) {
+      for (const raw of readCodes(file.fullPath)) {
         const bare = bareCodeOf(raw);
         const set = index.get(bare) ?? new Set();
         set.add(schematicKey);

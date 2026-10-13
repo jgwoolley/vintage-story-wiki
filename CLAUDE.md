@@ -63,7 +63,8 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
 - **The item index (`generated.items`, built by `src/ingest/crossref.ts`) is a recipe/loot graph,
   not a full registry walk.** Ore/gem deposits (`models/deposits.ts` → `/deposits/`), wild crop
   spawn patches (`models/blockpatches.ts` → `/crops/`), tree/fruit-tree spawn bands
-  (`models/trees.ts` → `/trees/`), and blocks that only drop something with no recipe of their own
+  (`models/trees.ts` → `/trees/`), `ItemStackRandomizer` placeholder items and their pool members
+  (`extractStackRandomizerPools`), items/blocks a `handbook://` link names (`handbookItemRefs`), and blocks that only drop something with no recipe of their own
   (grouped in `src/ingest/index.ts` as `blockDrops`/`blockDropsById`, looked up live from `/items/`
   by `domain:code` — see below) are all deliberate carve-outs, synthesized via
   `ensureSpawnTarget(domain, code, kind)` in `src/ingest/index.ts` for things with no recipe and

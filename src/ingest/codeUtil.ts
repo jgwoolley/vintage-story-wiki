@@ -21,22 +21,44 @@ export function resolveLangRef(lang: LangResolver, fallbackDomain: string, ref: 
 /**
  * Rewrites the `handbook://`/`handbooksearch://` links embedded in resolved lang text into real
  * site-relative paths. Only the 3 link shapes actually observed in the raw game text are
- * recognized (item-/block- codes, a cross-reference to another guide's own pageCode, and a
- * free-text handbook search) -- anything else matching `handbook://` is left as inert,
- * non-functional link text rather than guessed at. Paths are emitted lang-prefix-free with a
+ * recognized (item-/block- codes, optionally domain-prefixed; a cross-reference to another guide's
+ * own pageCode; and a free-text handbook search) -- anything else matching `handbook://` is left as
+ * inert, non-functional link text rather than guessed at. `guideDomains` (pageCode -> guide domain)
+ * lets a guide link resolve for any mod's guides, not just the vanilla `craftinginfo-`/
+ * `gamemechanicinfo-` families. Paths are emitted lang-prefix-free with a
  * `__LANG__` placeholder (ingest has no concept of the site's `/<lang>/` routing, which only
  * exists at Eleventy render time) -- the template splices in the real prefix via a string
  * `replace` before applying `| safe` (see `site/guides/guides.njk`). Shared by `models/guides.ts`
  * and `models/dialogue.ts` -- dialogue line text runs through the exact same lang-text pipeline as
  * handbook guide text, just resolved from a different config file.
  */
-export function rewriteHandbookLinks(html: string): string {
+export function rewriteHandbookLinks(html: string, guideDomains?: ReadonlyMap<string, string>): string {
+  const itemLink = (kind: "item" | "block") => (_m: string, ref: string) => {
+    // `handbook://item-<code>` or `handbook://item-<domain>:<code>`; an unprefixed code is vanilla,
+    // and the vanilla assets are the "survival" domain in the item index (`game:` is the same thing).
+    const { domain, bareCode } = splitDomainCode(ref, "survival");
+    const itemDomain = domain === "game" ? "survival" : domain;
+    handbookItemRefs.set(`${itemDomain}:${bareCode}`, kind);
+    return `__LANG__items/${itemDomain}/${bareCode}/`;
+  };
   return html
-    .replace(/handbook:\/\/item-([a-z0-9-]+)/gi, (_m, code) => `__LANG__items/survival/${code}/`)
-    .replace(/handbook:\/\/block-([a-z0-9-]+)/gi, (_m, code) => `__LANG__items/survival/${code}/`)
-    .replace(/handbook:\/\/((?:craftinginfo|gamemechanicinfo)-[a-z0-9-]+)/gi, (_m, pageCode) => `__LANG__guides/survival/${pageCode}/`)
+    .replace(/handbook:\/\/item-([a-z0-9_.-]+(?::[a-z0-9_.-]+)?)/gi, itemLink("item"))
+    .replace(/handbook:\/\/block-([a-z0-9_.-]+(?::[a-z0-9_.-]+)?)/gi, itemLink("block"))
+    // A guide's own pageCode (any mod's, e.g. "stonequarry-quarryguide", not just the vanilla two families).
+    .replace(/handbook:\/\/([a-z0-9_.-]+)(?=["<\s]|$)/gi, (m, pageCode: string) => {
+      const domain = guideDomains?.get(pageCode) ?? (/^(?:craftinginfo|gamemechanicinfo)-/i.test(pageCode) ? "survival" : undefined);
+      return domain ? `__LANG__guides/${domain}/${pageCode}/` : m;
+    })
     .replace(/handbooksearch:\/\/([^"<]+)/gi, (_m, text) => `__LANG__items/?q=${encodeURIComponent(text)}`);
 }
+
+/**
+ * Every `handbook://item-*`/`block-*` link `rewriteHandbookLinks` has rewritten so far in this
+ * process, as `"<domain>:<code>" -> kind`. `index.ts` reads it once the guide/dialogue/class text is
+ * extracted and gives each referenced item/block a page if the recipe/loot graph didn't already --
+ * otherwise a handbook mention of, say, muddy gravel would link to a page that doesn't exist.
+ */
+export const handbookItemRefs = new Map<string, "item" | "block">();
 
 /**
  * Strips HTML tags from a lang value that was authored for the game's own in-game rich-text

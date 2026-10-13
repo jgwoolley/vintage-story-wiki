@@ -13,6 +13,7 @@ import { resolveLangRef, rewriteHandbookLinks } from "../codeUtil.js";
  */
 export function extractGuides(index: AssetIndex, lang: LangResolver): GuideInfo[] {
   const out: GuideInfo[] = [];
+  const rawByGuide = new Map<GuideInfo, string>();
 
   for (const asset of assetsUnderAnyDomain(index, "config/handbook/")) {
     const json = asset.json as { pageCode?: string; title?: string; text?: string };
@@ -25,15 +26,22 @@ export function extractGuides(index: AssetIndex, lang: LangResolver): GuideInfo[
     const title = json.title ? resolveLangRef(lang, asset.domain, json.title) : json.pageCode;
     const rawText = json.text ? resolveLangRef(lang, asset.domain, json.text) : "";
 
-    out.push({
+    const guide: GuideInfo = {
       id: json.pageCode,
       domain: asset.domain,
       sourceMod: asset.modid,
       title,
-      html: rewriteHandbookLinks(rawText),
+      html: "", // filled in below, once every guide's pageCode is known
       order,
-    });
+    };
+    rawByGuide.set(guide, rawText);
+    out.push(guide);
   }
+
+  // Second pass: a guide may link to another guide by pageCode (mods' included), which can only be
+  // resolved once all of them are known.
+  const guideDomains = new Map(out.map((g) => [g.id, g.domain]));
+  for (const guide of out) guide.html = rewriteHandbookLinks(rawByGuide.get(guide) ?? "", guideDomains);
 
   return out.sort((a, b) => a.order - b.order);
 }

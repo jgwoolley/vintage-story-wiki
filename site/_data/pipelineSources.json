@@ -6,7 +6,7 @@
     "modelFiles": ["src/ingest/crossref.ts", "src/ingest/csharpClassMap.json", "scripts/map-csharp-classes.ts", "src/ingest/models/loot.ts", "src/ingest/models/deposits.ts", "src/ingest/models/blockpatches.ts", "src/ingest/models/trees.ts", "src/ingest/models/trades.ts", "src/ingest/models/dialogue.ts"],
     "globs": [
       "recipes/**/*.json",
-      "itemtypes/**/*.json (only drops/tags/maxstacksize/class/behaviors read, not the full definition)",
+      "itemtypes/**/*.json (only drops/tags/maxstacksize/class/behaviors read, not the full definition; for ItemStackRandomizer items, e.g. itemtypes/meta/stackrandomizer*.json, the per-variant `stacks` pool too)",
       "blocktypes/**/*.json (only drops/tags/maxstacksize/class/entityClass/behaviors/entityBehaviors read, not the full definition)",
       "entities/**/*.json (only death/harvestable drops read)",
       "worldgen/deposits/**/*.json",
@@ -14,7 +14,9 @@
       "worldgen/treengenproperties.json",
       "blocktypes/plant/fruittreebranch.json",
       "config/tradelists/*.json",
-      "config/dialogue/*.json"
+      "config/dialogue/*.json",
+      "config/handbook/*.json (guide text) -- only the item/block codes its, and dialogue's, handbook:// links name are used here, so each gets a page",
+      "worldgen/schematics/**/*.json (ItemCodes + BlockCodes dictionaries, for \"Found in structures\")"
     ]
   },
   {

@@ -315,7 +315,30 @@ export interface ItemIndexEntry {
   npcRewards: string[]; // indices (as strings) into the flat `generated.dialogueRewards` array -- NPCs whose dialogue can hand over this item
   description?: string; // flavor text from an itemdesc-/blockdesc- lang key, when the game defines one (most don't); trusted HTML like DecorItem.description
   codeRefs?: CodeRef[];
+  randomPool?: RandomPoolStack[]; // `ItemStackRandomizer` items only: everything it can turn into, most likely first (see extractStackRandomizerPools in models/loot.ts). The randomizer placed in a world-generated chest may also carry its own `totalChance` attribute (chance to generate nothing at all) -- per-instance data, not in this definition.
+  generatedBy?: RandomizerSource[]; // randomizer items that can generate this item/block, most likely first (the reverse of `randomPool`)
   includedByManifest?: string; // the vs-manifest.json `includeItems` pattern that matched this entry, when one did (set even if other rules also reach it) // the C# classes/behaviors this item/block's own JSON names (see attachItemMetadata in crossref.ts); absent when it names none
+}
+
+/**
+ * One possible result of an `ItemStackRandomizer` item (`ItemIndexEntry.randomPool`): the game rolls
+ * one of these when the randomizer is resolved (placed in a world-generated chest, dropped, ...).
+ */
+export interface RandomPoolStack {
+  domain: string;
+  code: string;
+  kind: "item" | "block";
+  quantityAvg?: number; // the stack's `quantity.avg`; the resolved size is uniform in avg ± var (the game's default when absent is exactly 1)
+  quantityVar?: number;
+  chance: number; // 0-1, this stack's raw `chance` weight divided by the pool's total weight (the game normalizes the same way)
+  attributes?: Record<string, unknown>; // attributes the generated stack is given -- e.g. the generic `clutter` block's `type` (which decides what it actually is)
+}
+
+/** Reverse of `RandomPoolStack`: a randomizer item whose pool can produce this item/block (`ItemIndexEntry.generatedBy`). */
+export interface RandomizerSource {
+  domain: string; // of the randomizer item, e.g. "survival"
+  code: string; // e.g. "stackrandomizer-ore"
+  chance: number; // 0-1 chance of this item among that randomizer's results (not including the randomizer's own per-instance `totalChance`)
 }
 
 /** Which engine registry a JSON-referenced C# name lives in -- one per `api.Register<X>Class`
