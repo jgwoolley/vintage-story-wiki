@@ -70,6 +70,11 @@ permalink: "{{ lang }}/index.html"
     <strong><span class="card-icon" aria-hidden="true">🧵</span> Tapestries</strong>
     <span class="muted">Every possible tapestry a structure could show, per structure, decoded from schematic data.</span>
   </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}clutter/">
+    <strong><span class="card-icon" aria-hidden="true">💀</span> Clutter</strong>
+    <span class="muted">Skulls, statues and other decorative objects placed in structures.</span>
+    <span class="muted">{{ generated.clutter.length }} types</span>
+  </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}clothing/">
     <strong><span class="card-icon" aria-hidden="true">👕</span> Clothing</strong>
     <span class="muted">Cosmetic wearables and their flavor text.</span>
@@ -120,8 +125,8 @@ permalink: "{{ lang }}/index.html"
     <strong><span class="card-icon" aria-hidden="true">🔍</span> Painting/tapestry-in-ruins lookup <span class="wip-badge">WIP</span></strong>
     <span class="muted">Which specific ruin variants place a given painting or tapestry.</span>
   </a>
-  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/#alloy-ratio-calculator">
-    <strong><span class="card-icon" aria-hidden="true">🧪</span> Alloy ratio calculator <span class="wip-badge">WIP</span></strong>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/alloy/">
+    <strong><span class="card-icon" aria-hidden="true">🧪</span> Alloy ratio calculator</strong>
     <span class="muted">Max crucible bits for a target alloy ratio, given item-stack limits.</span>
   </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}tools/#worldgen-seedbiome-lookup">

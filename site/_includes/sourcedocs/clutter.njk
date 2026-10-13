@@ -1,0 +1,24 @@
+<p>
+"Clutter" is one block code (<code>clutter</code>, plus the <code>clutter-devastation</code> and
+<code>clutter-aquatic</code> variants) with the <code>ShapeFromAttributes</code> behavior: what it
+actually <em>is</em> &mdash; a skull, a statue, a barricade, a broken anvil &mdash; is a per-instance
+<code>type</code> attribute on the placed block, not part of its code. That is why the item index
+only ever shows a bare "Clutter" entry.
+</p>
+<p>
+Like tapestries, every worldgen schematic a structure actually references is pre-filtered (from its
+header block-code list) down to those containing a clutter code, then fully decoded: each
+<code>BlockEntities</code> value is Ascii85-decoded into a <code>TreeAttribute</code> whose
+<code>type</code> string (e.g. <code>skull/human-crystal</code>) is read. Types are then grouped, with
+which structures place each and how many times.
+</p>
+<p>
+Names come from the game's own lang keys, built the way <code>BlockClutter</code> builds them:
+<code>clutter-</code> + the type with <code>/</code> replaced by <code>-</code>. A type with no such
+key is shown by its raw type string and flagged.
+</p>
+<div class="coverage-note">
+<p><strong>Schematic-authored, not guaranteed.</strong> This is what the structure schematics
+contain; some clutter is also scattered by <code>stackrandomizer-clutter</code>/loot mechanisms at
+world generation, which isn't visible in schematic data.</p>
+</div>

@@ -75,6 +75,7 @@ export function extractTrades(index: AssetIndex): TradeList[] {
       // Populated in index.ts, after the trader entities themselves are extracted -- see
       // TraderEntityRef's doc comment for why that cross-reference can't happen here.
       traderEntities: [],
+      displayName: "", // filled in by index.ts once trader entities are matched
     });
   }
 

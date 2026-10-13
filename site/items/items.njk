@@ -68,94 +68,110 @@ eleventyComputed:
 {% if item.rockStrata.length %}
 <h2>How this rock forms</h2>
 <p class="muted">Rock *type* placement is a separate worldgen system from ore/gem deposits -- see the full <a href="{{ ('/' ~ lang ~ '/') | url }}deposits/">Deposits</a> page for how deposits occur inside this rock, once it's present.</p>
-<ul>
+<table>
+  <thead><tr><th>Rock group</th><th>How it is placed</th></tr></thead>
+  <tbody>
   {% for rsId in item.rockStrata %}
     {% set rs = generated.rockStrataById[rsId] %}
     {% if rs.id %}
-    <li>
-      {% if rs.rockGroup %}<span class="tag">{{ rs.rockGroup }}</span>{% endif %}
-      Placed by layered worldgen noise, {% if rs.genDir == "BottomUp" %}anchored near bedrock (fills upward){% elif rs.genDir == "TopDown" %}anchored near the surface (fills downward){% else %}direction unspecified{% endif %}.
-    </li>
+    <tr>
+      <td>{% if rs.rockGroup %}<span class="tag">{{ rs.rockGroup }}</span>{% endif %}</td>
+      <td>Layered worldgen noise, {% if rs.genDir == "BottomUp" %}anchored near bedrock (fills upward){% elif rs.genDir == "TopDown" %}anchored near the surface (fills downward){% else %}direction unspecified{% endif %}.</td>
+    </tr>
     {% endif %}
   {% endfor %}
-</ul>
+  </tbody>
+</table>
 {% endif %}
 
 {% if item.spawnDeposits.length %}
 <h2>Where to find (natural deposits)</h2>
 <p class="muted">Read directly from the game's worldgen rules -- see <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a> for how this differs from an exact "X spawns at Y" guarantee. See also the full <a href="{{ ('/' ~ lang ~ '/') | url }}deposits/">Deposits</a> listing.</p>
-<ul>
+<table>
+  <thead><tr><th>Category</th><th>Occurs in</th><th>Typical depth</th></tr></thead>
+  <tbody>
   {% for depId in item.spawnDeposits %}
     {% set dep = generated.depositsById[depId] %}
     {% if dep.id %}
-    <li>
-      <span class="tag">{{ dep.category }}</span>
-      Occurs in <strong>{{ dep.hostRocks | join(", ") }}</strong>{% if dep.gradesByRock %} (grade varies by rock type -- richer grades are rarer, see the deposit's own rocks above){% endif %}.
-      {% if dep.yPosRel %}
-        {% set y = dep.yPosRel.avg %}
-        Typical depth: {% if y >= 0.8 %}near the surface{% elif y >= 0.5 %}shallow underground{% elif y >= 0.25 %}moderate depth{% else %}deep underground{% endif %} (relative height {{ y | round(2) }} -- {{ "yPosRel" | restrictionInfo }}).
-      {% endif %}
-    </li>
+    <tr>
+      <td><span class="tag">{{ dep.category }}</span></td>
+      <td><strong>{{ dep.hostRocks | join(", ") }}</strong>{% if dep.gradesByRock %} <span class="muted">(grade varies by rock type -- richer grades are rarer)</span>{% endif %}</td>
+      <td>{% if dep.yPosRel %}{% set y = dep.yPosRel.avg %}{% if y >= 0.8 %}near the surface{% elif y >= 0.5 %}shallow underground{% elif y >= 0.25 %}moderate depth{% else %}deep underground{% endif %} <span class="muted">(relative height {{ y | round(2) }} -- {{ "yPosRel" | restrictionInfo }})</span>{% endif %}</td>
+    </tr>
     {% endif %}
   {% endfor %}
-</ul>
+  </tbody>
+</table>
 {% endif %}
 
 {% if item.spawnBlockPatches.length %}
 <h2>Where to find (natural growth)</h2>
 <p class="muted">Climate conditions a chunk needs for this to grow wild. See also the full <a href="{{ ('/' ~ lang ~ '/') | url }}crops/">Crops</a> listing.</p>
-<ul>
+<table>
+  <thead><tr><th>Category</th><th>Temp (&deg;C)</th><th>Rain</th><th>Forest density</th><th>Soil fertility</th><th>Placement</th></tr></thead>
+  <tbody>
   {% for patchId in item.spawnBlockPatches %}
     {% set patch = generated.blockPatchesById[patchId] %}
     {% if patch.id %}
-    <li>
-      <span class="tag">{{ patch.category }}</span>
-      {% if patch.minTemp != null or patch.maxTemp != null %}Temp {{ patch.minTemp if patch.minTemp != null else "any" }}&ndash;{{ patch.maxTemp if patch.maxTemp != null else "any" }}&deg;C{% endif %}
-      {% if patch.minRain != null or patch.maxRain != null %} &middot; Rain {{ patch.minRain if patch.minRain != null else 0 }}&ndash;{{ patch.maxRain if patch.maxRain != null else 1 }}{% endif %}
-      {% if patch.minForest != null or patch.maxForest != null %} &middot; Forest density {{ patch.minForest if patch.minForest != null else 0 }}&ndash;{{ patch.maxForest if patch.maxForest != null else 1 }}{% endif %}
-      {% if patch.minFertility != null or patch.maxFertility != null %} &middot; Soil fertility {{ patch.minFertility if patch.minFertility != null else 0 }}&ndash;{{ patch.maxFertility if patch.maxFertility != null else 1 }}{% endif %}
-      {% if patch.placement %} &middot; {{ patch.placement }}{% endif %}
-    </li>
+    <tr>
+      <td><span class="tag">{{ patch.category }}</span></td>
+      <td>{% if patch.minTemp != null or patch.maxTemp != null %}{{ patch.minTemp if patch.minTemp != null else "any" }}&ndash;{{ patch.maxTemp if patch.maxTemp != null else "any" }}{% endif %}</td>
+      <td>{% if patch.minRain != null or patch.maxRain != null %}{{ patch.minRain if patch.minRain != null else 0 }}&ndash;{{ patch.maxRain if patch.maxRain != null else 1 }}{% endif %}</td>
+      <td>{% if patch.minForest != null or patch.maxForest != null %}{{ patch.minForest if patch.minForest != null else 0 }}&ndash;{{ patch.maxForest if patch.maxForest != null else 1 }}{% endif %}</td>
+      <td>{% if patch.minFertility != null or patch.maxFertility != null %}{{ patch.minFertility if patch.minFertility != null else 0 }}&ndash;{{ patch.maxFertility if patch.maxFertility != null else 1 }}{% endif %}</td>
+      <td>{{ patch.placement }}</td>
+    </tr>
+    {% if patch.crop.requiredNutrient %}
+    <tr><td colspan="6" class="muted">Crop: draws <strong>{{ {N: 'nitrogen', P: 'phosphorus', K: 'potassium'}[patch.crop.requiredNutrient] or patch.crop.requiredNutrient }}</strong> ({{ patch.crop.requiredNutrient }}){% if patch.crop.nutrientConsumption != null %}, uses {{ patch.crop.nutrientConsumption }} per cycle{% endif %}{% if patch.crop.totalGrowthMonths != null %}, grows in {{ patch.crop.totalGrowthMonths }} months{% endif %}.</td></tr>
+    {% endif %}
     {% endif %}
   {% endfor %}
-</ul>
+  </tbody>
+</table>
 {% endif %}
 
 {% if item.spawnTrees.length %}
 <h2>Where to find (tree growth)</h2>
 <p class="muted">Climate band this tree species can generate in. See also the full <a href="{{ ('/' ~ lang ~ '/') | url }}trees/">Trees</a> listing.</p>
-<ul>
+<table>
+  <thead><tr><th>Type</th><th>Species</th><th>Temp (&deg;C)</th><th>Rain</th><th>Forest density</th><th>Soil fertility</th><th>Habitat</th></tr></thead>
+  <tbody>
   {% for treeId in item.spawnTrees %}
     {% set tree = generated.treesById[treeId] %}
     {% if tree.id %}
-    <li>
-      <span class="tag">{{ "shrub" if tree.isShrub else "tree" }}</span> {% if tree.saplingCodes and tree.saplingCodes.length %}{{ generated.items | displayName(tree.domain, tree.saplingCodes[0]) }}{% else %}{{ tree.generator }}{% endif %}
-      {% if tree.minTemp != null or tree.maxTemp != null %} &middot; Temp {{ tree.minTemp if tree.minTemp != null else "any" }}&ndash;{{ tree.maxTemp if tree.maxTemp != null else "any" }}&deg;C{% endif %}
-      {% if tree.minRain != null or tree.maxRain != null %} &middot; Rain {{ (tree.minRain if tree.minRain != null else 0) | round(2) }}&ndash;{{ (tree.maxRain if tree.maxRain != null else 1) | round(2) }}{% endif %}
-      {% if tree.minForest != null or tree.maxForest != null %} &middot; Forest density {{ (tree.minForest if tree.minForest != null else 0) | round(2) }}&ndash;{{ (tree.maxForest if tree.maxForest != null else 1) | round(2) }}{% endif %}
-      {% if tree.minFertility != null or tree.maxFertility != null %} &middot; Soil fertility {{ (tree.minFertility if tree.minFertility != null else 0) | round(2) }}&ndash;{{ (tree.maxFertility if tree.maxFertility != null else 1) | round(2) }}{% endif %}
-      {% if tree.habitat %} &middot; Habitat: {{ tree.habitat }}{% endif %}
-    </li>
+    <tr>
+      <td><span class="tag">{{ "shrub" if tree.isShrub else "tree" }}</span></td>
+      <td>{% if tree.saplingCodes and tree.saplingCodes.length %}{{ generated.items | displayName(tree.domain, tree.saplingCodes[0]) }}{% else %}{{ tree.generator }}{% endif %}</td>
+      <td>{% if tree.minTemp != null or tree.maxTemp != null %}{{ tree.minTemp if tree.minTemp != null else "any" }}&ndash;{{ tree.maxTemp if tree.maxTemp != null else "any" }}{% endif %}</td>
+      <td>{% if tree.minRain != null or tree.maxRain != null %}{{ (tree.minRain if tree.minRain != null else 0) | round(2) }}&ndash;{{ (tree.maxRain if tree.maxRain != null else 1) | round(2) }}{% endif %}</td>
+      <td>{% if tree.minForest != null or tree.maxForest != null %}{{ (tree.minForest if tree.minForest != null else 0) | round(2) }}&ndash;{{ (tree.maxForest if tree.maxForest != null else 1) | round(2) }}{% endif %}</td>
+      <td>{% if tree.minFertility != null or tree.maxFertility != null %}{{ (tree.minFertility if tree.minFertility != null else 0) | round(2) }}&ndash;{{ (tree.maxFertility if tree.maxFertility != null else 1) | round(2) }}{% endif %}</td>
+      <td>{{ tree.habitat }}</td>
+    </tr>
     {% endif %}
   {% endfor %}
-</ul>
+  </tbody>
+</table>
 {% endif %}
 
 {% if item.spawnFruitTrees.length %}
 <h2>Where to find (fruit tree growth)</h2>
 <p class="muted">See also the full <a href="{{ ('/' ~ lang ~ '/') | url }}fruit-trees/">Fruit Trees</a> listing.</p>
-<ul>
+<table>
+  <thead><tr><th>Variety</th><th>Temp (&deg;C)</th><th>Rain</th></tr></thead>
+  <tbody>
   {% for ftId in item.spawnFruitTrees %}
     {% set ft = generated.fruitTreesById[ftId] %}
     {% if ft.id %}
-    <li>
-      {% if ft.fruitItemCode %}{{ generated.items | displayName(ft.domain, ft.fruitItemCode) }}{% else %}{{ ft.variety }}{% endif %}
-      {% if ft.minTemp != null or ft.maxTemp != null %} &middot; Temp {{ ft.minTemp }}&ndash;{{ ft.maxTemp }}&deg;C{% endif %}
-      {% if ft.minRain != null or ft.maxRain != null %} &middot; Rain {{ ft.minRain }}&ndash;{{ ft.maxRain }}{% endif %}
-    </li>
+    <tr>
+      <td>{% if ft.fruitItemCode %}{{ generated.items | displayName(ft.domain, ft.fruitItemCode) }}{% else %}{{ ft.variety }}{% endif %}</td>
+      <td>{% if ft.minTemp != null or ft.maxTemp != null %}{{ ft.minTemp }}&ndash;{{ ft.maxTemp }}{% endif %}</td>
+      <td>{% if ft.minRain != null or ft.maxRain != null %}{{ ft.minRain }}&ndash;{{ ft.maxRain }}{% endif %}</td>
+    </tr>
     {% endif %}
   {% endfor %}
-</ul>
+  </tbody>
+</table>
 {% endif %}
 
 {% if blockDrops.id %}
@@ -242,14 +258,17 @@ eleventyComputed:
 
 {% if item.tradesSelling.length %}
 <h2>Sold by traders ({{ item.tradesSelling.length }})</h2>
-{% call dt.datatable(20, "Search traders...", ["Trader", "Price", "Stock"]) %}
+{% call dt.datatable(20, "Search traders...", ["Trader", "Price min", "Price max", "Stock min", "Stock max"]) %}
 {% for listingId in item.tradesSelling %}
   {% set listing = generated.tradeListingsById[listingId] %}
   {% if listing.id %}
   <tr>
-    <td><a href="{{ ('/' ~ lang ~ '/') | url }}trades/{{ listing.tradeListId | slugify }}/">{{ listing.tradeListId.split(':')[1] }}</a></td>
-    <td>{% if listing.priceAvg != null %}{{ listing.priceAvg }}{% if listing.priceVar %} &plusmn; {{ listing.priceVar }}{% endif %}{% endif %}</td>
-    <td>{% if listing.stockAvg != null %}{{ listing.stockAvg }}{% if listing.stockVar %} &plusmn; {{ listing.stockVar }}{% endif %}{% endif %}</td>
+    {% set trader = generated.trades | findById(listing.tradeListId) %}
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}trades/{{ listing.tradeListId | slugify }}/">{{ trader.displayName or listing.tradeListId.split(':')[1] }}</a></td>
+    <td>{% if listing.priceMin != null %}{{ listing.priceMin | round(2) }}{% endif %}</td>
+    <td>{% if listing.priceMax != null %}{{ listing.priceMax | round(2) }}{% endif %}</td>
+    <td>{% if listing.stockMin != null %}{{ listing.stockMin | round(2) }}{% endif %}</td>
+    <td>{% if listing.stockMax != null %}{{ listing.stockMax | round(2) }}{% endif %}</td>
   </tr>
   {% endif %}
 {% endfor %}
@@ -258,14 +277,17 @@ eleventyComputed:
 
 {% if item.tradesBuying.length %}
 <h2>Bought by traders ({{ item.tradesBuying.length }})</h2>
-{% call dt.datatable(20, "Search traders...", ["Trader", "Price", "Stock"]) %}
+{% call dt.datatable(20, "Search traders...", ["Trader", "Price min", "Price max", "Stock min", "Stock max"]) %}
 {% for listingId in item.tradesBuying %}
   {% set listing = generated.tradeListingsById[listingId] %}
   {% if listing.id %}
   <tr>
-    <td><a href="{{ ('/' ~ lang ~ '/') | url }}trades/{{ listing.tradeListId | slugify }}/">{{ listing.tradeListId.split(':')[1] }}</a></td>
-    <td>{% if listing.priceAvg != null %}{{ listing.priceAvg }}{% if listing.priceVar %} &plusmn; {{ listing.priceVar }}{% endif %}{% endif %}</td>
-    <td>{% if listing.stockAvg != null %}{{ listing.stockAvg }}{% if listing.stockVar %} &plusmn; {{ listing.stockVar }}{% endif %}{% endif %}</td>
+    {% set trader = generated.trades | findById(listing.tradeListId) %}
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}trades/{{ listing.tradeListId | slugify }}/">{{ trader.displayName or listing.tradeListId.split(':')[1] }}</a></td>
+    <td>{% if listing.priceMin != null %}{{ listing.priceMin | round(2) }}{% endif %}</td>
+    <td>{% if listing.priceMax != null %}{{ listing.priceMax | round(2) }}{% endif %}</td>
+    <td>{% if listing.stockMin != null %}{{ listing.stockMin | round(2) }}{% endif %}</td>
+    <td>{% if listing.stockMax != null %}{{ listing.stockMax | round(2) }}{% endif %}</td>
   </tr>
   {% endif %}
 {% endfor %}
@@ -290,14 +312,20 @@ eleventyComputed:
 
 {% if item.appearsInStructures.length %}
 <h2>Found in structures ({{ item.appearsInStructures.length }})</h2>
-<ul class="grid-list">
+<table>
+  <thead><tr><th>Structure</th><th>Kind</th></tr></thead>
+  <tbody>
 {% for structureId in item.appearsInStructures %}
   {% set structure = generated.structures | findById(structureId) %}
   {% if structure.id %}
-  <li><a href="{{ ('/' ~ lang ~ '/') | url }}structures/{{ structure.id | slugify }}/">{{ structure.name or structure.code }}</a> <span class="tag">{{ structure.kind }}</span></li>
+  <tr>
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}structures/{{ structure.id | slugify }}/">{{ structure.name or structure.code }}</a></td>
+    <td><span class="tag">{{ structure.kind }}</span></td>
+  </tr>
   {% endif %}
 {% endfor %}
-</ul>
+  </tbody>
+</table>
 <p class="muted">This confirms the schematic(s) contain this code somewhere, not where or how many times -- the per-instance block-entity decoding used for tapestries isn't run for every content type.</p>
 {% endif %}
 

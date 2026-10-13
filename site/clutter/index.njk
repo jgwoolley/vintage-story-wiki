@@ -1,0 +1,29 @@
+---
+title: Clutter - Vintage Story Wiki
+layout: layouts/base.njk
+permalink: "{{ lang }}/clutter/index.html"
+---
+{% import "macros/datatable.njk" as dt %}
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Clutter"}]) }}
+<h1>Clutter</h1>
+<p class="muted">
+  Decorative objects such as skulls, statues, barricades and broken tools that structures place as
+  the generic <code>clutter</code> block. Which one it is lives in each placed block's own data, so
+  these are decoded directly from the worldgen schematics &mdash; one row per type, with the
+  structures that contain it. Source: <code>worldgen/schematics/**/*.json</code>'s
+  <code>BlockEntities</code>. <a href="{{ ('/' ~ lang ~ '/') | url }}sources/clutter/">Full details &rarr;</a>
+</p>
+
+<h2>Clutter types ({{ generated.clutter.length }})</h2>
+{% call dt.datatable(40, "Search clutter or structures...", ["Name", "Type", "Block", "Found in structures", "Mod"]) %}
+{% for c in generated.clutter %}
+  <tr data-search="{{ c.type }} {{ c.displayName }}" data-category="{{ c.blockCodes[0] }}" data-mod="{{ c.sourceMod }}" data-mod-label="{{ generated.mods | modName(c.sourceMod) }}">
+    <td>{{ c.displayName }}{% if c.missingTranslation %} <span class="tag">no lang key</span>{% endif %}</td>
+    <td><code>{{ c.type }}</code></td>
+    <td>{% for b in c.blockCodes %}<code>{{ b }}</code>{% if not loop.last %}, {% endif %}{% endfor %}</td>
+    <td>{% for s in c.structures %}{% set structure = generated.structures | findById(s.structureId) %}{% if structure.id %}<a href="{{ ('/' ~ lang ~ '/') | url }}structures/{{ structure.id | slugify }}/">{{ structure.name or structure.code }}</a>{% if s.count > 1 %} &times;{{ s.count }}{% endif %}{% if not loop.last %}, {% endif %}{% endif %}{% endfor %}</td>
+    <td><span class="tag">{{ c.sourceMod }}</span></td>
+  </tr>
+{% endfor %}
+{% endcall %}

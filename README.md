@@ -458,6 +458,21 @@ Info page for the visitor-facing version of that caveat.
   stale** (it describes the *previous* successful build, not the one currently rendering that
   page) — the page labels it that way explicitly rather than presenting it as live.
 
+## Clutter, crop nutrients and alloy calculator
+
+- **`/clutter/`** (`src/ingest/models/clutterInstances.ts`): the `clutter` block is one code whose real identity
+  (skull, statue, broken anvil...) is a per-instance `type` attribute in the placed block's entity data. Every
+  structure schematic containing a clutter code is decoded (same Ascii85/TreeAttribute decoder as tapestries) and
+  grouped by type, with names from the `clutter-<type with "/" → "-">` lang keys and the structures using each.
+- **Crop nutrients**: `models/blockpatches.ts` attaches each crop's `cropProps` (`requiredNutrient` N/P/K,
+  `nutrientConsumption`, `totalGrowthMonths`) to its `/crops/` rows; the columns are sortable and filterable.
+- **`/tools/alloy/`** (`site/assets/alloyCalculator.js`): alloy ranges (`recipes/alloy`) and bit stack sizes are
+  rendered into the page as JSON; the script finds the most bits a 4-slot crucible holds at a chosen ratio.
+- Trader pages use `TradeList.displayName` (the localized trader entity name without its climate suffix) and show
+  min and max price/stock as separate columns.
+- Storage vessels, chests, trunks, baskets and cluttered bookshelves are forced into the item index through
+  `vs-manifest.json` `includeItems` globs, so their pages list the structures they appear in.
+
 ## Tools (`/tools/`)
 
 Three interactive, fully client-side tools were merged in (with git history) from the user's former

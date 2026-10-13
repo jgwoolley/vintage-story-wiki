@@ -134,6 +134,14 @@ export default function (eleventyConfig) {
   // Every `data-mod="<modid>"` row (the datatable mod filter's matching value) should also carry
   // a `data-mod-label="<human name>"` so the <select> shows "BetterRuins" instead of "betterruins"
   // -- see datatable.js's populateSelect, which reads this sibling attribute for the option text.
+  // Max stack size of the crucible-ready "bit" form of an ingot code ("ingot-copper" ->
+  // "metalbit-copper"), for the alloy calculator; 128 (vanilla's metalbit stack) if unknown.
+  eleventyConfig.addFilter("bitStackSize", (items, ingotCode) => {
+    const bit = String(ingotCode).replace(/^ingot-/, "metalbit-");
+    const item = items.find((i) => i.code === bit);
+    return item?.maxStackSize ?? 128;
+  });
+
   eleventyConfig.addFilter("modName", (mods, modid) => {
     const mod = mods.find((m) => m.modid === modid);
     return mod ? mod.name : modid;

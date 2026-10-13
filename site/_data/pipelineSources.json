@@ -81,6 +81,13 @@
     "globs": ["blocktypes/cloth/tapestry.json", "blocktypes/stone/wallcarving.json", "worldgen/schematics/**/*.json (BlockEntities attribute blobs, decoded)"]
   },
   {
+    "id": "clutter",
+    "title": "Clutter",
+    "listingUrl": "clutter/",
+    "modelFiles": ["src/ingest/models/clutterInstances.ts"],
+    "globs": ["blocktypes/clutter.json", "blocktypes/devastation/clutter-devastation.json", "blocktypes/aquatic/clutter-aquatic.json", "worldgen/schematics/**/*.json (BlockEntities attribute blobs, decoded)", "lang/*.json (clutter-<type> keys)"]
+  },
+  {
     "id": "clothing",
     "title": "Clothing",
     "listingUrl": "clothing/",

@@ -14,6 +14,7 @@ import { extractBlockPatchSpawns } from "./models/blockpatches.js";
 import { extractTrees, extractFruitTrees } from "./models/trees.js";
 import { extractRockStrata } from "./models/rockstrata.js";
 import { extractTapestryInstances } from "./models/tapestryInstances.js";
+import { extractClutterTypes } from "./models/clutterInstances.js";
 import { extractGuides } from "./models/guides.js";
 import { extractTrades } from "./models/trades.js";
 import { extractDialogue } from "./models/dialogue.js";
@@ -207,6 +208,10 @@ function main(): void {
     if (matches.length) item.tapestryInstances = matches;
   }
 
+  step("Resolving clutter types (ShapeFromAttributes) in worldgen schematics");
+  const clutter = extractClutterTypes(schematicsByDomain, schematicToStructure, structures, lang);
+  console.log(`  ${clutter.length} distinct clutter types (${clutter.filter((c) => c.missingTranslation).length} without a lang key)`);
+
   // Paintings/tapestries/clothing each get their own top-level page/nav entry rather than one
   // shared /decor/ listing with a kind filter -- split here (post cross-reference) rather than
   // filtering in a template, consistent with how creatures/blockDrops were split from loot.
@@ -274,6 +279,12 @@ function main(): void {
   for (const trade of trades) {
     const specialization = trade.id.split(/:(.+)/)[1];
     trade.traderEntities = traderEntitiesByType.get(specialization) ?? [];
+    const first = trade.traderEntities[0];
+    const entityName = first ? lang.displayName("entity", first.domain, first.code) : undefined;
+    trade.displayName =
+      entityName && !entityName.missing
+        ? entityName.name.replace(/\s*\([^)]*\)\s*$/, "")
+        : `${specialization.charAt(0).toUpperCase()}${specialization.slice(1)} trader`;
   }
   console.log(
     `  ${trades.filter((t) => t.traderEntities.length).length}/${trades.length} specializations matched to at least one trader entity variant`
@@ -463,6 +474,7 @@ function main(): void {
   writeGenerated("structures", structures);
   writeGenerated("decor", decorCatalog);
   writeGenerated("paintings", paintings);
+  writeGenerated("clutter", clutter);
   writeGenerated("tapestries", tapestries);
   writeGenerated("clothing", clothing);
   writeGenerated("lore", loreBooks);

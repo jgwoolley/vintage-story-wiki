@@ -36,7 +36,7 @@ let data = null;
 let voxels = [];
 let blockMeta = new Map(); // block code -> { color, visible, count }
 let currentLayer = -1;
-let layerMode = "single"; // "single" = only floor N, "below" = floor N and every floor beneath it
+let layerMode = "below"; // "single" = only floor N, "below" = floor N and every floor beneath it
 let selectedIndex = -1;
 let searchQuery = "";
 

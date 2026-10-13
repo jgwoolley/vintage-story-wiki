@@ -75,7 +75,9 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   dedicated top-level pages (`/paintings/`, `/tapestries/`, `/clothing/`) instead, each backed by
   its own filtered array (`generated.paintings`/`tapestries`/`clothing`, split from the combined
   `generated.decor` in `src/ingest/index.ts` right after cross-referencing). Character classes/
-  traits (`models/classes.ts` → `/classes/`) are the same "own dedicated page, never joins the
+  traits (`models/classes.ts` → `/classes/`) and clutter types (`models/clutterInstances.ts` →
+  `/clutter/`: the generic `clutter` block's per-instance `type` attribute decoded from schematic block
+  entities, like tapestries) are the same "own dedicated page, never joins the
   item index" pattern again — a class is a character-creation choice, not a craftable/droppable
   thing. If you're asked to surface some other spawn-only/recipe-less content type, pick whichever
   of these two patterns fits (joins the item index vs. gets its own dedicated page) — don't force
