@@ -1,0 +1,50 @@
+<p>
+This tool is different from the other pages: the climate numbers are not read from a game data
+file, because the game computes them in C# at world-generation time. <code>site/assets/climate.js</code>
+is a port of that code, written against the game's own source (<code>vsessentialsmod</code>
+<code>Systems/WorldGen/Standard/ChunkGen/0.GenMaps/</code> and <code>vsapi</code> <code>Common/Climate.cs</code>,
+read from local reference clones that are not part of the build). The only game <em>data</em> it uses is the
+set of wild-patch, tree and fruit-tree climate bands the rest of the wiki already extracted, to say what grows
+at the computed climate.
+</p>
+
+<h3>What is ported</h3>
+<ul>
+<li>The seeded random generator (<code>NoiseBase</code>): a 64-bit linear congruential generator, reseeded for every
+512-block noise cell. It needs 64-bit wraparound integer maths, done with <code>BigInt</code>.</li>
+<li>The realistic climate (<code>NoiseClimateRealistic</code>): a north&ndash;south triangle-wave temperature
+gradient plus per-cell random variation in temperature, rainfall and geologic activity. The seed picks a
+position in the starting-climate range, which shifts the gradient so the middle of the map sits at the spawn
+temperature.</li>
+<li>The cell blend (<code>MapLayerClimate</code>): the four surrounding cells combined with a smoothstep, including
+the 14-map-pixel offset between the block grid and the noise grid that comes from how regions are generated.</li>
+<li>The altitude formulas (<code>Climate.cs</code>): temperature falls 1 stored unit per 1.5 blocks above sea level
+(y=110), and the rainfall height adjustment.</li>
+<li>C# <code>float</code> rounding (<code>Math.fround</code>) and <code>(int)</code> truncation, where the original uses them.</li>
+</ul>
+
+<h3>What is not ported</h3>
+<div class="coverage-note">
+<p><strong>The results are approximate.</strong></p>
+<ul>
+<li><strong>The map wobble.</strong> After the stage above, the game warps the whole climate map with a six-octave
+simplex noise (<code>MapLayerPerlinWobble</code>), displacing it by up to about 29 map pixels (roughly 900
+blocks). This is the main source of error for any given block.</li>
+<li><strong>Text seeds.</strong> The game converts a text seed to its integer seed inside
+<code>VintagestoryLib.dll</code>, which is closed source, so only numeric seeds are accepted. The open source
+contains two candidate string hashes, but neither is confirmed for world seeds.</li>
+<li><strong>Everything else that shapes what you actually see</strong>: forest and shrub maps, landforms and terrain
+height, and seasons. Plant and tree matching uses temperature and rainfall at the chosen height only, not
+fertility, forest density or terrain.</li>
+<li>The X/Z inputs are blocks from the world center, assumed to match the in-game coordinate display.</li>
+</ul>
+</div>
+
+<h3>How it was checked</h3>
+<p>
+No running game was available, so there is no comparison against real worlds. Instead
+<code>test/climate.test.ts</code> checks the port against an independent re-implementation of the same C#
+arithmetic (64-bit wraparound, signed shifts, float rounding) on several seeds, and checks properties such as
+the spawn temperature landing in the chosen starting-climate range. This catches arithmetic mistakes, not a
+misreading of the C#. Comparing a few readouts from a real save would be the best further validation.
+</p>

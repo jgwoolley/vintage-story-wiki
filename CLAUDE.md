@@ -195,11 +195,10 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
 - **Every field in `src/ingest/types.ts` is documented** (inline `//` or leading `/** */` per
   interface) — keep this true for any new/changed field. This is the single source of truth for
   what each generated JSON shape actually means; don't let it drift into "self-explanatory" silence.
-- **WIP stub page pattern**: `/tools/` still carries WIP sections (painting lookup, alloy calculator,
-  seed/biome lookup) for content not built yet — a `.wip-badge`-styled note plus prose saying exactly
+- **WIP stub page pattern**: `/tools/` still carries a WIP section (painting lookup) for content not built yet — a `.wip-badge`-styled note plus prose saying exactly
   which raw game files the real implementation would read (see `site/tools/index.njk`: explain what's
   planned and where the data already lives, don't just say "coming soon"). The schematic viewer,
-  WayPoint planner and Calendar under `/tools/` are real pages, merged from the user's former
+  WayPoint planner, Calendar, Alloy calculator and Seed climate lookup under `/tools/` are real pages, merged from the user's former
   `vintage-story-schematic-preview` / `vintage-story-price-guide` projects; their pure-client JS is in
   `site/assets/` (`schematicViewer.js`, `waypoints*.js`, `calendar.js`). The price guide's trades page was
   deliberately not ported (`/trades/` supersedes it). `/guides/` and `/trades/` *used* to be stubs but are
@@ -209,7 +208,9 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   partial at `site/_includes/sourcedocs/<id>.njk`, rendered through one shared pagination
   template (`site/sources/sources.njk`, dynamically including `"sourcedocs/" + src.id + ".njk"`
   — Nunjucks `{% include %}` accepts a computed string expression for the template path, this is
-  the one place in the codebase that relies on that). If you add a new top-level content type (a
+  the one place in the codebase that relies on that). A tool whose logic is a port of game code (e.g. `/tools/climate/`) gets one too: its "Raw game files read"
+  list then says plainly that no asset feeds the logic, and the partial explains what is and isn't ported. Tool pages
+  link to their Source page, never to RESEARCH.md (which is going away). If you add a new top-level content type (a
   new `generated.<x>` + its own `site/<x>/index.njk`), add a matching `pipelineSources.json`
   entry and `sourcedocs/<id>.njk` partial in the same change, and link the new listing page's own
   "Source: ..." line to it — this is now expected for every top-level page, not optional polish.
@@ -274,7 +275,7 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   large size variants share one `code` with `chance: 130/50/10`, which blindly `| percent`-formatted
   renders as a nonsensical "13000.00%". True generator semantics for this weight-vs-probability
   split aren't available in the locally-cloned `vssurvivalmod` (likely live in VSEssentialsMod,
-  not cloned) — `structures.njk` works around it by only formatting as a percent when
+  which is now also cloned at `vsessentialsmod/` but hasn't been checked for this) — `structures.njk` works around it by only formatting as a percent when
   `chance <= 1`, otherwise labeling it a relative weight. If you touch structure chance display
   again, keep that branch rather than assuming it's always a clean probability.
 - **The whole download/ingest/build pipeline is pure Node/npm** — `scripts/download.ts` uses the
@@ -301,6 +302,19 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   block entities); `npm run decode-stats` scans the local corpus and should report 0 throws. The ingest
   callers skip a failed blob but count it (`DecodeStats`); watch the ingest log for `WARNING (tapestry|clutter)`.
   Build test blobs by hand, don't commit game schematics. Keep `README.md`'s Testing section in sync.
+- **`site/assets/climate.js` is a port of the game's realistic climate generator**, verified against the
+  C# in `vsessentialsmod/.../0.GenMaps/` and `vsapi/Common/Climate.cs` (also gitignored clones, like
+  `vssurvivalmod/`; read them, don't pull them into the build). It uses BigInt for the 64-bit LCG and
+  `Math.fround` for C# `float`; `test/climate.test.ts` checks it against an independent Python
+  re-implementation. It deliberately omits the simplex `MapLayerPerlinWobble` (~900 blocks of
+  displacement), forest/shrub maps and landforms, and supports numeric seeds only (the text-seed hash is
+  in closed server code). Don't present its output as exact.
+- **Adding a tool means linking it from all three places**, not just creating the page: the home page
+  tools cards (`site/index.njk`, the "Tools" grid), the header "Tools" dropdown (`site/_includes/layouts/base.njk`),
+  and a section on `site/tools/index.njk`. Point each at the real `tools/<name>/` page (not a `tools/#anchor`)
+  and drop any `wip-badge` / old WIP stub section it replaces. The seed climate lookup shipped with the home
+  card still pointing at its old WIP anchor, which is the mistake this rule exists for. After building, grep
+  `_site/en/index.html` for the new `tools/<name>/` href to confirm.
 - **Git is read-only for Claude.** Read operations (`git status`, `log`, `diff`, `show`, `blame`,
   ...) are fine. Never run anything that writes to the repo's git state: no `commit`, `add`,
   `stash`, `checkout`/`switch`, `reset`, `restore`, `rebase`, `merge`, `branch`, `tag`, `push`, and so on.

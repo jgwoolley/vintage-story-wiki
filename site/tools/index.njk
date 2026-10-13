@@ -73,17 +73,12 @@ permalink: "{{ lang }}/tools/index.html"
   <a href="{{ ('/' ~ lang ~ '/') | url }}tools/alloy/">Open the alloy calculator &rarr;</a>
 </p>
 
-<h2 id="worldgen-seedbiome-lookup">World seed / biome lookup</h2>
-<p class="wip-badge">Work in progress</p>
+<h2 id="seed-climate-lookup">Seed climate lookup</h2>
 <p>
-  Plug in a world seed plus the worldgen settings chosen at world creation (climate/forest/
-  geologic-activity sliders, landform/polar-ice-cap toggles, etc.) and get back what that spot
-  actually generates -- biome, temperature, rain, forest density -- without having to create the
-  world first just to look. <code>worldgen/landforms.json</code> already describes the noise
-  parameters landforms are built from, but the actual seeded noise generator that turns a seed +
-  coordinates into a temperature/rain/landform value is implemented in the game's own engine code,
-  not expressed anywhere in the downloadable JSON assets this pipeline reads -- reproducing it
-  client-side would mean reverse-engineering/reimplementing that noise algorithm from the engine
-  source (or an existing community port of it, if one exists), not just reading a config file, so
-  this one's a bigger lift than the other tools above.
+  Enter a numeric world seed, the climate world options and a position to get the generated
+  temperature, rainfall and geologic activity there, plus which wild plants and trees from this
+  wiki's data can grow in that climate. A browser port of the game's realistic climate generator
+  (seeded per-cell randomness + the north&ndash;south temperature gradient), approximate because the
+  game's final simplex "wobble", forest/shrub maps and terrain height aren't ported.
+  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/climate/">Open the seed climate lookup &rarr;</a>
 </p>

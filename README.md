@@ -529,6 +529,13 @@ standalone projects `vintage-story-schematic-preview` and `vintage-story-price-g
   validation), `waypointMap.js` (SVG map), `waypointsPage.js` (DOM wiring); state lives in
   `localStorage`. This replaces the price guide's React/MUI/Cytoscape implementation with no
   library dependency.
+- **`/tools/climate/`** — `site/assets/climate.js` (pure logic, no DOM: a port of the game's realistic
+  climate generator, i.e. `NoiseClimateRealistic`/`MapLayerClimate`/`Climate.cs`; BigInt for the 64-bit
+  LCG, `Math.fround` for C# floats), `climatePage.js` (DOM wiring + a temperature canvas) and
+  `site/tools/climate/index.njk`, which embeds every wild patch/tree/fruit-tree climate band from
+  `generated.blockPatches`/`trees`/`fruitTrees` so the page can list what grows at the computed climate.
+  Approximate by design: the game's simplex wobble, forest/shrub maps and landforms aren't ported, and only
+  numeric seeds work. `test/climate.test.ts` checks the generator against an independent re-implementation.
 - **`/tools/calendar/`** — `calendar.js`, a small game-date → elapsed days / real hours converter.
 
 The price guide's Next.js trades page was *not* ported: `/trades/` (`models/trades.ts`) supersedes it.

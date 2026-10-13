@@ -1,10 +1,10 @@
 # TODOS
 
-## In Progress
-
 # Phase
 
-Can you make sure that documentation hasn't driffted, like source documents + such?
+- just remove the "tools" concept and put them into relevant sections.
+- handbook resolutions could be resolved
+- Can you make sure that documentation hasn't driffted, like source documents + such?
 
 # Phase
 

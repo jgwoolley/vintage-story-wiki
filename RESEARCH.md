@@ -231,40 +231,8 @@ CLAUDE.md) or leave the Python tool as a companion. No earlier note in this file
 
 ## Vintage Story temperature from seed
 
-Yes, this is feasible, and the C# → JavaScript port is smaller than you might fear. The catch is that "temperature" has a cheap part and an expensive part, so the right scope depends on what you want to show.
-
-### The cheap part: the regional climate map
-
-Vintage Story's base climate comes from a 2D noise "map layer" pipeline. It lives in the open-source game code (the survival mod and API repos on GitHub), not in the closed engine. Each climate value packs temperature, rainfall, and geologic activity into one int. The inputs are:
-
-- the world seed
-- world config values: `worldClimate` (realistic vs. patchy), `polarEquatorDistance`, `globalTemperature`, `globalPrecipitation`, map size, and the spawn/starting-climate offset
-
-The code involved is a few hundred lines: the climate noise classes, simplex noise, the base map layer hashing, plus the zoom/fuzz/blur layers. Porting it to TypeScript is a weekend-scale job. Running it in the browser for a whole map preview is fast.
-
-### The things that bite in the port
-
-- **Integer semantics.** The hashing relies on C# `int`/`long` overflow wrapping. In JS you need `Math.imul` and `| 0` for 32-bit math, and `BigInt` (or careful hi/lo splitting) for any 64-bit LCG steps. This is where most "almost right but not quite" bugs come from.
-- **Float vs. double.** C# code using `float` rounds differently than JS doubles. Use `Math.fround` where the original uses `float`. Otherwise values near thresholds will occasionally flip.
-- **Seed handling.** Make sure you replicate exactly how a text seed becomes the numeric seed, rather than assuming.
-- **Version drift.** Worldgen changes between major versions. Pin the port to one game version and test against real worlds.
-
-### The expensive part: altitude
-
-Actual temperature at a block drops with height above sea level. Reproducing exact terrain height means porting the landform system too. That includes the landform map, per-landform noise octaves, and the 3D terrain density that `landforms.json` drives. It's doable, but it's much more code and much more CPU, closer to running real worldgen.
-
-A practical compromise:
-- Show sea-level climate exactly from the ported map.
-- Let the user enter a Y level, and apply the game's altitude adjustment formula on top.
-
-### On "biome"
-
-Vintage Story doesn't have discrete biomes the way Minecraft does. What you see as a "biome" emerges from climate plus forest, shrub, and landform maps and per-block-type climate ranges. You can approximate it well by porting the forest/shrub map layers (same style of noise as the climate code) and classifying the results: tundra, taiga, temperate forest, desert, and so on. Exact vegetation placement would mean porting the block patch configs, which is overkill for a seed viewer.
-
-Seasonal and daily temperature swings come from the weather system, layered on top. You can add a "season" slider fairly easily if you want it.
-
-### An alternative to porting by hand
-
-You could compile the relevant C# to WebAssembly (Blazor WASM, or .NET's WASI/browser targets) and call it from JS. That avoids all the overflow and float headaches because it's the same code. The downsides are a heavier download, awkward extraction from the mod's dependencies, and a need to check that the game's source license permits redistributing it that way. For a public web tool, a clean TS port of just the climate layers is usually nicer.
-
-I can sketch the structure of the TS port or the integer-hash helpers if you'd like.
+**Status: the easy part is implemented** (`/tools/climate/`, `site/assets/climate.js`). What is and isn't
+ported, and how it was checked, now lives on the site's own source page
+(`site/_includes/sourcedocs/climate.njk`, shown at `/sources/climate/`), not here. Still open and worth
+researching: porting the simplex wobble (`MapLayerPerlinWobble`), and finding the text-seed to int conversion
+(closed `VintagestoryLib.dll`; candidates `GameMath.DotNetStringHash` and `StringUtil.GetNonRandomizedHashCode`).
