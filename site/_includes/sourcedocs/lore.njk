@@ -1,7 +1,11 @@
 <p>
-Each <code>config/lore/&lt;code&gt;.json</code> file is just a title lang-key reference and an
-ordered array of "piece" lang-key references -- the real prose lives in the lang file itself, not
-inline in these files, resolved the same way every other display string is (including
-mod-domain-prefixed keys like <code>betterruins:lore-brickworkerslament-title</code>). The game's
-own <code>___NEWPAGE___</code> marker inside a piece's text splits it into multiple book pages.
+A lore <em>section</em> is just the <code>category</code> field of
+<code>config/lore/&lt;code&gt;.json</code>; several texts can share one. The one-line description comes from the
+<code>loretype-&lt;category&gt;</code> lang key (BetterRuins authors those as <code>game:loretype-...</code> so
+they land in the vanilla namespace). The <code>tapestry</code> and <code>wallcarving</code> files aren't books you
+find: they're the chapter collections that tapestries and wallcarvings reveal, so they get their own text
+pages under <code>/lore/</code> while everything else lives under <a href="{{ ('/' ~ lang ~ '/') | url }}sources/books/">Books</a>.
+</p>
+<p>
+A section's "Structures" column is the union of its texts' structures -- see <a href="{{ ('/' ~ lang ~ '/') | url }}sources/books/">how books are located</a>.
 </p>

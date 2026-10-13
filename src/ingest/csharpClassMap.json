@@ -2625,6 +2625,423 @@
         "path": "BlockEntity/BEWorldgenHook.cs",
         "line": 11
       }
+    },
+    "entityBehavior": {
+      "activitydriven": {
+        "type": "EntityBehaviorActivityDriven",
+        "path": "Systems/EntityActivitySystem/EntityBehaviorActivityDriven.cs",
+        "line": 25
+      },
+      "antlergrowth": {
+        "type": "EntityBehaviorAntlerGrowth",
+        "path": "Entity/Behavior/BehaviorAntlerGrowth.cs",
+        "line": 32
+      },
+      "attachable": {
+        "type": "EntityBehaviorAttachable",
+        "path": "Entity/Behavior/BehaviorAttachable.cs",
+        "line": 176
+      },
+      "bodytemperature": {
+        "type": "EntityBehaviorBodyTemperature",
+        "path": "Entity/Behavior/BehaviorBodyTemperature.cs",
+        "line": 35
+      },
+      "boss": {
+        "type": "EntityBehaviorBoss",
+        "path": "Entity/Behavior/BehaviorBoss.cs",
+        "line": 28
+      },
+      "bossErel": {
+        "type": "EntityBehaviorErelBoss",
+        "path": "Entity/Behavior/BehaviorBoss.cs",
+        "line": 156
+      },
+      "commandable": {
+        "type": "EntityBehaviorCommandable",
+        "path": "Entity/Behavior/BehaviorCommandable.cs",
+        "line": 26
+      },
+      "conversable": {
+        "type": "EntityBehaviorConversable",
+        "path": "Systems/Dialogue/BehaviorConversable.cs",
+        "line": 39
+      },
+      "creaturecarrier": {
+        "type": "EntityBehaviorCreatureCarrier",
+        "path": "Systems/Boats/EntityBehaviorSeatable.cs",
+        "line": 18
+      },
+      "extraskinnable": {
+        "type": "EntityBehaviorExtraSkinnable",
+        "path": "Entity/Behavior/BehaviorExtraSkinnable.cs",
+        "line": 209
+      },
+      "hidewatersurface": {
+        "type": "EntityBehaviorHideWaterSurface",
+        "path": "Entity/Behavior/BehaviorHideWaterSurface.cs",
+        "line": 26
+      },
+      "idleanimations": {
+        "type": "EntityBehaviorIdleAnimations",
+        "path": "Entity/Behavior/BehaviorIdleAnims.cs",
+        "line": 27
+      },
+      "milkable": {
+        "type": "EntityBehaviorMilkable",
+        "path": "Entity/Behavior/BehaviorMilkable.cs",
+        "line": 30
+      },
+      "mortallywoundable": {
+        "type": "EntityBehaviorMortallyWoundable",
+        "path": "Entity/Behavior/BehaviorMortallyWoundable.cs",
+        "line": 37
+      },
+      "ownable": {
+        "type": "EntityBehaviorOwnable",
+        "path": "Systems/Riding/EntityBehaviorOwnable.cs",
+        "line": 12
+      },
+      "passivephysicsmultibox": {
+        "type": "EntityBehaviorPassivePhysicsMultiBox",
+        "path": "Entity/Behavior/BehaviorPassivePhysicsMultiBox.cs",
+        "line": 33
+      },
+      "pettable": {
+        "type": "EntityBehaviorPettable",
+        "path": "Entity/Behavior/BehaviorPettable.cs",
+        "line": 25
+      },
+      "playerrevivable": {
+        "type": "EntityBehaviorPlayerRevivable",
+        "path": "Entity/Behavior/BehaviorPlayerRevivable.cs",
+        "line": 27
+      },
+      "revivablesimple": {
+        "type": "EntityBehaviorRevivableSimple",
+        "path": "Entity/Behavior/EntityBehaviorRevivableSimple.cs",
+        "line": 11
+      },
+      "rideable": {
+        "type": "EntityBehaviorRideable",
+        "path": "Entity/Behavior/BehaviorRideable.cs",
+        "line": 88
+      },
+      "rideableaccessories": {
+        "type": "EntityBehaviorRideableAccessories",
+        "path": "Entity/Behavior/BehaviorRideableAccessories.cs",
+        "line": 47
+      },
+      "rightclickpickup": {
+        "type": "EntityBehaviorRightClickPickup",
+        "path": "Entity/Behavior/EntityBehaviorRightClickPickup.cs",
+        "line": 10
+      },
+      "ripharvestable": {
+        "type": "EntityBehaviorRipHarvestable",
+        "path": "Entity/Behavior/EntityBehaviorRipHarvestable.cs",
+        "line": 15
+      },
+      "ropetieable": {
+        "type": "EntityBehaviorRopeTieable",
+        "path": "Entity/Behavior/BehaviorRopeTieable.cs",
+        "line": 27
+      },
+      "seatable": {
+        "type": "EntityBehaviorSeatable",
+        "path": "Systems/Boats/EntityBehaviorSeatable.cs",
+        "line": 25
+      },
+      "selectionboxes": {
+        "type": "EntityBehaviorSelectionBoxes"
+      },
+      "seraphinventory": {
+        "type": "EntityBehaviorSeraphInventory",
+        "path": "Entity/Behavior/EntityBehaviorSeraphInventory.cs",
+        "line": 9
+      },
+      "temporalStabilityAffected": {
+        "type": "EntityBehaviorTemporalStabilityAffected",
+        "path": "Systems/TemporalStability/BehaviorTemporalStabilityAffected.cs",
+        "line": 14
+      },
+      "villagerinventory": {
+        "type": "EntityBehaviorVillagerInv",
+        "path": "Lore/Village/EntityDressedHumanoid.cs",
+        "line": 13
+      },
+      "writingsurface": {
+        "type": "EntityBehaviorWritingSurface",
+        "path": "Entity/Behavior/BehaviorWritingSurface.cs",
+        "line": 69
+      }
+    },
+    "aiTask": {
+      "bellalarm": {
+        "type": "AiTaskBellAlarm",
+        "path": "Entity/AITask/AiTaskBellAlarm.cs",
+        "line": 14
+      },
+      "butterflychase": {
+        "type": "AiTaskButterflyChase",
+        "path": "Entity/AITask/AiTaskButterflyChase.cs",
+        "line": 9
+      },
+      "butterflyfeedonflowers": {
+        "type": "AiTaskButterflyFeedOnFlowers",
+        "path": "Entity/AITask/AiTaskButterflyFeedOnFlowers.cs",
+        "line": 13
+      },
+      "butterflyflee": {
+        "type": "AiTaskButterflyFlee",
+        "path": "Entity/AITask/AiTaskButterflyFlee.cs",
+        "line": 11
+      },
+      "butterflyrest": {
+        "type": "AiTaskButterflyRest",
+        "path": "Entity/AITask/AiTaskButterflyRest.cs",
+        "line": 21
+      },
+      "butterflywander": {
+        "type": "AiTaskButterflyWander",
+        "path": "Entity/AITask/AiTaskButterflyWander.cs",
+        "line": 10
+      },
+      "cometoowner": {
+        "type": "AiTaskComeToOwner",
+        "path": "Systems/Riding/AiTaskComeToOwner.cs",
+        "line": 9
+      },
+      "eidolonmeleeattack": {
+        "type": "AiTaskEidolonMeleeAttack",
+        "path": "Lore/ResoArchives/Eidolon/AiTaskEidolonMeleeAttack.cs",
+        "line": 12
+      },
+      "eidolonslam": {
+        "type": "AiTaskEidolonSlam",
+        "path": "Lore/ResoArchives/Eidolon/AiTaskEidolonSlam.cs",
+        "line": 69
+      },
+      "firefeathersattack": {
+        "type": "AiTaskFireFeathersAttack",
+        "path": "Lore/Devastation/AiTaskFireFeathersAttack.cs",
+        "line": 26
+      },
+      "fishmovefast": {
+        "type": "AiTaskFishMoveFast",
+        "path": "Entity/AITask/AiTaskFishMoveFast.cs",
+        "line": 14
+      },
+      "fishoutofwater": {
+        "type": "AiTaskFishOutOfWater",
+        "path": "Entity/AITask/AiTaskFishOutOfWater.cs",
+        "line": 10
+      },
+      "flycircle": {
+        "type": "AiTaskFlyCircle",
+        "path": "Lore/Devastation/AiTaskFlyCircle.cs",
+        "line": 50
+      },
+      "flycircleifentity": {
+        "type": "AiTaskFlyCircleIfEntity",
+        "path": "Lore/Devastation/AiTaskFlyCircleIfEntity.cs",
+        "line": 10
+      },
+      "flycircletarget": {
+        "type": "AiTaskFlyCircleTarget",
+        "path": "Lore/Devastation/AiTaskFlyCircleTarget.cs",
+        "line": 12
+      },
+      "flydiveattack": {
+        "type": "AiTaskFlyDiveAttack",
+        "path": "Lore/Devastation/AiTaskFlyDiveAttack.cs",
+        "line": 12
+      },
+      "flyleave": {
+        "type": "AiTaskFlyLeave",
+        "path": "Lore/Devastation/AiTaskFlyLeave.cs",
+        "line": 9
+      },
+      "flyswoopattack": {
+        "type": "AiTaskFlySwoopAttack",
+        "path": "Lore/Devastation/AiTaskFlySwoopAttack.cs",
+        "line": 12
+      },
+      "flywander": {
+        "type": "AiTaskFlyWander",
+        "path": "Lore/Devastation/AiTaskFlyWander.cs",
+        "line": 10
+      },
+      "followleadholder": {
+        "type": "AiTaskFollowLeadHolder",
+        "path": "Systems/Riding/AiTaskFollowLeadHolder.cs",
+        "line": 10
+      },
+      "followleadholder-r": {
+        "type": "AiTaskFollowLeadHolderR",
+        "path": "Systems/Riding/AiTaskFollowLeadHolderR.cs",
+        "line": 46
+      },
+      "seekbobber": {
+        "type": "AiTaskSeekBobber",
+        "path": "Entity/AITask/AiTaskSeekBobber.cs",
+        "line": 10
+      },
+      "stayinrange": {
+        "type": "AiTaskStayInRange",
+        "path": "Entity/AITask/AiTaskStayInRange.cs",
+        "line": 24
+      },
+      "throwatentity": {
+        "type": "AiTaskThrowAtEntity",
+        "path": "Entity/AITask/AiTaskThrowAtEntity.cs",
+        "line": 12
+      },
+      "turretmode": {
+        "type": "AiTaskTurretMode",
+        "path": "Entity/AITask/AiTaskTurretMode.cs",
+        "line": 37
+      }
+    },
+    "entity": {
+      "EntityAnimalBot": {
+        "type": "EntityAnimalBot",
+        "path": "Entities/EntityAnimalBot.cs",
+        "line": 282
+      },
+      "EntityArmorStand": {
+        "type": "EntityArmorStand",
+        "path": "Entities/EntityArmorStand.cs",
+        "line": 8
+      },
+      "EntityBeeMob": {
+        "type": "EntityBeeMob",
+        "path": "Entities/EntityBeeMob.cs",
+        "line": 11
+      },
+      "EntityBell": {
+        "type": "EntityBell",
+        "path": "Entities/EntityBell.cs",
+        "line": 10
+      },
+      "EntityBoat": {
+        "type": "EntityBoat",
+        "path": "Systems/Boats/EntityBoat.cs",
+        "line": 218
+      },
+      "EntityBoatConstruction": {
+        "type": "EntityBoatConstruction",
+        "path": "Systems/Boats/EntityBoatConstruction.cs",
+        "line": 15
+      },
+      "EntityBobber": {
+        "type": "EntityBobber",
+        "path": "Entities/EntityBobber.cs",
+        "line": 109
+      },
+      "EntityButterfly": {
+        "type": "EntityButterfly",
+        "path": "Entities/EntityButterfly.cs",
+        "line": 43
+      },
+      "EntityDressedHumanoid": {
+        "type": "EntityDressedHumanoid",
+        "path": "Lore/Village/EntityDressedHumanoid.cs",
+        "line": 38
+      },
+      "EntityDrifter": {
+        "type": "EntityDrifter",
+        "path": "Entities/EntityDrifter.cs",
+        "line": 78
+      },
+      "EntityEchoChamber": {
+        "type": "EntityEchoChamber",
+        "path": "Lore/ResoArchives/EntityEchoChamber.cs",
+        "line": 33
+      },
+      "EntityEidolon": {
+        "type": "EntityEidolon",
+        "path": "Lore/ResoArchives/Eidolon/EntityEidolon.cs",
+        "line": 27
+      },
+      "EntityElevator": {
+        "type": "EntityElevator",
+        "path": "Systems/Elevator/EntityElevator.cs",
+        "line": 20
+      },
+      "EntityErel": {
+        "type": "EntityErel",
+        "path": "Lore/Devastation/EntityErel.cs",
+        "line": 40
+      },
+      "EntityFish": {
+        "type": "EntityFish",
+        "path": "Entities/EntityFish.cs",
+        "line": 33
+      },
+      "EntityGlowingAgent": {
+        "type": "EntityGlowingAgent",
+        "path": "Entities/EntityGlowingAgent.cs",
+        "line": 8
+      },
+      "EntityLibraryResonator": {
+        "type": "EntityLibraryResonator",
+        "path": "Lore/ResoArchives/EntityEchoChamber.cs",
+        "line": 10
+      },
+      "EntityLocust": {
+        "type": "EntityLocust",
+        "path": "Entities/EntityLocust.cs",
+        "line": 9
+      },
+      "EntityMechHelper": {
+        "type": "EntityMechHelper",
+        "path": "Systems/JonasDevices/EntityMechHelper.cs",
+        "line": 14
+      },
+      "EntityPlayerBot": {
+        "type": "EntityPlayerBot",
+        "path": "Entities/EntityPlayerBot.cs",
+        "line": 9
+      },
+      "EntityProjectile": {
+        "type": "EntityProjectile"
+      },
+      "EntityShiver": {
+        "type": "EntityShiver",
+        "path": "Entities/EntityShiver.cs",
+        "line": 10
+      },
+      "EntityStrawDummy": {
+        "type": "EntityStrawDummy",
+        "path": "Entities/EntityStrawDummy.cs",
+        "line": 8
+      },
+      "EntityThrownBeenade": {
+        "type": "EntityThrownBeenade",
+        "path": "Entities/EntityThrownBeenade.cs",
+        "line": 13
+      },
+      "EntityThrownSnowball": {
+        "type": "EntityThrownSnowball",
+        "path": "Entities/EntityThrownSnowball.cs",
+        "line": 12
+      },
+      "EntityThrownStone": {
+        "type": "EntityThrownStone",
+        "path": "Entities/EntityThrownStone.cs",
+        "line": 11
+      },
+      "EntityTrader": {
+        "type": "EntityTrader",
+        "path": "Systems/Trading/EntityTrader.cs",
+        "line": 22
+      },
+      "EntityVillager": {
+        "type": "EntityVillager",
+        "path": "Lore/Village/EntityVillager.cs",
+        "line": 16
+      }
     }
   }
 }

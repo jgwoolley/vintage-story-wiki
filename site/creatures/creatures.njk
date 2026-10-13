@@ -10,6 +10,7 @@ eleventyComputed:
 ---
 {% import "macros/datatable.njk" as dt %}
 {% import "macros/breadcrumb.njk" as bc %}
+{% import "macros/temperature.njk" as tmp %}
 {{ bc.trail(lang, [{label: "Creatures", url: "creatures/"}, {label: source.sourceDisplayName}]) }}
 
 <h1>{{ source.sourceDisplayName }}</h1>
@@ -23,6 +24,7 @@ eleventyComputed:
 <table>
   <tbody>
     {% if source.entityStats.maxHealth != null %}<tr><th>Max health</th><td>{{ source.entityStats.maxHealth }} hp</td></tr>{% endif %}
+    {% if source.entityStats.damageTier != null %}<tr><th>Tier</th><td>{{ source.entityStats.damageTier }} <span class="muted">(attack damage tier -- compared against armor's protection tier; higher hits through more armor)</span></td></tr>{% endif %}
     {% if source.entityStats.weight != null %}<tr><th>Weight</th><td>{{ source.entityStats.weight }} kg</td></tr>{% endif %}
     {% if source.entityStats.sizeX != null %}<tr><th>Hitbox size</th><td>{{ source.entityStats.sizeX }} &times; {{ source.entityStats.sizeY }} (width &times; height, blocks)</td></tr>{% endif %}
     {% if source.entityStats.tags.length %}
@@ -35,6 +37,23 @@ eleventyComputed:
 </table>
 {% endif %}
 
+{% if source.entityStats.codeRefs.length %}
+<h2>Game logic (C#)</h2>
+<p class="muted">The C# classes this creature's JSON hands its behavior to: its entity class, behaviors and AI tasks. Files link to <a href="https://github.com/anegostudios/vssurvivalmod">vssurvivalmod</a> on GitHub; names without a link are implemented in the game engine or VSEssentials, which aren't mapped here.</p>
+<table>
+  <thead><tr><th>Role</th><th>Name in JSON</th><th>C# type</th></tr></thead>
+  <tbody>
+  {% for ref in source.entityStats.codeRefs %}
+    <tr>
+      <td>{{ {class: "Entity class", entityBehavior: "Behavior", aiTask: "AI task"}[ref.role] }}</td>
+      <td><code>{{ ref.name }}</code></td>
+      <td>{% if ref.url %}<a href="{{ ref.url }}"><code>{{ ref.type }}</code></a>{% elif ref.type %}<code>{{ ref.type }}</code>{% else %}<span class="muted">engine / VSEssentials</span>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
 {% if source.entityStats.spawn %}
 {% set spawn = source.entityStats.spawn %}
 <h2>Where it spawns</h2>
@@ -42,7 +61,7 @@ eleventyComputed:
 <table>
   <thead><tr><th>Condition</th><th>Value</th><th>What this means</th></tr></thead>
   <tbody>
-    {% if spawn.minTemp != null or spawn.maxTemp != null %}<tr><th>Temperature</th><td>{{ spawn.minTemp if spawn.minTemp != null else "any" }}&ndash;{{ spawn.maxTemp if spawn.maxTemp != null else "any" }}&deg;C</td><td>{{ "minTemp" | restrictionInfo }}</td></tr>{% endif %}
+    {% if spawn.minTemp != null or spawn.maxTemp != null %}<tr><th>Temperature</th><td>{{ tmp.range(spawn.minTemp, spawn.maxTemp) }}&deg;C</td><td>{{ "minTemp" | restrictionInfo }}</td></tr>{% endif %}
     {% if spawn.minRain != null or spawn.maxRain != null %}<tr><th>Rain</th><td>{{ spawn.minRain if spawn.minRain != null else 0 }}&ndash;{{ spawn.maxRain if spawn.maxRain != null else 1 }}</td><td>{{ "minRain" | restrictionInfo }}</td></tr>{% endif %}
     {% if spawn.minForest != null or spawn.maxForest != null %}<tr><th>Forest density</th><td>{{ spawn.minForest if spawn.minForest != null else 0 }}&ndash;{{ spawn.maxForest if spawn.maxForest != null else 1 }}</td><td>{{ "minForest" | restrictionInfo }}</td></tr>{% endif %}
     {% if spawn.habitatBlocks.length %}

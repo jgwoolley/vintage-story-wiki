@@ -253,17 +253,38 @@ export default function (eleventyConfig) {
   eleventyConfig.addFilter("contextualRecipe", (recipe, domain, code) => {
     if (!recipe.wildcard) return recipe;
     const { placeholder, allowedVariants } = recipe.wildcard;
+    const token = `{${placeholder}}`;
+    // Only the output and the *variant-bearing* ingredient(s) (a `*` code that carries its own
+    // allowedVariants, like rod-* in the fruit press) depend on the placeholder. Every other
+    // ingredient -- including other wildcards such as plank-* ("name": "wood"), which would
+    // otherwise be wrongly resolved to e.g. plank-copper -- must stay as authored.
+    const isVariantIngredient = (ing) => typeof ing.code === "string" && ing.code.includes("*") && Array.isArray(ing.allowedVariants);
+    const outputDepends = typeof recipe.output.code === "string" && recipe.output.code.includes(token);
     for (const variant of allowedVariants) {
-      const substitute = (s) => (typeof s === "string" ? s.replace(new RegExp(`\\{${placeholder}\\}`, "g"), variant) : s);
-      const subIngredients = recipe.ingredients.map((ing) =>
-        typeof ing.code === "string" && ing.code.includes("*") ? { ...ing, code: ing.code.replace("*", variant) } : { ...ing, code: substitute(ing.code) }
-      );
-      const outCode = substitute(recipe.output.code);
+      const subIngredients = recipe.ingredients.map((ing) => {
+        if (isVariantIngredient(ing)) return { ...ing, code: ing.code.replace("*", variant) };
+        if (typeof ing.code === "string" && ing.code.includes(token)) return { ...ing, code: ing.code.split(token).join(variant) };
+        return ing;
+      });
+      const outCode = outputDepends ? recipe.output.code.split(token).join(variant) : recipe.output.code;
+      // A match only counts if it hinges on the substituted variant. An output with no placeholder
+      // (fruitpress-ns) matches every variant equally, so it must keep the generic ingredients
+      // (all allowed rods) instead of silently picking the first one.
       const matches =
-        subIngredients.some((ing) => ing.domain === domain && ing.code === code) || (recipe.output.domain === domain && outCode === code);
+        subIngredients.some((ing, i) => ing !== recipe.ingredients[i] && ing.domain === domain && ing.code === code) ||
+        (outputDepends && recipe.output.domain === domain && outCode === code);
       if (matches) return { ...recipe, ingredients: subIngredients, output: { ...recipe.output, code: outCode } };
     }
     return recipe;
+  });
+
+  // Colors a temperature (degC): blue when cold, red when hot, fading to neutral around 15degC
+  // (roughly -10 and below / 40 and above are fully saturated). Used by macros/temperature.njk.
+  eleventyConfig.addFilter("tempColor", (t) => {
+    const n = Number(t);
+    if (!Number.isFinite(n)) return "inherit";
+    const delta = Math.max(-1, Math.min(1, (n - 15) / 25));
+    return `hsl(${delta < 0 ? 210 : 5}, ${Math.round(Math.abs(delta) * 85)}%, ${Math.round(72 - Math.abs(delta) * 6)}%)`;
   });
 
   eleventyConfig.addPassthroughCopy("site/assets");

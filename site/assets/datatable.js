@@ -59,10 +59,11 @@
       const panel = wrapper ? wrapper.querySelector(".datatable-filter-panel") : null;
       const labelsByValue = collectValues(attr, labelAttr, multiToken);
       const values = [...labelsByValue.keys()].sort();
+      // The macro can relabel a dimension's button (e.g. "Tier" instead of "Category"); chips reuse that text.
       const dim = {
         name,
         attr,
-        label,
+        label: label ?? (toggle ? toggle.textContent.trim() : name),
         multiToken,
         wrapper,
         toggle,
@@ -97,12 +98,17 @@
     }
 
     const dimensions = [
-      buildDimension("category", "category", "Category", null, false),
+      buildDimension("category", "category", null, null, false),
       buildDimension("mod", "mod", "Mod", "modLabel", false),
       buildDimension("tag", "tags", "Tags", null, true),
       buildDimension("description", "description", "Description", "descriptionLabel", false),
     ];
     allDimensions.push(...dimensions);
+    // Hide the "Filters" caption too when every dimension hid itself (no values on any row).
+    const filtersGroup = root.querySelector(".datatable-filters");
+    if (filtersGroup && dimensions.every((d) => !d.wrapper || d.wrapper.style.display === "none")) {
+      filtersGroup.style.display = "none";
+    }
 
     // Restore filter state from the URL -- values are comma-separated (`?category=rock,ore`) and
     // filtered against the known value set so a stale/garbage param can't silently match zero rows
@@ -232,18 +238,23 @@
     const dirKey = paramKey("dir", instanceIndex);
     let sortColIndex = null;
     let sortDir = 1;
+    let domReordered = false; // true while the <tr>s are physically in sorted (not source) order
 
     function cellText(el, colIndex) {
       return (el.children[colIndex]?.textContent || "").trim();
     }
 
+    // A cell is numeric when it starts with a number, optionally followed by a unit ("17 hp", "45%",
+    // "3 items"); ranges ("3-5") sort by their first number. Empty cells always sort last, in
+    // either direction, rather than being compared as text against numbers.
+    const LEADING_NUMBER = /^-?\d+(?:\.\d+)?/;
     function compareRows(a, b) {
       const av = cellText(a, sortColIndex);
       const bv = cellText(b, sortColIndex);
-      const an = parseFloat(av);
-      const bn = parseFloat(bv);
-      const bothNumeric = !isNaN(an) && !isNaN(bn) && /^-?[\d.]+%?$/.test(av) && /^-?[\d.]+%?$/.test(bv);
-      const cmp = bothNumeric ? an - bn : av.localeCompare(bv, undefined, { numeric: true, sensitivity: "base" });
+      if (!av || !bv) return av === bv ? 0 : av ? -1 : 1;
+      const am = LEADING_NUMBER.exec(av);
+      const bm = LEADING_NUMBER.exec(bv);
+      const cmp = am && bm ? parseFloat(am[0]) - parseFloat(bm[0]) : av.localeCompare(bv, undefined, { numeric: true, sensitivity: "base" });
       return cmp * sortDir;
     }
 
@@ -290,6 +301,21 @@
         (el) => matchesQuery(el, query) && dimensions.every((dim) => matchesDimension(el, dim))
       );
       if (sortColIndex !== null) matches.sort(compareRows);
+      // Sorting only reordered this JS array, so the visible rows stayed in source order (only
+      // *which* rows made the page changed). Physically reorder the <tr>s too -- matches first, in
+      // sorted order -- and restore source order when the sort is cleared. Skipped when nothing is
+      // sorted and nothing was, so plain searching on huge tables doesn't re-append every row.
+      if (sortColIndex !== null || domReordered) {
+        const tbody = items[0]?.parentNode;
+        if (tbody) {
+          const matchSet = new Set(matches);
+          const ordered = sortColIndex !== null ? matches.concat(items.filter((el) => !matchSet.has(el))) : items;
+          const frag = document.createDocumentFragment();
+          for (const el of ordered) frag.appendChild(el);
+          tbody.appendChild(frag);
+        }
+        domReordered = sortColIndex !== null;
+      }
       const totalPages = Math.max(1, Math.ceil(matches.length / pageSize));
       if (page > totalPages) page = totalPages;
       if (page < 1) page = 1;

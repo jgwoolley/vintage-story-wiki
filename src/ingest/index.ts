@@ -8,7 +8,8 @@ import { extractRecipes } from "./models/recipes.js";
 import { extractLoot } from "./models/loot.js";
 import { extractStructures } from "./models/structures.js";
 import { extractDecorCatalog } from "./models/decor.js";
-import { extractLoreBooks } from "./models/lore.js";
+import { extractLoreBooks, buildLoreSections } from "./models/lore.js";
+import { attachLoreLocations } from "./models/loreLocations.js";
 import { extractDeposits } from "./models/deposits.js";
 import { extractBlockPatchSpawns } from "./models/blockpatches.js";
 import { extractTrees, extractFruitTrees } from "./models/trees.js";
@@ -186,6 +187,14 @@ function main(): void {
   step("Extracting lore books");
   const loreBooks = extractLoreBooks(index, lang);
   console.log(`  ${loreBooks.length} books/lore pieces`);
+  step("Locating lore books in structure schematics");
+  attachLoreLocations(loreBooks, schematicsByDomain, schematicToStructure);
+  const loreSections = buildLoreSections(loreBooks, lang);
+  // Books (findable, readable) and tapestry/wallcarving chapter collections get separate pages --
+  // split here, like paintings/tapestries/clothing from decor, rather than filtered in a template.
+  const books = loreBooks.filter((b) => b.kind === "book");
+  const loreChapters = loreBooks.filter((b) => b.kind === "chapters");
+  console.log(`  ${books.filter((b) => b.foundInStructures.length).length}/${books.length} books found in at least one structure; ${loreSections.length} lore sections`);
 
   // Tapestries have no flat "description" lang key -- their actual text lives in the matching
   // lore book's chapters (picked at placement time via a runtime "type" attribute). Cross-link
@@ -477,7 +486,9 @@ function main(): void {
   writeGenerated("clutter", clutter);
   writeGenerated("tapestries", tapestries);
   writeGenerated("clothing", clothing);
-  writeGenerated("lore", loreBooks);
+  writeGenerated("books", books);
+  writeGenerated("lore", loreChapters);
+  writeGenerated("loreSections", loreSections);
   writeGenerated("deposits", deposits);
   writeGenerated("depositsById", depositsById);
   writeGenerated("blockPatches", blockPatches);

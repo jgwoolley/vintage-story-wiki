@@ -145,6 +145,7 @@ eleventyComputed:
       </td>
       <td>
         {% if ing.isTool %}uses {{ ing.toolDurabilityCost }} durability{% endif %}
+        {% if ing.allowedVariants %}any of: {{ ing.allowedVariants | join(", ") }}{% endif %}
       </td>
     </tr>
   {% endfor %}

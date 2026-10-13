@@ -174,6 +174,15 @@ export interface EntityStats {
   sizeY?: number; // hitbox height, blocks
   maxHealth?: number;
   spawn?: EntitySpawnInfo;
+  /**
+   * The mob's attack tier: the highest `damageTier`/`projectileDamageTier` among its attack AI tasks,
+   * resolved for this variant (drifters: normal 0, deep 1, tainted 2, corrupt 3, nightmare 4). It's the
+   * value the game compares against armor's protection tier and the thing players read as "how tough
+   * is this mob". Absent when the entity has no tiered attack.
+   */
+  damageTier?: number;
+  /** The C# the entity's own JSON names -- its `class`, each behavior `code` and each AI task `code` (deduped across server/client), linked to source where `csharpClassMap.json` knows the name; engine/VSEssentials-only names stay unlinked. */
+  codeRefs?: CodeRef[];
 }
 
 /** One normalized drop: something a block/entity can yield, via one of the 5 `LootMechanism`s. */
@@ -310,8 +319,10 @@ export interface ItemIndexEntry {
 }
 
 /** Which engine registry a JSON-referenced C# name lives in -- one per `api.Register<X>Class`
- * method (`block` = RegisterBlockClass, `blockEntity` = RegisterBlockEntityClass, ...). */
-export type CSharpRegistrationKind = "block" | "item" | "blockEntity" | "blockBehavior" | "collectibleBehavior" | "blockEntityBehavior";
+ * method (`block` = RegisterBlockClass, `blockEntity` = RegisterBlockEntityClass, ...). The entity
+ * ones: `entity` = RegisterEntity (an entity JSON's `class`), `entityBehavior` = RegisterEntityBehaviorClass
+ * (`server.behaviors[].code`), `aiTask` = AiTaskRegistry.Register (`taskai`'s `aitasks[].code`). */
+export type CSharpRegistrationKind = "block" | "item" | "blockEntity" | "blockBehavior" | "collectibleBehavior" | "blockEntityBehavior" | "entity" | "entityBehavior" | "aiTask";
 
 /**
  * `src/ingest/csharpClassMap.json`: a committed snapshot of which C# file implements each name the
@@ -335,7 +346,7 @@ export interface CSharpTypeLocation {
 
 /** One C# name an item/block's JSON refers to, resolved against CSharpClassMap where possible. */
 export interface CodeRef {
-  role: "class" | "entityClass" | "behavior" | "entityBehavior"; // which JSON field named it (`class`, `entityClass`, `behaviors[].name`, `entityBehaviors[].name`)
+  role: "class" | "entityClass" | "behavior" | "entityBehavior" | "aiTask"; // which JSON field named it (`class`, `entityClass`, `behaviors[].name`, `entityBehaviors[].name`); for an entity (EntityStats.codeRefs): `class` = its entity class, `entityBehavior` = a `behaviors[].code`, `aiTask` = an `aitasks[].code`
   name: string; // the name exactly as written in the JSON, e.g. "HorizontalOrientable"
   type?: string; // resolved C# type name, when found in the map
   path?: string; // repo-relative .cs file declaring `type` (CSharpTypeLocation.path), e.g. "Block/BlockTobiasTeleporter.cs"

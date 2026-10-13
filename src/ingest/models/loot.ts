@@ -1,7 +1,8 @@
-import type { AssetIndex, CreatureRosterEntry, EntitySpawnInfo, EntityStats, LootEntry } from "../types.js";
+import type { AssetIndex, CodeRef, CreatureRosterEntry, CSharpRegistrationKind, EntitySpawnInfo, EntityStats, LootEntry } from "../types.js";
 import type { LangResolver } from "../lang.js";
 import { expandVariants, resolveByType, substitutePlaceholders } from "../variantExpander.js";
 import { splitDomainCode } from "../codeUtil.js";
+import { resolveCodeRef } from "../csharpRefs.js";
 
 interface DropSpec {
   type?: string;
@@ -110,6 +111,42 @@ function extractEntitySpawnInfo(json: any, concreteCode: string): EntitySpawnInf
   };
 }
 
+/** Highest `damageTier`/`projectileDamageTier` (plain or `*ByType`, resolved for `concreteCode`) found anywhere under `node` -- i.e. across every attack AI task. */
+function maxDamageTier(node: any, concreteCode: string): number | undefined {
+  let best: number | undefined;
+  const visit = (n: any): void => {
+    if (!n || typeof n !== "object") return;
+    if (Array.isArray(n)) return n.forEach(visit);
+    for (const field of ["damageTier", "projectileDamageTier"]) {
+      const v = n[field] ?? resolveByType(n[`${field}ByType`], concreteCode);
+      if (typeof v === "number" && (best === undefined || v > best)) best = v;
+    }
+    // `fooByType` maps hold the variant-specific version of `foo`; follow only this variant's pick.
+    for (const [k, child] of Object.entries(n)) visit(k.endsWith("ByType") ? resolveByType(child as any, concreteCode) : child);
+  };
+  visit(node);
+  return best;
+}
+
+/** The C# an entity's JSON names: its `class`, then every server/client behavior `code` and nested `aitasks[].code`, deduped by role+name. */
+function extractEntityCodeRefs(json: any): CodeRef[] {
+  const refs: CodeRef[] = [];
+  const seen = new Set<string>();
+  const add = (kinds: CSharpRegistrationKind[], role: CodeRef["role"], name: unknown): void => {
+    if (typeof name !== "string" || !name || seen.has(`${role}:${name}`)) return;
+    seen.add(`${role}:${name}`);
+    refs.push(resolveCodeRef(kinds, role, name));
+  };
+  add(["entity"], "class", json.class);
+  for (const side of [json.server, json.client]) {
+    for (const b of Array.isArray(side?.behaviors) ? side.behaviors : []) {
+      add(["entityBehavior"], "entityBehavior", b?.code);
+      for (const task of Array.isArray(b?.aitasks) ? b.aitasks : []) add(["aiTask"], "aiTask", task?.code);
+    }
+  }
+  return refs;
+}
+
 function extractEntityStats(json: any, concreteCode: string): EntityStats {
   const behaviors: any[] = json.server?.behaviors ?? [];
   const healthBehavior = behaviors.find((b) => String(b?.code ?? "").toLowerCase() === "health");
@@ -123,6 +160,8 @@ function extractEntityStats(json: any, concreteCode: string): EntityStats {
     sizeY: size?.y,
     maxHealth,
     spawn: extractEntitySpawnInfo(json, concreteCode),
+    damageTier: maxDamageTier(json.server?.behaviors, concreteCode),
+    codeRefs: extractEntityCodeRefs(json),
   };
 }
 

@@ -250,6 +250,24 @@ th.datatable-sorted[data-sort-dir="desc"] .datatable-th-label::after { content: 
   gap: 0.5rem;
   margin: 0.5rem 0;
   flex-wrap: wrap;
+  align-items: flex-end;
+}
+.datatable-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.datatable-filters-label {
+  font-size: 0.65rem;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted, #8a8174);
+}
+.datatable-filters-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 .datatable-search {
   flex: 1;
@@ -273,6 +291,8 @@ th.datatable-sorted[data-sort-dir="desc"] .datatable-th-label::after { content: 
   border-radius: 6px;
   cursor: pointer;
 }
+/* Chevron: reads as "opens a menu" without needing extra words or space. */
+.datatable-filter-toggle::after { content: " \25BE"; font-size: 0.8em; opacity: 0.7; }
 .datatable-filter-toggle:hover { border-color: var(--accent); }
 .datatable-filter-toggle[aria-expanded="true"] { border-color: var(--accent); }
 .datatable-filter-panel {
@@ -547,3 +567,12 @@ th.datatable-sorted[data-sort-dir="desc"] .datatable-th-label::after { content: 
 .gm .error { color: #c0392b; font-weight: 600; }
 .gm ul.notes { margin: 0; padding-left: 1.25rem; color: var(--muted); font-size: 0.88rem; }
 .gm ul.notes li { margin: 0.25rem 0; }
+
+/* Deep links (e.g. lore/.../#chapter-4) visibly mark the section they land on. */
+.card:target {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent);
+  scroll-margin-top: 1rem;
+}
+tr:target { outline: 2px solid var(--accent); outline-offset: -2px; }

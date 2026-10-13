@@ -182,21 +182,31 @@ to the matching `/clothing/` page by display name resolved at ingest time, since
 joins the main item index and so has no generic item cross-reference filter available in a
 template.
 
-## Books & Lore (`models/lore.ts`)
+## Books & Lore (`models/lore.ts`, `models/loreLocations.ts`)
 
-`/lore/` presents the actual readable text of every in-game book, journal, and tapestry chapter —
-both vanilla (19 books) and BetterRuins' own (53 more). `config/lore/<code>.json` files just list a
-title key and an ordered array of "piece" lang keys; the real prose lives in the lang file itself,
-resolved through the same mechanism as every other display string (including mod-domain-prefixed
-keys like `betterruins:lore-brickworkerslament-title`), with the game's own `___NEWPAGE___`
-page-break marker preserved.
+Two pages, one source. `config/lore/<code>.json` files list a title key and an ordered array of
+"piece" lang keys; the real prose lives in the lang file (resolved like every other display
+string, including mod-domain-prefixed keys). Each file's `category` is its **lore section**.
+
+- `/books/` (+ `/books/<domain>/<code>/`) — every readable book/journal/note (`kind: "book"`), its
+  section, and the structures whose schematics can contain it.
+- `/lore/` — one row per section (description from the `loretype-<category>` lang key), listing
+  its books and structures. The `tapestry`/`wallcarving` files aren't books (they're chapters a
+  tapestry/wallcarving reveals, `kind: "chapters"`), so their text pages stay at
+  `/lore/<domain>/<code>/` (the tapestry pages link to `#chapter-N`; `.card:target` highlights it).
+
+`attachLoreLocations` finds structures from three schematic signals: `clutteredbookshelfwithlore`
+block entities' `loreCode` (a section), `discoveryCode` on containers holding a specific book, and
+`stackrandomizer-<code|section>` in `ItemCodes`. Block-entity values are matched by regex over the
+raw decoded bytes. Outputs: `generated.books`, `generated.lore` (chapters only), `generated.loreSections`.
 
 ## Trades (`models/trades.ts`)
 
-`/trades/` has two layers: a flat, sortable table of every individual buy/sell listing across
-every specialization (the discovery/browsing entry point, in the spirit of
-vintagestorypriceguide.com), and per-specialization detail pages (`/trades/<id>/`) with their own
-selling/buying tables plus starting money. Each specialization is one
+Two pages: `/trades/` (in the Tools menu) is a flat, sortable table of every individual buy/sell
+listing (in the spirit of vintagestorypriceguide.com); `/traders/` lists the specializations, with
+per-specialization detail pages (`/traders/<id>/`) holding their own selling/buying tables plus
+starting money. A listing's price is per stack and its stock is a number of stacks (`stacksize`
+items each) -- shown as separate columns. Each specialization is one
 `config/tradelists/trader-<specialization>.json` file (vanilla also has `villager-<name>.json`
 tradelists for named NPCs, which this pipeline treats the same way but which don't resolve any
 `traderEntities` — see below). `priceMin`/`priceMax`/`stockMin`/`stockMax` are derived at ingest

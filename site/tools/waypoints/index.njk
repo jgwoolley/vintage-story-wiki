@@ -1,6 +1,6 @@
 ---
 title: WayPoint planner - Vintage Story Wiki
-description: Plan the shortest route between waypoints, with translocator links costing nothing, and export /waypoint commands.
+description: Plan the shortest route between waypoints, with translocator links costing nothing, and back up your waypoints as JSON.
 layout: layouts/base.njk
 permalink: "{{ lang }}/tools/waypoints/index.html"
 ---
@@ -11,15 +11,15 @@ permalink: "{{ lang }}/tools/waypoints/index.html"
   A clockmaker's best friend: add your waypoints (ground coordinates X/Z plus height), link pairs
   joined by a translocator, then pick a source and destination to find the cheapest route.
   Walking costs the straight-line distance; a translocator link costs nothing. Everything is
-  stored only in this browser (export a JSON file to back it up or move it elsewhere).
+  stored only in this browser (download a JSON file to back it up or move it elsewhere, and upload it again later).
   Ported from the standalone vintage-story-price-guide project.
 </p>
 
 <div class="button-group">
   <button type="button" id="wpAdd">Add WayPoint</button>
   <button type="button" id="wpFit">Fit map</button>
-  <button type="button" id="wpExport">Export JSON</button>
-  <label class="button-like">Import JSON <input type="file" id="wpImport" accept=".json" hidden></label>
+  <button type="button" id="wpExport">Download JSON</button>
+  <label class="button-like">Upload JSON <input type="file" id="wpImport" accept=".json" hidden></label>
   <button type="button" id="wpClear">Clear all</button>
 </div>
 <p id="wpStatus" class="muted" role="status"></p>

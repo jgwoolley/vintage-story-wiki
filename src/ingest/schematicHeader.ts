@@ -35,9 +35,9 @@ export interface SchematicHeader {
   blockCodeCount?: number;
 }
 
-/** Finds the `"BlockCodes": { ... }` substring in a schematic file's raw text, if present. */
-function extractBlockCodesSection(text: string): string | undefined {
-  const blockCodesStart = text.indexOf('"BlockCodes"');
+/** Finds the `"<key>": { ... }` (BlockCodes/ItemCodes) dictionary substring in a schematic file's raw text, if present. */
+function extractCodesSection(text: string, key: "BlockCodes" | "ItemCodes"): string | undefined {
+  const blockCodesStart = text.indexOf(`"${key}"`);
   if (blockCodesStart === -1) return undefined;
   const braceStart = text.indexOf("{", blockCodesStart);
   let depth = 0;
@@ -62,7 +62,7 @@ export function readSchematicHeader(fullPath: string): SchematicHeader {
   const sizeY = Number(text.match(/"SizeY"\s*:\s*(\d+)/)?.[1]);
   const sizeZ = Number(text.match(/"SizeZ"\s*:\s*(\d+)/)?.[1]);
 
-  const section = extractBlockCodesSection(text);
+  const section = extractCodesSection(text, "BlockCodes");
   const blockCodeCount = section ? (section.match(/"\d+"\s*:/g) ?? []).length : undefined;
 
   return {
@@ -80,8 +80,16 @@ export function readSchematicHeader(fullPath: string): SchematicHeader {
  * specific block (e.g. a painting or tapestry), by checking membership rather than full voxel decode.
  */
 export function readSchematicBlockCodes(fullPath: string): string[] {
-  const text = readFileSync(fullPath, "utf8");
-  const section = extractBlockCodesSection(text);
+  return codeValues(readFileSync(fullPath, "utf8"), "BlockCodes");
+}
+
+/** Same idea as `readSchematicBlockCodes` for the `ItemCodes` dictionary (items placed into containers/stackrandomizers, e.g. "game:stackrandomizer-darkheat"). */
+export function readSchematicItemCodes(fullPath: string): string[] {
+  return codeValues(readFileSync(fullPath, "utf8"), "ItemCodes");
+}
+
+function codeValues(text: string, key: "BlockCodes" | "ItemCodes"): string[] {
+  const section = extractCodesSection(text, key);
   if (!section) return [];
   try {
     return Object.values(JSON.parse(section) as Record<string, string>);

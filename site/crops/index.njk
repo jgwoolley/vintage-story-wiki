@@ -5,6 +5,7 @@ permalink: "{{ lang }}/crops/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
 {% import "macros/breadcrumb.njk" as bc %}
+{% import "macros/temperature.njk" as tmp %}
 {{ bc.trail(lang, [{label: "Crops"}]) }}
 <h1>Crops</h1>
 <p class="muted">
@@ -35,7 +36,7 @@ permalink: "{{ lang }}/crops/index.html"
     <td>{% if patch.crop.requiredNutrient %}<span class="tag" title="{{ {N: 'Nitrogen', P: 'Phosphorus', K: 'Potassium'}[patch.crop.requiredNutrient] or patch.crop.requiredNutrient }}">{{ patch.crop.requiredNutrient }}</span> {{ {N: 'Nitrogen', P: 'Phosphorus', K: 'Potassium'}[patch.crop.requiredNutrient] }}{% endif %}</td>
     <td>{% if patch.crop.nutrientConsumption != null %}{{ patch.crop.nutrientConsumption }}{% endif %}</td>
     <td>{% if patch.crop.totalGrowthMonths != null %}{{ patch.crop.totalGrowthMonths }}{% endif %}</td>
-    <td>{% if patch.minTemp != null or patch.maxTemp != null %}{{ patch.minTemp if patch.minTemp != null else "any" }}&ndash;{{ patch.maxTemp if patch.maxTemp != null else "any" }}{% endif %}</td>
+    <td>{{ tmp.range(patch.minTemp, patch.maxTemp) }}</td>
     <td>{% if patch.minRain != null or patch.maxRain != null %}{{ patch.minRain if patch.minRain != null else 0 }}&ndash;{{ patch.maxRain if patch.maxRain != null else 1 }}{% endif %}</td>
     <td><span class="tag">{{ patch.sourceMod }}</span></td>
   </tr>

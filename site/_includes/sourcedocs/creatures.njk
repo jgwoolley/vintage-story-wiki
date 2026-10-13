@@ -23,3 +23,10 @@ side of the conversation can say, and every item its dialogue can hand over as a
 underlying files are genuine branching state machines (condition/jump graphs) -- that graph
 structure itself isn't rendered, only the flattened lines/rewards.
 </p>
+<p>
+<strong>Tier</strong> is the highest <code>damageTier</code>/<code>projectileDamageTier</code> found anywhere in the entity's
+server behaviors (its attack AI tasks), resolved for that exact variant -- e.g. drifters run 0 (surface) to 4
+(nightmare). The game compares it with armor's protection tier. The <strong>Game logic (C#)</strong> table lists the
+entity <code>class</code>, every behavior <code>code</code> and every <code>aitasks[].code</code>, linked through
+<code>src/ingest/csharpClassMap.json</code> where vssurvivalmod implements them.
+</p>

@@ -1,9 +1,8 @@
 import type { AssetIndex, CodeRef, CSharpClassMap, CSharpRegistrationKind, ItemIndexEntry, LootEntry, NormalizedRecipe } from "./types.js";
 import type { LangResolver } from "./lang.js";
 import { expandVariants, globToRegExp, resolveByType, substitutePlaceholders } from "./variantExpander.js";
-import csharpClassMapJson from "./csharpClassMap.json" with { type: "json" };
+import { resolveCodeRef } from "./csharpRefs.js";
 
-const csharpClassMap = csharpClassMapJson as CSharpClassMap;
 
 function key(domain: string, code: string): string {
   return `${domain}:${code}`;
@@ -194,17 +193,7 @@ export function attachDescriptionsAndCodeRefs(items: Map<string, ItemIndexEntry>
     if (description) entry.description = description;
   }
 
-  const lookup = (kinds: CSharpRegistrationKind[], role: CodeRef["role"], name: string): CodeRef => {
-    for (const kind of kinds) {
-      const loc = csharpClassMap.registrations[kind]?.[name];
-      if (!loc) continue;
-      const url = loc.path
-        ? `https://github.com/${csharpClassMap.repo}/blob/${csharpClassMap.commit}/${loc.path}${loc.line ? `#L${loc.line}` : ""}`
-        : undefined;
-      return { role, name, type: loc.type, ...(url ? { path: loc.path, url } : {}) };
-    }
-    return { role, name };
-  };
+  const lookup = resolveCodeRef;
   const behaviorNames = (list: unknown): string[] =>
     Array.isArray(list) ? list.map((b) => (b as { name?: unknown })?.name).filter((n): n is string => typeof n === "string") : [];
 

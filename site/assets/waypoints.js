@@ -58,7 +58,7 @@ export function getWaypointCommand({ icon, height, pinned, color, label, x, z })
   return `/waypoint addati ${icon} ${x} ${height} ${z} ${pinned ? "true" : "false"} ${color} ${label}`;
 }
 
-/** Serialized shape (what Export writes / Import reads). */
+/** Serialized shape (what Download writes / Upload reads). */
 export function serializeWayPoints({ waypoints, source, destination, createdTime }) {
   return {
     createdTime: createdTime ?? new Date().toISOString(),

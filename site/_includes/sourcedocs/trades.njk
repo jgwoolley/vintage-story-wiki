@@ -1,16 +1,9 @@
 <p>
-Each <code>config/tradelists/trader-&lt;specialization&gt;.json</code> (and
-<code>villager-&lt;name&gt;.json</code>) file is a flat <code>{money, selling, buying}</code>
-object; entries repeating the same item under different cosmetic <code>attributes</code> (e.g. a
-tapestry listed many times under different "type" values) are collapsed to one listing, since
-those variations are randomized/cosmetic rather than distinct tradeable things.
+This is the flat, per-listing view of the same data as <a href="{{ ('/' ~ lang ~ '/') | url }}sources/traders/">Traders</a>:
+every entry of every <code>config/tradelists/*.json</code> <code>selling</code>/<code>buying</code> array, one
+table row each. See that page for how the files are read and how specializations are tied to trader entities.
 </p>
 <p>
-There's no explicit field anywhere linking a specialization to the trader entity that actually
-uses it -- <code>entities/humanoid/trader-{male,female}.json</code>'s own <code>variantgroups</code>
-declares a <code>type</code> dimension whose states <em>are</em> the specialization codes, and the
-entity's <code>attributes.tradePropsFile</code> substitutes that same value into the tradelist
-filename. Every concrete entity variant whose <code>type</code> matches a loaded specialization's
-code is linked back to it; the 8 <code>villager-*</code> tradelists intentionally resolve to no
-entity, since named villagers aren't assigned a specialization through this mechanism at all.
+A listing's <code>price</code> is per stack, and <code>stock</code> is a number of stacks (each holding
+<code>stacksize</code> items) -- the table shows them as separate columns rather than a combined "stock &times; size".
 </p>

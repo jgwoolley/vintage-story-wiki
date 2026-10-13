@@ -29,6 +29,7 @@ const KINDS: Record<string, CSharpRegistrationKind> = {
   RegisterBlockBehaviorClass: "blockBehavior",
   RegisterCollectibleBehaviorClass: "collectibleBehavior",
   RegisterBlockEntityBehaviorClass: "blockEntityBehavior",
+  RegisterEntityBehaviorClass: "entityBehavior",
 };
 
 function listCsFiles(dir: string): string[] {
@@ -85,6 +86,18 @@ function main(): void {
       if (!decl) unresolved++;
       (map.registrations[kind] ??= {})[jsonName] = { type: bareType, ...(decl ?? {}) };
     }
+  }
+  // Entity classes (`api.RegisterEntity("EntityBoat", typeof(EntityBoat))`, no "Class" suffix) and AI
+  // tasks (`AiTaskRegistry.Register<AiTaskFoo>("foo")`, generic form) don't fit the pattern above.
+  const add = (kind: CSharpRegistrationKind, jsonName: string, typeName: string) => {
+    const bareType = typeName.split(".").pop()!;
+    const decl = declarations.get(bareType);
+    if (!decl) unresolved++;
+    (map.registrations[kind] ??= {})[jsonName] = { type: bareType, ...(decl ?? {}) };
+  };
+  for (const { text } of sources) {
+    for (const [, jsonName, typeName] of text.matchAll(/RegisterEntity\(\s*"([^"]+)"\s*,\s*typeof\(\s*([A-Za-z0-9_.]+)\s*\)/g)) add("entity", jsonName, typeName);
+    for (const [, typeName, jsonName] of text.matchAll(/AiTaskRegistry\.Register<\s*([A-Za-z0-9_.]+)\s*>\(\s*"([^"]+)"/g)) add("aiTask", jsonName, typeName);
   }
   for (const kind of Object.keys(map.registrations) as CSharpRegistrationKind[]) {
     map.registrations[kind] = Object.fromEntries(Object.entries(map.registrations[kind]!).sort(([a], [b]) => a.localeCompare(b)));

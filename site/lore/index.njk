@@ -1,21 +1,41 @@
 ---
-title: Books & Lore - Vintage Story Wiki
+title: Lore - Vintage Story Wiki
+description: The game's lore sections, which books and chapters belong to each, and where in the world they can be found.
 layout: layouts/base.njk
 permalink: "{{ lang }}/lore/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
 {% import "macros/breadcrumb.njk" as bc %}
-{{ bc.trail(lang, [{label: "Books & Lore"}]) }}
-<h1>Books &amp; Lore</h1>
-<p class="muted">{{ generated.lore.length }} readable books/journals/tapestry chapters, with their full in-game text.</p>
-<p class="muted">Source: <code>config/lore/*.json</code> (title/text are lang-key references). <a href="{{ ('/' ~ lang ~ '/') | url }}sources/lore/">Full details &rarr;</a></p>
+{{ bc.trail(lang, [{label: "Lore"}]) }}
+<h1>Lore</h1>
+<p class="muted">
+  The game files every readable text under a <em>lore section</em> (the journal groups discoveries by it). Each row below is one
+  section, with the <a href="{{ ('/' ~ lang ~ '/') | url }}books/">books</a> that belong to it and the structures they can be found in.
+  Tapestry and wallcarving chapters aren't books, so they're listed here directly.
+</p>
+<p class="muted">Source: <code>config/lore/*.json</code> (<code>category</code> and the <code>loretype-&lt;category&gt;</code> lang key). <a href="{{ ('/' ~ lang ~ '/') | url }}sources/lore/">Full details &rarr;</a></p>
 
-{% call dt.datatable(60, "Search books & lore...", ["Title", "Category", "Mod"]) %}
-{% for book in generated.lore | sort(false, false, "title") %}
-  <tr data-category="{{ book.category }}" data-mod="{{ book.sourceMod }}" data-mod-label="{{ generated.mods | modName(book.sourceMod) }}">
-    <td><a href="{{ ('/' ~ lang ~ '/') | url }}lore/{{ book.domain }}/{{ book.code | slugify }}/">{{ book.title }}</a></td>
-    <td><span class="tag">{{ book.category }}</span></td>
-    <td><span class="tag">{{ book.sourceMod }}</span></td>
+{% call dt.datatable(40, "Search lore sections...", ["Section", "About", "Texts", "Structures", "Mod"]) %}
+{% for section in generated.loreSections %}
+  <tr id="section-{{ section.id | slugify }}" data-search="{{ section.id }} {{ section.description }}{% for bid in section.bookIds %}{% set b = generated.books | findById(bid) %} {{ b.title }}{% set c = generated.lore | findById(bid) %} {{ c.title }}{% endfor %}" data-mod="{{ section.sourceMod }}" data-mod-label="{{ generated.mods | modName(section.sourceMod) }}">
+    <td><span class="tag">{{ section.id }}</span></td>
+    <td>{{ section.description }}</td>
+    <td>
+      {% for bid in section.bookIds %}
+        {% set b = generated.books | findById(bid) %}
+        {% if b.id %}<a href="{{ ('/' ~ lang ~ '/') | url }}books/{{ b.domain }}/{{ b.code | slugify }}/">{{ b.title }}</a>{% else %}
+          {% set c = generated.lore | findById(bid) %}
+          {% if c.id %}<a href="{{ ('/' ~ lang ~ '/') | url }}lore/{{ c.domain }}/{{ c.code | slugify }}/">{{ c.title }}</a> <span class="muted">(chapters)</span>{% endif %}
+        {% endif %}{% if not loop.last %}<br>{% endif %}
+      {% endfor %}
+    </td>
+    <td>
+      {% for loc in section.structures %}
+        {% set st = generated.structures | findById(loc.structureId) %}
+        {% if st.id %}<a href="{{ ('/' ~ lang ~ '/') | url }}structures/{{ st.id | slugify }}/">{{ st.name or st.code }}</a>{% if not loop.last %}, {% endif %}{% endif %}
+      {% endfor %}
+    </td>
+    <td><span class="tag">{{ section.sourceMod }}</span></td>
   </tr>
 {% endfor %}
 {% endcall %}

@@ -80,19 +80,24 @@ permalink: "{{ lang }}/index.html"
     <span class="muted">Cosmetic wearables and their flavor text.</span>
     <span class="muted">{{ generated.clothing.length }} entries</span>
   </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}books/">
+    <strong><span class="card-icon" aria-hidden="true">📖</span> Books</strong>
+    <span class="muted">The full readable text of every in-game book and journal, and the structures that hold them.</span>
+    <span class="muted">{{ generated.books.length }} entries</span>
+  </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}lore/">
-    <strong><span class="card-icon" aria-hidden="true">📖</span> Books &amp; Lore</strong>
-    <span class="muted">The full readable text of every in-game book and journal.</span>
-    <span class="muted">{{ generated.lore.length }} entries</span>
+    <strong><span class="card-icon" aria-hidden="true">📜</span> Lore</strong>
+    <span class="muted">Lore sections: which books and tapestry chapters belong to each, and where to find them.</span>
+    <span class="muted">{{ generated.loreSections.length }} sections</span>
   </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}guides/">
     <strong><span class="card-icon" aria-hidden="true">💡</span> Help Guides</strong>
     <span class="muted">The game's own in-game handbook articles.</span>
     <span class="muted">{{ generated.guides.length }} entries</span>
   </a>
-  <a href="{{ ('/' ~ lang ~ '/') | url }}trades/">
-    <strong><span class="card-icon" aria-hidden="true">⚖️</span> Trades</strong>
-    <span class="muted">What wandering traders buy and sell, per specialization.</span>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}traders/">
+    <strong><span class="card-icon" aria-hidden="true">⚖️</span> Traders</strong>
+    <span class="muted">Wandering trader specializations: starting coins, and what each buys and sells.</span>
     <span class="muted">{{ generated.trades.length }} entries</span>
   </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}classes/">

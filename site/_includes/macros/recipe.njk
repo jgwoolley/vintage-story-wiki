@@ -10,7 +10,7 @@
 {% macro ingredientLabel(lang, items, ing) %}
 {%- if ing.code -%}
   {%- if "*" in ing.code or "{" in ing.code -%}
-    <a href="{{ ('/' ~ lang ~ '/') | url }}items/?q={{ ing.code | wildcardQuery | urlencode }}">{{ ing.code }}</a>
+    <a href="{{ ('/' ~ lang ~ '/') | url }}items/?q={{ ing.code | wildcardQuery | urlencode }}">{{ ing.code }}</a>{% if ing.allowedVariants %} <span class="muted">({{ ing.allowedVariants | join(", ") }})</span>{% endif %}
   {%- else -%}
     <a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ ing.domain }}/{{ ing.code | slugify }}/">{{ items | displayName(ing.domain, ing.code) }}</a>
   {%- endif -%}

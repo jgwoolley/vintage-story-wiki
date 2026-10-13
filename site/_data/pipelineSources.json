@@ -95,11 +95,18 @@
     "globs": ["itemtypes/wearable/seraph/*.json"]
   },
   {
+    "id": "books",
+    "title": "Books",
+    "listingUrl": "books/",
+    "modelFiles": ["src/ingest/models/lore.ts", "src/ingest/models/loreLocations.ts"],
+    "globs": ["config/lore/*.json", "worldgen/schematics/**/*.json (ItemCodes + BlockEntities, to find where each book is placed)"]
+  },
+  {
     "id": "lore",
-    "title": "Books & Lore",
+    "title": "Lore",
     "listingUrl": "lore/",
-    "modelFiles": ["src/ingest/models/lore.ts"],
-    "globs": ["config/lore/*.json"]
+    "modelFiles": ["src/ingest/models/lore.ts", "src/ingest/models/loreLocations.ts"],
+    "globs": ["config/lore/*.json", "lang/*.json (loretype-<category> descriptions)"]
   },
   {
     "id": "guides",
@@ -109,11 +116,18 @@
     "globs": ["config/handbook/*.json"]
   },
   {
+    "id": "traders",
+    "title": "Traders",
+    "listingUrl": "traders/",
+    "modelFiles": ["src/ingest/models/trades.ts"],
+    "globs": ["config/tradelists/*.json", "entities/humanoid/trader-{male,female}.json (specialization-to-entity join only)"]
+  },
+  {
     "id": "trades",
     "title": "Trades",
     "listingUrl": "trades/",
     "modelFiles": ["src/ingest/models/trades.ts"],
-    "globs": ["config/tradelists/*.json", "entities/humanoid/trader-{male,female}.json (specialization-to-entity join only)"]
+    "globs": ["config/tradelists/*.json"]
   },
   {
     "id": "classes",

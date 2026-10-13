@@ -144,7 +144,7 @@ $("wpDest").addEventListener("change", (e) => { state.destination = e.target.val
 $("wpSwap").addEventListener("click", () => { [state.source, state.destination] = [state.destination, state.source]; refresh(); });
 $("wpFit").addEventListener("click", () => map.fit(state.waypoints));
 
-// ---- Import / export ----
+// ---- Upload / download ----
 $("wpExport").addEventListener("click", () => {
   const blob = new Blob([JSON.stringify(serializeWayPoints(state), null, 2)], { type: "application/json" });
   const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: "vintage-story-waypoints.json" });
@@ -159,9 +159,9 @@ $("wpImport").addEventListener("change", async (e) => {
     state = { ...state, ...deserializeWayPoints(JSON.parse(await file.text())) };
     refresh();
     map.fit(state.waypoints);
-    setStatus(`Imported ${state.waypoints.length} waypoint(s).`);
+    setStatus(`Uploaded ${state.waypoints.length} waypoint(s).`);
   } catch (err) {
-    setStatus(`Import failed: ${err.message}`, true);
+    setStatus(`Upload failed: ${err.message}`, true);
   }
 });
 $("wpClear").addEventListener("click", () => {

@@ -5,6 +5,7 @@ permalink: "{{ lang }}/trees/index.html"
 ---
 {% import "macros/datatable.njk" as dt %}
 {% import "macros/breadcrumb.njk" as bc %}
+{% import "macros/temperature.njk" as tmp %}
 {{ bc.trail(lang, [{label: "Trees"}]) }}
 <h1>Trees</h1>
 <p class="muted">
@@ -23,7 +24,7 @@ permalink: "{{ lang }}/trees/index.html"
   <tr data-search="{{ t.generator }} {{ t.logBlockCode }} {{ t.leavesBlockCode }}" data-category="{{ 'shrub' if t.isShrub else 'tree' }}" data-mod="{{ t.sourceMod }}" data-mod-label="{{ generated.mods | modName(t.sourceMod) }}">
     <td>{% if t.saplingCodes and t.saplingCodes.length %}{{ generated.items | displayName(t.domain, t.saplingCodes[0]) }}{% else %}{{ t.generator }}{% endif %}{% if t.habitat %} <span class="tag">{{ t.habitat }}</span>{% endif %}</td>
     <td><span class="tag">{{ "shrub" if t.isShrub else "tree" }}</span></td>
-    <td>{% if t.minTemp != null or t.maxTemp != null %}{{ t.minTemp if t.minTemp != null else "any" }}&ndash;{{ t.maxTemp if t.maxTemp != null else "any" }}{% endif %}</td>
+    <td>{{ tmp.range(t.minTemp, t.maxTemp) }}</td>
     <td>{% if t.minRain != null or t.maxRain != null %}{{ (t.minRain if t.minRain != null else 0) | round(2) }}&ndash;{{ (t.maxRain if t.maxRain != null else 1) | round(2) }}{% endif %}</td>
     <td>{% if t.minFertility != null or t.maxFertility != null %}{{ (t.minFertility if t.minFertility != null else 0) | round(2) }}&ndash;{{ (t.maxFertility if t.maxFertility != null else 1) | round(2) }}{% endif %}</td>
     <td>{% if t.minForest != null or t.maxForest != null %}{{ (t.minForest if t.minForest != null else 0) | round(2) }}&ndash;{{ (t.maxForest if t.maxForest != null else 1) | round(2) }}{% endif %}</td>

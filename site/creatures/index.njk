@@ -10,11 +10,12 @@ permalink: "{{ lang }}/creatures/index.html"
 <p class="muted">{{ generated.creatures.length }} creatures with known drops/stats. Tags are clickable and filter this table; search also matches tags and codes even though they aren't both shown.</p>
 <p class="muted">Source: <code>entities/**/*.json</code> (stats, spawn conditions) and drop tables (entity death/harvestable loot). <a href="{{ ('/' ~ lang ~ '/') | url }}sources/creatures/">Full details &rarr;</a></p>
 
-{% call dt.datatable(60, "Search creatures or tags...", ["Name", "Health", "Tags", "Mod"]) %}
+{% call dt.datatable(60, "Search creatures or tags...", ["Name", "Health", "Tier", "Tags", "Mod"], "Tier") %}
 {% for source in generated.creatures | sort(false, false, "sourceDisplayName") %}
-  <tr data-search="{{ source.sourceDomain }}:{{ source.sourceCode }} {{ source.entityStats.tags | default([]) | join(' ') }}" data-tags="{{ source.entityStats.tags | default([]) | join(' ') }}" data-mod="{{ source.sourceMod }}" data-mod-label="{{ generated.mods | modName(source.sourceMod) }}">
+  <tr data-category="{% if source.entityStats.damageTier != null %}Tier {{ source.entityStats.damageTier }}{% else %}No tier{% endif %}" data-search="{{ source.sourceDomain }}:{{ source.sourceCode }} {{ source.entityStats.tags | default([]) | join(' ') }}" data-tags="{{ source.entityStats.tags | default([]) | join(' ') }}" data-mod="{{ source.sourceMod }}" data-mod-label="{{ generated.mods | modName(source.sourceMod) }}">
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}creatures/{{ source.sourceDomain }}/{{ source.sourceCode | slugify }}/">{{ source.sourceDisplayName }}</a></td>
     <td>{% if source.entityStats.maxHealth != null %}{{ source.entityStats.maxHealth }} hp{% endif %}</td>
+    <td>{% if source.entityStats.damageTier != null %}{{ source.entityStats.damageTier }}{% endif %}</td>
     <td>{% for t in source.entityStats.tags | default([]) %}<a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}creatures/?tag={{ t | urlencode }}">{{ t }}</a>{% endfor %}</td>
     <td><span class="tag">{{ source.sourceMod }}</span></td>
   </tr>

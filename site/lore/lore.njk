@@ -9,20 +9,15 @@ eleventyComputed:
   title: "{{ book.title }} - Vintage Story Wiki"
 ---
 {% import "macros/breadcrumb.njk" as bc %}
-{{ bc.trail(lang, [{label: "Books & Lore", url: "lore/"}, {label: book.title}]) }}
+{% import "macros/loretext.njk" as lt %}
+{{ bc.trail(lang, [{label: "Lore", url: "lore/"}, {label: book.title}]) }}
 
 <h1>{{ book.title }}</h1>
 <p class="muted">
-  <span class="tag">{{ book.category }}</span>
+  <a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}lore/?q={{ book.category | urlencode }}">{{ book.category }}</a>
   <code>{{ book.domain }}:{{ book.code }}</code>
   &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ book.sourceMod }}</a>
 </p>
+<p class="muted">These chapters aren't a book you find and read: each is revealed by a tapestry or wallcarving. See <a href="{{ ('/' ~ lang ~ '/') | url }}tapestries/">Tapestries</a> for where each one appears.</p>
 
-{% for page in book.pages %}
-  <div class="card" id="chapter-{{ loop.index0 }}">
-    {% for subpage in page %}
-      <div class="book-page">{{ subpage | lineBreaks | safe }}</div>
-      {% if not loop.last %}<hr>{% endif %}
-    {% endfor %}
-  </div>
-{% endfor %}
+{{ lt.pages(book) }}
