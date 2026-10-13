@@ -8,6 +8,7 @@ import { extractRecipes } from "./models/recipes.js";
 import { extractLoot } from "./models/loot.js";
 import { extractStructures } from "./models/structures.js";
 import { extractDecorCatalog } from "./models/decor.js";
+import { extractGear } from "./models/gear.js";
 import { extractLoreBooks, buildLoreSections } from "./models/lore.js";
 import { attachLoreLocations } from "./models/loreLocations.js";
 import { extractDeposits } from "./models/deposits.js";
@@ -374,6 +375,15 @@ function main(): void {
   }
   console.log(`  item index grown to ${itemIndex.size} after adding block-drop-only blocks`);
 
+  step("Extracting weapon/tool stats");
+  const gear = extractGear(index, lang);
+  // Every weapon/tool gets an /items/ page too (that's what the /weapons/ table links to).
+  for (const g of gear) {
+    const entry = ensureSpawnTarget(g.domain, g.code, "item");
+    if (entry.sourceMod === "game" && g.sourceMod !== "game") entry.sourceMod = g.sourceMod;
+  }
+  console.log(`  ${gear.length} weapons/tools/ammo; item index now ${itemIndex.size}`);
+
   attachItemMetadata(itemIndex, index, ensureSpawnTarget);
   console.log(`  item index grown to ${itemIndex.size} after adding tagged-tool-only items`);
 
@@ -486,6 +496,7 @@ function main(): void {
   writeGenerated("clutter", clutter);
   writeGenerated("tapestries", tapestries);
   writeGenerated("clothing", clothing);
+  writeGenerated("gear", gear);
   writeGenerated("books", books);
   writeGenerated("lore", loreChapters);
   writeGenerated("loreSections", loreSections);

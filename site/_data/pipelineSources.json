@@ -116,6 +116,13 @@
     "globs": ["config/handbook/*.json"]
   },
   {
+    "id": "weapons",
+    "title": "Weapons & Tools",
+    "listingUrl": "weapons/",
+    "modelFiles": ["src/ingest/models/gear.ts"],
+    "globs": ["itemtypes/**/*.json (variants with a tool type, attackpower, or attributes.damage plus at least one numeric stat)"]
+  },
+  {
     "id": "traders",
     "title": "Traders",
     "listingUrl": "traders/",

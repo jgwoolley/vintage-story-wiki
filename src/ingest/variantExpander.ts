@@ -85,13 +85,18 @@ export function expandVariants(index: AssetIndex, categoryPrefixes: string[]): C
     // product actually exist (e.g. not every ore mineral occurs in every rock type) -- confirmed
     // against real game data (ore-graded.json, fishraw.json) where the full cross product wildly
     // over-generates nonexistent items/blocks. When present, only codes in this list are kept.
-    const allowList = Array.isArray(json.allowedVariants) ? new Set(json.allowedVariants as string[]) : undefined;
+    // Entries may be globs ("spear-generic-*"), so match with globToRegExp rather than exact set
+    // membership; `skipVariants` is the inverse list and is honored the same way.
+    const toMatchers = (list: unknown) => (Array.isArray(list) ? (list as string[]).map(globToRegExp) : undefined);
+    const allowList = toMatchers(json.allowedVariants);
+    const skipList = toMatchers(json.skipVariants);
 
     const resolvedGroups = groups.map((g) => ({ code: g.code, states: resolveGroupStates(index, asset.domain, g) }));
     for (const combo of cartesian(resolvedGroups)) {
       const suffix = groups.map((g) => combo[g.code]).join("-");
       const code = suffix ? `${baseCode}-${suffix}` : baseCode;
-      if (allowList && !allowList.has(code)) continue;
+      if (allowList && !allowList.some((re) => re.test(code))) continue;
+      if (skipList && skipList.some((re) => re.test(code))) continue;
       out.push({
         domain: asset.domain,
         sourceModid: asset.modid,

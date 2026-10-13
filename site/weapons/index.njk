@@ -1,0 +1,39 @@
+---
+title: Weapons & Tools - Vintage Story Wiki
+description: Durability, damage, reach and tier of every weapon, tool and ammunition type, in one sortable table.
+layout: layouts/base.njk
+permalink: "{{ lang }}/weapons/index.html"
+---
+{% import "macros/datatable.njk" as dt %}
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Weapons & Tools"}]) }}
+<h1>Weapons &amp; Tools</h1>
+<p class="muted">
+  {{ generated.gear.length }} weapons, tools and ammo, each material variant on its own row. Click a column to sort, or use
+  the filters (Category, Tags = the kind of item, Mod).
+</p>
+<ul class="muted">
+  <li><strong>Durability</strong>: uses before it breaks.</li>
+  <li><strong>Attack power</strong>: melee damage per hit (hit points; a bare hand is 1). <strong>Reach</strong>: melee range in blocks, shown only when the item sets its own.</li>
+  <li><strong>Damage</strong>: for bows and slings the base ranged damage, for spears the thrown damage; for arrows and bullets the modifier added to it (can be negative).</li>
+  <li><strong>Attack tier</strong>: compared against armor's protection tier -- higher tiers cut through more armor. <strong>Tool tier</strong>: what it can mine or work (copper 2, bronze 3, iron 4, steel 5); blocks above it won't break.</li>
+  <li><strong>Mining speed</strong>: the best multiplier across the materials it digs (stone, ore, metal, wood...).</li>
+</ul>
+<p class="muted">Source: <code>itemtypes/**/*.json</code> (<code>durability</code>, <code>attackpower</code>, <code>tooltier</code>, <code>attributes.damage</code>, ...), resolved per variant. <a href="{{ ('/' ~ lang ~ '/') | url }}sources/weapons/">Full details &rarr;</a></p>
+
+{% call dt.datatable(60, "Search weapons and tools...", ["Name", "Type", "Durability", "Attack power", "Reach", "Damage", "Attack tier", "Tool tier", "Mining speed", "Mod"]) %}
+{% for g in generated.gear %}
+  <tr data-search="{{ g.displayName }} {{ g.code }} {{ g.type }}" data-category="{{ g.category }}" data-tags="{{ g.type }}" data-mod="{{ g.sourceMod }}" data-mod-label="{{ generated.mods | modName(g.sourceMod) }}">
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ g.domain }}/{{ g.code | slugify }}/">{{ g.displayName }}</a></td>
+    <td><span class="tag">{{ g.type }}</span></td>
+    <td>{% if g.durability != null %}{{ g.durability }}{% endif %}</td>
+    <td>{% if g.attackPower != null %}{{ g.attackPower }}{% endif %}</td>
+    <td>{% if g.attackRange != null %}{{ g.attackRange }}{% endif %}</td>
+    <td>{% if g.damage != null %}{{ g.damage }}{% endif %}</td>
+    <td>{% if g.damageTier != null %}{{ g.damageTier }}{% endif %}</td>
+    <td>{% if g.toolTier != null %}{{ g.toolTier }}{% endif %}</td>
+    <td>{% if g.bestMiningSpeed != null %}{{ g.bestMiningSpeed }}{% endif %}</td>
+    <td><span class="tag">{{ g.sourceMod }}</span></td>
+  </tr>
+{% endfor %}
+{% endcall %}

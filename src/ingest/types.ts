@@ -764,3 +764,28 @@ export interface EleventyBuildTiming {
   finishedAtIso: string; // UTC timestamp that previous run finished
   succeeded: boolean; // false if the wrapped eleventy process exited non-zero
 }
+
+/**
+ * One weapon, tool or ammo variant with combat/durability stats (`models/gear.ts` -> `/weapons/`).
+ * Every stat is resolved for this exact variant (nearly all are `*ByType` in the game files) and
+ * absent when the item doesn't define it. Each entry also gets a normal `/items/` page (see
+ * `ensureSpawnTarget` in `src/ingest/index.ts`), which is what `displayName` links to.
+ */
+export interface GearEntry {
+  id: string; // `${domain}:${code}`, same key as ItemIndexEntry
+  domain: string;
+  code: string; // fully-resolved variant code, e.g. "spear-generic-copper"
+  sourceMod: string;
+  displayName: string;
+  missingTranslation: boolean;
+  type: string; // the definition's own base code, e.g. "spear", "pickaxe", "arrow" -- the "what kind of thing" column
+  /** "melee weapon" = tagged `weapon-melee`; "ranged weapon" = a bow/sling-style `tool` with its own `attributes.damage`; "ammo" = `attributes.damage` with no `tool` (arrows, bullets); "tool" = everything else. */
+  category: "melee weapon" | "ranged weapon" | "ammo" | "tool";
+  durability?: number; // uses before it breaks (`durability`)
+  attackPower?: number; // melee damage per hit (`attackpower`); hit points of damage, 1 = bare-handed
+  attackRange?: number; // melee reach in blocks (`attackRange`), only set when it differs from the default
+  toolTier?: number; // mining/working tier (`tooltier`): which blocks it can break at all, e.g. copper 2, iron 4, steel 5
+  damageTier?: number; // attack damage tier (`attributes.damageTier`): compared against armor's protection tier, same meaning as EntityStats.damageTier
+  damage?: number; // ranged damage (`attributes.damage`): a bow's/sling's base damage, or an arrow/bullet's modifier added to it
+  bestMiningSpeed?: number; // highest multiplier across the item's `miningspeed` material table (e.g. 6 for a tin bronze pickaxe on stone/ore/metal)
+}

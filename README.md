@@ -471,6 +471,18 @@ Info page for the visitor-facing version of that caveat.
   (unique `eleventy-timing-<run_id>` key, restored by the `eleventy-timing-` prefix) around the
   "Build site" step, since `site/_data/generated/` is gitignored and otherwise starts empty.
 
+## Weapons & Tools (`models/gear.ts`)
+
+`/weapons/` is one sortable table of every weapon, tool and ammo variant with a numeric stat:
+durability, melee attack power/reach, ranged `attributes.damage`, attack tier (`damageTier`, same
+armor-comparison meaning as a creature's Tier), tool (mining) tier and best mining speed. Stats are
+read per concrete `itemtypes/` variant from `*ByType` maps, with a case-insensitive property lookup
+(files mix `attackpowerbytype`/`damageByType`). Each entry is also given an `/items/` page via
+`ensureSpawnTarget`, so the table's name links always resolve. Related fix: `expandVariants` now
+treats a definition's `allowedVariants`/`skipVariants` entries as globs (previously exact match, which
+silently dropped e.g. every `spear-generic-*` metal spear, and also under-generated some fish and
+animal variants).
+
 ## Clutter, crop nutrients and alloy calculator
 
 - **`/clutter/`** (`src/ingest/models/clutterInstances.ts`): the `clutter` block is one code whose real identity

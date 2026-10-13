@@ -23,6 +23,11 @@ permalink: "{{ lang }}/index.html"
     <span class="muted">Every crafting, smithing, cooking, and alloy recipe.</span>
     <span class="muted">{{ generated.recipes.length }} entries</span>
   </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}weapons/">
+    <strong><span class="card-icon" aria-hidden="true">⚔️</span> Weapons &amp; Tools</strong>
+    <span class="muted">Durability, damage, reach and tier of every weapon, tool and arrow.</span>
+    <span class="muted">{{ generated.gear.length }} entries</span>
+  </a>
 </div>
 
 <h2>Creatures &amp; World</h2>

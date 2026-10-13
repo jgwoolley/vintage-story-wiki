@@ -48,52 +48,6 @@ could they be summarized into one row?
 4. Watch for the already-documented `resolveByType`-must-pick-most-specific-match gotcha
    (`variantExpander.ts`) if this grouping logic ends up needing its own glob resolution.
 
-## 2. Rendering smithing/clayforming/knapping layers in 3D
-
-**Status: implemented.** Recipe pages now show an interactive 3D voxel model, built on a shared
-renderer meant to be reused for schematics. One correction to the findings below: smithing
-patterns are *not* always a single layer. 22 of the 48 vanilla smithing recipes have 2–5 layers
-(e.g. the helve hammer has 3).
-
-**The question**: recipe voxel patterns ("layers") currently render as flat text — should they be
-shown as an actual 3D shape instead?
-
-**Findings**:
-- `site/recipes/recipes.njk`'s voxel-pattern branch (`recipe.category == "smithing" or
-  "clayforming" or "knapping"`) currently renders `recipe.raw.pattern` as a stack of `<pre>` text
-  blocks, one per layer, with no visual/3D representation at all — just literal ASCII rows of
-  `#`/`_` characters under a "Layer N" label.
-- **Smithing recipes are always exactly 1 layer** (confirmed: every file checked under
-  `recipes/smithing/` has `pattern.length === 1`) — a smithing recipe is inherently a flat 2D
-  hammering pattern on one work-piece face, so "3D" for smithing specifically would mean rendering
-  that one flat grid as a small shaded/extruded plate rather than raw text, not a true multi-layer
-  voxel model.
-- **Clayforming genuinely has multi-layer 3D voxel shapes** — confirmed real depth, not a one-off:
-  `anvilmold.json` (11 layers), `clayoven.json` (16 layers), `clayplanter.json` (9), `crock.json`
-  (7), `crucible.json` (7), `bullets.json` (3), `axemold.json`/`blade-falxmold.json`/`bowl.json` (2
-  each). These are the ones that would benefit most from an actual 3D voxel preview, since stacking
-  16 separate ASCII text blocks is genuinely hard to read as a shape today.
-- Knapping wasn't spot-checked in as much depth but uses the exact same `pattern`
-  shape/parsing (`parseVoxelShaped` in `src/ingest/models/recipes.ts`), so whatever rendering
-  approach is picked should cover all three categories uniformly, the same way the ingest side
-  already does.
-
-**Recommended approach (not implemented)**:
-1. This is purely a presentation change — no new ingest data is needed. `recipe.raw.pattern`
-   already has everything (rows of `#`/`_` per layer, in order).
-2. A lightweight client-side option: render each layer as a small `<canvas>` or CSS-grid 2D
-   top-down view (quick win, still 2D but far more readable than raw text), OR go further and
-   stack the layers into a genuine isometric/3D view using a minimal WebGL/CSS-3D approach (no need
-   to pull in a full 3D engine for this — it's just colored unit cubes on a grid, not textured
-   geometry).
-3. If the planned `/tools/` schematic viewer (see topic 3 below) ends up using a real 3D rendering
-   library for schematic voxels, strongly consider reusing that same renderer here instead of
-   building a second, separate 3D code path — the data shapes are different (recipe `pattern` rows
-   vs. schematic `Blocks`/`BlockIds` arrays) but the "draw a grid of unit cubes" rendering core
-   would be shared.
-4. Smithing (1 layer) can probably ship a simpler "flat plate" version of whatever renderer is
-   built for the multi-layer case, as a reduced case rather than a separate implementation.
-
 ## 3. Integrating jgwoolley/vintage-story-schematic-preview (upload + in-browser viewing)
 
 **Status: upload + bundled samples implemented** (`/tools/schematic/`, as an adapter on the shared

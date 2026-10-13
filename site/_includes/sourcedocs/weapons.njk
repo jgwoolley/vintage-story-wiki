@@ -1,0 +1,16 @@
+<p>
+Every <code>itemtypes/</code> variant that looks like gear -- it has a <code>tool</code> type, an
+<code>attackpower</code>, an <code>attributes.damage</code>/<code>damageTier</code>, or a <code>tool</code>/<code>weapon</code> tag --
+<em>and</em> at least one numeric stat to show (durability, attack power, tool tier, damage or mining speed) becomes a row.
+</p>
+<p>
+Nearly every stat is a <code>*ByType</code> glob map (<code>durabilitybytype</code>, <code>attackpowerbytype</code>,
+<code>tooltierbytype</code>, <code>damageByType</code>, ...), resolved for each concrete variant (<code>spear-generic-copper</code>) with the
+most specific matching pattern winning. The game reads these names case-insensitively and the files use every casing, so
+property lookup here is case-insensitive too. Melee stats sit at the top of the item; ranged damage and attack tier sit under
+<code>attributes</code>. Category comes from the tags: <code>weapon-melee</code> is a melee weapon, a <code>tool</code> (bow, sling)
+with its own <code>attributes.damage</code> is ranged, a bare <code>attributes.damage</code> (arrows, bullets) is ammo, the rest are tools.
+</p>
+<p>
+Each row is also given an <a href="{{ ('/' ~ lang ~ '/') | url }}items/">item page</a> even if no recipe or drop table references it.
+</p>
