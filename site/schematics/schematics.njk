@@ -1,0 +1,96 @@
+---
+pagination:
+  data: generated.schematics
+  size: 1
+  alias: schematic
+permalink: "{{ lang }}/schematics/{{ schematic.pagePath }}/index.html"
+layout: layouts/base.njk
+eleventyComputed:
+  title: "{{ schematic.relPath }} - Schematic - Vintage Story Wiki"
+---
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Schematics", url: "schematics/"}, {label: schematic.relPath}]) }}
+
+<h1>{{ schematic.relPath }}</h1>
+<p class="muted">
+  <span class="tag">schematic</span>
+  <code>{{ schematic.id }}</code>
+  &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ schematic.sourceMod }}</a>
+</p>
+
+<p>
+  <a class="button-like" href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/?schematic={{ (schematic.domain ~ '/' ~ schematic.relPath) | urlencode }}">Open in the full viewer &rarr;</a>
+  <a href="{{ '/' | url }}{{ schematic.assetPath }}" download>Download (.json.gz, {{ schematic.gzBytes | bytes }})</a>
+</p>
+
+<div id="schematicPreview" class="schematic-preview" data-src="{{ '/' | url }}{{ schematic.assetPath }}" data-gz-bytes="{{ schematic.gzBytes }}" data-name="{{ schematic.relPath }}">
+  <div class="preview-stage" aria-live="polite"></div>
+  <p class="preview-status muted">3D preview needs JavaScript.</p>
+</div>
+<p class="muted">Drag to rotate, right-drag to pan, scroll to zoom. The full viewer adds the block list, floor slider and block inspector. Worldgen <code>meta-filler</code> markers aren't drawn.</p>
+<script type="module" src="{{ '/' | url }}assets/schematicPreview.js"></script>
+
+<table>
+  <tbody>
+    <tr><th>Size (X&times;Y&times;Z)</th><td>{{ schematic.sizeX }}&times;{{ schematic.sizeY }}&times;{{ schematic.sizeZ }} blocks</td></tr>
+    <tr><th>Distinct block codes</th><td>{{ schematic.blockCodeCount }}</td></tr>
+    <tr><th>File</th><td><code>worldgen/schematics/{{ schematic.relPath }}.json</code> &middot; {{ schematic.fileBytes | bytes }} ({{ schematic.gzBytes | bytes }} compressed)</td></tr>
+  </tbody>
+</table>
+
+<h2>Used by structures ({{ schematic.usedBy.length }})</h2>
+{% if schematic.usedBy.length %}
+<table>
+  <thead><tr><th>Structure</th><th>Kind</th><th>Referenced as</th><th>Weight</th><th>Quantity</th></tr></thead>
+  <tbody>
+  {% for use in schematic.usedBy %}
+    {% set structure = generated.structures | findById(use.structureId) %}
+    {% if structure.id %}
+    <tr>
+      <td><a href="{{ ('/' ~ lang ~ '/') | url }}structures/{{ structure.id | slugify }}/">{{ structure.name or structure.code }}</a></td>
+      <td><span class="tag">{{ structure.kind }}</span></td>
+      <td><code>{{ use.via }}</code></td>
+      <td>{{ use.weight }}</td>
+      <td>{% if use.minQuantity != null or use.maxQuantity != null %}{{ use.minQuantity }}{% if use.maxQuantity != use.minQuantity %}&ndash;{{ use.maxQuantity }}{% endif %}{% endif %}</td>
+    </tr>
+    {% endif %}
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">No structure definition references this file (it may be placed by code, or by another mod).</p>
+{% endif %}
+
+<h2>Blocks ({{ schematic.blockCodes.length }})</h2>
+<p class="muted">The block codes this schematic uses, from its <code>BlockCodes</code> dictionary (every state and orientation is its own code).</p>
+<table>
+  <thead><tr><th>Block</th><th>Code</th></tr></thead>
+  <tbody>
+  {% for raw in schematic.blockCodes | sort %}
+    {% set ref = generated | itemRef(raw) %}
+    <tr>
+      <td>{% if ref.code %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ ref.domain }}/{{ ref.code | slugify }}/">{{ ref.name }}</a>{% else %}{{ ref.name }}{% endif %}</td>
+      <td><code>{{ raw }}</code></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% if schematic.itemCodes.length %}
+<h2>Items placed inside containers ({{ schematic.itemCodes.length }})</h2>
+<p class="muted">From the <code>ItemCodes</code> dictionary: items stored in chests, vessels and similar. A <code>stackrandomizer-*</code> entry is rolled into a random item when the structure generates.</p>
+<table>
+  <thead><tr><th>Item</th><th>Code</th></tr></thead>
+  <tbody>
+  {% for raw in schematic.itemCodes | sort %}
+    {% set ref = generated | itemRef(raw) %}
+    <tr>
+      <td>{% if ref.code %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ ref.domain }}/{{ ref.code | slugify }}/">{{ ref.name }}</a>{% else %}{{ ref.name }}{% endif %}</td>
+      <td><code>{{ raw }}</code></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<p class="muted">This file belongs to the game or the mod named above; it is served here, compressed, only so it can be viewed in the 3D viewer.</p>

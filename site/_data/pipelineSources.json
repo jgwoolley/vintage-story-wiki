@@ -37,8 +37,15 @@
     "id": "structures",
     "title": "Structures",
     "listingUrl": "structures/",
-    "modelFiles": ["src/ingest/models/structures.ts", "src/ingest/schematicHeader.ts"],
-    "globs": ["worldgen/structures.json", "worldgen/villages.json", "worldgen/storystructures.json", "worldgen/hookgeneratedstructures/*.json", "worldgen/schematics/**/*.json (headers/BlockCodes dictionary only, not full voxel data)"]
+    "modelFiles": ["src/ingest/models/structures.ts", "src/ingest/structureContents.ts"],
+    "globs": ["worldgen/structures.json", "worldgen/villages.json", "worldgen/storystructures.json", "worldgen/hookgeneratedstructures/*.json"]
+  },
+  {
+    "id": "schematics",
+    "title": "Schematics",
+    "listingUrl": "schematics/",
+    "modelFiles": ["src/ingest/models/schematics.ts", "src/ingest/schematicHeader.ts", "src/ingest/schematicFiles.ts", "site/assets/schematicViewer.js"],
+    "globs": ["worldgen/schematics/**/*.json (header, BlockCodes and ItemCodes only for the pages; the whole file, gzip-compressed, for the 3D viewer)"]
   },
   {
     "id": "deposits",

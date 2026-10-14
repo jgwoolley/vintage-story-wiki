@@ -43,16 +43,15 @@ function buildCodeToSchematicIndex(
   return index;
 }
 
-/** Reverse index: which structures reference a given resolved schematic file. */
+/** Reverse index: which structures reference a given schematic (keyed by `SchematicInfo.id`). */
 export function buildSchematicToStructureIndex(structures: NormalizedStructure[]): Map<string, Set<string>> {
   const index = new Map<string, Set<string>>();
   for (const structure of structures) {
-    for (const schem of structure.schematics) {
-      for (const file of schem.resolvedFiles) {
-        const schematicKey = `${structure.domain}:${file.path}`;
-        const set = index.get(schematicKey) ?? new Set();
+    for (const ref of structure.schematics) {
+      for (const schematicId of ref.schematicIds) {
+        const set = index.get(schematicId) ?? new Set();
         set.add(structure.id);
-        index.set(schematicKey, set);
+        index.set(schematicId, set);
       }
     }
   }

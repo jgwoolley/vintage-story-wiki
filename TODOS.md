@@ -1,5 +1,7 @@
 # TODOS
 
+- Would it be possible to render chiseled blocks on the schematic preview?
+
 # Phase
 
 - just remove the "tools" concept and put them into relevant sections.

@@ -42,6 +42,11 @@ permalink: "{{ lang }}/index.html"
     <span class="muted">Generated ruins, villages, and story structures, and where they spawn.</span>
     <span class="muted">{{ generated.structures.length }} entries</span>
   </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}schematics/">
+    <strong><span class="card-icon" aria-hidden="true">🧱</span> Schematics</strong>
+    <span class="muted">The block layouts structures are built from, with a 3D view of each.</span>
+    <span class="muted">{{ generated.schematics.length }} entries</span>
+  </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}deposits/">
     <strong><span class="card-icon" aria-hidden="true">⛏️</span> Deposits</strong>
     <span class="muted">Which rock hosts which ore/gem, and at what depth.</span>

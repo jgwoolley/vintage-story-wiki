@@ -92,6 +92,32 @@ npm run serve      # same, with a local dev server + live reload
   blocks/entities drop it), resolving recipe-level wildcard/template placeholders (e.g.
   `plank-{wood}`) into concrete linked items.
 
+## Schematics vs. structures
+
+A **schematic** is a pre-built block layout file (`worldgen/schematics/**/*.json`); a **structure** is a
+worldgen rule (where/how often to spawn) that *references* schematics. They are separate things in the data:
+- `generated.schematics` (`models/schematics.ts` → `SchematicInfo`): one entry per file, read once (size,
+  `BlockCodes`/`ItemCodes`, byte sizes), with `usedBy` (the reverse of the structures' references). Its `id`
+  is `<domain>:worldgen/schematics/<relPath>.json`, the key every schematic cross-reference in the pipeline
+  already used (tapestry/clutter instances, lore locations, "Found in structures").
+- `NormalizedStructure.schematics` (`SchematicRef[]`): the raw path/glob, the structure's own
+  weight/quantity for it, and the resolved `schematicIds` (globs resolve against schematics of the
+  structure's own domain; `resolveSchematicGlob` in `models/structures.ts`).
+- Pages: `/schematics/` + `/schematics/<domain>/<relPath>/` (the URL segment is `SchematicInfo.pagePath`,
+  not `slugify(id)`, which collided for `.../-hut3-agr` vs `.../hut3-agr`).
+- **3D viewing**: `schematicFiles.ts` gzips every schematic (level 6, built-in `zlib`; ~271 MB → ~51 MB) into
+  `site/_data/generated/schematicFiles/`, which `eleventy.config.js` passes through to
+  `/assets/schematics/world/<domain>/<relPath>.json.gz`. `schematicViewer.js` fetches one on demand and
+  unpacks it with the browser's `DecompressionStream`. Redistributing these files (vanilla and mods) is a
+  deliberate choice; each schematic page says whose files they are.
+- **Two viewers, one core**: each schematic page embeds a read-only preview (`schematicPreview.js`: rotate/pan/zoom
+  only, no legend/slider/picking; files over 1.5 MB compressed wait for a click, the rest load when scrolled into
+  view) with a button into the full viewer (`schematicViewer.js`, which also has Download for whatever is loaded:
+  the exact bytes as `.json`, plus the `.json.gz` for the wiki's own). Both use the pure helpers in
+  `schematicVoxels.js` (packed-index → voxels, gzip fetch). `meta-filler` (a worldgen marker, ~half the voxels
+  of the biggest schematic) starts hidden: dropped entirely from the preview, toggleable in the full viewer's
+  block list (`isHiddenByDefault`).
+
 ## Random-stack placeholders and handbook links
 
 `ItemStackRandomizer` items (`stackrandomizer-*`, the placeholders world-generated chests hold in
@@ -535,8 +561,8 @@ standalone projects `vintage-story-schematic-preview` and `vintage-story-price-g
   click-to-inspect with `schematicDecode.js` decoding block-entity blobs; its legend names come from
   `generated.blockNames` (`models/blockNames.ts`, served as `/assets/blockNames.json`)). Upload any schematic
   `.json`, or pick a bundled sample from `site/tools/schematic/samples/` (copied to
-  `/assets/schematics/` by an `eleventy.config.js` passthrough). Browsing the wiki's own
-  `worldgen/schematics/**` in it is not done (see RESEARCH.md topic 3).
+  `/assets/schematics/` by an `eleventy.config.js` passthrough). `?schematic=<domain>/<relPath>` opens one of
+  the wiki's own worldgen schematics (see "Schematics vs. structures" below).
 - **`/tools/waypoints/`** — `waypoints.js` (pure logic: distance, Dijkstra route, import/export
   validation), `waypointMap.js` (SVG map), `waypointsPage.js` (DOM wiring); state lives in
   `localStorage`. This replaces the price guide's React/MUI/Cytoscape implementation with no
@@ -628,9 +654,9 @@ genuinely blocked, not merely skipped:
   wiki. Closing it fully would mean switching the item catalog from a recipe/loot/worldgen graph
   to a full registry walk — a bigger change than this note,
   flagged here rather than taken on silently.
-- Schematic geometry (the actual block-by-block layout of a generated structure) is not decoded —
-  only dimensions and a block-code inventory count are shown, plus (for the decor catalog) whether
-  a specific block code is present at all.
+- A structure is shown as the list of the schematics it can place, each viewable in 3D on its own. A
+  village's buildings are not assembled into one scene: the engine places them by rules that aren't in the
+  game data.
 - `condition`-gated patches assume the "Default" world-creation preset; a world created with
   non-default settings would see slightly different effective data.
 - Compiled-code mods (currently: Stone Quarry) are flagged but otherwise invisible to this

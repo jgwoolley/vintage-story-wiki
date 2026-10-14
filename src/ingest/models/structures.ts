@@ -1,6 +1,5 @@
-import type { AssetIndex, NormalizedStructure, SchematicSummary, StructureKind } from "../types.js";
+import type { AssetIndex, NormalizedStructure, SchematicInfo, SchematicRef, StructureKind } from "../types.js";
 import { assetsUnderAnyDomain } from "../assetLoader.js";
-import { readSchematicHeader, type SchematicFile } from "../schematicHeader.js";
 
 // "MinSpawnDistance" is deliberately excluded here -- it's already promoted to the top-level
 // `minSpawnDistance` field below, so including it here would render the same value twice.
@@ -23,7 +22,7 @@ const RESTRICTION_KEYS = [
   "maxSpawnDistZ",
 ];
 
-function globSegmentsMatch(globPath: string, relPath: string): boolean {
+export function globSegmentsMatch(globPath: string, relPath: string): boolean {
   const globSegs = globPath.split("/");
   const pathSegs = relPath.split("/");
   if (globSegs.length !== pathSegs.length) return false;
@@ -34,20 +33,10 @@ function globSegmentsMatch(globPath: string, relPath: string): boolean {
   });
 }
 
-function resolveSchematicGlob(
-  schematicsByDomain: Map<string, SchematicFile[]>,
-  domain: string,
-  globPath: string
-): SchematicSummary["resolvedFiles"] {
+/** Ids of the schematics (of the structure's own domain) that a structure's schematic path/glob matches. */
+export function resolveSchematicGlob(schematics: SchematicInfo[], domain: string, globPath: string): string[] {
   const globNoExt = globPath.replace(/\.json$/, "");
-  const candidates = schematicsByDomain.get(domain) ?? [];
-  const resolved: SchematicSummary["resolvedFiles"] = [];
-  for (const file of candidates) {
-    if (!globSegmentsMatch(globNoExt, file.relPath)) continue;
-    const header = readSchematicHeader(file.fullPath);
-    resolved.push({ path: `worldgen/schematics/${file.relPath}.json`, ...header });
-  }
-  return resolved;
+  return schematics.filter((s) => s.domain === domain && globSegmentsMatch(globNoExt, s.relPath)).map((s) => s.id);
 }
 
 function extractRestrictions(raw: Record<string, unknown>): Record<string, unknown> {
@@ -58,18 +47,14 @@ function extractRestrictions(raw: Record<string, unknown>): Record<string, unkno
   return out;
 }
 
-function buildSchematics(
-  schematicsByDomain: Map<string, SchematicFile[]>,
-  domain: string,
-  raw: any
-): SchematicSummary[] {
+function buildSchematics(schematics: SchematicInfo[], domain: string, raw: any): SchematicRef[] {
   const rawList: (string | { path: string; weight?: number; minQuantity?: number; maxQuantity?: number })[] =
     raw.schematics ?? [];
   return rawList.map((entry) => {
     const globPath = typeof entry === "string" ? entry : entry.path;
     return {
       globPath,
-      resolvedFiles: resolveSchematicGlob(schematicsByDomain, domain, globPath),
+      schematicIds: resolveSchematicGlob(schematics, domain, globPath),
       weight: typeof entry === "object" ? entry.weight : undefined,
       minQuantity: typeof entry === "object" ? entry.minQuantity : undefined,
       maxQuantity: typeof entry === "object" ? entry.maxQuantity : undefined,
@@ -79,7 +64,7 @@ function buildSchematics(
 
 function extractFromRegistry(
   index: AssetIndex,
-  schematicsByDomain: Map<string, SchematicFile[]>,
+  schematics: SchematicInfo[],
   relPath: string,
   listKey: string,
   kind: StructureKind
@@ -102,7 +87,7 @@ function extractFromRegistry(
         minSpawnDistance: entry.MinSpawnDistance ?? entry.minSpawnDistance,
         minGroupDistance: entry.minGroupDistance,
         restrictions: extractRestrictions(entry),
-        schematics: buildSchematics(schematicsByDomain, asset.domain, entry),
+        schematics: buildSchematics(schematics, asset.domain, entry),
         raw: entry,
       });
     });
@@ -110,10 +95,7 @@ function extractFromRegistry(
   return out;
 }
 
-function extractHookGenerated(
-  index: AssetIndex,
-  schematicsByDomain: Map<string, SchematicFile[]>
-): NormalizedStructure[] {
+function extractHookGenerated(index: AssetIndex, schematics: SchematicInfo[]): NormalizedStructure[] {
   const out: NormalizedStructure[] = [];
   for (const asset of assetsUnderAnyDomain(index, "worldgen/hookgeneratedstructures/")) {
     const json = asset.json as any;
@@ -121,15 +103,12 @@ function extractHookGenerated(
     const endElements = Object.values(json.endElements ?? {}) as any[];
     const allPaths = [...mainElements, ...endElements].map((e) => e.path).filter(Boolean);
 
-    const resolvedFiles: SchematicSummary["resolvedFiles"] = [];
-    const candidates = schematicsByDomain.get(asset.domain) ?? [];
+    const schematicIds: string[] = [];
     for (const rawPath of allPaths) {
       const normalized = rawPath.replace(/^worldgen\//, "").replace(/\.json$/, "");
       const relAttempt = normalized.startsWith("schematics/") ? normalized.slice("schematics/".length) : normalized;
-      const match = candidates.find((f) => f.relPath === relAttempt);
-      if (match) {
-        resolvedFiles.push({ path: `worldgen/schematics/${match.relPath}.json`, ...readSchematicHeader(match.fullPath) });
-      }
+      const match = schematics.find((f) => f.domain === asset.domain && f.relPath === relAttempt);
+      if (match) schematicIds.push(match.id);
     }
 
     out.push({
@@ -140,21 +119,18 @@ function extractHookGenerated(
       sourceMod: asset.modid,
       group: json.group,
       restrictions: {},
-      schematics: [{ globPath: allPaths.join(", "), resolvedFiles }],
+      schematics: [{ globPath: allPaths.join(", "), schematicIds }],
       raw: json,
     });
   }
   return out;
 }
 
-export function extractStructures(
-  index: AssetIndex,
-  schematicsByDomain: Map<string, SchematicFile[]>
-): NormalizedStructure[] {
+export function extractStructures(index: AssetIndex, schematics: SchematicInfo[]): NormalizedStructure[] {
   return [
-    ...extractFromRegistry(index, schematicsByDomain, "worldgen/structures.json", "structures", "structure"),
-    ...extractFromRegistry(index, schematicsByDomain, "worldgen/villages.json", "villageTypes", "village"),
-    ...extractFromRegistry(index, schematicsByDomain, "worldgen/storystructures.json", "structures", "storystructure"),
-    ...extractHookGenerated(index, schematicsByDomain),
+    ...extractFromRegistry(index, schematics, "worldgen/structures.json", "structures", "structure"),
+    ...extractFromRegistry(index, schematics, "worldgen/villages.json", "villageTypes", "village"),
+    ...extractFromRegistry(index, schematics, "worldgen/storystructures.json", "structures", "storystructure"),
+    ...extractHookGenerated(index, schematics),
   ];
 }

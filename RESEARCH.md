@@ -51,7 +51,9 @@ could they be summarized into one row?
 ## 3. Integrating jgwoolley/vintage-story-schematic-preview (upload + in-browser viewing)
 
 **Status: upload + bundled samples implemented** (`/tools/schematic/`, as an adapter on the shared
-`voxelViewer.js`). Still open: browsing this wiki's own `worldgen/schematics/**` in the viewer.
+`voxelViewer.js`), and **browsing this wiki's own `worldgen/schematics/**` is implemented too**: every
+schematic is gzip-compressed at ingest and fetched on demand (`?schematic=<domain>/<relPath>`); see
+`site/_includes/sourcedocs/schematics.njk` (`/sources/schematics/`).
 The findings below are the pre-implementation notes.
 
 **The question**: what would it take to pull in upload + browser-side viewing from the external

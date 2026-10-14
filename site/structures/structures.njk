@@ -34,23 +34,27 @@ eleventyComputed:
 </table>
 
 <h2>Schematics</h2>
-{% for schem in structure.schematics %}
+<p class="muted">The block layouts this structure can place. Each links to its own <a href="{{ ('/' ~ lang ~ '/') | url }}schematics/">schematic page</a> and can be opened in the 3D viewer.</p>
+{% for ref in structure.schematics %}
   <div class="card">
-    <p class="muted">{{ schem.globPath }}{% if schem.weight %} &middot; weight {{ schem.weight }}{% endif %}</p>
-    {% if schem.resolvedFiles.length %}
+    <p class="muted">{{ ref.globPath }}{% if ref.weight %} &middot; weight {{ ref.weight }}{% endif %}{% if ref.minQuantity != null or ref.maxQuantity != null %} &middot; quantity {{ ref.minQuantity }}{% if ref.maxQuantity != ref.minQuantity %}&ndash;{{ ref.maxQuantity }}{% endif %}{% endif %}</p>
+    {% if ref.schematicIds.length %}
     <table>
-      <thead><tr><th>File</th><th>Size (X&times;Y&times;Z)</th><th>Distinct block codes</th></tr></thead>
+      <thead><tr><th>Schematic</th><th>Size (X&times;Y&times;Z)</th><th>Distinct block codes</th><th>3D</th></tr></thead>
       <tbody>
-      {% for f in schem.resolvedFiles %}
+      {% for schematicId in ref.schematicIds %}
+        {% set schematic = generated.schematics | findById(schematicId) %}
+        {% if schematic.id %}
         <tr>
-          <td><code>{{ f.path }}</code></td>
-          <td>{{ f.sizeX }}&times;{{ f.sizeY }}&times;{{ f.sizeZ }}</td>
-          <td>{{ f.blockCodeCount }}</td>
+          <td><a href="{{ ('/' ~ lang ~ '/') | url }}schematics/{{ schematic.pagePath }}/">{{ schematic.relPath }}</a></td>
+          <td>{{ schematic.sizeX }}&times;{{ schematic.sizeY }}&times;{{ schematic.sizeZ }}</td>
+          <td>{{ schematic.blockCodeCount }}</td>
+          <td><a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/?schematic={{ (schematic.domain ~ '/' ~ schematic.relPath) | urlencode }}">View</a></td>
         </tr>
+        {% endif %}
       {% endfor %}
       </tbody>
     </table>
     {% else %}<p class="muted">No matching schematic files found.</p>{% endif %}
   </div>
 {% endfor %}
-<p class="muted">Schematic geometry (block-by-block layout) is not rendered in v1 &mdash; only dimensions and a block-code inventory count are shown.</p>

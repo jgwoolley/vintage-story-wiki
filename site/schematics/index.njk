@@ -1,0 +1,26 @@
+---
+title: Schematics - Vintage Story Wiki
+description: Every worldgen schematic (pre-built block layout) in the game and its mods, with size, block inventory and a 3D view.
+layout: layouts/base.njk
+permalink: "{{ lang }}/schematics/index.html"
+---
+{% import "macros/datatable.njk" as dt %}
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Schematics"}]) }}
+<h1>Schematics</h1>
+<p class="muted">{{ generated.schematics.length }} schematic files. A schematic is a pre-built block layout that world generation pastes into the world; <a href="{{ ('/' ~ lang ~ '/') | url }}structures/">structures</a> reference one or more of them. Open any in the <a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/">3D viewer</a>.</p>
+<p class="muted">Source: <code>worldgen/schematics/**/*.json</code> (header and block-code dictionaries only). <a href="{{ ('/' ~ lang ~ '/') | url }}sources/schematics/">Full details &rarr;</a></p>
+
+{% call dt.datatable(60, "Search schematics...", ["Name", "Mod", "Size (X×Y×Z)", "Block codes", "Used by", "File size", "3D"]) %}
+{% for schematic in generated.schematics | sort(false, false, "id") %}
+  <tr data-search="{{ schematic.relPath }}" data-category="{{ schematic.relPath.split('/')[0] }}" data-mod="{{ schematic.sourceMod }}" data-mod-label="{{ generated.mods | modName(schematic.sourceMod) }}">
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}schematics/{{ schematic.pagePath }}/">{{ schematic.relPath }}</a></td>
+    <td><span class="tag">{{ schematic.sourceMod }}</span></td>
+    <td>{{ schematic.sizeX }}&times;{{ schematic.sizeY }}&times;{{ schematic.sizeZ }}</td>
+    <td>{{ schematic.blockCodeCount }}</td>
+    <td>{{ schematic.usedBy.length }}</td>
+    <td>{{ schematic.fileBytes | bytes }}</td>
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/?schematic={{ (schematic.domain ~ '/' ~ schematic.relPath) | urlencode }}">View</a></td>
+  </tr>
+{% endfor %}
+{% endcall %}

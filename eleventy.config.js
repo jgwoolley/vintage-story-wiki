@@ -147,6 +147,32 @@ export default function (eleventyConfig) {
     return mod ? mod.name : modid;
   });
 
+  // "12 KB" / "3.4 MB" for the schematic pages.
+  eleventyConfig.addFilter("bytes", (n) => {
+    if (typeof n !== "number") return "";
+    return n >= 1e6 ? `${(n / 1e6).toFixed(1)} MB` : n >= 1e3 ? `${Math.round(n / 1e3)} KB` : `${n} B`;
+  });
+
+  // Resolves a schematic's raw block/item code ("game:chest-east", or unprefixed -- both vanilla) to
+  // { name, url? }: the item index's display name and /items/ page when it has one, else the
+  // localized name from the viewer's blockNames map, else the bare code. Cached per `generated`
+  // object because a schematic page resolves dozens of codes against ~9000 items.
+  const itemRefCache = new WeakMap();
+  eleventyConfig.addFilter("itemRef", (generated, rawCode) => {
+    let cache = itemRefCache.get(generated);
+    if (!cache) {
+      cache = new Map(generated.items.map((i) => [`${i.domain}:${i.code}`, i]));
+      itemRefCache.set(generated, cache);
+    }
+    const colon = String(rawCode).indexOf(":");
+    const rawDomain = colon < 0 ? "game" : rawCode.slice(0, colon);
+    const code = colon < 0 ? rawCode : rawCode.slice(colon + 1);
+    const domain = rawDomain === "game" ? "survival" : rawDomain;
+    const item = cache.get(`${domain}:${code}`);
+    if (item) return { name: item.displayName, domain, code };
+    return { name: generated.blockNames?.[`${rawDomain}:${code}`] ?? code };
+  });
+
   eleventyConfig.addFilter("findById", (list, id) => list.find((x) => x.id === id));
 
   // Several recipe categories (alloy, barrel, cooking, knapping, smithing, clayforming) never
@@ -300,7 +326,12 @@ export default function (eleventyConfig) {
     "node_modules/three/LICENSE": "assets/vendor/three/LICENSE",
     // Sample schematics for the schematic viewer (fetched client-side by assets/schematicViewer.js).
     "site/tools/schematic/samples": "assets/schematics",
+    // Every worldgen schematic, gzip-compressed by ingest (src/ingest/schematicFiles.ts), for the
+    // viewer's `?schematic=` mode. A missing folder (ingest not run yet) is simply skipped.
+    "site/_data/generated/schematicFiles": "assets/schematics/world",
   });
+  // ~50 MB of gzip files: in `npm run serve`, serve them in place instead of copying them again.
+  eleventyConfig.setServerPassthroughCopyBehavior("passthrough");
 
   // sitemap.xml: written after the build from the real list of output pages. (A Nunjucks template
   // over `collections.all` only saw ~40 of the ~12,900 pages -- paginated pages aren't all in it.)

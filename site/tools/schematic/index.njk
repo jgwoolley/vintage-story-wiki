@@ -8,14 +8,16 @@ permalink: "{{ lang }}/tools/schematic/index.html"
 {{ bc.trail(lang, [{label: "Tools", url: "tools/"}, {label: "Schematic viewer"}]) }}
 <h1>Schematic viewer</h1>
 <p class="muted">
-  Open one of the bundled sample schematics, or upload any Vintage Story schematic
+  Open one of the bundled sample schematics, any of the game's own worldgen schematics (from a
+  <a href="{{ ('/' ~ lang ~ '/') | url }}schematics/">schematic</a> or
+  <a href="{{ ('/' ~ lang ~ '/') | url }}structures/">structure</a> page), or upload any Vintage Story schematic
   <code>.json</code> (e.g. exported with <code>/we export</code>). Everything is decoded in your
   browser -- nothing is uploaded anywhere. Click blocks in the list to toggle them, drag the slider
   to look floor by floor, and click a block in the 3D view to see its position and (decoded)
   block-entity attributes.
 </p>
 
-<div class="schematic-tool" id="schematicTool" data-samples-base="{{ '/' | url }}assets/schematics/" data-items-url="{{ ('/' ~ lang ~ '/') | url }}items/" data-block-names="{{ '/' | url }}assets/blockNames.json">
+<div class="schematic-tool" id="schematicTool" data-samples-base="{{ '/' | url }}assets/schematics/" data-world-base="{{ '/' | url }}assets/schematics/world/" data-schematics-url="{{ ('/' ~ lang ~ '/') | url }}schematics/" data-items-url="{{ ('/' ~ lang ~ '/') | url }}items/" data-block-names="{{ '/' | url }}assets/blockNames.json">
   <div id="loadingOverlay" class="schematic-loading" hidden>
     <div class="spinner"></div>
     <div id="loadingText">Processing schematic...</div>
@@ -40,6 +42,11 @@ permalink: "{{ lang }}/tools/schematic/index.html"
         </optgroup>
       </select>
     </label>
+    <p id="worldSchematic" class="muted" hidden>Viewing <a id="worldSchematicLink" href="#"></a> from the wiki.</p>
+    <div class="button-group" role="group" aria-label="Download">
+      <button type="button" id="download" disabled>Download .json</button>
+      <a id="downloadGz" class="button-like" href="#" hidden>Download .json.gz</a>
+    </div>
     <div id="schematicInfo" class="muted" hidden>Size: <span id="sizeValue">-</span></div>
     <p id="schematicError" class="schematic-error" role="alert" hidden></p>
 
@@ -79,7 +86,7 @@ permalink: "{{ lang }}/tools/schematic/index.html"
   <div class="schematic-stage">
     <div id="viewport" class="schematic-viewport" aria-live="polite"></div>
     <p class="muted schematic-hint">
-      Rotate: left-drag &middot; Pan: right-drag &middot; Zoom: wheel &middot; Inspect: click a block.
+      Rotate: left-drag &middot; Pan: right-drag &middot; Zoom: wheel &middot; Inspect: click a block. <code>meta-filler</code> (a worldgen marker) starts hidden; click it in the list to show it.
       Source: <a href="https://github.com/jgwoolley/vintage-story-schematic-preview/">vintage-story-schematic-preview</a>
       (history merged into this repo).
     </p>

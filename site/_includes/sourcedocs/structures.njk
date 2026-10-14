@@ -1,11 +1,11 @@
 <p>
 All 4 structure registries (plain structures, villages, story structures, and the separate
-"hook-generated" family) are normalized into one common shape. Each entry's schematic file
-reference is a glob itself (e.g. <code>ruins/undergroundruin-small-*.json</code>) -- resolved
-against the real schematic file listing (headers only: dimensions and the small
-<code>BlockCodes</code> palette dictionary, never the actual per-block voxel/BlockEntities data,
-which stays unparsed here for size reasons) to report real dimensions and a block-code inventory
-per matching file.
+"hook-generated" family) are normalized into one common shape. A structure only <em>references</em>
+its schematics: each entry's schematic path is often a glob itself (e.g.
+<code>ruins/undergroundruin-small-*.json</code>), resolved against the schematic files of the
+structure's own domain, and the structure keeps the matching schematic ids plus its own weight and
+quantity for that reference. Everything about the files themselves (dimensions, block inventory, the
+3D view) lives on the <a href="{{ ('/' ~ lang ~ '/') | url }}sources/schematics/">schematics</a> pages.
 </p>
 <div class="coverage-note">
 <p><strong>Spawn <code>chance</code> is sometimes a relative weight, not a probability.</strong>

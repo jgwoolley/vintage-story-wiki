@@ -242,16 +242,47 @@ export interface CreatureRosterEntry {
 
 export type StructureKind = "structure" | "village" | "storystructure" | "hookgenerated";
 
-/** One schematic file (or glob of them) a structure can place, with header-only metadata (no voxel decode). */
-export interface SchematicSummary {
+/**
+ * One schematic file (`worldgen/schematics/**.json`): a pre-built block layout that world generation
+ * pastes into the world. Structures reference these (`NormalizedStructure.schematics`); this holds
+ * everything that belongs to the file itself. Read from the header only -- the voxel data stays
+ * unparsed at ingest time (the in-browser viewer decodes it on demand).
+ */
+export interface SchematicInfo {
+  id: string; // "<domain>:worldgen/schematics/<relPath>.json" -- the join key every schematic cross-reference in this codebase already uses (tapestry/clutter instances, lore locations, item "found in structures")
+  domain: string; // asset domain the file lives in (e.g. "survival", "betterruins"); structure globs only match schematics of their own domain
+  sourceMod: string; // modid that ships the file ("game" for vanilla)
+  relPath: string; // relative to worldgen/schematics/, no extension, "/" separators
+  name: string; // last path segment of `relPath`
+  pagePath: string; // "<domain>/<relPath lowercased>" -- the page URL segment under /schematics/. Not `slugify(id)`: slugifying collapses "/", "-" and "_" alike, and two real files ("trader/forest/-hut3-agr" and ".../hut3-agr") collided
+  assetPath: string; // site-root-relative URL of the gzip copy the viewer fetches, e.g. "assets/schematics/world/survival/well/deep-1.json.gz" (prefix with `'/' | url` in templates)
+  sizeX?: number; // bounding box, blocks
+  sizeY?: number;
+  sizeZ?: number;
+  blockCodeCount?: number; // distinct block codes, from the `BlockCodes` dict
+  blockCodes: string[]; // the `BlockCodes` dict's values, e.g. "game:supportbeam-veryaged" (a domain prefix is present as written in the file)
+  itemCodes: string[]; // the `ItemCodes` dict's values -- items placed inside containers, notably `stackrandomizer-*`
+  fileBytes: number; // size of the original .json
+  gzBytes?: number; // size of the gzip copy served to the viewer (`schematicFiles.ts`); absent if that copy wasn't written
+  usedBy: SchematicUse[]; // structures that reference this file (the reverse of `NormalizedStructure.schematics`)
+}
+
+/** One structure's use of a schematic file -- the reverse side of a `SchematicRef`. */
+export interface SchematicUse {
+  structureId: string;
+  via: string; // the structure's raw schematic path/glob that matched this file
+  weight?: number; // from that reference (see SchematicRef)
+  minQuantity?: number;
+  maxQuantity?: number;
+}
+
+/**
+ * A structure's reference to one schematic path or glob. The weight/quantities belong to this
+ * reference (the structure's own choice), not to the schematic file, which is why they live here.
+ */
+export interface SchematicRef {
   globPath: string; // the raw glob/path reference as written in the structure's own JSON
-  resolvedFiles: {
-    path: string; // concrete file this glob resolved to
-    sizeX?: number; // schematic bounding-box dimensions, blocks
-    sizeY?: number;
-    sizeZ?: number;
-    blockCodeCount?: number; // number of distinct block codes used, from the schematic's `BlockCodes` dict
-  }[];
+  schematicIds: string[]; // `SchematicInfo.id`s this glob resolved to (empty if nothing matched)
   weight?: number; // relative chance this specific schematic is picked when the structure has several
   minQuantity?: number; // how many copies of this schematic piece to place at once (e.g. village buildings)
   maxQuantity?: number;
@@ -287,7 +318,7 @@ export interface NormalizedStructure {
   minSpawnDistance?: number; // blocks from world spawn before this is allowed to generate at all
   minGroupDistance?: number; // blocks required between two instances of this same structure
   restrictions: Record<string, unknown>; // raw worldgen restriction keys not promoted to a field above -- see RESTRICTION_GLOSSARY
-  schematics: SchematicSummary[];
+  schematics: SchematicRef[]; // which schematic files this structure can place; the files themselves are `generated.schematics`
   raw: unknown; // original structure JSON, shown on the detail page
 }
 

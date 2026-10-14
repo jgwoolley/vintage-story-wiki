@@ -8,6 +8,8 @@ import { extractRecipes } from "./models/recipes.js";
 import { extractLoot, extractStackRandomizerPools } from "./models/loot.js";
 import { handbookItemRefs } from "./codeUtil.js";
 import { extractStructures } from "./models/structures.js";
+import { extractSchematics } from "./models/schematics.js";
+import { writeCompressedSchematics } from "./schematicFiles.js";
 import { extractDecorCatalog } from "./models/decor.js";
 import { extractGear } from "./models/gear.js";
 import { extractLoreBooks, buildLoreSections } from "./models/lore.js";
@@ -99,7 +101,7 @@ function main(): void {
   const schematicsByDomain = new Map<string, SchematicFile[]>();
   for (const source of sources) {
     const existing = schematicsByDomain.get(source.domain) ?? [];
-    schematicsByDomain.set(source.domain, [...existing, ...listSchematicFiles(source.domain, source.rootDir)]);
+    schematicsByDomain.set(source.domain, [...existing, ...listSchematicFiles(source.domain, source.rootDir, source.modid)]);
   }
   console.log(`  ${[...schematicsByDomain.values()].reduce((n, files) => n + files.length, 0)} schematic files indexed`);
 
@@ -177,9 +179,37 @@ function main(): void {
   const blockDrops = lootGroups.filter((g) => g.sourceKind === "block");
   const blockDropsById = Object.fromEntries(blockDrops.map((g) => [g.id, g]));
 
-  step("Extracting structures");
-  const structures = extractStructures(index, schematicsByDomain);
+  step("Extracting schematics + structures");
+  const { schematics, duplicateIds } = extractSchematics(schematicsByDomain);
+  console.log(`  ${schematics.length} schematics`);
+  for (const id of duplicateIds.slice(0, 10)) console.warn(`  ! schematic ${id} is shipped by more than one source; the first one wins`);
+  const structures = extractStructures(index, schematics);
   console.log(`  ${structures.length} structures`);
+
+  // The reverse of each structure's schematic references, so a schematic knows who places it.
+  const schematicById = new Map(schematics.map((sc) => [sc.id, sc]));
+  for (const structure of structures) {
+    for (const ref of structure.schematics) {
+      for (const id of ref.schematicIds) {
+        schematicById.get(id)?.usedBy.push({
+          structureId: structure.id,
+          via: ref.globPath,
+          ...(ref.weight !== undefined ? { weight: ref.weight } : {}),
+          ...(ref.minQuantity !== undefined ? { minQuantity: ref.minQuantity } : {}),
+          ...(ref.maxQuantity !== undefined ? { maxQuantity: ref.maxQuantity } : {}),
+        });
+      }
+    }
+  }
+  console.log(`  ${schematics.filter((sc) => sc.usedBy.length).length}/${schematics.length} schematics referenced by at least one structure`);
+
+  step("Compressing schematics for the in-browser viewer");
+  const compressed = writeCompressedSchematics(schematics, schematicsByDomain);
+  console.log(
+    `  ${(compressed.rawBytes / 1e6).toFixed(0)} MB -> ${(compressed.gzBytes / 1e6).toFixed(0)} MB gzip ` +
+      `(${compressed.written} written, ${compressed.reused} reused)`
+  );
+  if (compressed.gzBytes > 300e6) console.warn("  ! compressed schematics exceed 300 MB; GitHub Pages limits a site to 1 GB");
 
   step("Extracting decor catalog (paintings/tapestries/clothing)");
   const decorCatalog = extractDecorCatalog(index, lang);
@@ -568,6 +598,7 @@ function main(): void {
   writeGenerated("blockDrops", blockDrops);
   writeGenerated("blockDropsById", blockDropsById);
   writeGenerated("structures", structures);
+  writeGenerated("schematics", schematics);
   writeGenerated("decor", decorCatalog);
   writeGenerated("paintings", paintings);
   writeGenerated("clutter", clutter);

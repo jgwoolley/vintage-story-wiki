@@ -316,6 +316,16 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   and drop any `wip-badge` / old WIP stub section it replaces. The seed climate lookup shipped with the home
   card still pointing at its old WIP anchor, which is the mistake this rule exists for. After building, grep
   `_site/en/index.html` for the new `tools/<name>/` href to confirm.
+- **Schematics and structures are separate**: `generated.schematics` (one per file, `SchematicInfo`) holds
+  everything about a file; a structure's `schematics` are only `SchematicRef`s (path/glob, its own
+  weight/quantity, resolved `schematicIds`). Link to a schematic page with `schematics/{{ schematic.pagePath }}/`
+  (never `slugify(id)`, which collides) and to the viewer with `tools/schematic/?schematic=<domain>/<relPath>`.
+  The viewer's files are gzip copies written by ingest (`schematicFiles.ts`) and served by a passthrough
+  copy; don't point `fetch` at the raw game files. Schematic ids are the join key for tapestry/clutter/lore
+  cross-references, so don't change their format. The schematic page embeds a read-only preview
+  (`schematicPreview.js`); anything interactive (legend, layers, picking) belongs only in the full viewer.
+  `meta-filler` starts hidden everywhere via `isHiddenByDefault` in `schematicVoxels.js`; extend that one
+  helper if more marker blocks should be hidden by default.
 - **Git is read-only for Claude.** Read operations (`git status`, `log`, `diff`, `show`, `blame`,
   ...) are fine. Never run anything that writes to the repo's git state: no `commit`, `add`,
   `stash`, `checkout`/`switch`, `reset`, `restore`, `rebase`, `merge`, `branch`, `tag`, `push`, and so on.
