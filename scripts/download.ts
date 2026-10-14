@@ -170,6 +170,10 @@ async function installMod(spec: string, opts: Options): Promise<DownloadAction> 
 
   if (!release) {
     console.error(`✘ Could not find mod '${modid}'${version ? ` version ${version}` : ""} on mods.vintagestory.at`);
+    if (releases.length) {
+      // The usual cause is a mistyped or withdrawn pin in vs-manifest.json -- show what does exist.
+      console.error(`  Available versions: ${releases.slice(0, 10).map((r) => r.modversion).join(", ")}${releases.length > 10 ? ", ..." : ""}`);
+    }
     process.exitCode = 1;
     return "failed";
   }
