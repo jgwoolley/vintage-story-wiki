@@ -3,7 +3,7 @@ Mods
 node_modules
 .scratch
 _site
-site/_data/generated
+apps/vs-wiki/site/_data/generated
 dist
 *.log
 vssurvivalmod/

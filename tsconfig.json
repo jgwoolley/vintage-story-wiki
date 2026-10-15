@@ -1,16 +1,21 @@
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "lib": ["ES2022"],
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
+    "lib": [
+      "ES2022"
+    ],
     "outDir": "dist",
     "noEmit": true
   },
-  "include": ["src/**/*.ts", "scripts/**/*.ts", "test/**/*.ts", "eleventy.config.js"]
+  "include": [
+    "libs/vs-wiki-core/src/**/*.ts",
+    "apps/*/src/**/*.ts",
+    "apps/*/scripts/**/*.ts",
+    "apps/*/test/**/*.ts"
+  ],
+  "exclude": [
+    "apps/vs-vscode-extension"
+  ]
 }

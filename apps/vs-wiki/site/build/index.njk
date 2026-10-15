@@ -1,0 +1,146 @@
+---
+title: Build info - Vintage Story Wiki
+description: What commit/CI run generated this build, and how long each pipeline phase took.
+layout: layouts/base.njk
+permalink: "{{ lang }}/build/index.html"
+---
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Build info"}]) }}
+<h1>Build info</h1>
+<p class="muted">
+  Full detail behind the "generated X ago" note in the footer of every page: exactly which
+  commit/branch/CI run produced this build, and how long each of the three pipeline phases
+  (download, ingest, site build) took to run.
+</p>
+
+<h2>This build</h2>
+{% if buildInfo.isCi %}
+  <div class="card">
+    <p>
+      Built in GitHub Actions from
+      {% if buildInfo.repoSlug %}<code>{{ buildInfo.repoSlug }}</code>{% endif %}
+      {% if buildInfo.branch %} on branch <code>{{ buildInfo.branch }}</code>{% endif %}.
+    </p>
+    <p>
+      Commit:
+      {% if buildInfo.commitUrl %}<a href="{{ buildInfo.commitUrl }}"><code>{{ buildInfo.commitShortSha }}</code></a>{% elif buildInfo.commitSha %}<code>{{ buildInfo.commitShortSha }}</code>{% else %}unknown{% endif %}
+      {% if buildInfo.commitMessage %} &mdash; {{ buildInfo.commitMessage }}{% endif %}
+      {% if buildInfo.commitAuthor %} (<span>{{ buildInfo.commitAuthor }}</span>){% endif %}
+    </p>
+    {% if buildInfo.runUrl %}<p>CI run: <a href="{{ buildInfo.runUrl }}">{{ buildInfo.runUrl }}</a></p>{% endif %}
+    <p>
+      Generated
+      <time datetime="{{ buildInfo.utcIso }}" data-build-time="{{ buildInfo.utcIso }}">{{ buildInfo.utcIso }}</time><span data-build-ago> ago</span>
+      (<code>{{ buildInfo.utcIso }}</code> UTC).
+    </p>
+  </div>
+{% else %}
+  <p class="wip-badge">Local build &mdash; no CI metadata available</p>
+  <div class="card">
+    <p class="muted">
+      This build did not run in GitHub Actions, so the <code>GITHUB_SHA</code>/
+      <code>GITHUB_REPOSITORY</code>/<code>GITHUB_RUN_ID</code> environment variables Actions sets
+      automatically on every run aren't present, and there's no CI run to link to. The fields
+      below are resolved from the local git working tree instead (best-effort, and may be absent
+      too, e.g. outside any git repo at all):
+    </p>
+    <p>
+      Repo: {% if buildInfo.repoSlug %}<code>{{ buildInfo.repoSlug }}</code>{% else %}unknown{% endif %}
+      &nbsp;&middot;&nbsp;
+      Branch: {% if buildInfo.branch %}<code>{{ buildInfo.branch }}</code>{% else %}unknown{% endif %}
+    </p>
+    <p>
+      Commit:
+      {% if buildInfo.commitUrl %}<a href="{{ buildInfo.commitUrl }}"><code>{{ buildInfo.commitShortSha }}</code></a>{% elif buildInfo.commitSha %}<code>{{ buildInfo.commitShortSha }}</code>{% else %}unknown{% endif %}
+      {% if buildInfo.commitMessage %} &mdash; {{ buildInfo.commitMessage }}{% endif %}
+      {% if buildInfo.commitAuthor %} (<span>{{ buildInfo.commitAuthor }}</span>){% endif %}
+    </p>
+    <p>
+      Generated
+      <time datetime="{{ buildInfo.utcIso }}" data-build-time="{{ buildInfo.utcIso }}">{{ buildInfo.utcIso }}</time><span data-build-ago> ago</span>
+      (<code>{{ buildInfo.utcIso }}</code> UTC).
+    </p>
+  </div>
+{% endif %}
+
+<h2>Pipeline timings</h2>
+<p class="muted">
+  Each phase below runs as its own process (in CI, three separate workflow steps, possibly
+  minutes apart) and persists its own timing to a small JSON file under
+  <code>site/_data/generated/</code> that this page reads &mdash; see
+  <code>apps/vs-wiki/src/ingest/types.ts</code>'s <code>DownloadTiming</code>/<code>IngestTiming</code>/
+  <code>EleventyBuildTiming</code> for the exact shape of each.
+</p>
+
+<h3>1. Download (<code>npm run download</code>)</h3>
+{% set dl = generated.downloadTiming %}
+{% if dl.finishedAtIso %}
+  <div class="card">
+    <p>Took <strong>{{ dl.durationMs | durationLabel }}</strong>, finished <code>{{ dl.finishedAtIso }}</code> UTC.</p>
+    <p>
+      {% if dl.anyDownloaded %}
+        <span class="tag tag-positive">freshly downloaded</span> at least one of the server/mods was actually fetched this run.
+      {% else %}
+        <span class="tag">already present</span> everything was cached from a previous run (skip-checked, not re-fetched) &mdash; a small duration here is expected, not a bug.
+      {% endif %}
+    </p>
+    <table>
+      <thead><tr><th>What</th><th>Outcome</th><th>Took</th></tr></thead>
+      <tbody>
+        <tr><td>Vintage Story server</td><td>{{ dl.serverAction }}</td><td>{% if dl.serverDurationMs != null %}{{ dl.serverDurationMs | durationLabel }}{% endif %}</td></tr>
+        {% for mod in dl.modActions %}
+          <tr><td>{{ mod.modid }}</td><td>{{ mod.action }}</td><td>{% if mod.durationMs != null %}{{ mod.durationMs | durationLabel }}{% endif %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p class="card muted">Not available &mdash; <code>npm run download</code> hasn't been run yet in this checkout (or ran before this feature existed).</p>
+{% endif %}
+
+<h3>2. Ingest (<code>npm run ingest</code>)</h3>
+{% set ing = generated.ingestTiming %}
+{% if ing.finishedAtIso %}
+  <div class="card">
+    <p>Took <strong>{{ ing.durationMs | durationLabel }}</strong>, finished <code>{{ ing.finishedAtIso }}</code> UTC.</p>
+    {% if ing.steps.length %}
+    <table>
+      <thead><tr><th>Step</th><th>Took</th></tr></thead>
+      <tbody>
+        {% for st in ing.steps %}
+          <tr><td>{{ st.name }}</td><td>{{ st.durationMs | durationLabel }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+{% else %}
+  <p class="card muted">Not available &mdash; <code>npm run ingest</code> hasn't been run yet in this checkout.</p>
+{% endif %}
+
+<h3>3. Site build (Eleventy)</h3>
+<p class="muted">
+  Eleventy can't report its own total duration to its own templates &mdash; the number isn't
+  known until the process is already exiting, after every page (including this one) has already
+  rendered. <code>apps/vs-wiki/scripts/build-site.ts</code> wraps the real <code>eleventy</code> CLI, times the
+  whole child process, and writes <code>eleventyBuildTiming.json</code> only after it exits. That
+  means the figure below is always <strong>one full build run stale</strong>: it describes the
+  previous successful build, not the one that produced this page. It is shown here labeled as
+  such rather than silently presented as a live number.
+</p>
+{% set ev = generated.eleventyBuildTiming %}
+{% if ev.finishedAtIso %}
+  <div class="card">
+    <p>
+      Previous build took <strong>{{ ev.durationMs | durationLabel }}</strong>, finished
+      <code>{{ ev.finishedAtIso }}</code> UTC.
+      {% if not ev.succeeded %}<span class="warning">That build did not complete successfully.</span>{% endif %}
+    </p>
+  </div>
+{% else %}
+  <p class="card muted">
+    Not available &mdash; the site hasn't been built via <code>apps/vs-wiki/scripts/build-site.ts</code> yet
+    (e.g. a bare <code>npx eleventy</code> invocation was used instead, or this is the very first
+    build in this checkout).
+  </p>
+{% endif %}

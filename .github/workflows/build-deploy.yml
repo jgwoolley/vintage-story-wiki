@@ -18,7 +18,7 @@ concurrency:
 jobs:
   build:
     # The whole pipeline (download/ingest/build) is pure Node/npm now -- no system package is
-    # ever shelled out to (the old `tar` CLI dependency in scripts/download.ts was replaced with
+    # ever shelled out to (the old `tar` CLI dependency in apps/vs-wiki/scripts/download.ts was replaced with
     # the pure-JS `tar` npm package). `ubuntu-latest` here is just GitHub Actions' standard
     # GitHub-hosted runner choice, not an actual OS-level requirement of this project.
     runs-on: ubuntu-latest
@@ -53,6 +53,10 @@ jobs:
       - name: Download game server + mods (skipped on cache hit)
         run: npm run download
 
+      # Compiles libs/vs-schematic's TypeScript to dist/, which Eleventy copies to /assets/.
+      - name: Build libraries
+        run: npm run build:libs
+
       - name: Ingest game data
         run: npm run ingest
 
@@ -62,7 +66,7 @@ jobs:
       - name: Restore previous Eleventy build timing
         uses: actions/cache/restore@v4
         with:
-          path: site/_data/generated/eleventyBuildTiming.json
+          path: apps/vs-wiki/site/_data/generated/eleventyBuildTiming.json
           key: eleventy-timing-${{ github.run_id }}
           restore-keys: eleventy-timing-
 
@@ -71,19 +75,19 @@ jobs:
         # https://<user>.github.io/<repo>/ rather than the domain root, so every internal
         # link/asset needs that repo-name prefix -- see eleventy.config.js's pathPrefix.
         # SITE_URL gives og:image/og:url an absolute origin, since Open Graph wants one.
-        # scripts/build-site.ts is a thin wrapper around the real `eleventy` CLI that times the
-        # whole build and writes site/_data/generated/eleventyBuildTiming.json for the *next*
+        # apps/vs-wiki/scripts/build-site.ts is a thin wrapper around the real `eleventy` CLI that times the
+        # whole build and writes apps/vs-wiki/site/_data/generated/eleventyBuildTiming.json for the *next*
         # build to surface on /<lang>/build/ -- see that script's own comment for why Eleventy
         # can't report this about itself.
         env:
           PATH_PREFIX: /${{ github.event.repository.name }}/
           SITE_URL: https://${{ github.repository_owner }}.github.io
-        run: npx tsx scripts/build-site.ts
+        run: npx tsx apps/vs-wiki/scripts/build-site.ts
 
       - name: Save Eleventy build timing for the next run
         uses: actions/cache/save@v4
         with:
-          path: site/_data/generated/eleventyBuildTiming.json
+          path: apps/vs-wiki/site/_data/generated/eleventyBuildTiming.json
           key: eleventy-timing-${{ github.run_id }}
 
       - name: Upload Pages artifact

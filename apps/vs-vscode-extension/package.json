@@ -1,0 +1,54 @@
+{
+  "name": "vs-vscode-extension",
+  "displayName": "Vintage Story Schematic Preview",
+  "description": "Preview Vintage Story worldgen schematics (.json / .json.gz) as an interactive 3D voxel model.",
+  "version": "0.1.0",
+  "private": true,
+  "publisher": "vintage-story-wiki",
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Visualization", "Other"],
+  "keywords": ["vintage story", "schematic", "voxel", "preview"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "vsSchematic.preview",
+        "displayName": "Vintage Story Schematic Preview",
+        "priority": "option",
+        "selector": [{ "filenamePattern": "*.json" }, { "filenamePattern": "*.json.gz" }]
+      }
+    ],
+    "commands": [
+      {
+        "command": "vsSchematic.openPreview",
+        "title": "Preview Schematic",
+        "category": "Vintage Story"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        { "command": "vsSchematic.openPreview", "when": "resourceFilename =~ /\\.json(\\.gz)?$/", "group": "navigation" }
+      ],
+      "editor/title": [
+        { "command": "vsSchematic.openPreview", "when": "resourceFilename =~ /\\.json(\\.gz)?$/", "group": "navigation" }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p src/webview/tsconfig.json",
+    "package": "npm run build && vsce package --no-dependencies --allow-missing-repository --skip-license"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^3.2.0",
+    "esbuild": "^0.28.2"
+  },
+  "dependencies": {
+    "three": "0.180.0",
+    "vs-schematic": "*"
+  }
+}

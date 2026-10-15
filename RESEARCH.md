@@ -1,8 +1,9 @@
 # Research notes
 
-Investigation notes. Unless a section says otherwise, nothing here has been implemented.
-Each section below is one of the four research tasks requested, with findings from the real game
-data and a recommended approach for a future implementation session to pick up.
+Investigation notes: findings from the real game data and a recommended approach for a future
+implementation session to pick up. Each section starts with a **Status** line saying how much of it has
+been built (several sections have since been implemented, partly or fully, and now live on their own
+Source pages instead); a section without one is still just research.
 
 ## 1. Collapsing direction/orientation variants that share one localization name
 
@@ -51,21 +52,23 @@ could they be summarized into one row?
 ## 3. Integrating jgwoolley/vintage-story-schematic-preview (upload + in-browser viewing)
 
 **Status: upload + bundled samples implemented** (`/tools/schematic/`, as an adapter on the shared
-`voxelViewer.js`), and **browsing this wiki's own `worldgen/schematics/**` is implemented too**: every
+`voxelViewer.ts`), and **browsing this wiki's own `worldgen/schematics/**` is implemented too**: every
 schematic is gzip-compressed at ingest and fetched on demand (`?schematic=<domain>/<relPath>`); see
-`site/_includes/sourcedocs/schematics.njk` (`/sources/schematics/`).
+`apps/vs-wiki/site/_includes/sourcedocs/schematics.njk` (`/sources/schematics/`). Each schematic page also embeds a
+read-only preview (rotate/pan/zoom only), the full viewer has Download buttons, and `meta-filler` starts
+hidden. Not done: rendering chiseled blocks as their real shape (topic 6).
 The findings below are the pre-implementation notes.
 
 **The question**: what would it take to pull in upload + browser-side viewing from the external
 schematic-preview project, beyond the decode logic already adapted earlier this project?
 
 **Findings**:
-- The binary decode layer is **already done and already browser-ready** — `site/assets/
-  schematicDecode.js` is a verbatim-ported, dependency-free ES module (`Ascii85`,
-  `TreeAttributeParser`, `decodeBlockEntity`) with zero Node-specific or DOM-specific APIs,
-  confirmed because it's already imported directly by the Node-side ingest pipeline
-  (`src/ingest/models/tapestryInstances.ts`) with no shims. This file is already exactly what a
-  `<script type="module" src="...">` on a future tools page would load — no rework needed there.
+- The binary decode layer is **already done and already browser-ready** — `libs/vs-schematic/src/schematicDecode.ts`
+  is a dependency-free module (`Ascii85`, `TreeAttributeParser`, `decodeBlockEntity`) with zero Node-specific
+  or DOM-specific APIs, confirmed because it's imported directly by the Node-side ingest pipeline
+  (`apps/vs-wiki/src/ingest/models/tapestryInstances.ts`) with no shims. (It was originally a plain `.js` file
+  loaded by a `<script type="module">`; it is TypeScript now, compiled for the browser by `npm run build:libs`
+  — see topic 8.)
 - What's genuinely missing is everything *around* that decode layer: (a) a file upload UI (an
   `<input type="file">` + `FileReader`, reading a `.json` schematic client-side — no server
   component needed, this is a fully static site); (b) parsing the schematic's `Blocks`/`BlockIds`/
@@ -94,7 +97,7 @@ schematic-preview project, beyond the decode logic already adapted earlier this 
    the existing decode module as-is, and delivers real value (anyone can inspect any schematic
    file, not just this wiki's own curated set).
 2. Scope the voxel-grid parsing (`Blocks`/`BlockIds`/`BlockCodes` → a 3D array of concrete block
-   codes) as new, dedicated client-side JS — a sibling to `schematicDecode.js`, not an extension of
+   codes) as new, dedicated client-side JS — a sibling to `schematicDecode.ts`, not an extension of
    it, since it's a different part of the schematic format (bulk voxel grid vs. per-instance
    block-entity attributes).
 3. Pin whichever 3D rendering approach is chosen to a specific version per this project's existing
@@ -181,50 +184,84 @@ generates"?
   "tools-only" page set can include without `generated` being present (Eleventy errors or renders
   empty on a missing `generated` global).
 - How to select a subset: an env flag (`TOOLS_ONLY=1`) feeding `eleventyConfig.ignores`/a second
-  config file with its own `input` globs, versus a separate Eleventy invocation over `site/tools` +
-  `site/assets` only. The second keeps the full-site config untouched but duplicates layout/filter setup.
+  config file with its own `input` globs, versus a separate Eleventy invocation over `apps/vs-wiki/site/tools` +
+  `apps/vs-wiki/site/assets` only. The second keeps the full-site config untouched but duplicates layout/filter setup.
 - Whether it should still be able to render the shared header/footer without `generated.mods` etc.
 - CI side (`.github/workflows/build-deploy.yml`): GitHub Pages deploys a whole artifact, so a tools-only
   build can't just overwrite part of the live site unless the previous `_site` (or the cached
-  `site/_data/generated`) is restored first. Options: cache the generated JSON (already cached
-  `vs_server/`/`Mods/`) keyed on the manifest + `src/ingest/**` hash, and skip ingest on a hit; or
+  `apps/vs-wiki/site/_data/generated`) is restored first. Options: cache the generated JSON (already cached
+  `vs_server/`/`Mods/`) keyed on the manifest + `apps/vs-wiki/src/ingest/**` hash, and skip ingest on a hit; or
   keep a tools-only local script (the new `npm run rebuild` already skips ingest) for dev only.
 - Sitemap/`robots.txt` generation (now an `eleventy.after` hook over `results`) must still produce a
   full sitemap, or be skipped, in a partial build.
 - The timing files (`downloadTiming`/`ingestTiming`/`eleventyBuildTiming`) assume all three phases ran;
   a partial build should keep the previous ingest numbers rather than blanking them.
 
-## 6. Chiseled block viewer (similar to the schematic viewer)
+## 6. Chiseled block viewer (rendering chiseled blocks as they really look)
 
-**Status: WIP, not researched yet.** A matching stub section is on `/tools/`.
+**Status: researched, not implemented.** Everything needed to draw the *shape* is verified to decode; drawing
+real *appearance* (textures/colors) is a separate, bigger gap. A matching "chiseled block viewer" stub may
+still be on `/tools/`.
 
-**The idea**: view chiseled blocks (sub-block voxel shapes made with the chisel) in 3D, like the
-schematic viewer. As I understand it, chiseled block shape data lives in the block entity attributes, so
-it is stored inside schematics, and the qptech chisel mod's blocks could be viewed the same way.
+**The idea**: today a chiseled block (`chiseledblock`, a "microblock") is drawn in the schematic viewer as one
+full unit cube colored by the generic block code. Draw its real sub-block shape instead.
 
-**What I expect to need to find out** (all unverified guesses):
-- The attribute layout of the vanilla chiseled block's block entity (likely a microblock entity with a
-  list of packed voxel cuboids plus a material list and a rotation) -- verify against the cloned
-  `vssurvivalmod/` (look for the micro/chisel block entity and its `FromTreeAttributes`) and against
-  real decoded blobs from existing schematics via `schematicDecode.js`'s `decodeBlockEntity`.
-- How cuboids are packed (min/max xyz in 0-16 space, material index, flags) and how the material index
-  maps back to block codes (to color/name them via `blockNames.json`).
-- qptech's chisel mod: which mod it is exactly, whether it stores the same attribute layout or its own
-  format, and whether it can be added to `vs-manifest.json` so ingest sees its blocks and lang strings.
-- Rendering: `voxelViewer.js` only draws unit cubes. Chisel cuboids are boxes, so either extend the
-  viewer to accept sized boxes (preferred: one `InstancedMesh` of scaled boxes) or voxelize at 16x per
-  block (up to 4096 cubes per block, too heavy for whole schematics).
-- Inputs: a chiseled block inside a larger schematic (click it in the schematic viewer to open it?), a
-  standalone item/block stack's attributes, or an uploaded export. Which sources contain chiseled blocks
-  in the wiki's own data (ruins/structures) so there are samples to test with.
-- Rotation/flip handling and any per-face material overrides.
+**Findings (verified against `vssurvivalmod/Systems/Microblock/BEMicroBlock.cs` and real decoded blobs):**
+- A chiseled block's block entity (decoded by `schematicDecode.ts`) carries `cuboids`, `materials`,
+  `rotation`, plus `decorRot`, `emitSideAo`, `sideSolid`, `sideAlmostSolid`, `blockName`,
+  `availMaterialQuantities` and a `beams` byte array. `beams` is not shape data: it's written by the
+  separate support-beam behavior (`BEBehaviorSupportBeam.cs`, `tree.SetBytes("beams", ...)`) that chiseled blocks
+  can also carry.
+- `cuboids` is an int array; each int is one box inside the block's 16x16x16 grid. **The bit layout in the
+  game source's own comment is wrong**; the real `ToUint`/`FromUint` is: bits 0-3 minX, 4-7 minY, 8-11 minZ,
+  12-15 maxX-1, 16-19 maxY-1, 20-23 maxZ-1, 24-31 material index (so `max = field + 1`, 1..16).
+- `materials` is an int array of block ids; the box's material index picks one. In a schematic those ids
+  are keys of the schematic's own `BlockCodes` (e.g. `game:genericwood`, `game:rock-chert`), so they resolve
+  to block codes with no running game.
+- `rotation` stores `(rotationY + 360) << 10` as **bookkeeping only**: `RotateModel` already rotates the
+  `cuboids` themselves (`TransformList`) when a schematic is rotated, so the stored cuboids are already in
+  their final orientation and need no further rotation to draw the shape. `rotationY` only matters for decor
+  faces (`decorRot`) and material face lookups.
+- Corpus check over all vanilla + BetterRuins schematics: **138,570 chiseled blocks in 475 schematics, 875,451
+  cuboids**, average 6.3 per block (max 462), 14,351 of them plain full-block boxes. Zero malformed boxes
+  (min < max on every axis) and zero material indexes outside their block's `materials` list; every material
+  resolves through `BlockCodes`. Decoding all of them takes about 1.6 s in Node.
+- Heaviest schematic: `brsunrift` has 15,718 chiseled blocks / 171,290 cuboids on top of ~600k visible
+  voxels. The median schematic that has chiseled blocks has about 300 cuboids. Only one schematic exceeds
+  100k cuboids.
+
+**What implementing the shape would take:**
+1. When a schematic loads, decode the `chiseledblock` entities (`decodeBlockEntity`) and replace each one's
+   single unit-cube voxel with one box per cuboid, colored per material block instead of by `chiseledblock`.
+2. Teach `voxelViewer.ts` sized boxes. It draws only unit cubes today (one `InstancedMesh` per opacity with
+   per-instance color); a per-instance scale/offset on the same mesh is a small change and keeps the cost
+   proportional to box count. Voxelizing at 16x instead (up to 4096 cubes per block) is too heavy.
+3. Decide how hiding, the legend counts and `pick` treat the new boxes, and keep the schematic-page preview
+   and the full viewer consistent (they share `schematicVoxels.ts`).
+4. Add a test using a chiseled blob decoded from a bundled sample (e.g. `story/devastation/small/small-13.json`
+   has two).
+
+**What "actually look" needs beyond shape (not solved):**
+- The viewers color every block by a hash of its code; there are no textures. Real colors need per-block
+  color/texture data. The raw textures are in `assets/*/textures/block/**.png`, so one option is averaging
+  each block's texture color at ingest, which needs a PNG decoder (a small npm dependency, or a minimal
+  reader) and the block-code to texture mapping from each blocktype's `textures`. That would improve every
+  block in the viewers, not just chiseled ones.
+- Per-face textures and the `decorRot` decor faces are a further step again.
+
+**Open questions:**
+- `chiseltools` (QP's Chisel Tools, `chiseltools` 1.17.9, which ships a compiled `.dll`) is now in
+  `vs-manifest.json`. It's a tool mod; whether it stores its own block-entity format or just edits vanilla
+  chiseled blocks is **not checked**. The earlier assumption that it has its own format is unverified.
+- Standalone input (a chiseled item stack's attributes, or an export) isn't covered by anything above; the
+  schematic case is the one with real data to test on.
 
 ## 7. vs-mod-updater (separate repo, not merged)
 
 The user's Python `vs-mod-updater` lives in its own repo, <https://github.com/jgwoolley/vs-mod-updater>.
 A local copy was briefly placed in this checkout but is being removed; the current plan is to **keep the
 two projects separate** rather than merge the updater into this one (at least for now), so nothing here
-depends on it. `scripts/download.ts` already implements the overlapping part in TypeScript: resolving a
+depends on it. `apps/vs-wiki/scripts/download.ts` already implements the overlapping part in TypeScript: resolving a
 mod via `mods.vintagestory.at/api/mod/<id>`, picking a release, downloading and skipping when present.
 What the updater has beyond that (per its README): checking installed mods for newer releases,
 recursively installing declared dependencies, and never leaving duplicate versions. If this is revisited,
@@ -233,8 +270,32 @@ CLAUDE.md) or leave the Python tool as a companion. No earlier note in this file
 
 ## Vintage Story temperature from seed
 
-**Status: the easy part is implemented** (`/tools/climate/`, `site/assets/climate.js`). What is and isn't
+**Status: the easy part is implemented** (`/tools/climate/`, `apps/vs-wiki/site/assets/climate.js`). What is and isn't
 ported, and how it was checked, now lives on the site's own source page
-(`site/_includes/sourcedocs/climate.njk`, shown at `/sources/climate/`), not here. Still open and worth
+(`apps/vs-wiki/site/_includes/sourcedocs/climate.njk`, shown at `/sources/climate/`), not here. Still open and worth
 researching: porting the simplex wobble (`MapLayerPerlinWobble`), and finding the text-seed to int conversion
 (closed `VintagestoryLib.dll`; candidates `GameMath.DotNetStringHash` and `StringUtil.GetNonRandomizedHashCode`).
+
+## 8. Splitting the pipeline into packages, and a VS Code schematic preview
+
+**Status: implemented.** The repo is an npm-workspaces monorepo: `libs/vs-wiki-core` (asset loading, JSON
+patching, variant expansion, lang resolution), `libs/vs-schematic` (schematic decode, voxel conversion, the
+Three.js voxel viewer; TypeScript, compiled to `dist/` for browsers) and `apps/vs-wiki` (the ingest, Eleventy
+site, scripts and tests). `apps/vs-vscode-extension` is a custom read-only editor that previews `.json` /
+`.json.gz` schematics, bundled with esbuild around the same `vs-schematic` code. See `README.md` ("Repository
+layout") for how they fit together.
+
+Decisions and what was left out, for whoever revisits this:
+- **No headless C# API.** The pipeline reads JSON and applies the engine's rules to it; the C# source is only
+  a reference for checking behavior (hence `csharpClassMap.json`). Running engine code would add a .NET
+  toolchain and the game's proprietary DLLs to CI and break the pure Node/npm property.
+- **Downloader not merged with the separate mod-updater CLI** (topic 7). The only contract the ingest has with
+  it is the directory layout (`vs_server/`, `Mods/`) plus `vs-manifest.json`, so either tool can fill it.
+- **The extension isn't published or tested inside a real VS Code yet.** It type-checks, bundles and packages
+  to a `.vsix` (`npm run build:extension`), and the HTML shell has unit tests, but nothing here
+  launched an Extension Development Host; the first thing to do is press F5 on a schematic file and check the
+  webview (WebGL, CSP, the file watcher). Not done: running it under `@vscode/test-electron`, a Marketplace
+  publisher/icon/license, and an extension-side setting for default-hidden blocks (it reuses
+  `isHiddenByDefault`, so `meta-filler` starts hidden like on the wiki).
+- **`libs/vs-schematic`'s package `exports` point at the TypeScript source**, which suits the Node/tsx and
+  esbuild consumers; only the wiki's browser build needs the compiled `dist/`.

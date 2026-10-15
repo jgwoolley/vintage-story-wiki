@@ -4,28 +4,26 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "download": "tsx scripts/download.ts",
-    "ingest": "tsx src/ingest/index.ts",
-    "build": "npm run ingest && tsx scripts/build-site.ts",
-    "rebuild": "tsx scripts/build-site.ts",
-    "serve": "npm run ingest && eleventy --serve",
-    "clean": "rm -rf .scratch _site site/_data/generated",
-    "typecheck": "tsc --noEmit",
-    "test": "tsx --test test/*.test.ts",
-    "decode-stats": "tsx scripts/decode-stats.ts"
-  },
-  "dependencies": {
-    "@11ty/eleventy": "^3.0.0",
-    "adm-zip": "^0.5.16",
-    "json5": "^2.2.3",
-    "markdown-it": "^15.0.2",
-    "tar": "^7.5.22",
-    "three": "0.180.0"
+    "download": "tsx apps/vs-wiki/scripts/download.ts",
+    "ingest": "tsx apps/vs-wiki/src/ingest/index.ts",
+    "build": "npm run build:libs && npm run ingest && tsx apps/vs-wiki/scripts/build-site.ts",
+    "rebuild": "npm run build:libs && tsx apps/vs-wiki/scripts/build-site.ts",
+    "serve": "npm run build:libs && npm run ingest && eleventy --serve --config=apps/vs-wiki/eleventy.config.js",
+    "clean": "rm -rf .scratch _site libs/*/dist apps/vs-wiki/site/_data/generated",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p libs/vs-schematic/tsconfig.json && npm run typecheck -w vs-vscode-extension",
+    "test": "tsx --test libs/*/test/*.test.ts apps/*/test/*.test.ts",
+    "decode-stats": "tsx apps/vs-wiki/scripts/decode-stats.ts",
+    "build:libs": "npm run build -w vs-schematic",
+    "build:extension": "npm run package -w vs-vscode-extension"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.5",
     "@types/node": "^22.10.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
-  }
+  },
+  "workspaces": [
+    "libs/*",
+    "apps/*"
+  ]
 }

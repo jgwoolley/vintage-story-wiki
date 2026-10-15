@@ -1,0 +1,169 @@
+[
+  {
+    "id": "items",
+    "title": "Items & Blocks",
+    "listingUrl": "items/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/crossref.ts", "apps/vs-wiki/src/ingest/csharpClassMap.json", "apps/vs-wiki/scripts/map-csharp-classes.ts", "apps/vs-wiki/src/ingest/models/loot.ts", "apps/vs-wiki/src/ingest/models/deposits.ts", "apps/vs-wiki/src/ingest/models/blockpatches.ts", "apps/vs-wiki/src/ingest/models/trees.ts", "apps/vs-wiki/src/ingest/models/trades.ts", "apps/vs-wiki/src/ingest/models/dialogue.ts"],
+    "globs": [
+      "recipes/**/*.json",
+      "itemtypes/**/*.json (only drops/tags/maxstacksize/class/behaviors read, not the full definition; for ItemStackRandomizer items, e.g. itemtypes/meta/stackrandomizer*.json, the per-variant `stacks` pool too)",
+      "blocktypes/**/*.json (only drops/tags/maxstacksize/class/entityClass/behaviors/entityBehaviors read, not the full definition)",
+      "entities/**/*.json (only death/harvestable drops read)",
+      "worldgen/deposits/**/*.json",
+      "worldgen/blockpatches/*.json",
+      "worldgen/treengenproperties.json",
+      "blocktypes/plant/fruittreebranch.json",
+      "config/tradelists/*.json",
+      "config/dialogue/*.json",
+      "config/handbook/*.json (guide text) -- only the item/block codes its, and dialogue's, handbook:// links name are used here, so each gets a page",
+      "worldgen/schematics/**/*.json (ItemCodes + BlockCodes dictionaries, for \"Found in structures\")"
+    ]
+  },
+  {
+    "id": "recipes",
+    "title": "Recipes",
+    "listingUrl": "recipes/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/recipes.ts"],
+    "globs": ["recipes/grid/*.json", "recipes/smithing/*.json", "recipes/clayforming/*.json", "recipes/knapping/*.json", "recipes/alloy/*.json", "recipes/barrel/*.json", "recipes/cooking/*.json"]
+  },
+  {
+    "id": "creatures",
+    "title": "Creatures",
+    "listingUrl": "creatures/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/loot.ts", "apps/vs-wiki/src/ingest/models/dialogue.ts"],
+    "globs": ["entities/**/*.json", "config/dialogue/*.json"]
+  },
+  {
+    "id": "structures",
+    "title": "Structures",
+    "listingUrl": "structures/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/structures.ts", "apps/vs-wiki/src/ingest/structureContents.ts"],
+    "globs": ["worldgen/structures.json", "worldgen/villages.json", "worldgen/storystructures.json", "worldgen/hookgeneratedstructures/*.json"]
+  },
+  {
+    "id": "schematics",
+    "title": "Schematics",
+    "listingUrl": "schematics/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/schematics.ts", "apps/vs-wiki/src/ingest/schematicHeader.ts", "apps/vs-wiki/src/ingest/schematicFiles.ts", "apps/vs-wiki/site/assets/schematicViewer.js", "apps/vs-wiki/site/assets/schematicPreview.js", "libs/vs-schematic/src/schematicVoxels.ts", "libs/vs-schematic/src/voxelViewer.ts", "libs/vs-schematic/src/schematicDecode.ts"],
+    "globs": ["worldgen/schematics/**/*.json (header, BlockCodes and ItemCodes only for the pages; the whole file, gzip-compressed, for the 3D viewer)"]
+  },
+  {
+    "id": "deposits",
+    "title": "Deposits",
+    "listingUrl": "deposits/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/deposits.ts", "apps/vs-wiki/src/ingest/models/rockstrata.ts"],
+    "globs": ["worldgen/deposits/**/*.json", "worldgen/rockstrata.json"]
+  },
+  {
+    "id": "crops",
+    "title": "Crops",
+    "listingUrl": "crops/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/blockpatches.ts"],
+    "globs": ["worldgen/blockpatches/*.json"]
+  },
+  {
+    "id": "trees",
+    "title": "Trees",
+    "listingUrl": "trees/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/trees.ts"],
+    "globs": ["worldgen/treengenproperties.json", "worldgen/treegen/*.json", "blocktypes/plant/*.json (sapling variants only)"]
+  },
+  {
+    "id": "fruit-trees",
+    "title": "Fruit Trees",
+    "listingUrl": "fruit-trees/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/trees.ts"],
+    "globs": ["blocktypes/plant/fruittreebranch.json"]
+  },
+  {
+    "id": "paintings",
+    "title": "Paintings",
+    "listingUrl": "paintings/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/decor.ts"],
+    "globs": ["blocktypes/wood/painting.json"]
+  },
+  {
+    "id": "tapestries",
+    "title": "Tapestries",
+    "listingUrl": "tapestries/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/decor.ts", "apps/vs-wiki/src/ingest/models/tapestryInstances.ts", "libs/vs-schematic/src/schematicDecode.ts"],
+    "globs": ["blocktypes/cloth/tapestry.json", "blocktypes/stone/wallcarving.json", "worldgen/schematics/**/*.json (BlockEntities attribute blobs, decoded)"]
+  },
+  {
+    "id": "clutter",
+    "title": "Clutter",
+    "listingUrl": "clutter/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/clutterInstances.ts", "libs/vs-schematic/src/schematicDecode.ts"],
+    "globs": ["blocktypes/clutter.json", "blocktypes/devastation/clutter-devastation.json", "blocktypes/aquatic/clutter-aquatic.json", "worldgen/schematics/**/*.json (BlockEntities attribute blobs, decoded)", "lang/*.json (clutter-<type> keys)"]
+  },
+  {
+    "id": "clothing",
+    "title": "Clothing",
+    "listingUrl": "clothing/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/decor.ts"],
+    "globs": ["itemtypes/wearable/seraph/*.json"]
+  },
+  {
+    "id": "books",
+    "title": "Books",
+    "listingUrl": "books/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/lore.ts", "apps/vs-wiki/src/ingest/models/loreLocations.ts", "libs/vs-schematic/src/schematicDecode.ts"],
+    "globs": ["config/lore/*.json", "worldgen/schematics/**/*.json (ItemCodes + BlockEntities, to find where each book is placed)"]
+  },
+  {
+    "id": "lore",
+    "title": "Lore",
+    "listingUrl": "lore/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/lore.ts", "apps/vs-wiki/src/ingest/models/loreLocations.ts"],
+    "globs": ["config/lore/*.json", "lang/*.json (loretype-<category> descriptions)"]
+  },
+  {
+    "id": "guides",
+    "title": "Help Guides",
+    "listingUrl": "guides/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/guides.ts"],
+    "globs": ["config/handbook/*.json"]
+  },
+  {
+    "id": "weapons",
+    "title": "Weapons & Tools",
+    "listingUrl": "weapons/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/gear.ts"],
+    "globs": ["itemtypes/**/*.json (variants with a tool type, attackpower, or attributes.damage plus at least one numeric stat)"]
+  },
+  {
+    "id": "traders",
+    "title": "Traders",
+    "listingUrl": "traders/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/trades.ts"],
+    "globs": ["config/tradelists/*.json", "entities/humanoid/trader-{male,female}.json (specialization-to-entity join only)"]
+  },
+  {
+    "id": "trades",
+    "title": "Trades",
+    "listingUrl": "trades/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/trades.ts"],
+    "globs": ["config/tradelists/*.json"]
+  },
+  {
+    "id": "classes",
+    "title": "Classes",
+    "listingUrl": "classes/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/classes.ts"],
+    "globs": ["config/characterclasses.json", "config/traits.json"]
+  },
+  {
+    "id": "mods",
+    "title": "Mods",
+    "listingUrl": "mods/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/modExtractor.ts", "apps/vs-wiki/scripts/download.ts"],
+    "globs": ["modinfo.json (one per installed mod .zip)", "Mods/<modid>.meta.json (cached mods.vintagestory.at API response, not a game asset)"]
+  },
+  {
+    "id": "climate",
+    "title": "Seed climate lookup",
+    "listingUrl": "tools/climate/",
+    "modelFiles": ["apps/vs-wiki/site/assets/climate.js", "apps/vs-wiki/site/assets/climatePage.js", "apps/vs-wiki/site/tools/climate/index.njk", "apps/vs-wiki/test/climate.test.ts", "apps/vs-wiki/src/ingest/models/blockpatches.ts", "apps/vs-wiki/src/ingest/models/trees.ts"],
+    "globs": ["worldgen/blockpatches/*.json (climate bands matched against the result)", "worldgen/treengenproperties.json (tree/shrub climate bands)", "blocktypes/plant/fruittreebranch.json (fruit tree climate bands)", "No game asset feeds the generator itself: it is a port of the game's C# climate code (see below)"]
+  }
+]

@@ -1,0 +1,95 @@
+/* Colors come from the active VS Code theme so the preview matches light, dark and high-contrast. */
+html, body { height: 100%; margin: 0; padding: 0; }
+body {
+  display: flex;
+  flex-direction: column;
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+  font: 13px var(--vscode-font-family, sans-serif);
+}
+button {
+  color: var(--vscode-button-secondaryForeground);
+  background: var(--vscode-button-secondaryBackground);
+  border: 1px solid var(--vscode-contrastBorder, transparent);
+  padding: 3px 10px;
+  cursor: pointer;
+}
+button:hover { background: var(--vscode-button-secondaryHoverBackground); }
+button:disabled { opacity: 0.5; cursor: default; }
+input[type="search"] {
+  box-sizing: border-box;
+  width: 100%;
+  color: var(--vscode-input-foreground);
+  background: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, transparent);
+  padding: 4px 6px;
+}
+#toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+#toolbar .check, #toolbar .slider { display: flex; align-items: center; gap: 4px; }
+#summary { margin-left: auto; color: var(--vscode-descriptionForeground); }
+#error {
+  margin: 8px 10px;
+  padding: 8px 10px;
+  color: var(--vscode-errorForeground);
+  border: 1px solid var(--vscode-inputValidation-errorBorder, var(--vscode-errorForeground));
+  background: var(--vscode-inputValidation-errorBackground, transparent);
+  white-space: pre-wrap;
+}
+#error[hidden], #inspector[hidden] { display: none; }
+#main { flex: 1; min-height: 0; display: flex; }
+#viewport { flex: 1; min-width: 0; position: relative; }
+#viewport canvas { display: block; width: 100%; height: 100%; }
+#side {
+  width: 280px;
+  max-width: 45%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  box-sizing: border-box;
+  border-left: 1px solid var(--vscode-panel-border);
+  overflow: hidden;
+}
+.side-actions { display: flex; gap: 6px; }
+#legend { flex: 1; min-height: 80px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+  padding: 2px 4px;
+  color: var(--vscode-foreground);
+  background: transparent;
+  border: 0;
+}
+.legend-item:hover { background: var(--vscode-list-hoverBackground); }
+.legend-item.hidden-block { opacity: 0.45; text-decoration: line-through; }
+.color-box { flex: none; width: 12px; height: 12px; border: 1px solid var(--vscode-contrastBorder, rgba(128, 128, 128, 0.6)); }
+.block-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.block-count { color: var(--vscode-descriptionForeground); }
+#inspector {
+  position: relative;
+  max-height: 50%;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid var(--vscode-panel-border);
+  background: var(--vscode-sideBar-background, transparent);
+}
+#closeInspector { position: absolute; top: 2px; right: 2px; padding: 0 6px; }
+.trait { margin-bottom: 6px; word-break: break-all; }
+.trait b { color: var(--vscode-descriptionForeground); font-weight: 600; }
+#inspector pre {
+  margin: 0;
+  padding: 6px;
+  overflow: auto;
+  font: 12px var(--vscode-editor-font-family, monospace);
+  background: var(--vscode-textCodeBlock-background);
+}

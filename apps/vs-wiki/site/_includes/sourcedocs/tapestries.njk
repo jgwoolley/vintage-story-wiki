@@ -1,0 +1,29 @@
+<p>
+Like paintings, <code>blocktypes/cloth/tapestry.json</code>/<code>blocktypes/stone/
+wallcarving.json</code> get a full variant walk since tapestries have no recipe/drop table either.
+What makes this page different is the second pass: every worldgen schematic file actually
+referenced by a structure is pre-filtered (cheaply, from the header's block-code list) down to the
+ones containing a <code>tapestry-*</code>/<code>wallcarving-*</code> code, then fully decoded --
+the schematic's <code>BlockEntities</code> values are Ascii85-decoded into a binary
+<code>TreeAttribute</code> blob per placed block instance, giving the real stored
+<code>type</code> runtime attribute (e.g. <code>temporality2</code>).
+</p>
+<div class="coverage-note">
+<p><strong>This is a possibility list, not a guarantee.</strong> The game rerolls a schematic's
+authored tapestry to a uniformly random member of the same theme group at actual placement time
+(unless pinned), and separately has roughly a 60% chance of not spawning at all, with ~75% of the
+ones that do turning out rotten (no name/lore/drop). Every member of the reroll group is shown as
+a possible outcome for that structure, not just the schematic's own literal stored sample.</p>
+</div>
+<p>
+Each resolved outcome's lore-chapter link comes from the owning block's own
+<code>attributes.loreChapterIds</code> map, cross-referenced against the matching lore book
+(<code>tapestry</code>/<code>wallcarving</code> category) extracted the same way as any other book
+-- see the lore source page.
+</p>
+<div class="coverage-note">
+<p><strong>Decoder.</strong> The <code>TreeAttribute</code> layouts follow the game's own
+<code>vsapi</code> source (<code>libs/vs-schematic/src/schematicDecode.ts</code>). Every block entity in the
+vanilla and BetterRuins schematics decodes without error (<code>npm run decode-stats</code>), and
+<code>npm test</code> pins each attribute type.</p>
+</div>

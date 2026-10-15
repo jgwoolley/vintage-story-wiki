@@ -10,13 +10,17 @@ actually in those files, nothing more.
 
 - **Items & Blocks** — look up any item or block to see what recipes produce it, what it's used
   in, what drops it (or what it drops), and (for things like ore or wild crops) where it naturally
-  occurs.
+  occurs. Random-stack placeholders (the `stackrandomizer-*` items world generation rolls into
+  chests) list everything they can turn into, and each of those items links back.
 - **Recipes** — browse by category (grid crafting, smithing, cooking, etc.), or jump to one from
   an item's page.
 - **Creatures** — per-creature drop tables, plus health, size, and the conditions needed for them
   to spawn at all.
 - **Structures** — world-generated buildings and ruins, with their spawn conditions explained in
-  plain language.
+  plain language, and the schematics each one can place.
+- **Schematics** — the pre-built block layouts structures are made from: size, which structures use
+  them, every block they contain, and a 3D preview you can rotate and zoom (a button opens the full
+  viewer).
 - **Deposits** — every ore/gem/rock deposit: which rock hosts it, and roughly how deep.
 - **Crops** — wild crops, flowers, mushrooms, and the climate each needs.
 - **Trees** — tree/shrub species and fruit tree varieties, by climate band.
@@ -29,12 +33,14 @@ actually in those files, nothing more.
 - **Help Guides** — the game's own in-game handbook articles.
 - **Trades** — every wandering trader's buy/sell listings, in one sortable table.
 - **Classes** — starting character classes, their fixed traits, and starting gear.
-- **Tools** — small interactive tools: a 3D schematic viewer (upload your own), a WayPoint route
-  planner, and a game-calendar converter, plus a few more planned ones described on that page.
+- **Tools** — small interactive tools: a 3D schematic viewer (open any of the game's own schematics,
+  or upload yours, and download them), a WayPoint route planner, a game-calendar converter, an alloy
+  ratio calculator, and a seed climate lookup (temperature and rainfall for a world seed, and which
+  wild plants fit); a few more are planned and described on that page.
 - **Sources** — exactly which raw game files feed each page above, and how, for anyone curious
   past "trust me."
-- **Research** — investigation notes for features being considered but not yet built. Nothing on
-  that page is implemented; it's there so the thinking behind a future feature isn't lost.
+- **Research** — investigation notes for features being considered or only partly built (each
+  section says which). It's there so the thinking behind a future feature isn't lost.
 
 Every table has a search box, and most have a filter dropdown too — both are saved in the page URL,
 so you can bookmark or share a filtered view. Click a code like `tallgrass-*` or a creature tag
@@ -58,6 +64,13 @@ almost anywhere and it'll jump you straight to a pre-filtered list.
   doesn't spawn at all, and of the ones that do, roughly 75% turn out "rotten" (no name, no lore,
   no drop). So for any one row on the Tapestries page, expect it to actually show up, intact and
   readable, only a fraction of the time.
+- **The 3D schematic views are simplified.** Every block is a colour picked from its name, not its
+  texture, and chiseled blocks are drawn as whole cubes rather than their real carved shape. Blocks
+  the game uses only as worldgen markers (`meta-filler`) start hidden. A village is shown as its
+  separate buildings, not assembled, because the game places those by rules that aren't in its data.
+- **The seed climate lookup is approximate.** It reproduces the game's climate generator but not a
+  final map-warping step, so a given spot can be off by up to roughly 900 blocks, and it only takes
+  numeric seeds.
 - **Mods with their own compiled code** (shown as such on the Mods page) can add behavior this
   wiki simply can't see, since it only reads JSON data, not code.
 

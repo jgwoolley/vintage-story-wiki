@@ -1,0 +1,22 @@
+{
+  "name": "vs-schematic",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Vintage Story schematic decoding (Ascii85/TreeAttribute block entities), voxel conversion and a Three.js voxel viewer. TypeScript source; `npm run build:libs` compiles dist/ for browsers.",
+  "exports": {
+    "./*.js": {
+      "types": "./src/*.ts",
+      "default": "./src/*.ts"
+    }
+  },
+  "peerDependencies": {
+    "three": "0.180.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.180.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json"
+  }
+}

@@ -18,8 +18,8 @@ document aimed at visitors; `CLAUDE.md` is for a future AI coding session pickin
    `crossref.ts`; ingest warns about patterns that match nothing). The file's shape is described
    by `vs-manifest.schema.json` (JSON Schema draft-07), referenced from the manifest's own
    `"$schema"` key so VS Code validates and autocompletes it with no extra setup. Keep the schema
-   in sync with `VsManifest` in `src/ingest/types.ts` when adding a field.
-2. **`npm run download`** (`scripts/download.ts`) reads that manifest, downloading the vanilla
+   in sync with `VsManifest` in `apps/vs-wiki/src/ingest/types.ts` when adding a field.
+2. **`npm run download`** (`apps/vs-wiki/scripts/download.ts`) reads that manifest, downloading the vanilla
    dedicated server into `vs_server/` and mod `.zip` files into `Mods/` (both gitignored) via
    Node's built-in `fetch`, the mods.vintagestory.at API, and the pure-JS `tar` package for
    extraction — the whole pipeline is plain Node/npm, no OS-provided tool is ever shelled out to.
@@ -29,26 +29,64 @@ document aimed at visitors; `CLAUDE.md` is for a future AI coding session pickin
    slug) and `logoUrl` is a ready-to-use CDN image URL rendered on `/mods/` — ingest itself never
    touches the network, so re-run `npm run download` to pick either up for mods fetched before
    this caching existed.
-3. **`npm run ingest`** (`src/ingest/`) reads those raw game assets and produces normalized JSON
-   under `site/_data/generated/` — recipes, loot/drop tables, worldgen structures, a decor
+3. **`npm run ingest`** (`apps/vs-wiki/src/ingest/`) reads those raw game assets and produces normalized JSON
+   under `apps/vs-wiki/site/_data/generated/` — recipes, loot/drop tables, worldgen structures, a decor
    catalog (paintings/tapestries/clothing), readable book content, and a cross-referenced item
    index. See the pipeline stages below.
-4. **`npm run build`** runs the ingest step and then builds the static site with Eleventy, from
-   `site/` into `_site/`.
+4. **`npm run build`** compiles the TypeScript libs (`build:libs`), runs the ingest step and then builds the static site with Eleventy, from
+   `apps/vs-wiki/site/` into `_site/`.
 
 ```
 npm install
 npm run download   # fetch the pinned vanilla server + mods
-npm run build      # ingest game data + build the static site into _site/
+npm run build      # compile libs, ingest game data, build the static site into _site/
 npm run serve      # same, with a local dev server + live reload
+npm run typecheck  # tsc over the wiki + core lib, the vs-schematic lib (DOM) and the extension
+npm test           # node:test across every package
 ```
 
-## Ingestion pipeline (`src/ingest/`)
+## Repository layout (npm workspaces)
+
+```
+libs/vs-wiki-core/          asset loading, JSON patching, variant expansion, lang resolution (+ their types)
+libs/vs-schematic/          schematic decode, voxel conversion, Three.js voxel viewer (TypeScript)
+apps/vs-wiki/               the wiki: src/ingest, scripts, test, site (Eleventy input), eleventy.config.js
+apps/vs-vscode-extension/   VS Code preview for schematic files
+```
+
+Every command runs **from the repo root**: all pipeline paths are cwd-relative, and the shared data
+(`vs_server/`, `Mods/`, `.scratch/`, `_site/`, `vs-manifest.json`, and the gitignored reference clones
+`vssurvivalmod/`/`vsapi/`/`vsessentialsmod/`) lives there. Apps import libs by package name
+(`vs-wiki-core/lang.js`, `vs-schematic/schematicDecode.js`; each lib's `exports` maps `./*.js` to its
+TypeScript source, which `tsx` and `esbuild` consume directly). Libs never import from apps.
+
+- **`libs/vs-wiki-core`** knows nothing about the wiki's content types: only the loaded-asset shapes
+  (`AssetSource`/`LoadedAsset`/`AssetIndex`/`PatchOp`, re-exported from the app's `types.ts`).
+- **`libs/vs-schematic`** is TypeScript with its own `tsconfig.json` (adds the DOM lib; the root tsconfig has no
+  DOM, which keeps `schematicDecode.ts` honest since the ingest imports it). Browsers can't run TS, so
+  `npm run build:libs` (`tsc -p libs/vs-schematic/tsconfig.build.json`) compiles it to `libs/vs-schematic/dist/`
+  (gitignored); `apps/vs-wiki/eleventy.config.js` passes `dist/*.js` through to `/assets/`, next to the site's own
+  scripts, so their relative `./voxelViewer.js`-style imports resolve. `npm run build`/`rebuild`/`serve` and the
+  CI workflow run `build:libs` first; `three` is a peer dependency, supplied by the importmap on the site and
+  bundled by esbuild in the extension.
+- **`apps/vs-vscode-extension`** is a custom read-only editor (`vsSchematic.preview`, priority `option`, so it
+  never replaces the normal JSON editor: use "Open With..." or the "Vintage Story: Preview Schematic" command,
+  explorer context menu or editor-title button). `src/extension.ts` (Node host: reads the file, gunzips
+  `.json.gz`, watches it for changes) talks over `src/protocol.ts` to `src/webview/main.ts` (browser: legend with
+  per-block toggles, search, `meta-filler` toggle, height slider, click-to-inspect with decoded block entities;
+  the wiki's schematic viewer, minus the wiki-specific parts). `esbuild.mjs` bundles both halves into `dist/`,
+  aliasing `three/addons/OrbitControls.js` the way the wiki's importmap does. The webview HTML shell
+  (`src/webviewHtml.ts`, strict nonce-only CSP) is plain string building so it is unit tested without VS Code.
+  `npm run build:extension` bundles and packages a `.vsix` (`apps/vs-vscode-extension/`, gitignored); `npm run build -w vs-vscode-extension` bundles only. It has
+  not been run inside a real VS Code yet (see `RESEARCH.md` topic 8); to try it, open the repo in VS Code and
+  launch an Extension Development Host on `apps/vs-vscode-extension`.
+
+## Ingestion pipeline (`apps/vs-wiki/src/ingest/`)
 
 - **`modExtractor.ts`** — reads `modinfo.json` out of each mod zip, flags mods that ship compiled
   code (`.dll`) since their custom behavior can't be captured from JSON alone, and extracts into
   `.scratch/mods/` (a build-time cache, distinct from the user/CI-managed `Mods/` download cache).
-- **`assetLoader.ts`** — walks `assets/<domain>/<category>/**/*.json` for vanilla and every mod,
+- **`assetLoader.ts`** (in `libs/vs-wiki-core/src/`, as are `patchEngine.ts`, `variantExpander.ts` and `lang.ts`) — walks `assets/<domain>/<category>/**/*.json` for vanilla and every mod,
   parsing with a JSON5-tolerant parser (real game files use unquoted keys, trailing commas, and
   comments). Schematic voxel-data files are skipped here (see `schematicHeader.ts`) since they can
   be tens of megabytes.
@@ -106,7 +144,7 @@ worldgen rule (where/how often to spawn) that *references* schematics. They are 
 - Pages: `/schematics/` + `/schematics/<domain>/<relPath>/` (the URL segment is `SchematicInfo.pagePath`,
   not `slugify(id)`, which collided for `.../-hut3-agr` vs `.../hut3-agr`).
 - **3D viewing**: `schematicFiles.ts` gzips every schematic (level 6, built-in `zlib`; ~271 MB → ~51 MB) into
-  `site/_data/generated/schematicFiles/`, which `eleventy.config.js` passes through to
+  `apps/vs-wiki/site/_data/generated/schematicFiles/`, which `apps/vs-wiki/eleventy.config.js` passes through to
   `/assets/schematics/world/<domain>/<relPath>.json.gz`. `schematicViewer.js` fetches one on demand and
   unpacks it with the browser's `DecompressionStream`. Redistributing these files (vanilla and mods) is a
   deliberate choice; each schematic page says whose files they are.
@@ -114,7 +152,7 @@ worldgen rule (where/how often to spawn) that *references* schematics. They are 
   only, no legend/slider/picking; files over 1.5 MB compressed wait for a click, the rest load when scrolled into
   view) with a button into the full viewer (`schematicViewer.js`, which also has Download for whatever is loaded:
   the exact bytes as `.json`, plus the `.json.gz` for the wiki's own). Both use the pure helpers in
-  `schematicVoxels.js` (packed-index → voxels, gzip fetch). `meta-filler` (a worldgen marker, ~half the voxels
+  `libs/vs-schematic/src/schematicVoxels.ts` (packed-index → voxels, gzip fetch). `meta-filler` (a worldgen marker, ~half the voxels
   of the biggest schematic) starts hidden: dropped entirely from the preview, toggleable in the full viewer's
   block list (`isHiddenByDefault`).
 
@@ -122,7 +160,7 @@ worldgen rule (where/how often to spawn) that *references* schematics. They are 
 
 `ItemStackRandomizer` items (`stackrandomizer-*`, the placeholders world-generated chests hold in
 schematics' `ItemCodes`) get an item page with a "Can generate" pool and every result a "Can be generated
-by" back-link (`ItemIndexEntry.randomPool`/`generatedBy`, built in `src/ingest/index.ts` from
+by" back-link (`ItemIndexEntry.randomPool`/`generatedBy`, built in `apps/vs-wiki/src/ingest/index.ts` from
 `extractStackRandomizerPools` in `models/loot.ts`; chances are weight / pool total, stack `attributes` such as
 a clutter `type` are kept). "Found in structures" for items also reads the schematic `ItemCodes`
 dictionary (`buildItemCodeToSchematicIndex`).
@@ -169,7 +207,7 @@ Paintings, tapestries, and clothing have no recipe and no drop table — worldge
 creative-mode `/giveblock` command, or NPC trade are the only ways to get them in survival — so the
 normal recipe/loot-driven item index never sees them (see "Known v1 limitations" below).
 `extractDecorCatalog` is a deliberate, separate full-registry walk scoped to just these three
-categories, returning one flat list (`generated.decor`) that `src/ingest/index.ts` then splits by
+categories, returning one flat list (`generated.decor`) that `apps/vs-wiki/src/ingest/index.ts` then splits by
 `kind` into `generated.paintings`/`tapestries`/`clothing` — each with its own top-level page
 (`/paintings/`, `/tapestries/`, `/clothing/`) rather than one shared listing with a kind filter,
 consistent with "organize by what the thing is" (see Creatures vs. Items below). Details:
@@ -184,9 +222,10 @@ consistent with "organize by what the thing is" (see Creatures vs. Items below).
   every real possible outcome by finding which `tapestryGroups`/`wallcarvingGroups` entry it
   belongs to (the game rerolls to a uniformly random member of that group at world-placement time
   unless the schematic pins it — see `BlockTapestry.OnLoadCollectibleMappings` in
-  `vssurvivalmod`). The decoder itself lives at `site/assets/schematicDecode.js`, not under
-  `src/ingest/` — plain dependency-free ES module JS, directly `<script>`-loadable, since the
-  `/tools/schematic/` viewer (see "Tools" below) needs the exact same decode logic client-side; `tapestryInstances.ts` just imports that same file. `/tapestries/` is one
+  `vssurvivalmod`). The decoder itself lives at `libs/vs-schematic/src/schematicDecode.ts`, not under
+  `apps/vs-wiki/src/ingest/` — dependency-free TypeScript with no Node or DOM APIs (compiled to browser JS by
+  `npm run build:libs`), since the `/tools/schematic/` viewer (see "Tools" below) and the VS Code extension need
+  the exact same decode logic client-side; `tapestryInstances.ts` just imports that same file. `/tapestries/` is one
   flat, sortable table of every (structure, possible tapestry) pairing this produces — not a page
   per block code/direction, since direction/code aren't the interesting axis here. Scoped to
   schematics actually referenced by world generation only (`structureContents.ts`'s existing
@@ -256,7 +295,7 @@ declare `variantgroups: [{code: "gender", ...}, {code: "type", states: ["agricul
 "artisan", ..., "treasurehunter"]}, {code: "climate", ...}]`, and the entity's own
 `attributes.tradePropsFile: "config/tradelists/trader-{type}"` substitutes that same `type`
 variant value into the tradelist filename — so the `type` variant state *is* the specialization
-code, and that's the only join key that exists. `src/ingest/index.ts` re-expands `entities/` via
+code, and that's the only join key that exists. `apps/vs-wiki/src/ingest/index.ts` re-expands `entities/` via
 `expandVariants` (rather than reusing `extractLoot`'s `creatureRoster`, which only keeps the
 already-flattened code, not each variant's `groupValues`) and, for every concrete entity variant
 whose `type` value matches a loaded specialization's code, records it as a `TraderEntityRef`
@@ -331,7 +370,7 @@ entity that happens to have a drop table" — that definition silently excluded 
 none at all (traders, villagers, locusts, ...). `models/loot.ts`'s `extractLoot` also returns a
 `creatureRoster` (every entity variant with the "health" server behavior, i.e. actually alive,
 regardless of drops — this is also what correctly excludes non-creature utility entities like
-boats/arrows/elevators, which never have one); `src/ingest/index.ts` seeds `generated.creatures`
+boats/arrows/elevators, which never have one); `apps/vs-wiki/src/ingest/index.ts` seeds `generated.creatures`
 from that complete roster first, then merges in real drop entries (grouped the same way as
 before, `LootSourceGroup`) where they exist, leaving `entries: []` where they don't rather than
 omitting the creature entirely. Block-kind groups become `generated.blockDrops`/
@@ -375,13 +414,13 @@ Info page for the visitor-facing version of that caveat.
 - **`/<lang>/sources/<id>/`** — one page per top-level listing (items, recipes, creatures,
   structures, deposits, crops, trees, fruit-trees, paintings, tapestries, clothing, lore, guides,
   trades, classes, mods), naming the exact raw game-file globs that feed it and a prose
-  explanation of how they're processed, generated from `site/_data/pipelineSources.json`
+  explanation of how they're processed, generated from `apps/vs-wiki/site/_data/pipelineSources.json`
   (per-page metadata: id/title/globs/model files) via one shared template
-  (`site/sources/sources.njk`) that dynamically includes a per-id prose partial from
-  `site/_includes/sourcedocs/<id>.njk`. Every top-level listing page links to its own source page
+  (`apps/vs-wiki/site/sources/sources.njk`) that dynamically includes a per-id prose partial from
+  `apps/vs-wiki/site/_includes/sourcedocs/<id>.njk`. Every top-level listing page links to its own source page
   (its existing "Source: ..." one-liner gained a "Full details →" link); `/<lang>/sources/` is
   the index of all of them, also linked from the home page. This is hand-authored documentation
-  *about* the pipeline, not pipeline output itself — unlike `site/_data/generated/`, it's a
+  *about* the pipeline, not pipeline output itself — unlike `apps/vs-wiki/site/_data/generated/`, it's a
   regular tracked file, not gitignored. Keep it in sync the same way README.md itself needs to
   stay in sync with real pipeline changes — a new content-type model or a changed glob should
   update its matching `pipelineSources.json` entry and `sourcedocs/` partial.
@@ -392,9 +431,9 @@ Info page for the visitor-facing version of that caveat.
   style is reused on the structures/creatures/tapestries source pages for their own non-obvious
   caveats (chance-as-weight, the full living-entity roster, the tapestry reroll mechanic).
 - **`/<lang>/research/`** — `RESEARCH.md` published the same way `INFO.md` → `/info/` already
-  was (`eleventy.config.js`'s `researchHtml` global data, `md.render(readFileSync("RESEARCH.md"))`),
+  was (`apps/vs-wiki/eleventy.config.js`'s `researchHtml` global data, `md.render(readFileSync("RESEARCH.md"))`),
   referenced from `/info/`. Investigation notes; each section says whether it has since been implemented.
-- **Header "Tools" dropdown** (`site/assets/nav.js`, next to the Info link) lists every
+- **Header "Tools" dropdown** (`apps/vs-wiki/site/assets/nav.js`, next to the Info link) lists every
   individual tool (built and WIP) as a direct link, mirroring the home page's own expanded Tools
   section and `/tools/`'s own per-tool anchors.
 - **Sort state also round-trips through the URL** (`?sort=<colIndex>&dir=asc|desc`, numbered
@@ -405,21 +444,21 @@ Info page for the visitor-facing version of that caveat.
   mode) and Layer (tab per layer) groups, over a stage holding the 3D canvas or the 2D slice.
   Controls that don't apply right now are disabled, never hidden, so the Layer tabs stay in the
   same spot in both views. The chosen view is remembered across pages via `localStorage`.
-  - 2D: one flat slice grid per layer, picked with the Layer tabs (`site/assets/layers.js`).
+  - 2D: one flat slice grid per layer, picked with the Layer tabs (`apps/vs-wiki/site/assets/layers.js`).
   - 3D: an interactive voxel model (orbit/zoom/pan) with three layer modes: "All layers", "One
     layer", or "Layer N and below". The last two use the same Layer tabs, so the selected layer
     carries over between views.
   - The slice grids are plain server-rendered HTML. Without JS/WebGL the toggles stay hidden and
     the 2D view is all that shows.
-  - `site/assets/voxelViewer.js` is the **generic renderer core** (`createVoxelViewer(container,
-    {voxels})` → `setStyle`/`pick`/`resetView`/`dispose`). It knows nothing about recipes and is
-    reused by the schematic viewer (`site/assets/schematicViewer.js`, see "Tools" below). It uses one
+  - `libs/vs-schematic/src/voxelViewer.ts` is the **generic renderer core** (`createVoxelViewer(container,
+    {voxels})` → `setStyle`/`pick`/`resetView`/`dispose`; generic over the caller's voxel type). It knows nothing about recipes and is
+    reused by the schematic viewer (`apps/vs-wiki/site/assets/schematicViewer.js`, see "Tools" below) and the VS Code extension. It uses one
     `InstancedMesh` per opacity with per-instance colors and renders on demand only.
-    `site/assets/recipeVoxels.js` is the recipe-specific adapter: `pattern[layer][row][col]` →
+    `apps/vs-wiki/site/assets/recipeVoxels.js` is the recipe-specific adapter: `pattern[layer][row][col]` →
     `y = layer` (Layer 1 at the bottom), `z = row`, `x = col`.
   - **Three.js is the project's only browser-side library dependency.** It's pinned exactly in
     `package.json` (no `^`) and copied out of `node_modules/three` into `/assets/vendor/three/` by
-    `eleventy.config.js` passthrough. It's never loaded from a CDN. A global `<script
+    `apps/vs-wiki/eleventy.config.js` passthrough. It's never loaded from a CDN. A global `<script
     type="importmap">` in `layouts/base.njk` maps the bare `three` / `three/addons/` specifiers.
     To add another Three.js addon, add it to that passthrough map.
 - **Every listing is one real `<table>`**, not a grid-list of plain links, with pagination, a
@@ -437,8 +476,8 @@ Info page for the visitor-facing version of that caveat.
 - **Item/block pages show their description and a "Game logic (C#)" table.** The table lists the
   C# names the item's own JSON points at (`class`, `entityClass`, `behaviors`, `entityBehaviors`)
   and links each one to its implementing `.cs` file on GitHub.
-  - The name-to-file mapping is a committed snapshot, `src/ingest/csharpClassMap.json`, generated
-    by hand with `npx tsx scripts/map-csharp-classes.ts`. The script reads the local gitignored
+  - The name-to-file mapping is a committed snapshot, `apps/vs-wiki/src/ingest/csharpClassMap.json`, generated
+    by hand with `npx tsx apps/vs-wiki/scripts/map-csharp-classes.ts`. The script reads the local gitignored
     `vssurvivalmod/` clone and matches each `api.Register...Class("Name", typeof(Type))` call to
     the file declaring `Type`.
   - Links are pinned to the clone's commit, so line anchors stay right. The C# source never enters
@@ -449,7 +488,7 @@ Info page for the visitor-facing version of that caveat.
   comma-separated lists of active values, e.g. `?category=block,item&tag=tool,weapon`, numbered
   `q2`/`category2`/... for a 2nd+ table on the same page) via `history.replaceState`, so a
   filtered/searched view can be bookmarked, shared, or revisited with back/forward navigation. See
-  `site/assets/datatable.js`. `tag` matches exact tokens split out of the space-separated
+  `apps/vs-wiki/site/assets/datatable.js`. `tag` matches exact tokens split out of the space-separated
   `data-tags` attribute, not the free-text `q` substring search — a tag link shouldn't also match
   unrelated rows whose name/code happens to contain the same substring.
 - **Wildcard/placeholder ingredients are clickable**, e.g. a recipe using `leather-normal-*` links
@@ -463,19 +502,19 @@ Info page for the visitor-facing version of that caveat.
   site like `https://<user>.github.io/<repo>/` serves from a subpath, not the domain root — a
   hardcoded `/assets/style.css` would 404 there even though it works fine in local dev.
 - **Every content page lives under a `/<lang>/` path segment** (currently just `/en/`) — baked into
-  each page's `permalink` via the `lang` global data value (eleventy.config.js), composed with the
+  each page's `permalink` via the `lang` global data value (apps/vs-wiki/eleventy.config.js), composed with the
   `('/' ~ lang ~ '/') | url` idiom instead of the plain `'/' | url` one used for shared,
   non-language-specific assets (css/js/favicon/og-image, which stay outside the prefix). The bare
-  site root (`/index.html`) is a tiny meta-refresh redirect to `/en/` (`site/redirect.njk`). This is
+  site root (`/index.html`) is a tiny meta-refresh redirect to `/en/` (`apps/vs-wiki/site/redirect.njk`). This is
   routing-only prep for a second language later — nothing currently generates non-English content,
   and `LANG_PREFIX` is the only knob, overriding the default `"en"` for local experimentation.
 - **Footer build info**: every page shows when it was generated (stored in UTC, rendered
-  client-side as a relative time string — see `site/assets/build-time.js`), linking to the site's
-  own **`/<lang>/build/`** page (`site/build/index.njk`) rather than straight to GitHub. The " ago"
+  client-side as a relative time string — see `apps/vs-wiki/site/assets/build-time.js`), linking to the site's
+  own **`/<lang>/build/`** page (`apps/vs-wiki/site/build/index.njk`) rather than straight to GitHub. The " ago"
   suffix lives in a separate sibling element so "just now" doesn't read as "just now ago".
 - **`/<lang>/build/`** is the full build/CI detail page the footer links to: repo, branch, commit
   sha/message/author, and (in CI) a link to the actual GitHub Actions run — all resolved in
-  `eleventy.config.js`'s `buildInfo` global data from `GITHUB_SHA`/`GITHUB_REPOSITORY`/
+  `apps/vs-wiki/eleventy.config.js`'s `buildInfo` global data from `GITHUB_SHA`/`GITHUB_REPOSITORY`/
   `GITHUB_RUN_ID`/`GITHUB_HEAD_REF`/`GITHUB_REF_NAME` (set automatically by every Actions run) with
   a local-git (`git log`/`git rev-parse`) fallback for everything except the CI run link itself.
   `buildInfo.isCi` (true only when `GITHUB_ACTIONS === "true"`) drives a clear "local build — no
@@ -483,12 +522,12 @@ Info page for the visitor-facing version of that caveat.
   section or showing something misleadingly CI-flavored.
 - **Pipeline phase timings**, also surfaced on `/<lang>/build/`: each of the three phases
   (`npm run download`, `npm run ingest`, the Eleventy site build) persists its own wall-clock
-  duration as a small JSON file under `site/_data/generated/` — `downloadTiming.json`
-  (`scripts/download.ts`'s `main()`), `ingestTiming.json` (`src/ingest/index.ts`'s `main()`), and
+  duration as a small JSON file under `apps/vs-wiki/site/_data/generated/` — `downloadTiming.json`
+  (`apps/vs-wiki/scripts/download.ts`'s `main()`), `ingestTiming.json` (`apps/vs-wiki/src/ingest/index.ts`'s `main()`), and
   `eleventyBuildTiming.json`. These are three separate process invocations (in CI, three separate
   workflow steps, possibly minutes apart), so each is written to disk rather than held in memory —
   see the matching `DownloadTiming`/`IngestTiming`/`EleventyBuildTiming` interfaces in
-  `src/ingest/types.ts`. Each phase also breaks down per step: ingest records one duration per
+  `apps/vs-wiki/src/ingest/types.ts`. Each phase also breaks down per step: ingest records one duration per
   `step("...")` section (`ingestTiming.steps`), download records a duration for the server install and
   each mod; both are shown as tables on the build page. (`npm run rebuild` re-runs only the Eleventy
   build, reusing the existing generated data.) `downloadTiming.json` also records a per-mod `"downloaded" |
@@ -497,7 +536,7 @@ Info page for the visitor-facing version of that caveat.
   what distinguishes that from something being silently broken.
   **Eleventy can't report its own total duration to its own templates** — the number isn't known
   until the process is already exiting, after every page (including `/<lang>/build/` itself) has
-  already rendered. Resolved with `scripts/build-site.ts`, a thin wrapper that runs the real
+  already rendered. Resolved with `apps/vs-wiki/scripts/build-site.ts`, a thin wrapper that runs the real
   `eleventy` CLI as a child process, times the whole invocation from outside it, and writes
   `eleventyBuildTiming.json` only once that child exits — `npm run build` and the CI "Build site"
   step both invoke this wrapper instead of `eleventy` directly now. The unavoidable consequence:
@@ -506,7 +545,7 @@ Info page for the visitor-facing version of that caveat.
   page) — the page labels it that way explicitly rather than presenting it as live.
   In CI the file is carried between runs with `actions/cache/restore` + `actions/cache/save`
   (unique `eleventy-timing-<run_id>` key, restored by the `eleventy-timing-` prefix) around the
-  "Build site" step, since `site/_data/generated/` is gitignored and otherwise starts empty.
+  "Build site" step, since `apps/vs-wiki/site/_data/generated/` is gitignored and otherwise starts empty.
 
 ## Weapons & Tools (`models/gear.ts`)
 
@@ -522,13 +561,13 @@ animal variants).
 
 ## Clutter, crop nutrients and alloy calculator
 
-- **`/clutter/`** (`src/ingest/models/clutterInstances.ts`): the `clutter` block is one code whose real identity
+- **`/clutter/`** (`apps/vs-wiki/src/ingest/models/clutterInstances.ts`): the `clutter` block is one code whose real identity
   (skull, statue, broken anvil...) is a per-instance `type` attribute in the placed block's entity data. Every
   structure schematic containing a clutter code is decoded (same Ascii85/TreeAttribute decoder as tapestries) and
   grouped by type, with names from the `clutter-<type with "/" → "-">` lang keys and the structures using each.
 - **Crop nutrients**: `models/blockpatches.ts` attaches each crop's `cropProps` (`requiredNutrient` N/P/K,
   `nutrientConsumption`, `totalGrowthMonths`) to its `/crops/` rows; the columns are sortable and filterable.
-- **`/tools/alloy/`** (`site/assets/alloyCalculator.js`): alloy ranges (`recipes/alloy`) and bit stack sizes are
+- **`/tools/alloy/`** (`apps/vs-wiki/site/assets/alloyCalculator.js`): alloy ranges (`recipes/alloy`) and bit stack sizes are
   rendered into the page as JSON; the script finds the most bits a 4-slot crucible holds at a chosen ratio.
 - Trader pages use `TradeList.displayName` (the localized trader entity name without its climate suffix) and show
   min and max price/stock as separate columns.
@@ -537,43 +576,50 @@ animal variants).
 
 ## Testing
 
-`npm test` runs `test/*.test.ts` with Node's built-in runner via `tsx --test` (no extra
-dependency), and CI runs `npm run typecheck` + `npm test` right after `npm ci`. Currently covers
-`site/assets/schematicDecode.js`: Ascii85, each `TreeAttribute` type code, hostile array lengths
-(regression for the slow-ingest bug in `FINDINGS_SLOW.md`), flat tapestry/clutter blobs, and the
-committed `site/tools/schematic/samples/default.json`. Blobs are built by hand in the tests rather
+`npm test` runs every package's `test/*.test.ts` (`libs/*/test`, `apps/*/test`) with Node's built-in runner via
+`tsx --test` (no extra dependency), and CI runs `npm run typecheck` + `npm test` right after `npm ci`. The test
+files: in `libs/vs-schematic/test`, `schematicDecode` (the decoder, below) and `schematicVoxels` (packed-index
+voxels, `meta-filler` hidden by default, gzip fetch); in `apps/vs-vscode-extension/test`, `webviewHtml` (CSP and
+element ids of the preview shell); in `apps/vs-wiki/test`, `decodeIntegration` (the committed sample schematic and
+ingest's `DecodeStats`, which need wiki-owned files), `climate` (the seed climate port vs. an independent
+re-implementation), `handbookLinks` (`rewriteHandbookLinks`), `schematics` (glob resolution, ids/page
+paths, the structure→schematic index, gzip round trip and its reuse). The decoder test covers
+`libs/vs-schematic/src/schematicDecode.ts`: Ascii85, each `TreeAttribute` type code, hostile array lengths
+(regression for the slow-ingest bug in `FINDINGS_SLOW.md`) and flat tapestry/clutter blobs; the committed
+`apps/vs-wiki/site/tools/schematic/samples/default.json` is checked by `decodeIntegration`. Blobs are built by hand in the tests rather
 than copied from game files. The attribute layouts were
 checked against `vsapi`'s `*Attribute.cs` `FromBytes` (ids 1-16, incl. type 7 ItemStack, which decodes to
 `{itemClass, id, stackSize, attributes}`; `id` indexes the schematic's own `ItemCodes`/`BlockCodes`, no
 running game needed). An id the game doesn't register throws, as it would in-game. `npm run decode-stats`
-(`scripts/decode-stats.ts`, opt-in since it needs the gitignored game data) scans every local schematic and
+(`apps/vs-wiki/scripts/decode-stats.ts`, opt-in since it needs the gitignored game data) scans every local schematic and
 prints the throw rate, which should stay 0. `tapestryInstances.ts`/`clutterInstances.ts` skip a blob that
 fails to decode, but count it in a shared `DecodeStats` (`schematicHeader.ts`) that `index.ts` logs per step
 (`decoded N/N block entities`, plus a `WARNING` with examples if any failed; it never aborts the ingest).
 
 ## Tools (`/tools/`)
 
-Three interactive, fully client-side tools were merged in (with git history) from the user's former
-standalone projects `vintage-story-schematic-preview` and `vintage-story-price-guide`:
+The schematic viewer, WayPoint planner and calendar were merged in (with git history) from the user's
+former standalone projects `vintage-story-schematic-preview` and `vintage-story-price-guide`; the alloy
+calculator (see above) and the seed climate lookup were written here. All are fully client-side:
 
-- **`/tools/schematic/`** — `site/tools/schematic/index.njk` + `site/assets/schematicViewer.js`.
-  A schematic adapter on `voxelViewer.js` (`Indices`/`BlockIds` → voxels; legend, floor slider,
-  click-to-inspect with `schematicDecode.js` decoding block-entity blobs; its legend names come from
+- **`/tools/schematic/`** — `apps/vs-wiki/site/tools/schematic/index.njk` + `apps/vs-wiki/site/assets/schematicViewer.js`.
+  A schematic adapter on `voxelViewer.ts` (`Indices`/`BlockIds` → voxels; legend, floor slider,
+  click-to-inspect with `schematicDecode.ts` decoding block-entity blobs; its legend names come from
   `generated.blockNames` (`models/blockNames.ts`, served as `/assets/blockNames.json`)). Upload any schematic
-  `.json`, or pick a bundled sample from `site/tools/schematic/samples/` (copied to
-  `/assets/schematics/` by an `eleventy.config.js` passthrough). `?schematic=<domain>/<relPath>` opens one of
+  `.json`, or pick a bundled sample from `apps/vs-wiki/site/tools/schematic/samples/` (copied to
+  `/assets/schematics/` by an `apps/vs-wiki/eleventy.config.js` passthrough). `?schematic=<domain>/<relPath>` opens one of
   the wiki's own worldgen schematics (see "Schematics vs. structures" below).
 - **`/tools/waypoints/`** — `waypoints.js` (pure logic: distance, Dijkstra route, import/export
   validation), `waypointMap.js` (SVG map), `waypointsPage.js` (DOM wiring); state lives in
   `localStorage`. This replaces the price guide's React/MUI/Cytoscape implementation with no
   library dependency.
-- **`/tools/climate/`** — `site/assets/climate.js` (pure logic, no DOM: a port of the game's realistic
+- **`/tools/climate/`** — `apps/vs-wiki/site/assets/climate.js` (pure logic, no DOM: a port of the game's realistic
   climate generator, i.e. `NoiseClimateRealistic`/`MapLayerClimate`/`Climate.cs`; BigInt for the 64-bit
   LCG, `Math.fround` for C# floats), `climatePage.js` (DOM wiring + a temperature canvas) and
-  `site/tools/climate/index.njk`, which embeds every wild patch/tree/fruit-tree climate band from
+  `apps/vs-wiki/site/tools/climate/index.njk`, which embeds every wild patch/tree/fruit-tree climate band from
   `generated.blockPatches`/`trees`/`fruitTrees` so the page can list what grows at the computed climate.
   Approximate by design: the game's simplex wobble, forest/shrub maps and landforms aren't ported, and only
-  numeric seeds work. `test/climate.test.ts` checks the generator against an independent re-implementation.
+  numeric seeds work. `apps/vs-wiki/test/climate.test.ts` checks the generator against an independent re-implementation.
 - **`/tools/calendar/`** — `calendar.js`, a small game-date → elapsed days / real hours converter.
 
 The price guide's Next.js trades page was *not* ported: `/trades/` (`models/trades.ts`) supersedes it.
@@ -642,6 +688,10 @@ genuinely blocked, not merely skipped:
 
 ## Known v1 limitations
 
+- Chiseled blocks (`chiseledblock`) are drawn in the schematic viewers as one full unit cube, not their real
+  sub-block shape, and every block is a hash color rather than its texture. The chisel data is fully
+  decodable (138k chiseled blocks across the schematics, validated); see RESEARCH.md topic 6 for what drawing
+  the shape would take.
 - **The recipe/loot item index (`/items/`) only lists things reachable from a recipe, a drop
   table (either direction), or a worldgen spawn rule.** `generated.items` (`crossref.ts` +
   `index.ts`'s synthesis loops) is built by walking recipe ingredients/outputs, loot entries (both

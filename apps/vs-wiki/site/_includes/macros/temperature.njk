@@ -1,0 +1,8 @@
+{#
+  Renders a temperature range ("min-max", degC) with each end colored by how hot/cold it is: lower
+  temperatures lean blue, higher lean red (see the `tempColor` filter in apps/vs-wiki/eleventy.config.js).
+  A missing bound renders as "any". Colors are purely cosmetic -- the cell's text content is
+  still plain "min-max", so the datatable's numeric-aware sort/search is unaffected.
+#}
+{% macro temp(t) %}{% if t != null %}<span class="temp" style="color: {{ t | tempColor }}">{{ t }}</span>{% else %}any{% endif %}{% endmacro %}
+{% macro range(min, max) %}{% if min != null or max != null %}{{ temp(min) }}&ndash;{{ temp(max) }}{% endif %}{% endmacro %}

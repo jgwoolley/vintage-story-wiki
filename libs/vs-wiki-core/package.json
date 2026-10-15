@@ -1,0 +1,16 @@
+{
+  "name": "vs-wiki-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Vintage Story asset loading: mod/asset indexing, JSON patching, variant expansion, lang resolution.",
+  "exports": {
+    "./*.js": {
+      "types": "./src/*.ts",
+      "default": "./src/*.ts"
+    }
+  },
+  "dependencies": {
+    "json5": "^2.2.3"
+  }
+}
