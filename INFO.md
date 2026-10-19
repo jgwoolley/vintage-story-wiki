@@ -65,7 +65,7 @@ almost anywhere and it'll jump you straight to a pre-filtered list.
   no drop). So for any one row on the Tapestries page, expect it to actually show up, intact and
   readable, only a fraction of the time.
 - **The 3D schematic views are simplified.** Every block is a colour picked from its name, not its
-  texture, and chiseled blocks are drawn as whole cubes rather than their real carved shape. Blocks
+  texture, and chiseled blocks are drawn as whole cubes in the main view (click one to see its real shape, materials and a ChiselTools export). Blocks
   the game uses only as worldgen markers (`meta-filler`) start hidden. A village is shown as its
   separate buildings, not assembled, because the game places those by rules that aren't in its data.
 - **The seed climate lookup is approximate.** It reproduces the game's climate generator but not a

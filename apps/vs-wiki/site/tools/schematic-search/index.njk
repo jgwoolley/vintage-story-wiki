@@ -1,0 +1,39 @@
+---
+title: Schematic block/item search - Vintage Story Wiki
+description: Search every worldgen schematic, in your browser, for a block or item - placed blocks, chiseled materials, container contents and random placeholders.
+layout: layouts/base.njk
+permalink: "{{ lang }}/tools/schematic-search/index.html"
+---
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Tools", url: "tools/"}, {label: "Schematic block/item search"}]) }}
+<h1>Schematic block/item search</h1>
+<p class="muted">
+  Find which worldgen schematics (ruins, villages, story structures, ...) contain a block or item.
+  Nothing is precomputed: the page fetches the schematic files and decodes them in your browser.
+  It reports blocks <strong>placed</strong> in the schematic, <strong>chiseled</strong> blocks made from a material,
+  stacks <strong>inside containers</strong> (chests, shelves, ground storage, ...) and
+  <strong>possible</strong> contents &mdash; random placeholders (<code>stackrandomizer-*</code>) whose pool can
+  turn into it, which may or may not actually generate it.
+  <a href="{{ ('/' ~ lang ~ '/') | url }}sources/schematic-search/">How it works &rarr;</a>
+</p>
+
+<div id="schematicSearch" data-index-url="{{ '/' | url }}assets/schematicSearchIndex.json" data-pools-url="{{ '/' | url }}assets/randomizerPools.json" data-world-base="{{ '/' | url }}assets/schematics/world/" data-schematics-url="{{ ('/' ~ lang ~ '/') | url }}schematics/" data-viewer-url="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/" data-items-url="{{ ('/' ~ lang ~ '/') | url }}items/">
+  <form id="ssForm" class="schematic-row-fields" onsubmit="return false">
+    <label class="schematic-field">Block or item code <input type="text" id="ssCode" placeholder="e.g. gear-rusty or rock-*" size="32" required></label>
+    <label class="schematic-field">Kind
+      <select id="ssKind">
+        <option value="any">Block or item</option>
+        <option value="block">Block</option>
+        <option value="item">Item</option>
+      </select>
+    </label>
+    <button type="submit" id="ssGo">Search</button>
+    <button type="button" id="ssCancel" hidden>Cancel</button>
+  </form>
+  <p class="muted">The domain (<code>game:</code>) is optional; <code>*</code> matches anything, so <code>chest-*</code> finds every chest.</p>
+  <p id="ssStatus" class="muted" role="status"></p>
+  <p id="ssError" class="schematic-error" hidden></p>
+  <div id="ssResults"></div>
+</div>
+
+<script type="module" src="{{ '/' | url }}assets/schematicSearchPage.js"></script>

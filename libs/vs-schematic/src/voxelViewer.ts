@@ -20,6 +20,10 @@ export interface ViewerVoxel {
   y: number;
   z: number;
   color?: THREE.ColorRepresentation;
+  /** Box size along each axis (default 1); x/y/z is then the box's center. Used for chiseled-block cuboids. */
+  sx?: number;
+  sy?: number;
+  sz?: number;
 }
 
 /** `null` hides the voxel; `opacity < 1` draws it as a translucent ghost. */
@@ -95,14 +99,15 @@ export function createVoxelViewer<V extends ViewerVoxel>(
   const min = new THREE.Vector3(Infinity, Infinity, Infinity);
   const max = new THREE.Vector3(-Infinity, -Infinity, -Infinity);
   for (const v of voxels) {
-    min.min(new THREE.Vector3(v.x, v.y, v.z));
-    max.max(new THREE.Vector3(v.x, v.y, v.z));
+    const half = new THREE.Vector3((v.sx ?? 1) / 2, (v.sy ?? 1) / 2, (v.sz ?? 1) / 2);
+    min.min(new THREE.Vector3(v.x, v.y, v.z).sub(half));
+    max.max(new THREE.Vector3(v.x, v.y, v.z).add(half));
   }
   if (!voxels.length) {
-    min.set(0, 0, 0);
-    max.set(0, 0, 0);
+    min.set(-0.5, -0.5, -0.5);
+    max.set(0.5, 0.5, 0.5);
   }
-  const extent = new THREE.Vector3().subVectors(max, min).addScalar(1);
+  const extent = new THREE.Vector3().subVectors(max, min);
   const offset = new THREE.Vector3().addVectors(min, max).multiplyScalar(0.5);
 
   const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 1000);
@@ -172,7 +177,8 @@ export function createVoxelViewer<V extends ViewerVoxel>(
       const mesh = new THREE.InstancedMesh(geometry, material, entries.length);
       mesh.renderOrder = translucent ? 1 : 0;
       entries.forEach(({ voxel, color: c }, i) => {
-        matrix.makeTranslation(voxel.x - offset.x, voxel.y - offset.y, voxel.z - offset.z);
+        matrix.makeScale(voxel.sx ?? 1, voxel.sy ?? 1, voxel.sz ?? 1);
+        matrix.setPosition(voxel.x - offset.x, voxel.y - offset.y, voxel.z - offset.z);
         mesh.setMatrixAt(i, matrix);
         mesh.setColorAt(i, color.set(c));
       });

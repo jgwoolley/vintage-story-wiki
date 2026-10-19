@@ -584,8 +584,8 @@ animal variants).
 
 `npm test` runs every package's `test/*.test.ts` (`libs/*/test`, `apps/*/test`) with Node's built-in runner via
 `tsx --test` (no extra dependency), and CI runs `npm run typecheck` + `npm test` right after `npm ci`. The test
-files: in `libs/vs-schematic/test`, `schematicDecode` (the decoder, below) and `schematicVoxels` (packed-index
-voxels, `meta-filler` hidden by default, gzip fetch); in `apps/vs-vscode-extension/test`, `webviewHtml` (CSP and
+files: in `libs/vs-schematic/test`, `schematicDecode` (the decoder, below), `schematicVoxels` (packed-index
+voxels, `meta-filler` hidden by default, gzip fetch), `chisel` (cuboid decode and the ChiselTools export bytes, whose expected protobuf bytes were captured from the game's own `SerializerUtil`) and `schematicSearch` (code matching, prefilter, scan of hand-built blobs); in `apps/vs-vscode-extension/test`, `webviewHtml` (CSP and
 element ids of the preview shell); in `apps/vs-wiki/test`, `decodeIntegration` (the committed sample schematic and
 ingest's `DecodeStats`, which need wiki-owned files), `climate` (the seed climate port vs. an independent
 re-implementation), `handbookLinks` (`rewriteHandbookLinks`), `schematics` (glob resolution, ids/page
@@ -635,6 +635,19 @@ calculator (see above) and the seed climate lookup were written here. All are fu
   `.json`, or pick a bundled sample from `apps/vs-wiki/site/tools/schematic/samples/` (copied to
   `/assets/schematics/` by an `apps/vs-wiki/eleventy.config.js` passthrough). `?schematic=<domain>/<relPath>` opens one of
   the wiki's own worldgen schematics (see "Schematics vs. structures" below).
+  Clicking a chiseled block (block entity with `cuboids` + `materials`) shows a materials table, a mini 3D preview of
+  its boxes and an "Export for ChiselTools" button (`chiselExport.ts`). Format, from the decompiled `chiseltools.dll`
+  1.17.9 (`PortfolioSave`): `.pf save <name>` writes `XmlSerializer(PantographData)` -- `name`, `voxeldata`
+  (base64 of protobuf-net `List<uint>`, the packed cuboids), `matdata` (protobuf `int[]` block ids), `blockcodes`
+  (`string[]`, which the loader uses to re-resolve materials index for index), `materialPasteOK` -- to a file with no
+  extension in `GetOrCreateDataPath("chiselportfolio")`, i.e. `<VintagestoryData>/chiselportfolio/`. The export is
+  verified against that source and the real protobuf bytes, but has not been loaded in a running game.
+- **`/tools/schematic-search/`** — `schematicSearchPage.js` (URL params `code`, `kind`; fetch + results) over the pure
+  `libs/vs-schematic/src/schematicSearch.ts`. Item pages link here (`?code=<code>&kind=<kind>`). Prefilters with
+  `/assets/schematicSearchIndex.json` (each schematic's `BlockCodes`/`ItemCodes`, exact because any hit needs a code
+  from those lists) and `/assets/randomizerPools.json` (which `stackrandomizer-*` can produce the target), then
+  downloads only the candidate `.json.gz` files, decodes every block entity and reports placed / chiseled-from /
+  in-container / possible-via-randomizer per schematic. Nothing is precomputed.
 - **`/tools/waypoints/`** — `waypoints.js` (pure logic: distance, Dijkstra route, import/export
   validation), `waypointMap.js` (SVG map), `waypointsPage.js` (DOM wiring); state lives in
   `localStorage`. This replaces the price guide's React/MUI/Cytoscape implementation with no
@@ -718,10 +731,10 @@ genuinely blocked, not merely skipped:
 
 ## Known v1 limitations
 
-- Chiseled blocks (`chiseledblock`) are drawn in the schematic viewers as one full unit cube, not their real
-  sub-block shape, and every block is a hash color rather than its texture. The chisel data is fully
-  decodable (138k chiseled blocks across the schematics, validated); see RESEARCH.md topic 6 for what drawing
-  the shape would take.
+- Chiseled blocks (`chiseledblock`) are drawn in the schematic viewers' main 3D view as one full unit cube, and every
+  block is a hash color rather than its texture. Clicking one in the full viewer shows its real shape in the block
+  panel (`libs/vs-schematic/src/chisel.ts`, a sized-box extension of `voxelViewer.ts`), its materials, and an export
+  for QPTech's ChiselTools; drawing the shapes in the main view is not done (see RESEARCH.md topic 6).
 - **The recipe/loot item index (`/items/`) only lists things reachable from a recipe, a drop
   table (either direction), or a worldgen spawn rule.** `generated.items` (`crossref.ts` +
   `index.ts`'s synthesis loops) is built by walking recipe ingredients/outputs, loot entries (both

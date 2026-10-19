@@ -165,5 +165,12 @@
     "listingUrl": "tools/climate/",
     "modelFiles": ["apps/vs-wiki/site/assets/climate.js", "apps/vs-wiki/site/assets/climatePage.js", "apps/vs-wiki/site/tools/climate/index.njk", "apps/vs-wiki/test/climate.test.ts", "apps/vs-wiki/src/ingest/models/blockpatches.ts", "apps/vs-wiki/src/ingest/models/trees.ts"],
     "globs": ["worldgen/blockpatches/*.json (climate bands matched against the result)", "worldgen/treengenproperties.json (tree/shrub climate bands)", "blocktypes/plant/fruittreebranch.json (fruit tree climate bands)", "No game asset feeds the generator itself: it is a port of the game's C# climate code (see below)"]
+  },
+  {
+    "id": "schematic-search",
+    "title": "Schematic block/item search",
+    "listingUrl": "tools/schematic-search/",
+    "modelFiles": ["libs/vs-schematic/src/schematicSearch.ts", "libs/vs-schematic/src/chisel.ts", "apps/vs-wiki/site/assets/schematicSearchPage.js", "apps/vs-wiki/site/assets/schematicSearchIndex.json.njk", "apps/vs-wiki/site/assets/randomizerPools.json.njk", "apps/vs-wiki/site/tools/schematic-search/index.njk", "libs/vs-schematic/test/schematicSearch.test.ts"],
+    "globs": ["worldgen/schematics/**/*.json (every file is fetched and decoded in the browser, as gzip copies)", "itemtypes/**/stackrandomizer*.json (via the randomizer pools: which placeholder can produce what)"]
   }
 ]

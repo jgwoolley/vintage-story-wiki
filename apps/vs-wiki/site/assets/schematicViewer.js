@@ -8,6 +8,8 @@
 // y = (i >> 20) & 0x3FF (y is up); BlockIds[n] indexes BlockCodes for the block at Indices[n].
 import { createVoxelViewer } from "./voxelViewer.js";
 import { decodeBlockEntity } from "./schematicDecode.js";
+import { decodeChiseledBlock, materialVolumes } from "./chisel.js";
+import { PORTFOLIO_FOLDER, chiselToolsPortfolioXml, portfolioFileName } from "./chiselExport.js";
 import { assertSchematic, fetchGzipText, isHiddenByDefault, toVoxels } from "./schematicVoxels.js";
 import { blockColor, clearBlockColorsOverride, loadBlockColors, saveBlockColorsOverride } from "./blockColors.js";
 
@@ -135,13 +137,74 @@ function setAllVisible(visible) {
   renderLegend();
 }
 
+// The small 3D preview inside the inspector, for chiseled blocks. One at a time.
+let chiselViewer = null;
+
+function disposeChiselViewer() {
+  chiselViewer?.dispose();
+  chiselViewer = null;
+}
+
+function downloadText(filename, text) {
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(new Blob([text], { type: "application/xml" }));
+  link.download = filename;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+}
+
+// What a chiseled block is made of (materials table), its shape (3D preview of the cuboids) and the
+// ChiselTools export. Cuboids live on a 16x16x16 grid, drawn with x/z/y centers and sizes in 1/16ths.
+function renderChiseledBlock(shape, voxel) {
+  const volumes = materialVolumes(shape);
+  const total = volumes.reduce((a, b) => a + b, 0) || 1;
+  const preview = textEl("div", "chisel-preview", "");
+  els.traits.append(textEl("div", "trait", "Chiseled shape:"), preview);
+  const boxes = shape.cuboids.map((c) => ({
+    x: (c.x1 + c.x2) / 2, y: (c.y1 + c.y2) / 2, z: (c.z1 + c.z2) / 2,
+    sx: c.x2 - c.x1, sy: c.y2 - c.y1, sz: c.z2 - c.z1, material: c.material,
+  }));
+  boxes.push(...[[0, 0, 0], [16, 16, 16]].map(([x, y, z]) => ({ x, y, z, sx: 0.01, sy: 0.01, sz: 0.01, material: -1 })));
+  chiselViewer = createVoxelViewer(preview, { voxels: boxes, label: "3D view of the chiseled block's shape" });
+  chiselViewer?.setStyle((box) => (box.material < 0 ? null : { color: blockColor(shape.materials[box.material], blockColors) }));
+
+  const table = document.createElement("table");
+  table.className = "chisel-materials";
+  table.append(...["Material", "Boxes", "Volume"].map((h) => textEl("th", "", h)));
+  shape.materials.forEach((code, i) => {
+    const row = document.createElement("tr");
+    const nameCell = document.createElement("td");
+    const swatch = textEl("span", "color-box", "");
+    swatch.style.background = blockColor(code, blockColors);
+    const link = document.createElement("a");
+    link.href = `${itemsUrl}?q=${encodeURIComponent(code.replace(/^[^:]+:/, ""))}`;
+    link.textContent = displayName(code);
+    link.title = code;
+    nameCell.append(swatch, " ", link);
+    row.append(nameCell,
+      textEl("td", "", String(shape.cuboids.filter((c) => c.material === i).length)),
+      textEl("td", "", `${((volumes[i] / total) * 100).toFixed(0)}% (${volumes[i]}/4096)`));
+    table.append(row);
+  });
+  els.traits.append(textEl("div", "trait", `Made from ${shape.materials.length} material${shape.materials.length === 1 ? "" : "s"}, ${shape.cuboids.length} boxes:`), table);
+
+  const name = portfolioFileName(`${displayName(voxel.code)}-${voxel.x}-${voxel.y}-${voxel.z}`);
+  const button = textEl("button", "", "Export for ChiselTools");
+  button.type = "button";
+  button.addEventListener("click", () => downloadText(name, chiselToolsPortfolioXml(shape, name)));
+  els.traits.append(button, textEl("p", "muted chisel-export-help",
+    `Saves a file named "${name}" (no extension) for QPTech's ChiselTools mod. Put it in the "${PORTFOLIO_FOLDER}" folder inside your VintagestoryData folder (Windows: %appdata%\\VintagestoryData, Linux: ~/.config/VintagestoryData, macOS: ~/Library/Application Support/VintagestoryData); the mod creates the folder the first time you run .pf save. Then hold a Pantograph and run .pf load ${name}, or look at a chiseled block and press P to browse your portfolio.`));
+}
+
 function closeInspector() {
+  disposeChiselViewer();
   els.inspector.hidden = true;
   selectedIndex = -1;
   restyle();
 }
 
 function showInspector(voxel) {
+  disposeChiselViewer();
   const entity = data.BlockEntities?.[voxel.packed];
   const ascii = typeof entity === "string" ? entity : entity?.Data || entity?.Attributes;
   els.traits.replaceChildren();
@@ -164,8 +227,14 @@ function showInspector(voxel) {
   trait("Position:", `X:${voxel.x}, Y:${voxel.y}, Z:${voxel.z}`);
   if (ascii) {
     try {
-      const json = JSON.stringify(decodeBlockEntity(ascii), (k, v) => (typeof v === "bigint" ? v.toString() : v), 2);
-      els.traits.append(textEl("div", "trait", "Entity Data:"), textEl("pre", "schematic-json", json));
+      const attrs = decodeBlockEntity(ascii);
+      const json = JSON.stringify(attrs, (k, v) => (typeof v === "bigint" ? v.toString() : v), 2);
+      const shape = decodeChiseledBlock(attrs, data.BlockCodes ?? {});
+      if (shape) renderChiseledBlock(shape, voxel);
+      const details = document.createElement("details");
+      details.open = !shape;
+      details.append(textEl("summary", "trait", "Entity Data:"), textEl("pre", "schematic-json", json));
+      els.traits.append(details);
     } catch (err) {
       console.error(err);
       els.traits.append(textEl("div", "trait schematic-error", `Error parsing data: ${err.message}`));
@@ -187,6 +256,7 @@ function load({ data: schematic, text, name }) {
   }
   currentLayer = -1;
   selectedIndex = -1;
+  disposeChiselViewer();
   els.inspector.hidden = true;
   els.slider.max = Math.max(0, (schematic.SizeY || 1) - 1);
   els.slider.value = -1;

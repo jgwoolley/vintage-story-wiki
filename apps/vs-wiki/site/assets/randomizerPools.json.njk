@@ -1,0 +1,6 @@
+---
+permalink: assets/randomizerPools.json
+eleventyExcludeFromCollections: true
+---
+{#- ItemStackRandomizer "domain:code" -> pool members, for /tools/schematic-search/ (which randomizer placeholders can turn into the searched item). -#}
+{"_":[]{% for it in generated.items %}{% if it.randomPool.length %},{{ (it.domain ~ ":" ~ it.code) | dump | safe }}:{{ it.randomPool | dump | safe }}{% endif %}{% endfor %}}

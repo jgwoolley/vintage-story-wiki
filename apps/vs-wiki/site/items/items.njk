@@ -366,6 +366,12 @@ eleventyComputed:
 <p class="muted">This confirms the schematic(s) contain this code somewhere, not where or how many times -- the per-instance block-entity decoding used for tapestries isn't run for every content type.</p>
 {% endif %}
 
+<h2>Find in schematics</h2>
+<p>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic-search/?code={{ item.code | urlencode }}&amp;kind={{ item.kind | urlencode }}">Search every worldgen schematic for this {{ item.kind }} &rarr;</a>
+  <span class="muted">Decodes the schematics in your browser to find where it is placed, what chiseled blocks use it, and which chests could hold it (including random placeholders), which the lists above don't cover.</span>
+</p>
+
 {% if not item.producedBy.length and not item.consumedBy.length and not item.droppedBy.length and not blockDrops.id and not item.spawnDeposits.length and not item.spawnBlockPatches.length and not item.spawnTrees.length and not item.spawnFruitTrees.length and not item.rockStrata.length and not item.tradesSelling.length and not item.tradesBuying.length and not item.appearsInStructures.length and not item.npcRewards.length and not item.randomPool.length and not item.generatedBy.length %}
 <p class="muted">Not produced, consumed, dropped, traded, naturally spawned, found in any structure, or an NPC reward currently catalogued.</p>
 {% endif %}

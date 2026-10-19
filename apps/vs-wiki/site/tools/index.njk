@@ -56,15 +56,20 @@ permalink: "{{ lang }}/tools/index.html"
   <code>worldgen/structures.json</code> directly.
 </p>
 
-<h2 id="chiseled-block-viewer">Chiseled block viewer</h2>
-<p class="wip-badge">Work in progress</p>
+<h2 id="chiseled-block-viewer">Chiseled blocks</h2>
 <p>
-  A viewer like the <a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/">schematic viewer</a>,
-  but for chiseled blocks &mdash; the sub-block (1/16th) shapes made with the chisel. Their shape
-  is stored as block-entity data inside schematics (the same Ascii85/TreeAttribute blobs the
-  schematic viewer already decodes), so the plan is to render those in 3D from the wiki's own
-  schematics or an uploaded file, and ideally also cover qptech's chisel mod. See the
-  <a href="{{ ('/' ~ lang ~ '/') | url }}research/">research page</a> for what still needs to be worked out.
+  The <a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/">schematic viewer</a> decodes chiseled blocks:
+  click one and the block panel lists the materials it is made from, draws its shape in 3D and can export it as a
+  file for QPTech's ChiselTools mod, with instructions on where to put it. (The main 3D view still draws a chiseled
+  block as a plain cube.) See the <a href="{{ ('/' ~ lang ~ '/') | url }}research/">research page</a> for the data format.
+</p>
+
+<h2 id="schematic-block-item-search">Schematic block/item search</h2>
+<p>
+  Search every worldgen schematic for a block or item: where it is placed, which chiseled blocks use it as a
+  material, which containers hold it and which random placeholders could produce it. The files are fetched and
+  decoded in your browser, nothing is precomputed. Every item page links here with its code filled in.
+  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic-search/">Open the schematic search &rarr;</a>
 </p>
 
 <h2 id="alloy-ratio-calculator">Alloy ratio calculator</h2>

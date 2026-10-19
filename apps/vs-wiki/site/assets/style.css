@@ -481,6 +481,10 @@ th.datatable-sorted[data-sort-dir="desc"] .datatable-th-label::after { content: 
 .schematic-viewport canvas { display: block; width: 100%; height: 100%; }
 .schematic-hint { font-size: 0.8em; }
 .schematic-tool #inspector { position: absolute; top: 0.6rem; right: 0.6rem; width: min(18rem, calc(100% - 1.2rem)); max-height: 60%; overflow: auto; }
+.chisel-preview { height: 14rem; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.chisel-materials { border-collapse: collapse; font-size: 0.85em; }
+.chisel-materials th, .chisel-materials td { text-align: left; padding: 0.15rem 0.5rem 0.15rem 0; }
+.chisel-export-help { font-size: 0.8em; margin: 0; }
 .schematic-json { font-size: 0.75em; white-space: pre-wrap; max-height: 14rem; overflow: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem; margin: 0.3rem 0 0; }
 .schematic-tool .search-container { position: relative; display: flex; align-items: center; }
 .schematic-tool .search-container input { width: 100%; padding-right: 2rem; }

@@ -1,8 +1,12 @@
 # TODOS
 
-- Would it be possible to render chiseled blocks on the schematic preview?
+- Make a tool to find other instances of equivellent microblocks. Should be able to do that by clicking a link inside of the block info -> using query parameters to search for it against all schematics (integrate into schematic-search if it makes sense)
+- food / satiation?
+- make known icons selectable via dropdown in "add waypoint" (find them out via game / mod assets)
 - Implement the map renderer into the Map from https://github.com/jgwoolley/vintage-story-launcher
 - Is it possible to get non-guid name for server (IP / host)?
+- none of the clicking behaviors work any more clicking on graph should show you waypoint in table. clicking waypoint in table should open map to that location
+- Have a link to prod site in "build information"
 
 # Phase
 

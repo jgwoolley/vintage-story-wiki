@@ -199,9 +199,9 @@ generates"?
 
 ## 6. Chiseled block viewer (rendering chiseled blocks as they really look)
 
-**Status: researched, not implemented.** Everything needed to draw the *shape* is verified to decode; drawing
-real *appearance* (textures/colors) is a separate, bigger gap. A matching "chiseled block viewer" stub may
-still be on `/tools/`.
+**Status: partly implemented.** The schematic viewer's block panel decodes a clicked chiseled block (materials, a
+mini 3D shape preview, ChiselTools export; `libs/vs-schematic/src/chisel.ts`). Drawing the shapes in the *main* view
+and real *appearance* (textures/colors) are not done.
 
 **The idea**: today a chiseled block (`chiseledblock`, a "microblock") is drawn in the schematic viewer as one
 full unit cube colored by the generic block code. Draw its real sub-block shape instead.
@@ -250,9 +250,11 @@ full unit cube colored by the generic block code. Draw its real sub-block shape 
 - Per-face textures and the `decorRot` decor faces are a further step again.
 
 **Open questions:**
-- `chiseltools` (QP's Chisel Tools, `chiseltools` 1.17.9, which ships a compiled `.dll`) is now in
-  `vs-manifest.json`. It's a tool mod; whether it stores its own block-entity format or just edits vanilla
-  chiseled blocks is **not checked**. The earlier assumption that it has its own format is unverified.
+- `chiseltools` (QP's Chisel Tools 1.17.9) was decompiled (ilspycmd): it edits vanilla chiseled blocks
+  (`BlockEntityMicroBlock.VoxelCuboids`/`BlockIds`) and has its own *file* format only for saved shapes
+  ("portfolio"): an XmlSerializer dump of `PantographData` with protobuf-net-serialized `List<uint>` cuboids and
+  `int[]` block ids, plus `blockcodes`, in `<VintagestoryData>/chiselportfolio/` (see README, Tools). It also
+  imports MagicaVoxel `.vox` files.
 - Standalone input (a chiseled item stack's attributes, or an export) isn't covered by anything above; the
   schematic case is the one with real data to test on.
 
