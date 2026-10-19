@@ -1,7 +1,7 @@
 {
   "name": "vs-vscode-extension",
   "displayName": "Vintage Story Schematic Preview",
-  "description": "Preview Vintage Story worldgen schematics (.json / .json.gz) as an interactive 3D voxel model.",
+  "description": "Preview Vintage Story worldgen schematics (.json / .json.gz) and ChiselTools chiseled-block shapes as interactive 3D models.",
   "version": "0.1.0",
   "private": true,
   "publisher": "vintage-story-wiki",
@@ -17,22 +17,22 @@
         "viewType": "vsSchematic.preview",
         "displayName": "Vintage Story Schematic Preview",
         "priority": "option",
-        "selector": [{ "filenamePattern": "*.json" }, { "filenamePattern": "*.json.gz" }]
+        "selector": [{ "filenamePattern": "*.json" }, { "filenamePattern": "*.json.gz" }, { "filenamePattern": "*.pf" }, { "filenamePattern": "**/chiselportfolio/*" }]
       }
     ],
     "commands": [
       {
         "command": "vsSchematic.openPreview",
-        "title": "Preview Schematic",
+        "title": "Preview Schematic or Chisel Shape",
         "category": "Vintage Story"
       }
     ],
     "menus": {
       "explorer/context": [
-        { "command": "vsSchematic.openPreview", "when": "resourceFilename =~ /\\.json(\\.gz)?$/", "group": "navigation" }
+        { "command": "vsSchematic.openPreview", "when": "resourceFilename =~ /\\.(json(\\.gz)?|pf)$/ || resourcePath =~ /chiselportfolio/", "group": "navigation" }
       ],
       "editor/title": [
-        { "command": "vsSchematic.openPreview", "when": "resourceFilename =~ /\\.json(\\.gz)?$/", "group": "navigation" }
+        { "command": "vsSchematic.openPreview", "when": "resourceFilename =~ /\\.(json(\\.gz)?|pf)$/ || resourcePath =~ /chiselportfolio/", "group": "navigation" }
       ]
     }
   },

@@ -811,3 +811,23 @@ export interface GearEntry {
   damage?: number; // ranged damage (`attributes.damage`): a bow's/sling's base damage, or an arrow/bullet's modifier added to it
   bestMiningSpeed?: number; // highest multiplier across the item's `miningspeed` material table (e.g. 6 for a tin bronze pickaxe on stone/ore/metal)
 }
+
+/**
+ * One edible item/block variant with its `nutritionProps`, read from `itemtypes/` and `blocktypes/` (see
+ * `extractFoods` in `models/foods.ts`). Each entry also gets a normal `/items/` page via `ensureSpawnTarget`,
+ * which is where the table links and where a "Nutrition" section shows the same numbers.
+ */
+export interface FoodEntry {
+  id: string; // `${domain}:${code}`, same key as ItemIndexEntry
+  domain: string;
+  code: string; // fully-resolved variant code, e.g. "fruit-redapple"
+  kind: "item" | "block"; // which registry it came from (nearly always "item"; wild mushrooms are blocks)
+  sourceMod: string;
+  displayName: string;
+  missingTranslation: boolean;
+  type: string; // the definition's own base code, e.g. "fruit", "redmeat" -- the "what kind of food" column
+  satiety: number; // satiety points restored when eaten on its own (`nutritionProps.satiety`)
+  health?: number; // health change when eaten (`nutritionProps.health`); negative for poisonous ones; absent when the game doesn't set it (0)
+  foodCategory: string; // `nutritionProps.foodcategory`: Fruit, Vegetable, Grain, Protein, Dairy, ... (a balanced diet needs several)
+  mealSatiety?: number; // satiety it counts for as an ingredient of a cooked meal (`nutritionPropsWhenInMeal.satiety`), only when that differs from eating it alone
+}

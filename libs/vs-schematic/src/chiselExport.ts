@@ -6,6 +6,7 @@
 // where `voxeldata` is protobuf-net `List<uint>` (the packed cuboids) and `matdata` protobuf-net `int[]`
 // (block ids; on load the mod replaces them by looking up `blockcodes`, index for index). protobuf-net
 // writes a root-level primitive list as repeated field 1, unpacked: `08 <varint>` per element.
+import { unpackCuboid } from "./chisel.js";
 import type { ChiselShape } from "./chisel.js";
 
 /** Where the game keeps portfolio files: `GetOrCreateDataPath("chiselportfolio")` inside VintagestoryData. */
@@ -57,4 +58,47 @@ export function chiselToolsPortfolioXml(shape: ChiselShape, name: string): strin
     "</PantographData>",
     "",
   ].join("\n");
+}
+
+function decodeVarintList(bytes: Uint8Array): number[] {
+  const out: number[] = [];
+  let i = 0;
+  while (i < bytes.length) {
+    if (bytes[i++] !== 0x08) throw new Error("Unexpected protobuf field in a shape file.");
+    let v = 0n, shift = 0n;
+    while (i < bytes.length) {
+      const b = bytes[i++];
+      v |= BigInt(b & 0x7f) << shift;
+      if (!(b & 0x80)) break;
+      shift += 7n;
+    }
+    out.push(Number(BigInt.asUintN(32, v)));
+  }
+  return out;
+}
+
+const unescapeXml = (s: string): string =>
+  s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&");
+
+/** Read a ChiselTools portfolio file (the `PantographData` XML `.pf save` writes) back into a shape. Inverse of `chiselToolsPortfolioXml`. */
+export function parsePortfolioXml(xml: string): { name: string; shape: ChiselShape } {
+  const tag = (name: string): string => {
+    const m = new RegExp(`<${name}>([\\s\\S]*?)</${name}>`).exec(xml);
+    if (!m) throw new Error(`Not a ChiselTools shape file (no <${name}>).`);
+    return m[1];
+  };
+  const bytes = (name: string) => Uint8Array.from(atob(tag(name).trim()), (c) => c.charCodeAt(0));
+  const packed = decodeVarintList(bytes("voxeldata"));
+  const materialIds = decodeVarintList(bytes("matdata"));
+  const materials = [...tag("blockcodes").matchAll(/<string>([\s\S]*?)<\/string>/g)].map((m) => unescapeXml(m[1]));
+  const nameMatch = /<name>([\s\S]*?)<\/name>/.exec(xml);
+  return {
+    name: nameMatch ? unescapeXml(nameMatch[1]) : "",
+    shape: { cuboids: packed.map(unpackCuboid), materials, materialIds, packed, name: nameMatch ? unescapeXml(nameMatch[1]) : undefined },
+  };
+}
+
+/** Whether a file's text is a ChiselTools shape file (XML) rather than a schematic (JSON). */
+export function looksLikePortfolio(text: string): boolean {
+  return text.trimStart().startsWith("<") && text.includes("<PantographData");
 }

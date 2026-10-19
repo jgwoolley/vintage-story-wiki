@@ -11,6 +11,9 @@ import {
   type Voxel,
 } from "vs-schematic/schematicVoxels.js";
 import { createVoxelViewer, type VoxelViewer } from "vs-schematic/voxelViewer.js";
+import { materialVolumes, type ChiselShape } from "vs-schematic/chisel.js";
+import { looksLikePortfolio, parsePortfolioXml } from "vs-schematic/chiselExport.js";
+import { createChiselPreview } from "vs-schematic/chiselPreview.js";
 import type { HostMessage, WebviewMessage } from "../protocol.js";
 import "./style.css";
 
@@ -39,7 +42,9 @@ interface BlockMeta {
 
 const HIGHLIGHT = "#00ffff";
 
+// Either the schematic voxel viewer or a chiseled shape preview (a ChiselTools shape file); both only need dispose/resetView.
 let viewer: VoxelViewer<Voxel> | null = null;
+let shapeViewer: { dispose(): void; resetView(): void } | null = null;
 let data: SchematicJson | null = null;
 let voxels: Voxel[] = [];
 let blockMeta = new Map<string, BlockMeta>();
@@ -130,7 +135,47 @@ function showInspector(voxel: Voxel): void {
   els.inspector.hidden = false;
 }
 
+/** A ChiselTools shape file (`.pf save`): draw the chiseled block's boxes, and list its materials with their share of the 4096 voxels. */
+function loadShape(name: string, shape: ChiselShape): void {
+  showError("");
+  data = null;
+  voxels = [];
+  blockMeta = new Map();
+  selectedIndex = -1;
+  els.inspector.hidden = true;
+  els.maxY.disabled = true;
+  els.maxYValue.textContent = "";
+  els.showFiller.checked = false;
+  const volumes = materialVolumes(shape);
+  els.summary.textContent = `${name}: chiseled block, ${shape.cuboids.length} boxes, ${volumes.reduce((a, b) => a + b, 0)} of 4096 voxels`;
+  els.legend.replaceChildren();
+  shape.materials.forEach((code, i) => {
+    const row = document.createElement("div");
+    row.className = "legend-item";
+    row.title = code;
+    const swatch = textEl("span", "color-box", "");
+    swatch.style.background = stringToColor(code);
+    row.append(swatch, textEl("span", "block-name", displayName(code)), textEl("span", "block-count", `${volumes[i]} voxels`));
+    els.legend.append(row);
+  });
+  viewer?.dispose();
+  viewer = null;
+  shapeViewer?.dispose();
+  shapeViewer = createChiselPreview(els.viewport, shape, stringToColor);
+  if (!shapeViewer) showError("WebGL isn't available in this webview, so the 3D view can't be shown.");
+}
+
 function load(name: string, text: string): void {
+  if (looksLikePortfolio(text)) {
+    try {
+      loadShape(name, parsePortfolioXml(text).shape);
+    } catch (err) {
+      showError(`${name} isn't a readable ChiselTools shape file: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    return;
+  }
+  shapeViewer?.dispose();
+  shapeViewer = null;
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
@@ -166,7 +211,7 @@ function load(name: string, text: string): void {
   renderLegend();
 }
 
-$("resetView").addEventListener("click", () => viewer?.resetView());
+$("resetView").addEventListener("click", () => (shapeViewer ?? viewer)?.resetView());
 $("showAll").addEventListener("click", () => setAllVisible(true));
 $("hideAll").addEventListener("click", () => setAllVisible(false));
 $("closeInspector").addEventListener("click", closeInspector);

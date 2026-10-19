@@ -1,0 +1,34 @@
+---
+title: Foods - Vintage Story Wiki
+description: Satiety, health and food category of every food, in one sortable table, each linking to its item page.
+layout: layouts/base.njk
+permalink: "{{ lang }}/foods/index.html"
+---
+{% import "macros/datatable.njk" as dt %}
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Foods"}]) }}
+<h1>Foods</h1>
+<p class="muted">
+  {{ generated.foods.length }} foods, each variant (raw, cooked, cured, ...) on its own row. Click a name for its item page, a column to sort,
+  or use the filters (Category = food category, Tags = the kind of food, Mod).
+</p>
+<ul class="muted">
+  <li><strong>Satiety</strong>: how much of the hunger bar eating it fills. The game also tracks each <strong>food category</strong> separately, so a balanced diet matters.</li>
+  <li><strong>Health</strong>: health gained or lost when eaten (negative for poisonous mushrooms); blank when the game sets none.</li>
+  <li><strong>In meals</strong>: the satiety it counts for as a cooked-meal ingredient, shown only when that differs from eating it alone.</li>
+</ul>
+<p class="muted">Source: <code>itemtypes/**/*.json</code> and <code>blocktypes/**/*.json</code> (<code>nutritionProps</code>), resolved per variant. Liquids (milk, juice, ...) scale per litre and aren't listed. <a href="{{ ('/' ~ lang ~ '/') | url }}sources/foods/">Full details &rarr;</a></p>
+
+{% call dt.datatable(60, "Search foods...", ["Name", "Type", "Category", "Satiety", "Health", "In meals", "Mod"]) %}
+{% for f in generated.foods %}
+  <tr data-search="{{ f.displayName }} {{ f.code }} {{ f.type }}" data-category="{{ f.foodCategory }}" data-tags="{{ f.type }}" data-mod="{{ f.sourceMod }}" data-mod-label="{{ generated.mods | modName(f.sourceMod) }}">
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ f.domain }}/{{ f.code | slugify }}/">{{ f.displayName }}</a></td>
+    <td><span class="tag">{{ f.type }}</span></td>
+    <td>{{ f.foodCategory }}</td>
+    <td>{{ f.satiety }}</td>
+    <td>{% if f.health != null %}{{ f.health }}{% endif %}</td>
+    <td>{% if f.mealSatiety != null %}{{ f.mealSatiety }}{% endif %}</td>
+    <td><span class="tag">{{ f.sourceMod }}</span></td>
+  </tr>
+{% endfor %}
+{% endcall %}

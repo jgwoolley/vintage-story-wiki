@@ -12,6 +12,7 @@ import { extractSchematics } from "./models/schematics.js";
 import { writeCompressedSchematics } from "./schematicFiles.js";
 import { extractDecorCatalog } from "./models/decor.js";
 import { extractGear } from "./models/gear.js";
+import { extractFoods } from "./models/foods.js";
 import { extractLoreBooks, buildLoreSections } from "./models/lore.js";
 import { attachLoreLocations } from "./models/loreLocations.js";
 import { extractDeposits } from "./models/deposits.js";
@@ -428,6 +429,16 @@ function main(): void {
   }
   console.log(`  ${gear.length} weapons/tools/ammo; item index now ${itemIndex.size}`);
 
+  step("Extracting food nutrition");
+  const foods = extractFoods(index, lang);
+  // Every food gets an /items/ page too (the /foods/ table links to it, and its page shows the nutrition).
+  for (const f of foods) {
+    const entry = ensureSpawnTarget(f.domain, f.code, f.kind);
+    if (entry.sourceMod === "game" && f.sourceMod !== "game") entry.sourceMod = f.sourceMod;
+  }
+  const foodsById = Object.fromEntries(foods.map((f) => [f.id, f]));
+  console.log(`  ${foods.length} foods; item index now ${itemIndex.size}`);
+
   attachItemMetadata(itemIndex, index, ensureSpawnTarget);
   console.log(`  item index grown to ${itemIndex.size} after adding tagged-tool-only items`);
 
@@ -605,6 +616,8 @@ function main(): void {
   writeGenerated("tapestries", tapestries);
   writeGenerated("clothing", clothing);
   writeGenerated("gear", gear);
+  writeGenerated("foods", foods);
+  writeGenerated("foodsById", foodsById);
   writeGenerated("books", books);
   writeGenerated("lore", loreChapters);
   writeGenerated("loreSections", loreSections);

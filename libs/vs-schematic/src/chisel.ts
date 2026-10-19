@@ -23,6 +23,8 @@ export interface ChiselShape {
   materialIds: number[];
   /** The cuboids exactly as stored (uint32), for re-export without a lossy round trip. */
   packed: number[];
+  /** The block's name (`blockName` on the entity, or the ChiselTools shape file's name), when set. */
+  name?: string;
 }
 
 /** Voxels (of 4096) each material fills; overlapping cuboids are counted once, last one wins like the game. */
@@ -74,5 +76,102 @@ export function decodeChiseledBlock(attrs: TreeAttributes, blockCodes: Record<st
     materials: materialIds.map((id) => blockCodes[String(id)] ?? "unknown"),
     materialIds,
     packed: packed.map((n) => n >>> 0),
+    name: typeof attrs.blockName === "string" && attrs.blockName ? attrs.blockName : undefined,
   };
+}
+
+/** Material index per voxel of the 16x16x16 grid (`(y*16+z)*16+x`), -1 where empty; later cuboids overwrite earlier ones. */
+export function voxelGrid(shape: ChiselShape): Int16Array {
+  const grid = new Int16Array(16 * 16 * 16).fill(-1);
+  for (const c of shape.cuboids) {
+    for (let x = c.x1; x < c.x2; x++) {
+      for (let y = c.y1; y < c.y2; y++) {
+        for (let z = c.z1; z < c.z2; z++) grid[(y * 16 + z) * 16 + x] = c.material;
+      }
+    }
+  }
+  return grid;
+}
+
+export interface ShapeMatchOptions {
+  /** `same`: the same block in the same voxels; `any`: only the carved shape counts. */
+  materials: "same" | "any";
+  /** Also treat the four rotations about the vertical axis, and their mirror images, as the same shape. */
+  symmetries: boolean;
+}
+
+const bareBlock = (code: string): string => code.replace(/^[^:]+:/, "");
+
+/**
+ * A string that is equal for two chiseled blocks exactly when they fill the same voxels (with the same
+ * materials, unless `any`) -- independent of how the voxels are split into cuboids and of the order of
+ * the material list. Null for an empty block.
+ */
+export function shapeKey(shape: ChiselShape, materials: "same" | "any", transform: (x: number, z: number) => [number, number] = (x, z) => [x, z]): string | null {
+  const grid = voxelGrid(shape);
+  const used = materials === "any" ? [] : [...new Set(Array.from(grid).filter((m) => m >= 0).map((m) => bareBlock(shape.materials[m] ?? "unknown")))].sort();
+  let key = "";
+  let run = 0, last = -2, filled = 0;
+  for (let y = 0; y < 16; y++) {
+    for (let z = 0; z < 16; z++) {
+      for (let x = 0; x < 16; x++) {
+        const [sx, sz] = transform(x, z);
+        const m = grid[(y * 16 + sz) * 16 + sx];
+        const value = m < 0 ? -1 : materials === "any" ? 0 : used.indexOf(bareBlock(shape.materials[m] ?? "unknown"));
+        if (m >= 0) filled++;
+        if (value === last) run++;
+        else {
+          if (run) key += `${last}:${run},`;
+          last = value;
+          run = 1;
+        }
+      }
+    }
+  }
+  key += `${last}:${run}`;
+  return filled ? `${used.join("|")}~${key}` : null;
+}
+
+// Source voxel (sx, sz) for each target voxel (x, z): a quarter turn about the vertical axis r times, optionally mirrored in x first.
+const turn = (x: number, z: number): [number, number] => [15 - z, x];
+const SYMMETRIES: { label: string; map: (x: number, z: number) => [number, number] }[] = [0, 1].flatMap((mirror) =>
+  [0, 1, 2, 3].map((turns) => ({
+    label: `${mirror ? "mirrored" : "as-is"}${turns ? `, turned ${turns * 90}°` : ""}`,
+    map: (x: number, z: number): [number, number] => {
+      let p: [number, number] = mirror ? [15 - x, z] : [x, z];
+      for (let i = 0; i < turns; i++) p = turn(...p);
+      return p;
+    },
+  })),
+);
+
+/** key -> how the searched shape has to be turned to produce it (every orientation allowed by `options`). */
+export function queryKeys(shape: ChiselShape, options: ShapeMatchOptions): Map<string, string> {
+  const keys = new Map<string, string>();
+  for (const s of options.symmetries ? SYMMETRIES : SYMMETRIES.slice(0, 1)) {
+    const key = shapeKey(shape, options.materials, s.map);
+    if (key && !keys.has(key)) keys.set(key, s.label);
+  }
+  return keys;
+}
+
+const toBase64Url = (bytes: Uint8Array): string => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const fromBase64Url = (s: string): Uint8Array => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+
+/** URL query values describing a shape (`shape`: packed cuboids as little-endian uint32, base64url; `mats`: block codes, comma-separated). */
+export function shapeToParams(shape: ChiselShape): { shape: string; mats: string } {
+  const bytes = new Uint8Array(shape.packed.length * 4);
+  const view = new DataView(bytes.buffer);
+  shape.packed.forEach((v, i) => view.setUint32(i * 4, v >>> 0, true));
+  return { shape: toBase64Url(bytes), mats: shape.materials.join(",") };
+}
+
+/** Inverse of `shapeToParams`; throws on a malformed value. */
+export function shapeFromParams(shapeParam: string, matsParam: string): ChiselShape {
+  const bytes = fromBase64Url(shapeParam);
+  if (bytes.length % 4) throw new Error("Malformed shape parameter.");
+  const view = new DataView(bytes.buffer);
+  const packed = Array.from({ length: bytes.length / 4 }, (_, i) => view.getUint32(i * 4, true));
+  const materials = matsParam ? matsParam.split(",") : [];
+  return { cuboids: packed.map(unpackCuboid), materials, materialIds: materials.map((_, i) => i), packed };
 }

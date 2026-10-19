@@ -19,9 +19,13 @@ permalink: "{{ lang }}/tools/waypoints/index.html"
   <button type="button" id="wpAdd">Add WayPoint</button>
   <button type="button" id="wpFit">Fit map</button>
   <button type="button" id="wpExport">Download JSON</button>
-  <label class="button-like">Upload JSON <input type="file" id="wpImport" accept=".json" hidden></label>
   <button type="button" id="wpClear">Clear all</button>
 </div>
+<label class="schematic-dropzone" for="wpImport">
+  <strong>Upload waypoints</strong>
+  <span class="muted">Drop a <code>.json</code> file here (your own export, or the translocator mod's <code>Nf3tData.json</code>), or click to browse</span>
+  <input type="file" id="wpImport" accept=".json" hidden>
+</label>
 <label id="wpSaveRow" class="schematic-field" hidden>Savegame in mod data <select id="wpSave"></select></label>
 <p id="wpStatus" class="muted" role="status"></p>
 

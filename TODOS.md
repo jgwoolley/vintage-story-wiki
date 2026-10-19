@@ -1,7 +1,7 @@
 # TODOS
 
-- Make a tool to find other instances of equivellent microblocks. Should be able to do that by clicking a link inside of the block info -> using query parameters to search for it against all schematics (integrate into schematic-search if it makes sense)
-- food / satiation?
+- Download for extensions
+- Add a way for the "schematic-search" to link back to the exa
 - make known icons selectable via dropdown in "add waypoint" (find them out via game / mod assets)
 - Implement the map renderer into the Map from https://github.com/jgwoolley/vintage-story-launcher
 - Is it possible to get non-guid name for server (IP / host)?

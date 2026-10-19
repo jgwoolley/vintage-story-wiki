@@ -40,6 +40,20 @@ eleventyComputed:
 </table>
 {% endif %}
 
+{% set food = generated.foodsById[item.domain ~ ':' ~ item.code] %}
+{% if food.id %}
+<h2>Nutrition</h2>
+<table>
+  <tbody>
+    <tr><th>Satiety</th><td>{{ food.satiety }}</td></tr>
+    <tr><th>Food category</th><td><a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}foods/?category={{ food.foodCategory | urlencode }}">{{ food.foodCategory }}</a></td></tr>
+    {% if food.health != null %}<tr><th>Health</th><td>{{ food.health }}</td></tr>{% endif %}
+    {% if food.mealSatiety != null %}<tr><th>Satiety in a meal</th><td>{{ food.mealSatiety }}</td></tr>{% endif %}
+  </tbody>
+</table>
+<p class="muted">Compare it with every other food on <a href="{{ ('/' ~ lang ~ '/') | url }}foods/">the foods page</a>. <a href="{{ ('/' ~ lang ~ '/') | url }}sources/foods/">Where this comes from &rarr;</a></p>
+{% endif %}
+
 {% if item.codeRefs %}
 {#- C# names this item/block's own JSON points at, linked to the implementing file via the
     committed apps/vs-wiki/src/ingest/csharpClassMap.json (see apps/vs-wiki/scripts/map-csharp-classes.ts). -#}

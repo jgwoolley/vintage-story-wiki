@@ -7,6 +7,7 @@ voxel model, without leaving VS Code.
 - A block list with counts: click to hide/show a kind, filter by name, show/hide all.
 - `meta-filler` (a worldgen marker) starts hidden, like on the wiki; tick **Show meta-filler** to see it.
 - An **Up to Y** slider peels the structure away from the top.
+- Also opens QPTech ChiselTools shape files (saved with `.pf save`, in the `chiselportfolio` folder, or named `*.pf`): the chiseled block's shape in 3D plus its materials.
 - Reloads when the file changes on disk.
 
 ## Using it

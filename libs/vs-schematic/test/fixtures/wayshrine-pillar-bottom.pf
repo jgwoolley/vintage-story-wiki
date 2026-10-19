@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PantographData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <name>Wayshrine Pillar Bottom</name>
+  <voxeldata>CIDgwwcIkOKHBwig5pMGCNDquwUI4OabAgjg9psGCJHABwiR3scHCKHEkwEIodrTBgjRxpcCCNHWlwYI4cSbAQjh2tsGCPHGuwII8da7Bgjxy78NCKKiUwiivJMHCNKklwEI0rrXBgjiolsI4rybBwjypLsBCPK6+wYI8qe/Cgjyt78OCKOAEwijntMHCNOCVwjTnJcHCOOAGwjjntsHCPOCewjznLsHCPOFvwkI85v/DgjVwBYI1d7WBwj1wDoI9d76Bwj1w/4ICPXdvg8=</voxeldata>
+  <matdata>CP9LCIZM</matdata>
+  <blockcodes>
+    <string>game:polishedrockold-full-granite</string>
+    <string>game:polishedrockold-cobbled-basalt</string>
+  </blockcodes>
+  <materialPasteOK>true</materialPasteOK>
+</PantographData>

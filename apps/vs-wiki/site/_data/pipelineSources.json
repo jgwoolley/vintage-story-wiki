@@ -172,5 +172,12 @@
     "listingUrl": "tools/schematic-search/",
     "modelFiles": ["libs/vs-schematic/src/schematicSearch.ts", "libs/vs-schematic/src/chisel.ts", "apps/vs-wiki/site/assets/schematicSearchPage.js", "apps/vs-wiki/site/assets/schematicSearchIndex.json.njk", "apps/vs-wiki/site/assets/randomizerPools.json.njk", "apps/vs-wiki/site/tools/schematic-search/index.njk", "libs/vs-schematic/test/schematicSearch.test.ts"],
     "globs": ["worldgen/schematics/**/*.json (every file is fetched and decoded in the browser, as gzip copies)", "itemtypes/**/stackrandomizer*.json (via the randomizer pools: which placeholder can produce what)"]
+  },
+  {
+    "id": "foods",
+    "title": "Foods",
+    "listingUrl": "foods/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/foods.ts"],
+    "globs": ["itemtypes/**/*.json and blocktypes/**/*.json (variants with nutritionProps: a numeric satiety and a foodcategory)"]
   }
 ]

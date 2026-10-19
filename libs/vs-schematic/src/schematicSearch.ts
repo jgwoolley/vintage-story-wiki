@@ -4,7 +4,8 @@
 // schematics it fetched and decompressed; tests feed it hand-built ones.
 import { decodeBlockEntity } from "./schematicDecode.js";
 import type { TreeAttributes } from "./schematicDecode.js";
-import { decodeChiseledBlock } from "./chisel.js";
+import { decodeChiseledBlock, queryKeys, shapeKey } from "./chisel.js";
+import type { ChiselShape, ShapeMatchOptions } from "./chisel.js";
 import type { SchematicJson } from "./schematicVoxels.js";
 
 /** `ItemIndexEntry.randomPool` as the page serves it: pool members of one randomizer, with normalized chance. */
@@ -189,4 +190,106 @@ function blockIdAt(schematic: SchematicJson, packed: number): number | undefined
     idByPosition.set(schematic, map);
   }
   return map.get(packed);
+}
+
+/** A chiseled-block search: the shape to find and how loosely to match it. */
+export interface ChiselQuery {
+  shape: ChiselShape;
+  options: ShapeMatchOptions;
+}
+
+const CHISELED_BLOCK = /^(?:[^:]+:)?(?:microblock|chiseledblock)/i;
+
+/**
+ * Prefilter on schematics.json's code lists: the schematic must place a chiseled block and, when
+ * materials matter, contain every block the shape is made of (a chiseled block's materials are keys of
+ * the schematic's own BlockCodes).
+ */
+export function mayContainShape(blockCodes: string[], query: ChiselQuery): boolean {
+  if (!blockCodes.some((c) => CHISELED_BLOCK.test(c))) return false;
+  if (query.options.materials === "any") return true;
+  const have = new Set(blockCodes.map(bareCode));
+  const used = new Set(query.shape.cuboids.map((c) => bareCode(query.shape.materials[c.material] ?? "unknown")));
+  return [...used].every((code) => have.has(code));
+}
+
+export interface ShapeHit {
+  x: number;
+  y: number;
+  z: number;
+  /** How the searched shape is oriented in this block ("as-is", "mirrored, turned 90°", ...). */
+  orientation: string;
+  /** The block's own name, when it has one. */
+  name?: string;
+}
+
+/** Chiseled blocks in one schematic that are the searched shape (or, if allowed, a turned/mirrored copy). */
+export function scanSchematicForShape(schematic: SchematicJson, query: ChiselQuery): { hits: ShapeHit[]; chiseledBlocks: number; skippedEntities: number } {
+  const wanted = queryKeys(query.shape, query.options);
+  const result = { hits: [] as ShapeHit[], chiseledBlocks: 0, skippedEntities: 0 };
+  const memo = new Map<string, string | null>(); // many chiseled blocks in a schematic repeat exactly
+  for (const [key, entity] of Object.entries(schematic.BlockEntities ?? {})) {
+    const ascii = typeof entity === "string" ? entity : (entity as { Data?: string; Attributes?: string })?.Data || (entity as { Attributes?: string })?.Attributes;
+    if (!ascii) continue;
+    let shape: ChiselShape | null;
+    try {
+      shape = decodeChiseledBlock(decodeBlockEntity(ascii), schematic.BlockCodes);
+    } catch {
+      result.skippedEntities++;
+      continue;
+    }
+    if (!shape) continue;
+    result.chiseledBlocks++;
+    const memoKey = `${shape.packed.join(",")}|${shape.materials.join(",")}`;
+    let own = memo.get(memoKey);
+    if (own === undefined) {
+      own = shapeKey(shape, query.options.materials);
+      memo.set(memoKey, own);
+    }
+    const orientation = own ? wanted.get(own) : undefined;
+    if (orientation === undefined) continue;
+    const packed = Number(key);
+    result.hits.push({ x: packed & 0x3ff, z: (packed >> 10) & 0x3ff, y: (packed >> 20) & 0x3ff, orientation, name: shape.name });
+  }
+  return result;
+}
+
+/** Case-insensitive match on a chiseled block's name: a substring, or a glob when it contains `*`. */
+export function nameMatcher(pattern: string): (name: string) => boolean {
+  const text = pattern.trim();
+  const source = text.includes("*")
+    ? `^${text.split("*").map((part) => part.replace(/[.+?^$()|[\]\\{}]/g, "\\$&")).join(".*")}$`
+    : text.replace(/[.+?^$()|[\]\\{}*]/g, "\\$&");
+  const re = new RegExp(source, "i");
+  return (name) => re.test(name);
+}
+
+export interface NameHit {
+  x: number;
+  y: number;
+  z: number;
+  name: string;
+}
+
+/** Prefilter for a name search: the schematic has to place chiseled blocks at all. */
+export const mayContainChiseled = (blockCodes: string[]): boolean => blockCodes.some((c) => CHISELED_BLOCK.test(c));
+
+/** Chiseled blocks in one schematic whose name matches (the name a player gave it with the chisel, or the one the game generated from its material). */
+export function scanSchematicForName(schematic: SchematicJson, pattern: string): { hits: NameHit[]; skippedEntities: number } {
+  const matches = nameMatcher(pattern);
+  const result = { hits: [] as NameHit[], skippedEntities: 0 };
+  for (const [key, entity] of Object.entries(schematic.BlockEntities ?? {})) {
+    const ascii = typeof entity === "string" ? entity : (entity as { Data?: string; Attributes?: string })?.Data || (entity as { Attributes?: string })?.Attributes;
+    if (!ascii) continue;
+    try {
+      const attrs = decodeBlockEntity(ascii);
+      const name = attrs.blockName;
+      if (typeof name !== "string" || !name || !Array.isArray(attrs.cuboids) || !matches(name)) continue;
+      const packed = Number(key);
+      result.hits.push({ x: packed & 0x3ff, z: (packed >> 10) & 0x3ff, y: (packed >> 20) & 0x3ff, name });
+    } catch {
+      result.skippedEntities++;
+    }
+  }
+  return result;
 }

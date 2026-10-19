@@ -553,6 +553,15 @@ Info page for the visitor-facing version of that caveat.
   (unique `eleventy-timing-<run_id>` key, restored by the `eleventy-timing-` prefix) around the
   "Build site" step, since `apps/vs-wiki/site/_data/generated/` is gitignored and otherwise starts empty.
 
+## Foods (`models/foods.ts`)
+
+`/foods/` lists every `itemtypes/`/`blocktypes/` variant whose `nutritionProps` has a numeric `satiety` and a food
+category (plus `health` and the `nutritionPropsWhenInMeal` satiety when it differs), resolved per concrete variant
+like gear (case-insensitive lookup, `*ByType` globs). Each food is also given an `/items/` page via `ensureSpawnTarget`,
+whose "Nutrition" section reads `generated.foodsById`. Mushrooms are blocks with a variant per facing and per picked
+state, so only the standing north-facing one is listed; `*PerLitre` liquids and cooked meals/pies (nutrition computed
+from ingredients) are not listed.
+
 ## Weapons & Tools (`models/gear.ts`)
 
 `/weapons/` is one sortable table of every weapon, tool and ammo variant with a numeric stat:
@@ -647,7 +656,13 @@ calculator (see above) and the seed climate lookup were written here. All are fu
   `/assets/schematicSearchIndex.json` (each schematic's `BlockCodes`/`ItemCodes`, exact because any hit needs a code
   from those lists) and `/assets/randomizerPools.json` (which `stackrandomizer-*` can produce the target), then
   downloads only the candidate `.json.gz` files, decodes every block entity and reports placed / chiseled-from /
-  in-container / possible-via-randomizer per schematic. Nothing is precomputed.
+  in-container / possible-via-randomizer per schematic. Nothing is precomputed. The same page finds *equivalent
+  chiseled blocks*: `?shape=<base64url packed cuboids>&mats=<block codes>` (the schematic viewer's chiseled-block panel links
+  here; or upload a ChiselTools shape file, parsed by `parsePortfolioXml`). Equivalence (`shapeKey` in `chisel.ts`) is
+  the same voxels with the same materials, regardless of cuboid splitting or material order; options match any material
+  (`anymat=1`) and turned/mirrored copies (on unless `nosym=1`). Results link to the viewer with `&select=x,y,z`, which
+  opens that block's panel. The test fixture `libs/vs-schematic/test/fixtures/wayshrine-pillar-bottom.pf` is a real
+  ChiselTools export (from the Wayshrine mod's pillar).
 - **`/tools/waypoints/`** — `waypoints.js` (pure logic: distance, Dijkstra route, import/export
   validation), `waypointMap.js` (SVG map), `waypointsPage.js` (DOM wiring); state lives in
   `localStorage`. This replaces the price guide's React/MUI/Cytoscape implementation with no

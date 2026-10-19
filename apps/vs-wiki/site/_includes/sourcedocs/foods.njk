@@ -1,0 +1,14 @@
+<p>
+Every <code>itemtypes/</code> or <code>blocktypes/</code> variant with a <code>nutritionProps</code> object that has a numeric
+<code>satiety</code> and a <code>foodcategory</code> becomes a row. The props are often a <code>nutritionPropsByType</code> glob map
+(<code>"*-flax-perfect": {...}</code>), resolved for each concrete variant with the most specific matching pattern winning; the lookup is
+case-insensitive like the game's.
+</p>
+<p>
+<code>nutritionPropsWhenInMeal</code> (what an ingredient counts for inside a cooked meal) is shown as "In meals" when it differs. Liquids use
+<code>nutritionPropsPerLitre</code>, which scales with the portion size, and cooked meals/pies compute their nutrition from their ingredients;
+neither is listed here.
+</p>
+<p>
+Each row is also given an <a href="{{ ('/' ~ lang ~ '/') | url }}items/">item page</a> even if no recipe or drop table references it, and that page shows the same numbers in a Nutrition section.
+</p>

@@ -17,7 +17,7 @@ permalink: "{{ lang }}/tools/schematic-search/index.html"
   <a href="{{ ('/' ~ lang ~ '/') | url }}sources/schematic-search/">How it works &rarr;</a>
 </p>
 
-<div id="schematicSearch" data-index-url="{{ '/' | url }}assets/schematicSearchIndex.json" data-pools-url="{{ '/' | url }}assets/randomizerPools.json" data-world-base="{{ '/' | url }}assets/schematics/world/" data-schematics-url="{{ ('/' ~ lang ~ '/') | url }}schematics/" data-viewer-url="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/" data-items-url="{{ ('/' ~ lang ~ '/') | url }}items/">
+<div id="schematicSearch" data-index-url="{{ '/' | url }}assets/schematicSearchIndex.json" data-pools-url="{{ '/' | url }}assets/randomizerPools.json" data-world-base="{{ '/' | url }}assets/schematics/world/" data-schematics-url="{{ ('/' ~ lang ~ '/') | url }}schematics/" data-viewer-url="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/" data-block-names="{{ '/' | url }}assets/blockNames.json" data-block-colors="{{ '/' | url }}assets/Nf3tBlockColors.json" data-items-url="{{ ('/' ~ lang ~ '/') | url }}items/">
   <form id="ssForm" class="schematic-row-fields" onsubmit="return false">
     <label class="schematic-field">Block or item code <input type="text" id="ssCode" placeholder="e.g. gear-rusty or rock-*" size="32" required></label>
     <label class="schematic-field">Kind
@@ -31,6 +31,34 @@ permalink: "{{ lang }}/tools/schematic-search/index.html"
     <button type="button" id="ssCancel" hidden>Cancel</button>
   </form>
   <p class="muted">The domain (<code>game:</code>) is optional; <code>*</code> matches anything, so <code>chest-*</code> finds every chest.</p>
+  <p class="muted">
+    To find a <strong>chiseled block</strong> instead, click one in the
+    <a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/">schematic viewer</a> and follow its "Find equivalent chiseled blocks" link, or
+    upload a ChiselTools shape file (made with <code>.pf save</code>):
+  </p>
+  <form id="ssNameForm" class="schematic-row-fields" onsubmit="return false">
+    <label class="schematic-field">Chiseled block name <input type="text" id="ssChiselName" placeholder="e.g. Signature or aged*bricks" size="32" required></label>
+    <button type="submit">Search names</button>
+  </form>
+  <p class="muted">Matches the name on a chiseled block: one a player gave it, or the one the game generated from its material. Case-insensitive; a plain word matches anywhere in the name, <code>*</code> is a wildcard.</p>
+  <label class="schematic-dropzone" for="ssShapeFile">
+    <strong>Upload a ChiselTools shape file</strong>
+    <span class="muted">Drop a file from your <code>chiselportfolio</code> folder here, or click to browse</span>
+    <input type="file" id="ssShapeFile" hidden>
+  </label>
+  <div id="ssShape" hidden>
+    <h2>Chiseled shape: <span id="ssShapeName"></span></h2>
+    <div class="schematic-row-fields">
+      <div id="ssShapePreview" class="chisel-preview"></div>
+      <div>
+        <div id="ssShapeDetails"></div>
+        <button type="button" id="ssShapeReset">Reset view</button>
+        <p id="ssShapeSummary"></p>
+        <label><input type="checkbox" id="ssSameMaterials" checked> Same materials (otherwise only the carved shape counts)</label><br>
+        <label><input type="checkbox" id="ssSymmetries" checked> Also match turned and mirrored copies</label>
+      </div>
+    </div>
+  </div>
   <p id="ssStatus" class="muted" role="status"></p>
   <p id="ssError" class="schematic-error" hidden></p>
   <div id="ssResults"></div>
