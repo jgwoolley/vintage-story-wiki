@@ -2,7 +2,8 @@
 // zoom only. No legend, layer slider or block picking -- those live in the full viewer, which the
 // page links to. Reuses the shared voxelViewer.js core and schematicVoxels.js helpers.
 import { createVoxelViewer } from "./voxelViewer.js";
-import { assertSchematic, fetchGzipText, isHiddenByDefault, stringToColor, toVoxels } from "./schematicVoxels.js";
+import { assertSchematic, fetchGzipText, isHiddenByDefault, toVoxels } from "./schematicVoxels.js";
+import { blockColor, loadBlockColors } from "./blockColors.js";
 
 const root = document.getElementById("schematicPreview");
 if (root) {
@@ -29,9 +30,10 @@ if (root) {
       const schematic = JSON.parse(await fetchGzipText(src));
       assertSchematic(schematic);
       // Filler markers are dropped outright, so the preview can never show them.
+      const { colors } = await loadBlockColors(root.dataset.blockColors);
       const voxels = toVoxels(schematic)
         .filter((v) => !isHiddenByDefault(v.code))
-        .map((v) => ({ ...v, color: stringToColor(v.code) }));
+        .map((v) => ({ ...v, color: blockColor(v.code, colors) }));
       if (!voxels.length) return say("Nothing to show: this schematic has no visible blocks.");
       const viewer = createVoxelViewer(stage, { voxels, label: `3D preview of ${root.dataset.name}` });
       if (!viewer) return say("WebGL is unavailable in this browser, so the 3D preview can't be shown.");

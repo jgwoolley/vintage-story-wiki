@@ -1,12 +1,12 @@
 // Page controller for site/tools/waypoints/index.njk: state + DOM wiring around waypoints.js
 // (logic) and waypointMap.js (SVG map). Waypoints persist in localStorage only.
-import { shortestPath, stringifyWayPoint, getWaypointCommand, serializeWayPoints, deserializeWayPoints } from "./waypoints.js";
+import { shortestPath, stringifyWayPoint, formatCoords, getWaypointCommand, serializeWayPoints, deserializeWayPoints, isModData, modDataSavegames, importModData } from "./waypoints.js";
 import { createWaypointMap } from "./waypointMap.js";
 
 const STORAGE_KEY = "vsWaypointTool";
 const $ = (id) => document.getElementById(id);
 
-let state = { waypoints: [], source: "", destination: "", createdTime: undefined };
+let state = { waypoints: [], source: "", destination: "", createdTime: undefined, spawn: undefined };
 
 function load() {
   try {
@@ -43,6 +43,13 @@ function button(label, onClick) {
   return b;
 }
 
+/** Swaps a button's label for a checkmark for a couple of seconds. */
+function flashCopied(btn) {
+  clearTimeout(btn.copiedTimer);
+  btn.textContent = "\u2713 Copied";
+  btn.copiedTimer = setTimeout(() => { btn.textContent = "Copy command"; }, 2500);
+}
+
 function refresh() {
   const { waypoints } = state;
   if (!waypoints.some((w) => w.id === state.source)) state.source = "";
@@ -52,7 +59,7 @@ function refresh() {
     const select = $(id);
     const current = key ? state[key] : select.value;
     select.replaceChildren(new Option(key ? "-- choose --" : "(none)", ""));
-    for (const w of waypoints) select.append(new Option(stringifyWayPoint(w), w.id));
+    for (const w of waypoints) select.append(new Option(stringifyWayPoint(w, state.spawn), w.id));
     select.value = waypoints.some((w) => w.id === current) ? current : "";
   }
 
@@ -61,7 +68,7 @@ function refresh() {
   body.replaceChildren();
   path.forEach((s, i) => {
     const tr = document.createElement("tr");
-    tr.append(td(String(i + 1)), td(s.from.label), td(s.to.label), td(s.distance === 0 ? "translocator (0)" : s.distance.toFixed(1)));
+    tr.append(td(String(i + 1)), td(stringifyWayPoint(s.from, state.spawn)), td(stringifyWayPoint(s.to, state.spawn)), td(s.distance === 0 ? "translocator (0)" : s.distance.toFixed(1)));
     body.append(tr);
   });
   const total = path.reduce((sum, s) => sum + s.distance, 0);
@@ -76,15 +83,19 @@ function refresh() {
     actions.append(
       button("Edit", () => openDialog(w)),
       button("Center", () => map.focus(w)),
-      button("Copy command", async () => {
-        try { await navigator.clipboard.writeText(getWaypointCommand(w)); setStatus(`Copied: ${getWaypointCommand(w)}`); }
-        catch { setStatus(getWaypointCommand(w)); }
+      button("Copy command", async (e) => {
+        try {
+          await navigator.clipboard.writeText(getWaypointCommand(w));
+          setStatus(`Copied: ${getWaypointCommand(w)}`);
+          flashCopied(e.currentTarget);
+        } catch { setStatus(getWaypointCommand(w)); }
       }),
     );
     const linked = waypoints.find((o) => o.id === w.connection);
-    tr.append(td(w.label), td(`${w.x}, ${w.height}, ${w.z}`), td(linked ? linked.label : ""), td(actions));
+    tr.append(td(w.label), td(formatCoords(w, state.spawn)), td(linked ? stringifyWayPoint(linked, state.spawn) : ""), td(actions));
     rows.append(tr);
   }
+  $("wpCoordsHead").textContent = state.spawn ? "X, Y, Z (relative to spawn)" : "X, Y, Z";
   $("wpEmpty").hidden = waypoints.length > 0;
   map.render({ waypoints, path, sourceId: state.source, destinationId: state.destination });
   save();
@@ -156,7 +167,11 @@ $("wpImport").addEventListener("change", async (e) => {
   e.target.value = "";
   if (!file) return;
   try {
-    state = { ...state, ...deserializeWayPoints(JSON.parse(await file.text())) };
+    const json = JSON.parse(await file.text());
+    if (isModData(json)) return loadModData(json);
+    modData = null;
+    $("wpSaveRow").hidden = true;
+    state = { ...state, ...deserializeWayPoints(json) };
     refresh();
     map.fit(state.waypoints);
     setStatus(`Uploaded ${state.waypoints.length} waypoint(s).`);
@@ -164,6 +179,23 @@ $("wpImport").addEventListener("change", async (e) => {
     setStatus(`Upload failed: ${err.message}`, true);
   }
 });
+// Nf3tData.json from the mod: pick one savegame (the busiest is preselected) to load as the waypoint list.
+let modData = null;
+function loadModData(json) {
+  const saves = modDataSavegames(json);
+  if (!saves.length) throw new Error("This mod data file has no translocators or waypoints in any savegame.");
+  modData = json;
+  $("wpSave").replaceChildren(...saves.map((s) => new Option(`${s.id} (${s.translocators} translocators, ${s.waypoints} waypoints)`, s.id)));
+  $("wpSaveRow").hidden = false;
+  applyModSave();
+}
+function applyModSave() {
+  state = { ...state, ...importModData(modData, $("wpSave").value) };
+  refresh();
+  map.fit(state.waypoints);
+  setStatus(`Imported ${state.waypoints.length} point(s) from savegame ${$("wpSave").value}. Replaces the current list.`);
+}
+$("wpSave").addEventListener("change", applyModSave);
 $("wpClear").addEventListener("click", () => {
   if (!$("wpClear").dataset.armed) {
     $("wpClear").dataset.armed = "1";
@@ -171,7 +203,7 @@ $("wpClear").addEventListener("click", () => {
     setTimeout(() => { delete $("wpClear").dataset.armed; $("wpClear").textContent = "Clear all"; }, 3000);
     return;
   }
-  state = { waypoints: [], source: "", destination: "", createdTime: undefined };
+  state = { waypoints: [], source: "", destination: "", createdTime: undefined, spawn: undefined };
   delete $("wpClear").dataset.armed;
   $("wpClear").textContent = "Clear all";
   refresh();

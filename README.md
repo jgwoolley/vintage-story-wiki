@@ -197,6 +197,12 @@ game source (`anegostudios/vssurvivalmod`, `vsapi` on GitHub), not just the asse
 - **Clothing/painting/tapestry flavor text, when present, is a separate `itemdesc-`/`blockdesc-`
   lookup**, not part of the display name at all (see the Decor catalog section below).
 
+Schematic block names (`models/blockNames.ts`): a `variantgroups` entry that only has `loadFromProperties` (soil's
+fertility/grasscoverage) takes its group code from the property file's own `code`, otherwise the groups collapsed
+(`soil-sparse-sparse`). A variant with no lang key of its own (fences, logs, lava, ...) borrows the name of the sibling
+variant sharing the most group values, since the game names those from the pickable sibling; some blocks (e.g. banners,
+`boilingwater`) have no named sibling and still show the code.
+
 After these fixes, vanilla item/block display names resolve at ~97%. The remaining gaps are real
 upstream data, not pipeline bugs: the attribute-parametrized blocks above, and a larger set of
 BetterRuins' own decorative schematic-only blocks that the mod itself never added lang entries for.
@@ -596,6 +602,26 @@ prints the throw rate, which should stay 0. `tapestryInstances.ts`/`clutterInsta
 fails to decode, but count it in a shared `DecodeStats` (`schematicHeader.ts`) that `index.ts` logs per step
 (`decoded N/N block entities`, plus a `WARNING` with examples if any failed; it never aborts the ingest).
 
+## Block colors (schematic viewers)
+
+The schematic viewer and the per-schematic 3D preview colour blocks from
+`apps/vs-wiki/site/assets/Nf3tBlockColors.json`, a **committed, hand-refreshed data file** (not produced by the
+pipeline). It comes from the BlockColorMod game mod
+(<https://github.com/jgwoolley/translocator-locator-cmd>), which writes `Nf3tBlockColors.json`, the real colour of every block the
+running game has loaded: `"domain:code": { "hex": "#RRGGBB", "alpha": 0 }` (alpha is ignored). The mod's `hex` is actually **BGR** (soil is `#1D3954`, copper `#3B60AA`),
+so `parseBlockColors` swaps red and blue on load; if the mod is ever fixed to write RGB, remove that swap.
+
+- **It must be regenerated when the game version or the mod list changes.** New or renamed blocks (including
+  every block of a newly added mod) are not in the file until you re-run the mod in a game with those mods
+  loaded and replace `Nf3tBlockColors.json` with its output.
+- Blocks missing from the file get a stable hash-derived colour (`stringToColor`), so a stale file looks
+  random for the missing blocks instead of breaking. Lookup is in `libs/vs-schematic/src/blockColors.ts`
+  (`blockColor`; a code without a domain is looked up as `game:<code>`).
+- **Visitors can override it**: the schematic viewer has a "Block colors file" upload. The file is validated,
+  applied immediately, and remembered in the browser's `localStorage` (key `vsWiki.blockColors`), where the
+  viewer and the schematic-page previews read it in preference to the bundled file; "Use bundled colors" clears it.
+- The VS Code extension does not use the file yet; it still uses generated colours.
+
 ## Tools (`/tools/`)
 
 The schematic viewer, WayPoint planner and calendar were merged in (with git history) from the user's
@@ -612,7 +638,11 @@ calculator (see above) and the seed climate lookup were written here. All are fu
 - **`/tools/waypoints/`** — `waypoints.js` (pure logic: distance, Dijkstra route, import/export
   validation), `waypointMap.js` (SVG map), `waypointsPage.js` (DOM wiring); state lives in
   `localStorage`. This replaces the price guide's React/MUI/Cytoscape implementation with no
-  library dependency.
+  library dependency. The upload also accepts the translocator-locator mod's `Nf3tData.json` (keyed by savegame GUID:
+  translocators with target locations, the game's waypoints, spawn, last route; the page asks which savegame to
+  load, see `isModData`/`importModData`; coordinates display relative to the savegame's spawn, and a game waypoint on the
+  same spot as a translocator is dropped in favor of the translocator). The page explains where the mod writes it (`ModData`, e.g.
+  `~/.config/VintagestoryData/ModData` on Linux).
 - **`/tools/climate/`** — `apps/vs-wiki/site/assets/climate.js` (pure logic, no DOM: a port of the game's realistic
   climate generator, i.e. `NoiseClimateRealistic`/`MapLayerClimate`/`Climate.cs`; BigInt for the 64-bit
   LCG, `Math.fround` for C# floats), `climatePage.js` (DOM wiring + a temperature canvas) and

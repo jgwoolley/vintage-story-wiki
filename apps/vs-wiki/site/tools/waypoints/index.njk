@@ -22,7 +22,25 @@ permalink: "{{ lang }}/tools/waypoints/index.html"
   <label class="button-like">Upload JSON <input type="file" id="wpImport" accept=".json" hidden></label>
   <button type="button" id="wpClear">Clear all</button>
 </div>
+<label id="wpSaveRow" class="schematic-field" hidden>Savegame in mod data <select id="wpSave"></select></label>
 <p id="wpStatus" class="muted" role="status"></p>
+
+<details>
+  <summary>Import from the translocator-locator mod</summary>
+  <p class="muted">
+    The <a href="https://github.com/jgwoolley/translocator-locator-cmd">translocator-locator</a> mod writes
+    <code>Nf3tData.json</code> into the game's <code>ModData</code> folder. Upload it with the button above, then
+    choose which savegame to load (savegames are identified by GUID; the one with the most entries is preselected).
+    Translocators become linked waypoints (a game waypoint on the same spot is dropped), alongside the game's own waypoints, the world spawn and your last route. Coordinates are shown relative to the world spawn, as in the game.
+    Default locations:
+  </p>
+  <ul class="muted">
+    <li>Linux: <code>~/.config/VintagestoryData/ModData/</code></li>
+    <li>Windows: <code>%appdata%\VintagestoryData\ModData\</code></li>
+    <li>macOS: <code>~/Library/Application Support/VintagestoryData/ModData/</code></li>
+  </ul>
+  <p class="muted">If you moved your data folder (the game's <code>--dataPath</code> option), look there instead.</p>
+</details>
 
 <div id="wpMap" class="waypoint-map-container"></div>
 <p class="muted">Drag to pan, scroll to zoom, click a dot to edit it. Dashed lines are translocator links; the highlighted line is the current route.</p>
@@ -42,7 +60,7 @@ permalink: "{{ lang }}/tools/waypoints/index.html"
 
 <h2>WayPoints</h2>
 <table>
-  <thead><tr><th>Label</th><th>X, Y, Z</th><th>Translocator to</th><th>Actions</th></tr></thead>
+  <thead><tr><th>Label</th><th id="wpCoordsHead">X, Y, Z</th><th>Translocator to</th><th>Actions</th></tr></thead>
   <tbody id="wpTableBody"></tbody>
 </table>
 

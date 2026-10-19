@@ -23,7 +23,7 @@ eleventyComputed:
   <a href="{{ '/' | url }}{{ schematic.assetPath }}" download>Download (.json.gz, {{ schematic.gzBytes | bytes }})</a>
 </p>
 
-<div id="schematicPreview" class="schematic-preview" data-src="{{ '/' | url }}{{ schematic.assetPath }}" data-gz-bytes="{{ schematic.gzBytes }}" data-name="{{ schematic.relPath }}">
+<div id="schematicPreview" class="schematic-preview" data-block-colors="{{ '/' | url }}assets/Nf3tBlockColors.json" data-src="{{ '/' | url }}{{ schematic.assetPath }}" data-gz-bytes="{{ schematic.gzBytes }}" data-name="{{ schematic.relPath }}">
   <div class="preview-stage" aria-live="polite"></div>
   <p class="preview-status muted">3D preview needs JavaScript.</p>
 </div>

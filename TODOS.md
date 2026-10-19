@@ -1,6 +1,8 @@
 # TODOS
 
 - Would it be possible to render chiseled blocks on the schematic preview?
+- Implement the map renderer into the Map from https://github.com/jgwoolley/vintage-story-launcher
+- Is it possible to get non-guid name for server (IP / host)?
 
 # Phase
 

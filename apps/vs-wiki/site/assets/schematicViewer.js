@@ -8,7 +8,8 @@
 // y = (i >> 20) & 0x3FF (y is up); BlockIds[n] indexes BlockCodes for the block at Indices[n].
 import { createVoxelViewer } from "./voxelViewer.js";
 import { decodeBlockEntity } from "./schematicDecode.js";
-import { assertSchematic, fetchGzipText, isHiddenByDefault, stringToColor, toVoxels } from "./schematicVoxels.js";
+import { assertSchematic, fetchGzipText, isHiddenByDefault, toVoxels } from "./schematicVoxels.js";
+import { blockColor, clearBlockColorsOverride, loadBlockColors, saveBlockColorsOverride } from "./blockColors.js";
 
 const root = document.getElementById("schematicTool");
 const $ = (id) => document.getElementById(id);
@@ -25,6 +26,44 @@ const itemsUrl = root.dataset.itemsUrl;
 // same lang files as the rest of the wiki. Best-effort: the legend falls back to the raw code.
 let blockNames = {};
 fetch(root.dataset.blockNames).then((r) => (r.ok ? r.json() : {})).then((n) => { blockNames = n; renderLegend(); }).catch(() => {});
+
+// Real block colors from the BlockColorMod file (bundled, or the user's uploaded override); blocks it
+// doesn't list get a generated color. See README "Block colors".
+let blockColors = null;
+const colorStatus = $("colorStatus");
+
+function recolor() {
+  for (const [code, meta] of blockMeta) meta.color = blockColor(code, blockColors);
+  renderLegend();
+  restyle();
+}
+
+function setColors(colors, source, note = "") {
+  blockColors = colors;
+  colorStatus.textContent = (colors ? `Block colors: ${source === "uploaded" ? "your uploaded file" : "bundled file"} (${colors.size} blocks). ` : "Block colors: none loaded, using generated colors. ") + note;
+  $("resetColors").hidden = source !== "uploaded";
+  recolor();
+}
+
+loadBlockColors(root.dataset.blockColors).then(({ colors, source }) => setColors(colors, source));
+
+$("colorInput").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  event.target.value = "";
+  if (!file) return;
+  try {
+    const { colors, stored } = saveBlockColorsOverride(await file.text());
+    setColors(colors, "uploaded", stored ? "Remembered in this browser." : "Too large to remember; it applies until you leave this page.");
+  } catch (err) {
+    colorStatus.textContent = `Couldn't use ${file.name}: ${err.message}`;
+  }
+});
+
+$("resetColors").addEventListener("click", async () => {
+  clearBlockColorsOverride();
+  const { colors, source } = await loadBlockColors(root.dataset.blockColors);
+  setColors(colors, source);
+});
 
 function displayName(code) {
   // Exact match first, then drop trailing "-state" segments (orientation, variant) until one matches.
@@ -143,7 +182,7 @@ function load({ data: schematic, text, name }) {
   voxels = toVoxels(schematic);
   blockMeta = new Map();
   for (const v of voxels) {
-    if (!blockMeta.has(v.code)) blockMeta.set(v.code, { color: stringToColor(v.code), visible: !isHiddenByDefault(v.code), count: 0 });
+    if (!blockMeta.has(v.code)) blockMeta.set(v.code, { color: blockColor(v.code, blockColors), visible: !isHiddenByDefault(v.code), count: 0 });
     blockMeta.get(v.code).count++;
   }
   currentLayer = -1;

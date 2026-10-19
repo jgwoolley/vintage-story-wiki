@@ -17,7 +17,7 @@ permalink: "{{ lang }}/tools/schematic/index.html"
   block-entity attributes.
 </p>
 
-<div class="schematic-tool" id="schematicTool" data-samples-base="{{ '/' | url }}assets/schematics/" data-world-base="{{ '/' | url }}assets/schematics/world/" data-schematics-url="{{ ('/' ~ lang ~ '/') | url }}schematics/" data-items-url="{{ ('/' ~ lang ~ '/') | url }}items/" data-block-names="{{ '/' | url }}assets/blockNames.json">
+<div class="schematic-tool" id="schematicTool" data-samples-base="{{ '/' | url }}assets/schematics/" data-world-base="{{ '/' | url }}assets/schematics/world/" data-schematics-url="{{ ('/' ~ lang ~ '/') | url }}schematics/" data-items-url="{{ ('/' ~ lang ~ '/') | url }}items/" data-block-colors="{{ '/' | url }}assets/Nf3tBlockColors.json" data-block-names="{{ '/' | url }}assets/blockNames.json">
   <div id="loadingOverlay" class="schematic-loading" hidden>
     <div class="spinner"></div>
     <div id="loadingText">Processing schematic...</div>
@@ -79,6 +79,15 @@ permalink: "{{ lang }}/tools/schematic/index.html"
       <button type="button" id="showAll">Show All</button>
       <button type="button" id="hideAll">Hide All</button>
       <button type="button" id="resetView">Reset view</button>
+    </div>
+    <div class="control-block">
+      <label class="schematic-dropzone" for="colorInput">
+        <strong>Block colors file</strong>
+        <span class="muted">Upload a newer <code>Nf3tBlockColors.json</code> from the BlockColorMod to use it instead of the bundled one</span>
+        <input type="file" id="colorInput" accept=".json,application/json" hidden>
+      </label>
+      <p id="colorStatus" class="muted" role="status">Block colors: loading...</p>
+      <button type="button" id="resetColors" hidden>Use bundled colors</button>
     </div>
     <div id="legend"></div>
   </aside>

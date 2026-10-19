@@ -1,7 +1,8 @@
 import type { AssetIndex, LoadedAsset } from "./types.js";
 
 interface VariantGroup {
-  code: string;
+  /** Optional when `loadFromProperties` is set: the game then uses the property file's own `code` (soil's fertility/grasscoverage groups). */
+  code?: string;
   states?: string[];
   loadFromProperties?: string; // e.g. "block/wood" -> assets/<domain>/worldproperties/block/wood.json
 }
@@ -22,23 +23,29 @@ export function globToRegExp(pattern: string): RegExp {
   return new RegExp(`^${escaped}$`);
 }
 
-function worldPropertyStates(index: AssetIndex, domain: string, propPath: string): string[] {
+function worldProperty(index: AssetIndex, domain: string, propPath: string): { code?: string; variants: Record<string, unknown>[] } | undefined {
   // propPath is like "block/wood" -- try the variant's own domain first, then vanilla survival as fallback.
   for (const d of [domain, "survival", "game"]) {
     const asset = index.get(`${d}:worldproperties/${propPath}.json`);
     if (!asset) continue;
-    const json = asset.json as { variants?: Record<string, unknown>[] };
+    const json = asset.json as { code?: string; variants?: Record<string, unknown>[] };
     if (!Array.isArray(json.variants)) continue;
-    return json.variants
-      .map((v) => (v.Code ?? v.code) as string | undefined)
-      .filter((v): v is string => typeof v === "string");
+    return { code: json.code, variants: json.variants };
   }
-  return [];
+  return undefined;
+}
+
+function groupCode(index: AssetIndex, domain: string, group: VariantGroup): string {
+  if (group.code) return group.code;
+  const prop = group.loadFromProperties ? worldProperty(index, domain, group.loadFromProperties) : undefined;
+  return prop?.code ?? group.loadFromProperties?.split("/").pop() ?? "";
 }
 
 function resolveGroupStates(index: AssetIndex, domain: string, group: VariantGroup): string[] {
   const inline = group.states ?? [];
-  const fromProps = group.loadFromProperties ? worldPropertyStates(index, domain, group.loadFromProperties) : [];
+  const fromProps = (group.loadFromProperties ? worldProperty(index, domain, group.loadFromProperties)?.variants ?? [] : [])
+    .map((v) => (v.Code ?? v.code) as string | undefined)
+    .filter((v): v is string => typeof v === "string");
   return [...new Set([...inline, ...fromProps])];
 }
 
@@ -91,9 +98,9 @@ export function expandVariants(index: AssetIndex, categoryPrefixes: string[]): C
     const allowList = toMatchers(json.allowedVariants);
     const skipList = toMatchers(json.skipVariants);
 
-    const resolvedGroups = groups.map((g) => ({ code: g.code, states: resolveGroupStates(index, asset.domain, g) }));
+    const resolvedGroups = groups.map((g) => ({ code: groupCode(index, asset.domain, g), states: resolveGroupStates(index, asset.domain, g) }));
     for (const combo of cartesian(resolvedGroups)) {
-      const suffix = groups.map((g) => combo[g.code]).join("-");
+      const suffix = resolvedGroups.map((g) => combo[g.code]).join("-");
       const code = suffix ? `${baseCode}-${suffix}` : baseCode;
       if (allowList && !allowList.some((re) => re.test(code))) continue;
       if (skipList && skipList.some((re) => re.test(code))) continue;

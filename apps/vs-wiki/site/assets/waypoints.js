@@ -49,8 +49,13 @@ export function shortestPath(waypoints, sourceId, destinationId) {
   return steps;
 }
 
-export function stringifyWayPoint(w) {
-  return `${w.label} (${w.x}, ${w.height}, ${w.z})`;
+/** "X, Y, Z" for display: relative to `spawn` ({x, y, z}, as the game shows coordinates) when given, else absolute. */
+export function formatCoords(w, spawn) {
+  return spawn ? `${w.x - spawn.x}, ${w.height - spawn.y}, ${w.z - spawn.z}` : `${w.x}, ${w.height}, ${w.z}`;
+}
+
+export function stringifyWayPoint(w, spawn) {
+  return `${w.label} (${formatCoords(w, spawn)})`;
 }
 
 /** The in-game chat command that recreates this waypoint. */
@@ -59,12 +64,13 @@ export function getWaypointCommand({ icon, height, pinned, color, label, x, z })
 }
 
 /** Serialized shape (what Download writes / Upload reads). */
-export function serializeWayPoints({ waypoints, source, destination, createdTime }) {
+export function serializeWayPoints({ waypoints, source, destination, createdTime, spawn }) {
   return {
     createdTime: createdTime ?? new Date().toISOString(),
     modifiedTime: new Date().toISOString(),
     source,
     destination,
+    spawn,
     waypoints: waypoints.map((w) => ({ ...w })),
   };
 }
@@ -96,5 +102,75 @@ export function deserializeWayPoints(json) {
     };
   });
   for (const w of waypoints) if (w.connection && !ids.has(w.connection)) w.connection = undefined;
-  return { waypoints, source: json.source, destination: json.destination, createdTime: json.createdTime };
+  return { waypoints, source: json.source, destination: json.destination, createdTime: json.createdTime,
+    spawn: [json.spawn?.x, json.spawn?.y, json.spawn?.z].every(isNum) ? json.spawn : undefined };
+}
+
+// ---- Mod data (Nf3tData.json) ----
+// The translocator-locator mod (https://github.com/jgwoolley/translocator-locator-cmd) writes
+// Nf3tData.json into the game's ModData folder: everything is keyed by savegame GUID.
+//   TranslocatorsPerSavegame[guid]       [{ Position: {X,Y,Z}, TargetLocation: {X,Y,Z} | null }]
+//   WayPointsPerSavegame[guid]           [{ Name, CodePath, Icon, Color, Pos: {X, Z, InternalY} }]
+//   DefaultSpawnPositionPerSavegame[guid] {X,Y,Z}
+//   LastTranslocatorPathPerSavegame[guid] { StartPos, GoalPos }
+// One savegame at a time becomes the planner's waypoint list.
+
+/** True for the mod's Nf3tData.json shape (as opposed to this tool's own export). */
+export function isModData(json) {
+  return Boolean(json && typeof json === "object" && !Array.isArray(json) && (json.TranslocatorsPerSavegame || json.WayPointsPerSavegame));
+}
+
+/** Savegames in the mod data that have anything to import, busiest first: [{ id, translocators, waypoints }]. */
+export function modDataSavegames(json) {
+  const ids = new Set([...Object.keys(json.TranslocatorsPerSavegame ?? {}), ...Object.keys(json.WayPointsPerSavegame ?? {})]);
+  return [...ids]
+    .map((id) => ({ id, translocators: json.TranslocatorsPerSavegame?.[id]?.length ?? 0, waypoints: json.WayPointsPerSavegame?.[id]?.length ?? 0 }))
+    .filter((s) => s.translocators + s.waypoints > 0)
+    .sort((a, b) => b.translocators + b.waypoints - (a.translocators + a.waypoints));
+}
+
+const posKey = (p) => `${p.X},${p.Y},${p.Z}`;
+
+/**
+ * Converts one savegame of mod data into planner state. Translocators become waypoints linked to the
+ * translocator at their TargetLocation (if it was also recorded); the game's own waypoints, the world
+ * spawn and the last route's start/goal are added too, and the route's start/goal preselected. Waypoints on
+ * a translocator are dropped. `spawn` is returned so coordinates can be shown relative to it.
+ */
+export function importModData(json, savegameId) {
+  const waypoints = [];
+  const translocators = json.TranslocatorsPerSavegame?.[savegameId] ?? [];
+  const idAt = new Map(translocators.map((t) => [posKey(t.Position), `translocator:${posKey(t.Position)}`]));
+  for (const t of translocators) {
+    const { X, Y, Z } = t.Position;
+    const id = idAt.get(posKey(t.Position));
+    if (waypoints.some((w) => w.id === id)) continue;
+    waypoints.push({
+      id, label: "Translocator", x: X, z: Z, height: Y, pinned: false, color: "red", icon: "spiral",
+      connection: t.TargetLocation ? idAt.get(posKey(t.TargetLocation)) : undefined,
+    });
+  }
+  // A waypoint sitting on a translocator (the game auto-creates those for static translocators) would just
+  // duplicate it, so only the translocator is kept. Waypoint positions can be off by a block.
+  const onTranslocator = (p) => translocators.some((t) => Math.abs(t.Position.X - p.X) <= 1 && Math.abs(t.Position.Z - p.Z) <= 1 && Math.abs(t.Position.Y - (p.InternalY ?? 0)) <= 2);
+  for (const [i, w] of (json.WayPointsPerSavegame?.[savegameId] ?? []).entries()) {
+    if (onTranslocator(w.Pos)) continue;
+    waypoints.push({
+      id: `waypoint:${i}`, label: w.Name || w.CodePath || `Waypoint ${i + 1}`, x: w.Pos.X, z: w.Pos.Z, height: w.Pos.InternalY ?? 0,
+      pinned: false, color: w.Color || "red", icon: w.Icon || "circle",
+    });
+  }
+  const extra = (id, label, p, icon) => p && waypoints.push({ id, label, x: p.X, z: p.Z, height: p.Y, pinned: false, color: "red", icon });
+  const spawn = json.DefaultSpawnPositionPerSavegame?.[savegameId];
+  extra("spawn", "World spawn", spawn, "home");
+  const last = json.LastTranslocatorPathPerSavegame?.[savegameId];
+  extra("path-start", "Last route start", last?.StartPos, "circle");
+  extra("path-goal", "Last route goal", last?.GoalPos, "circle");
+  return {
+    waypoints,
+    source: last?.StartPos ? "path-start" : "",
+    destination: last?.GoalPos ? "path-goal" : "",
+    createdTime: undefined,
+    spawn: spawn ? { x: spawn.X, y: spawn.Y, z: spawn.Z } : undefined,
+  };
 }
