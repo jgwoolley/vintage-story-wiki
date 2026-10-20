@@ -13,6 +13,8 @@ permalink: "{{ lang }}/build/index.html"
   (download, ingest, site build) took to run.
 </p>
 
+{% if buildInfo.prodWikiUrl %}<p>Production wiki: <a href="{{ buildInfo.prodWikiUrl }}">{{ buildInfo.prodWikiUrl }}</a>{% if not buildInfo.isCi %} <span class="muted">(this is a local build)</span>{% endif %}</p>{% endif %}
+
 <h2>This build</h2>
 {% if buildInfo.isCi %}
   <div class="card">

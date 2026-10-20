@@ -1,12 +1,6 @@
 # TODOS
-
 - Download for extensions
-- Add a way for the "schematic-search" to link back to the exa
-- make known icons selectable via dropdown in "add waypoint" (find them out via game / mod assets)
 - Implement the map renderer into the Map from https://github.com/jgwoolley/vintage-story-launcher
-- Is it possible to get non-guid name for server (IP / host)?
-- none of the clicking behaviors work any more clicking on graph should show you waypoint in table. clicking waypoint in table should open map to that location
-- Have a link to prod site in "build information"
 
 # Phase
 

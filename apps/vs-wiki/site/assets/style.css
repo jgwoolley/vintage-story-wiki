@@ -481,6 +481,7 @@ th.datatable-sorted[data-sort-dir="desc"] .datatable-th-label::after { content: 
 .schematic-viewport canvas { display: block; width: 100%; height: 100%; }
 .schematic-hint { font-size: 0.8em; }
 .schematic-tool #inspector { position: absolute; top: 0.6rem; right: 0.6rem; width: min(18rem, calc(100% - 1.2rem)); max-height: 60%; overflow: auto; }
+.chisel-preview canvas { display: block; width: 100%; height: 100%; } /* without this the canvas keeps its pixel size (twice the box on hi-dpi screens) and the shape is cropped off-center */
 .chisel-preview { height: 14rem; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
 .chisel-materials { border-collapse: collapse; font-size: 0.85em; }
 .chisel-materials th, .chisel-materials td { text-align: left; padding: 0.15rem 0.5rem 0.15rem 0; }
@@ -513,6 +514,10 @@ th.datatable-sorted[data-sort-dir="desc"] .datatable-th-label::after { content: 
 .waypoint-map .wp-node { cursor: pointer; }
 .waypoint-map circle { fill: var(--muted); stroke: var(--fg); stroke-width: 0.5; }
 .waypoint-map circle.wp-onpath { fill: var(--accent); }
+.waypoint-map .wp-selected circle { stroke: var(--accent); stroke-width: 3px; vector-effect: non-scaling-stroke; }
+.waypoint-map .wp-selected text { font-weight: bold; }
+tr.wp-row { cursor: pointer; }
+tr.wp-row-selected td { background: var(--card); box-shadow: inset 0 0 0 9999px color-mix(in srgb, var(--accent) 14%, transparent); }
 .waypoint-map circle.wp-source { fill: #2e8b57; }
 .waypoint-map circle.wp-dest { fill: #c0392b; }
 .waypoint-map text { fill: var(--fg); pointer-events: none; }
@@ -594,3 +599,10 @@ tr:target { outline: 2px solid var(--accent); outline-offset: -2px; }
 .schematic-preview .preview-load { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
 .pager { display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0; }
 .pager[hidden] { display: none; }
+.stage-tabs { display: flex; gap: 0.4rem; margin-bottom: 0.5rem; }
+.stage-pane { position: relative; }
+.stage-pane[hidden] { display: none; }
+#blockDetails table { border-collapse: collapse; font-size: 0.85em; }
+#blockDetails h2, #blockDetails h3 { margin: 0.6rem 0 0.2rem; }
+.settings-list { display: grid; gap: 0.6rem; margin: 0.5rem 0 1rem; }
+.settings-list .check { display: flex; gap: 0.5rem; align-items: baseline; }

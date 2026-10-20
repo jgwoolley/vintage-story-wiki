@@ -20,6 +20,21 @@
         "selector": [{ "filenamePattern": "*.json" }, { "filenamePattern": "*.json.gz" }, { "filenamePattern": "*.pf" }, { "filenamePattern": "**/chiselportfolio/*" }]
       }
     ],
+    "configuration": {
+      "title": "Vintage Story Schematic Preview",
+      "properties": {
+        "vsSchematic.showCenterMarker": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show a marker (a magenta dot with red/green/blue axes) at the center of the previewed shape: the point the camera orbits."
+        },
+        "vsSchematic.showGrid": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show a grid on the y = 0 plane (the bottom of the lowest row of blocks) in the preview."
+        }
+      }
+    },
     "commands": [
       {
         "command": "vsSchematic.openPreview",

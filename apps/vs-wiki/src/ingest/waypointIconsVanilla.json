@@ -1,0 +1,4 @@
+{
+  "_comment": "Vanilla 1.22.7 world map waypoint icons: the file names (minus extension and leading '<number>-') in assets/survival/textures/icons/worldmap/. The dedicated server download that `npm run download` fetches ships no client textures, so the ingest scans for these files and falls back to this list. Refresh it from a full game install when the game adds icons.",
+  "icons": ["circle", "turnip", "grain", "apple", "berries", "mushroom", "bee", "cave", "gear", "gravestone", "home", "ladder", "pick", "propick", "rocks", "ruins", "skull_and_crossbones", "spiral", "star1", "star2", "trader", "tree", "tree2", "vessel", "x"]
+}

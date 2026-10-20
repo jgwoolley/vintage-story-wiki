@@ -663,6 +663,13 @@ calculator (see above) and the seed climate lookup were written here. All are fu
   (`anymat=1`) and turned/mirrored copies (on unless `nosym=1`). Results link to the viewer with `&select=x,y,z`, which
   opens that block's panel. The test fixture `libs/vs-schematic/test/fixtures/wayshrine-pillar-bottom.pf` is a real
   ChiselTools export (from the Wayshrine mod's pillar).
+  The selected block is always drawn (cyan) whatever the block list or floor slider hide, and the page state lives in the
+  query string via `replaceState`: `schematic=`/`sample=` (what is open), `select=x,y,z` (the selected block) and
+  `tab=details`. The stage has two tabs: the 3D schematic, and "Block details" (name, code, position, the chiseled
+  shape with materials/export/equivalent search, the inventory -- `blockEntityInfo.ts`'s `inventoryOf`, each stack linking to
+  an items search -- and the entity's attributes as JSON).
+- **`/tools/chisel-shape/`** — `chiselShapePage.js`: upload a ChiselTools shape file (or open `?shape=&mats=&name=`) and
+  render it with the shared `chiselPreview`. 
 - **`/tools/waypoints/`** — `waypoints.js` (pure logic: distance, Dijkstra route, import/export
   validation), `waypointMap.js` (SVG map), `waypointsPage.js` (DOM wiring); state lives in
   `localStorage`. This replaces the price guide's React/MUI/Cytoscape implementation with no
@@ -671,6 +678,7 @@ calculator (see above) and the seed climate lookup were written here. All are fu
   load, see `isModData`/`importModData`; coordinates display relative to the savegame's spawn, and a game waypoint on the
   same spot as a translocator is dropped in favor of the translocator). The page explains where the mod writes it (`ModData`, e.g.
   `~/.config/VintagestoryData/ModData` on Linux).
+  Clicking a dot selects the waypoint in the table and clicking a table row centres the map on it (the map only takes pointer capture once a drag starts; capturing on pointerdown swallowed clicks on dots). The Add/Edit dialog's icon dropdown is `generated.waypointIcons` (`models/waypointIcons.ts`): the `textures/icons/worldmap/*.svg` names found in vanilla or mod assets plus a committed vanilla list (`waypointIconsVanilla.json`), because the dedicated server download ships no client textures.
 - **`/tools/climate/`** — `apps/vs-wiki/site/assets/climate.js` (pure logic, no DOM: a port of the game's realistic
   climate generator, i.e. `NoiseClimateRealistic`/`MapLayerClimate`/`Climate.cs`; BigInt for the 64-bit
   LCG, `Math.fround` for C# floats), `climatePage.js` (DOM wiring + a temperature canvas) and

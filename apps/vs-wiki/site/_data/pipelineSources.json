@@ -179,5 +179,12 @@
     "listingUrl": "foods/",
     "modelFiles": ["apps/vs-wiki/src/ingest/models/foods.ts"],
     "globs": ["itemtypes/**/*.json and blocktypes/**/*.json (variants with nutritionProps: a numeric satiety and a foodcategory)"]
+  },
+  {
+    "id": "chisel-shape",
+    "title": "Chiseled shape viewer",
+    "listingUrl": "tools/chisel-shape/",
+    "modelFiles": ["libs/vs-schematic/src/chiselExport.ts", "libs/vs-schematic/src/chisel.ts", "libs/vs-schematic/src/chiselPreview.ts", "apps/vs-wiki/site/assets/chiselShapePage.js", "apps/vs-wiki/site/tools/chisel-shape/index.njk", "libs/vs-schematic/test/chisel.test.ts"],
+    "globs": ["No game asset feeds this tool: it decodes the ChiselTools mod's own shape file format (read from the mod's compiled code)"]
   }
 ]

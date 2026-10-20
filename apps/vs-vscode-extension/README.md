@@ -8,6 +8,7 @@ voxel model, without leaving VS Code.
 - `meta-filler` (a worldgen marker) starts hidden, like on the wiki; tick **Show meta-filler** to see it.
 - An **Up to Y** slider peels the structure away from the top.
 - Also opens QPTech ChiselTools shape files (saved with `.pf save`, in the `chiselportfolio` folder, or named `*.pf`): the chiseled block's shape in 3D plus its materials.
+- Settings (**File > Preferences > Settings**, search "Vintage Story Schematic Preview"): `vsSchematic.showCenterMarker` draws a marker at the middle of the shape (the camera's orbit point) and `vsSchematic.showGrid` draws a grid on the y = 0 plane. Both apply to open previews immediately.
 - Reloads when the file changes on disk.
 
 ## Using it

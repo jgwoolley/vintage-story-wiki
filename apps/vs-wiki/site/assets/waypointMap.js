@@ -11,8 +11,8 @@ function svg(tag, attrs = {}, text) {
 }
 
 /**
- * Mount a map into `container`. Returns { render(state), focus(waypoint) }.
- * `onSelect(waypoint)` fires when a dot is clicked.
+ * Mount a map into `container`. Returns { render(state), focus(waypoint), fit(waypoints) }.
+ * `onSelect(waypoint)` fires when a dot is clicked; `render` takes an optional `selectedId` to highlight.
  */
 export function createWaypointMap(container, { onSelect }) {
   const root = svg("svg", { class: "waypoint-map", role: "img", "aria-label": "Waypoint map" });
@@ -33,22 +33,32 @@ export function createWaypointMap(container, { onSelect }) {
     view.span = Math.min(1e7, Math.max(5, view.span * (e.deltaY > 0 ? 1.15 : 1 / 1.15)));
     redrawLabels();
   }, { passive: false });
-  root.addEventListener("pointerdown", (e) => { drag = { x: e.clientX, y: e.clientY }; root.setPointerCapture(e.pointerId); });
+  // Pointer capture is only taken once the pointer has actually moved: capturing on pointerdown redirects
+  // the click that follows to the <svg> itself, so a plain click on a waypoint never reached the dot.
+  const DRAG_THRESHOLD = 4;
+  root.addEventListener("pointerdown", (e) => { drag = { x: e.clientX, y: e.clientY, moved: false, id: e.pointerId }; });
   root.addEventListener("pointermove", (e) => {
     if (!drag) return;
+    if (!drag.moved) {
+      if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < DRAG_THRESHOLD) return;
+      drag.moved = true;
+      root.setPointerCapture(drag.id);
+    }
     const scale = view.span / (container.clientHeight || 1);
     view.cx -= (e.clientX - drag.x) * scale;
     view.cz -= (e.clientY - drag.y) * scale;
-    drag = { x: e.clientX, y: e.clientY };
+    drag = { ...drag, x: e.clientX, y: e.clientY };
     applyView();
   });
-  root.addEventListener("pointerup", () => (drag = null));
+  const endDrag = () => (drag = null);
+  root.addEventListener("pointerup", endDrag);
+  root.addEventListener("pointercancel", endDrag);
 
   let last = null;
   const redrawLabels = () => last && render(last);
 
-  function render({ waypoints, path = [], sourceId, destinationId }) {
-    last = { waypoints, path, sourceId, destinationId };
+  function render({ waypoints, path = [], sourceId, destinationId, selectedId }) {
+    last = { waypoints, path, sourceId, destinationId, selectedId };
     root.replaceChildren();
     applyView();
     const unit = view.span / (container.clientHeight || 400); // user units per CSS pixel
@@ -62,7 +72,7 @@ export function createWaypointMap(container, { onSelect }) {
       root.append(svg("line", { x1: s.from.x, y1: s.from.z, x2: s.to.x, y2: s.to.z, class: "wp-path", "stroke-width": unit * 3 }));
     }
     for (const w of waypoints) {
-      const g = svg("g", { class: "wp-node", tabindex: 0, role: "button", "aria-label": w.label });
+      const g = svg("g", { class: `wp-node${w.id === selectedId ? " wp-selected" : ""}`, tabindex: 0, role: "button", "aria-label": w.label });
       const cls = w.id === sourceId ? "wp-source" : w.id === destinationId ? "wp-dest" : onPath.has(w.id) ? "wp-onpath" : "";
       g.append(svg("circle", { cx: w.x, cy: w.z, r: unit * 7, class: cls }));
       g.append(svg("text", { x: w.x + unit * 10, y: w.z + unit * 4, "font-size": unit * 12 }, w.label));

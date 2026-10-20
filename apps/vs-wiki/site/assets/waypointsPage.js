@@ -3,10 +3,24 @@
 import { shortestPath, stringifyWayPoint, formatCoords, getWaypointCommand, serializeWayPoints, deserializeWayPoints, isModData, modDataSavegames, importModData } from "./waypoints.js";
 import { createWaypointMap } from "./waypointMap.js";
 
+// The waypoint icons the in-game map offers, from the game's and mods' assets (generated at build time).
+const iconSelect = () => document.getElementById("wpIcon");
+fetch(document.getElementById("wpMap").dataset.icons)
+  .then((r) => (r.ok ? r.json() : []))
+  .then((icons) => {
+    const select = iconSelect();
+    const current = select.value;
+    select.replaceChildren(...icons.map((i) => new Option(i.source === "game" ? i.code : `${i.code} (${i.source})`, i.code)));
+    if (!icons.some((i) => i.code === "circle")) select.prepend(new Option("circle", "circle"));
+    select.value = current || "circle";
+  })
+  .catch(() => {});
+
 const STORAGE_KEY = "vsWaypointTool";
 const $ = (id) => document.getElementById(id);
 
 let state = { waypoints: [], source: "", destination: "", createdTime: undefined, spawn: undefined };
+let selectedId = null; // the highlighted waypoint: a dot clicked on the map, or a table row clicked
 
 function load() {
   try {
@@ -27,7 +41,18 @@ function setStatus(msg, isError = false) {
   el.classList.toggle("schematic-error", isError);
 }
 
-const map = createWaypointMap($("wpMap"), { onSelect: (w) => openDialog(w) });
+// Clicking a dot on the map shows that waypoint in the table; clicking a table row opens the map at it.
+const map = createWaypointMap($("wpMap"), { onSelect: (w) => select(w, { table: true }) });
+
+function select(w, { table = false, centerMap = false } = {}) {
+  selectedId = w.id;
+  if (centerMap) {
+    map.focus(w);
+    $("wpMap").scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+  refresh();
+  if (table) document.querySelector("#wpTableBody tr.wp-row-selected")?.scrollIntoView({ block: "center", behavior: "smooth" });
+}
 
 function td(content) {
   const cell = document.createElement("td");
@@ -82,7 +107,7 @@ function refresh() {
     actions.className = "wp-actions";
     actions.append(
       button("Edit", () => openDialog(w)),
-      button("Center", () => map.focus(w)),
+      button("Center", () => select(w, { centerMap: true })),
       button("Copy command", async (e) => {
         try {
           await navigator.clipboard.writeText(getWaypointCommand(w));
@@ -92,12 +117,16 @@ function refresh() {
       }),
     );
     const linked = waypoints.find((o) => o.id === w.connection);
+    tr.className = w.id === selectedId ? "wp-row wp-row-selected" : "wp-row";
+    tr.addEventListener("click", (e) => {
+      if (!e.target.closest("button, a")) select(w, { centerMap: true });
+    });
     tr.append(td(w.label), td(formatCoords(w, state.spawn)), td(linked ? stringifyWayPoint(linked, state.spawn) : ""), td(actions));
     rows.append(tr);
   }
   $("wpCoordsHead").textContent = state.spawn ? "X, Y, Z (relative to spawn)" : "X, Y, Z";
   $("wpEmpty").hidden = waypoints.length > 0;
-  map.render({ waypoints, path, sourceId: state.source, destinationId: state.destination });
+  map.render({ waypoints, path, sourceId: state.source, destinationId: state.destination, selectedId });
   save();
 }
 
@@ -112,7 +141,10 @@ function openDialog(w) {
   $("wpZ").value = w?.z ?? 0;
   $("wpHeight").value = w?.height ?? 0;
   $("wpColor").value = w?.color ?? "red";
-  $("wpIcon").value = w?.icon ?? "circle";
+  const icon = w?.icon ?? "circle";
+  // A waypoint from elsewhere may use an icon this build doesn't list; keep it selectable rather than silently changing it.
+  if (![...$("wpIcon").options].some((o) => o.value === icon)) $("wpIcon").append(new Option(icon, icon));
+  $("wpIcon").value = icon;
   $("wpPinned").checked = w?.pinned ?? false;
   $("wpDelete").hidden = !w;
   refresh();

@@ -49,10 +49,22 @@ class SchematicEditorProvider implements vscode.CustomReadonlyEditorProvider<Sch
       }
     };
 
+    const sendSettings = () => {
+      const config = vscode.workspace.getConfiguration("vsSchematic");
+      void post({ type: "settings", centerMarker: config.get<boolean>("showCenterMarker", false), grid: config.get<boolean>("showGrid", false) });
+    };
+
     // The webview's script loads asynchronously, so it asks for the file instead of being pushed it.
     panel.webview.onDidReceiveMessage((message: WebviewMessage) => {
-      if (message.type === "ready") void send();
+      if (message.type === "ready") {
+        sendSettings();
+        void send();
+      }
     });
+    const configWatcher = vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration("vsSchematic")) sendSettings();
+    });
+    panel.onDidDispose(() => configWatcher.dispose());
 
     // Reload when the file changes on disk (e.g. it's regenerated or re-saved from the game).
     const watcher = vscode.workspace.createFileSystemWatcher(

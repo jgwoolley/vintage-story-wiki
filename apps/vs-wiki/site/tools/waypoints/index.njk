@@ -46,8 +46,8 @@ permalink: "{{ lang }}/tools/waypoints/index.html"
   <p class="muted">If you moved your data folder (the game's <code>--dataPath</code> option), look there instead.</p>
 </details>
 
-<div id="wpMap" class="waypoint-map-container"></div>
-<p class="muted">Drag to pan, scroll to zoom, click a dot to edit it. Dashed lines are translocator links; the highlighted line is the current route.</p>
+<div id="wpMap" class="waypoint-map-container" data-icons="{{ '/' | url }}assets/waypointIcons.json"></div>
+<p class="muted">Drag to pan, scroll to zoom, click a dot to find it in the table below (use its Edit button to change it), or click a row in the table to centre the map on it. Dashed lines are translocator links; the highlighted line is the current route.</p>
 <p id="wpEmpty" class="muted">No waypoints yet &mdash; add one to get started.</p>
 
 <h2>Route</h2>
@@ -77,7 +77,7 @@ permalink: "{{ lang }}/tools/waypoints/index.html"
     <label class="schematic-field">Height (Y) <input type="number" id="wpHeight" step="any"></label>
     <label class="schematic-field">Translocator link <select id="wpConnection"></select></label>
     <label class="schematic-field">Color <input type="text" id="wpColor"></label>
-    <label class="schematic-field">Icon <input type="text" id="wpIcon"></label>
+    <label class="schematic-field">Icon <select id="wpIcon"><option value="circle">circle</option></select></label>
     <label><input type="checkbox" id="wpPinned"> Pinned</label>
     <div class="button-group">
       <button type="submit">Save</button>

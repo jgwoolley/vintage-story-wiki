@@ -1,0 +1,22 @@
+---
+title: Settings - Vintage Story Wiki
+description: Display options for the wiki's 3D views, remembered in this browser.
+layout: layouts/base.njk
+permalink: "{{ lang }}/settings/index.html"
+---
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Settings"}]) }}
+<h1>Settings</h1>
+<p class="muted">Options for the wiki's own pages. They are stored in this browser only (<code>localStorage</code>) and apply to every 3D view straight away.</p>
+
+<h2>3D views</h2>
+<p class="muted">For the schematic viewer, the schematic previews, chiseled shapes and recipe patterns.</p>
+<div class="settings-list">
+  <label class="check"><input type="checkbox" id="setCenterMarker"> Show a marker at the center of each shape <span class="muted">(a magenta dot with red/green/blue axes at the middle of the model: the point the camera orbits)</span></label>
+  <label class="check"><input type="checkbox" id="setGrid"> Show a grid at y = 0 <span class="muted">(the bottom of the lowest row of blocks; 1 block per square, 16 on very large structures)</span></label>
+</div>
+<p id="setStatus" class="muted" role="status"></p>
+
+<div id="setPreview" class="chisel-preview" aria-label="Preview of a chiseled pillar with the current settings"></div>
+
+<script type="module" src="{{ '/' | url }}assets/settingsPage.js"></script>

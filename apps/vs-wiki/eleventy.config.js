@@ -76,7 +76,10 @@ export default function (eleventyConfig) {
     const branch = resolveBranch();
     const { commitMessage, commitAuthor, commitAuthorEmail } = resolveCommitDetails(commitSha);
     const runId = process.env.GITHUB_RUN_ID;
+    // The production wiki's address comes from vs-manifest.json, so a local build can still link to it.
+    const prodWikiUrl = JSON.parse(readFileSync("vs-manifest.json", "utf8")).prodWikiUrl;
     return {
+      prodWikiUrl,
       utcIso: new Date().toISOString(),
       isCi,
       repoSlug,

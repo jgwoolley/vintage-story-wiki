@@ -9,6 +9,8 @@
 import { createVoxelViewer } from "./voxelViewer.js";
 import { decodeBlockEntity } from "./schematicDecode.js";
 import { decodeChiseledBlock, shapeToParams } from "./chisel.js";
+import { inventoryOf } from "./blockEntityInfo.js";
+import { loadViewerSettings, saveViewerSettings, watchViewerSettings } from "./viewerSettings.js";
 import { materialsSection } from "./chiselDetails.js";
 import { createChiselPreview } from "./chiselPreview.js";
 import { PORTFOLIO_FOLDER, chiselToolsPortfolioXml, portfolioFileName } from "./chiselExport.js";
@@ -20,7 +22,7 @@ const $ = (id) => document.getElementById(id);
 const els = {
   viewport: $("viewport"), legend: $("legend"), slider: $("layerSlider"), layerLabel: $("layerLabel"),
   search: $("searchInput"), info: $("schematicInfo"), size: $("sizeValue"), error: $("schematicError"),
-  overlay: $("loadingOverlay"), inspector: $("inspector"), traits: $("traitContent"),
+  overlay: $("loadingOverlay"), inspector: $("inspector"), traits: $("traitContent"), details: $("blockDetails"),
 };
 const samplesBase = root.dataset.samplesBase;
 const worldBase = root.dataset.worldBase; // the wiki's own worldgen schematics, gzip-compressed (see src/ingest/schematicFiles.ts)
@@ -85,6 +87,11 @@ let currentLayer = -1;
 let layerMode = "below"; // "single" = only floor N, "below" = floor N and every floor beneath it
 let selectedIndex = -1;
 let searchQuery = "";
+let initialUrlState = (() => {
+  const params = new URLSearchParams(location.search);
+  const select = (params.get("select") || "").split(",").map(Number);
+  return { select: select.length === 3 && select.every(Number.isInteger) ? select : null, tab: params.get("tab") };
+})();
 let current = null; // { text, name } of the loaded schematic, so it can be downloaded back out unchanged
 
 function showError(message) {
@@ -95,10 +102,10 @@ function showError(message) {
 function restyle() {
   if (!viewer) return;
   viewer.setStyle((voxel, index) => {
+    if (index === selectedIndex) return { color: "#00ffff" }; // the selected block shows whatever the block list or floor slider say
     if (!blockMeta.get(voxel.code).visible) return null;
     if (currentLayer !== -1 && (layerMode === "below" ? voxel.y > currentLayer : voxel.y !== currentLayer)) return null;
-    const color = blockMeta.get(voxel.code).color;
-    return index === selectedIndex ? { color: "#00ffff" } : { color };
+    return { color: blockMeta.get(voxel.code).color };
   });
 }
 
@@ -143,9 +150,12 @@ function setAllVisible(visible) {
   renderLegend();
 }
 
-// The small 3D preview inside the inspector, for chiseled blocks. One at a time.
+// ---- The selected block: a short summary in the sidebar panel, everything else on the "Block details" tab ----
+
+// The small 3D preview of a chiseled block on the details tab. One at a time.
 let chiselViewer = null;
-let requestedSchematic = null; // the wiki schematic being viewed (`?schematic=`), if any
+let sourceSchematic = null; // `<domain>/<relPath>` of the wiki schematic being viewed (`?schematic=`), null for uploads and samples
+let activeTab = "schematic";
 
 function disposeChiselViewer() {
   chiselViewer?.dispose();
@@ -160,22 +170,87 @@ function downloadText(filename, text) {
   setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }
 
-// What a chiseled block is made of (materials table), its shape (3D preview of the cuboids) and the
-// ChiselTools export. Cuboids live on a 16x16x16 grid, drawn with x/z/y centers and sizes in 1/16ths.
-function renderChiseledBlock(shape, voxel) {
+// The page's state lives in the query string, kept current with replaceState (no history entry per click):
+// `schematic`/`sample` (what is open), `select=x,y,z` (the selected block) and `tab=details`.
+function updateUrl(changes = {}) {
+  const params = new URLSearchParams(location.search);
+  if (selectedIndex >= 0) params.set("select", `${voxels[selectedIndex].x},${voxels[selectedIndex].y},${voxels[selectedIndex].z}`);
+  else params.delete("select");
+  if (activeTab === "details") params.set("tab", "details");
+  else params.delete("tab");
+  for (const [key, value] of Object.entries(changes)) {
+    if (value === null) params.delete(key);
+    else params.set(key, value);
+  }
+  const query = params.toString();
+  window.history.replaceState(null, "", `${location.pathname}${query ? `?${query}` : ""}`);
+}
+
+function setTab(tab) {
+  activeTab = tab;
+  $("schematicPane").hidden = tab !== "schematic";
+  $("detailsPane").hidden = tab !== "details";
+  for (const id of ["tabSchematic", "tabDetails"]) {
+    const selected = (id === "tabDetails") === (tab === "details");
+    $(id).setAttribute("aria-selected", String(selected));
+    $(id).classList.toggle("active", selected);
+  }
+  updateUrl();
+}
+
+/** The decoded entity of a block: `{ attrs, json }`, `{ error }`, or null when the block has no entity. */
+function entityOf(voxel) {
+  const entity = data.BlockEntities?.[voxel.packed];
+  const ascii = typeof entity === "string" ? entity : entity?.Data || entity?.Attributes;
+  if (!ascii) return null;
+  try {
+    const attrs = decodeBlockEntity(ascii);
+    return { attrs, json: JSON.stringify(attrs, (k, v) => (typeof v === "bigint" ? v.toString() : v), 2) };
+  } catch (err) {
+    console.error(err);
+    return { error: err.message };
+  }
+}
+
+const bareCode = (code) => code.replace(/^[^:]+:/, "");
+// Both link to the wiki's items search for the code. Item pages are keyed by the asset folder
+// ("survival"), not the schematic's "game:" domain, so search on the bare code instead.
+const itemsLinkFor = (code) => `${itemsUrl}?q=${encodeURIComponent(bareCode(code))}`;
+
+function traitRows(container, voxel, shape) {
+  const trait = (label, value, href) => {
+    const row = textEl("div", "trait", "");
+    row.append(textEl("b", "", label), document.createElement("br"), href ? linkEl(href, value) : value);
+    container.append(row);
+  };
+  if (shape?.name) trait("Name:", shape.name, `${root.dataset.searchUrl}?${new URLSearchParams({ chiselname: shape.name })}`);
+  trait("Block:", displayName(voxel.code), itemsLinkFor(voxel.code));
+  trait("Code:", voxel.code, itemsLinkFor(voxel.code));
+  trait("Position:", `X:${voxel.x}, Y:${voxel.y}, Z:${voxel.z}`);
+}
+
+// The sidebar panel: just the basics, plus a way to the details tab.
+function showInspector(voxel) {
+  const entity = entityOf(voxel);
+  const shape = entity?.attrs ? decodeChiseledBlock(entity.attrs, data.BlockCodes ?? {}) : null;
+  els.traits.replaceChildren();
+  traitRows(els.traits, voxel, shape);
+  const more = textEl("button", "", "Block details");
+  more.type = "button";
+  more.addEventListener("click", () => setTab("details"));
+  els.traits.append(more);
+  els.inspector.hidden = false;
+}
+
+// What a chiseled block is made of and its shape, with the ChiselTools export and the equivalent-block search.
+function renderChiseledBlock(container, shape, voxel) {
   const preview = textEl("div", "chisel-preview", "");
   const reset = textEl("button", "", "Reset view");
   reset.type = "button";
   reset.addEventListener("click", () => chiselViewer?.resetView());
-  if (shape.name) {
-    const nameRow = textEl("div", "trait", "");
-    nameRow.append(textEl("b", "", "Name:"), document.createElement("br"),
-      linkEl(`${root.dataset.searchUrl}?${new URLSearchParams({ chiselname: shape.name })}`, shape.name));
-    els.traits.append(nameRow);
-  }
-  els.traits.append(textEl("div", "trait", "Chiseled shape:"), preview, reset);
+  container.append(textEl("h3", "", "Chiseled shape"), preview, reset);
   chiselViewer = createChiselPreview(preview, shape, (code) => blockColor(code, blockColors));
-  els.traits.append(...materialsSection(shape, { colorOf: (code) => blockColor(code, blockColors), nameOf: displayName, itemsUrl }));
+  container.append(...materialsSection(shape, { colorOf: (code) => blockColor(code, blockColors), nameOf: displayName, itemsUrl }));
 
   const name = portfolioFileName(shape.name || `${displayName(voxel.code)}-${voxel.x}-${voxel.y}-${voxel.z}`);
   const button = textEl("button", "", "Export for ChiselTools");
@@ -187,67 +262,87 @@ function renderChiseledBlock(shape, voxel) {
     ...(shape.name && { name: shape.name }),
     block: voxel.code,
     at: `${voxel.x},${voxel.y},${voxel.z}`,
-    ...(requestedSchematic && { schematic: requestedSchematic }),
+    ...(sourceSchematic && { schematic: sourceSchematic }),
   };
   const findLink = textEl("p", "", "");
   findLink.append(linkEl(`${root.dataset.searchUrl}?${new URLSearchParams(params)}`, "Find equivalent chiseled blocks in all schematics \u2192"));
-  els.traits.append(findLink, button, textEl("p", "muted chisel-export-help",
+  container.append(findLink, button, textEl("p", "muted chisel-export-help",
     `Saves a file named "${name}" (no extension) for QPTech's ChiselTools mod. Put it in the "${PORTFOLIO_FOLDER}" folder inside your VintagestoryData folder (Windows: %appdata%\\VintagestoryData, Linux: ~/.config/VintagestoryData, macOS: ~/Library/Application Support/VintagestoryData); the mod creates the folder the first time you run .pf save. Then hold a Pantograph and run .pf load ${name}, or look at a chiseled block and press P to browse your portfolio.`));
 }
 
-function closeInspector() {
-  disposeChiselViewer();
-  els.inspector.hidden = true;
-  selectedIndex = -1;
-  restyle();
+// The stacks in the block's inventory (chests, shelves, ...), each linking to its items page search.
+function renderInventory(container, attrs) {
+  const entries = inventoryOf(attrs, data.BlockCodes ?? {}, data.ItemCodes ?? {});
+  if (!entries.length) return;
+  container.append(textEl("h3", "", `Inventory (${entries.length} stack${entries.length === 1 ? "" : "s"})`));
+  const table = document.createElement("table");
+  const head = document.createElement("tr");
+  head.append(...["Slot", "Item", "Count", "Attributes"].map((h) => textEl("th", "", h)));
+  table.append(head);
+  for (const e of entries) {
+    const row = document.createElement("tr");
+    const item = document.createElement("td");
+    if (e.code) item.append(linkEl(itemsLinkFor(e.code), displayName(e.code)), " ", textEl("code", "muted", e.code));
+    else item.append(textEl("span", "muted", `unknown ${e.kind} (id not in the schematic)`));
+    const extra = Object.keys(e.attributes).length ? JSON.stringify(e.attributes, (k, v) => (typeof v === "bigint" ? v.toString() : v)) : "";
+    row.append(textEl("td", "", e.path), item, textEl("td", "", String(e.stackSize)), textEl("td", "muted", extra));
+    table.append(row);
+  }
+  container.append(table);
 }
 
-function showInspector(voxel) {
+// The "Block details" tab: everything known about the selected block.
+function renderDetails(voxel) {
   disposeChiselViewer();
-  const entity = data.BlockEntities?.[voxel.packed];
-  const ascii = typeof entity === "string" ? entity : entity?.Data || entity?.Attributes;
-  els.traits.replaceChildren();
-  const trait = (label, value, href) => {
-    const row = textEl("div", "trait", "");
-    let content = value;
-    if (href) {
-      content = document.createElement("a");
-      content.href = href;
-      content.textContent = value;
-    }
-    row.append(textEl("b", "", label), document.createElement("br"), content);
-    els.traits.append(row);
-  };
-  // Both link to the wiki's items search for this block. Item pages are keyed by the asset folder
-  // ("survival"), not the schematic's "game:" domain, so search on the bare code instead.
-  const itemsLink = `${itemsUrl}?q=${encodeURIComponent(voxel.code.replace(/^[^:]+:/, ""))}`;
-  trait("Block:", displayName(voxel.code), itemsLink);
-  trait("Code:", voxel.code, itemsLink);
-  trait("Position:", `X:${voxel.x}, Y:${voxel.y}, Z:${voxel.z}`);
-  if (ascii) {
+  const container = els.details;
+  container.replaceChildren();
+  if (!voxel) {
+    container.append(textEl("p", "muted", "Click a block in the schematic to see its details here."));
+    return;
+  }
+  const entity = entityOf(voxel);
+  const shape = entity?.attrs ? decodeChiseledBlock(entity.attrs, data.BlockCodes ?? {}) : null;
+  container.append(textEl("h2", "", shape?.name || displayName(voxel.code)));
+  traitRows(container, voxel, shape);
+  if (!entity) {
+    container.append(textEl("p", "muted", "This block has no block entity, so there is no further data."));
+    return;
+  }
+  if (entity.error) {
+    container.append(textEl("div", "trait schematic-error", `Error parsing data: ${entity.error}`));
+    return;
+  }
+  // Each section is isolated: a failure in one must not hide the metadata below it.
+  const guard = (what, fn) => {
     try {
-      const attrs = decodeBlockEntity(ascii);
-      const json = JSON.stringify(attrs, (k, v) => (typeof v === "bigint" ? v.toString() : v), 2);
-      const shape = decodeChiseledBlock(attrs, data.BlockCodes ?? {});
-      if (shape) {
-        // The shape section must never hide the metadata below it, so a failure there is reported but not fatal.
-        try {
-          renderChiseledBlock(shape, voxel);
-        } catch (err) {
-          console.error(err);
-          els.traits.append(textEl("div", "trait schematic-error", `Couldn't draw the chiseled shape: ${err.message}`));
-        }
-      }
-      const details = document.createElement("details");
-      details.open = true;
-      details.append(textEl("summary", "trait", "Entity Data:"), textEl("pre", "schematic-json", json));
-      els.traits.append(details);
+      fn();
     } catch (err) {
       console.error(err);
-      els.traits.append(textEl("div", "trait schematic-error", `Error parsing data: ${err.message}`));
+      container.append(textEl("div", "trait schematic-error", `Couldn't show the ${what}: ${err.message}`));
     }
-  }
-  els.inspector.hidden = false;
+  };
+  if (shape) guard("chiseled shape", () => renderChiseledBlock(container, shape, voxel));
+  guard("inventory", () => renderInventory(container, entity.attrs));
+  const details = document.createElement("details");
+  details.open = true;
+  details.append(textEl("summary", "trait", "Attributes (JSON)"), textEl("pre", "schematic-json", entity.json));
+  container.append(details);
+}
+
+function selectBlock(index) {
+  selectedIndex = index;
+  restyle();
+  showInspector(voxels[index]);
+  renderDetails(voxels[index]);
+  updateUrl();
+}
+
+function closeInspector() {
+  selectedIndex = -1;
+  els.inspector.hidden = true;
+  renderDetails(null);
+  restyle();
+  updateUrl();
 }
 
 function load({ data: schematic, text, name }) {
@@ -263,7 +358,7 @@ function load({ data: schematic, text, name }) {
   }
   currentLayer = -1;
   selectedIndex = -1;
-  disposeChiselViewer();
+  renderDetails(null);
   els.inspector.hidden = true;
   els.slider.max = Math.max(0, (schematic.SizeY || 1) - 1);
   els.slider.value = -1;
@@ -284,6 +379,16 @@ function load({ data: schematic, text, name }) {
   }
   restyle();
   renderLegend();
+  // The first schematic opened applies the page's initial state (`select`, `tab`) from the URL; later ones start clean.
+  if (initialUrlState) {
+    const { select, tab } = initialUrlState;
+    initialUrlState = null;
+    const index = select ? voxels.findIndex((v) => v.x === select[0] && v.y === select[1] && v.z === select[2]) : -1;
+    if (index >= 0) selectBlock(index);
+    if (tab === "details") setTab("details");
+  } else {
+    updateUrl();
+  }
 }
 
 async function withLoading(task) {
@@ -303,7 +408,11 @@ async function withLoading(task) {
 
 // A task resolves to { text, name }; the text is kept for the Download button and parsed here.
 const parsed = ({ text, name }) => ({ data: JSON.parse(text), text, name });
-const loadFile = (file) => withLoading(async () => parsed({ text: await file.text(), name: file.name }));
+const loadFile = (file) => {
+  sourceSchematic = null;
+  updateUrl({ schematic: null, sample: null });
+  return withLoading(async () => parsed({ text: await file.text(), name: file.name }));
+};
 $("fileInput").addEventListener("change", (e) => {
   const file = e.target.files[0];
   e.target.value = ""; // allow re-selecting the same file
@@ -312,6 +421,8 @@ $("fileInput").addEventListener("change", (e) => {
 // Dropping a file on the upload box is handled for every page by dropzone.js (it triggers the input's change event).
 $("fileSelect").addEventListener("change", (e) => {
   if (!e.target.value) return;
+  sourceSchematic = null;
+  updateUrl({ schematic: null, sample: e.target.value });
   withLoading(async () => {
     const response = await fetch(samplesBase + e.target.value);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -384,6 +495,16 @@ $("showAll").addEventListener("click", () => setAllVisible(true));
 $("hideAll").addEventListener("click", () => setAllVisible(false));
 $("resetView").addEventListener("click", () => viewer?.resetView());
 $("closeInspector").addEventListener("click", closeInspector);
+// The same two options as /settings/ (every viewer follows them); these checkboxes are a shortcut while looking at a model.
+watchViewerSettings((settings) => {
+  $("optCenter").checked = settings.centerMarker;
+  $("optGrid").checked = settings.grid;
+});
+for (const id of ["optCenter", "optGrid"]) {
+  $(id).addEventListener("change", () => saveViewerSettings({ ...loadViewerSettings(), centerMarker: $("optCenter").checked, grid: $("optGrid").checked }));
+}
+$("tabSchematic").addEventListener("click", () => setTab("schematic"));
+$("tabDetails").addEventListener("click", () => setTab("details"));
 // Download the loaded schematic back out, byte for byte as it was read (an upload, a sample, or the
 // unpacked copy of one of the wiki's own).
 $("download").addEventListener("click", () => {
@@ -405,9 +526,7 @@ els.viewport.addEventListener("pointerup", (e) => {
   if (!viewer || !down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 4) return;
   const hit = viewer.pick(e.clientX, e.clientY);
   if (!hit) return closeInspector();
-  selectedIndex = hit.index;
-  restyle();
-  showInspector(hit.voxel);
+  selectBlock(hit.index);
 });
 
 // Fetches a gzip copy of one of the wiki's own schematics and decompresses it in the browser.
@@ -421,7 +540,6 @@ async function fetchWorldSchematic(path) {
 // `?schematic=<domain>/<relPath>` (linked from the schematic and structure pages) opens one of the
 // wiki's own worldgen schematics; otherwise start on the default sample so the page isn't empty.
 const requested = new URLSearchParams(location.search).get("schematic");
-requestedSchematic = requested;
 if (requested && /^[\w.-]+(\/[\w. +()-]+)+$/.test(requested) && !requested.includes("..")) {
   const [domain, ...rest] = requested.split("/");
   const relPath = rest.join("/");
@@ -432,16 +550,12 @@ if (requested && /^[\w.-]+(\/[\w. +()-]+)+$/.test(requested) && !requested.inclu
   $("downloadGz").href = `${worldBase}${requested}.json.gz`;
   $("downloadGz").download = `${relPath.split("/").pop()}.json.gz`;
   $("downloadGz").hidden = false;
-  // `&select=x,y,z` (from the schematic search) opens that block's panel once the schematic is loaded.
-  withLoading(() => fetchWorldSchematic(requested)).then(() => {
-    const [x, y, z] = (new URLSearchParams(location.search).get("select") || "").split(",").map(Number);
-    const index = voxels.findIndex((v) => v.x === x && v.y === y && v.z === z);
-    if (index < 0) return;
-    selectedIndex = index;
-    restyle();
-    showInspector(voxels[index]);
-  });
+  sourceSchematic = requested;
+  withLoading(() => fetchWorldSchematic(requested));
 } else {
-  $("fileSelect").value = "default.json";
+  // `?sample=<file>` reopens a bundled sample; anything else starts on the default one.
+  const sample = new URLSearchParams(location.search).get("sample");
+  const known = [...$("fileSelect").options].some((o) => o.value && o.value === sample);
+  $("fileSelect").value = known ? sample : "default.json";
   $("fileSelect").dispatchEvent(new Event("change"));
 }

@@ -14,7 +14,7 @@ permalink: "{{ lang }}/foods/index.html"
 </p>
 <ul class="muted">
   <li><strong>Satiety</strong>: how much of the hunger bar eating it fills. The game also tracks each <strong>food category</strong> separately, so a balanced diet matters.</li>
-  <li><strong>Health</strong>: health gained or lost when eaten (negative for poisonous mushrooms); blank when the game sets none.</li>
+  <li><strong>Health</strong>: health gained or lost when eaten (negative for poisonous mushrooms); 0 when the game sets none.</li>
   <li><strong>In meals</strong>: the satiety it counts for as a cooked-meal ingredient, shown only when that differs from eating it alone.</li>
 </ul>
 <p class="muted">Source: <code>itemtypes/**/*.json</code> and <code>blocktypes/**/*.json</code> (<code>nutritionProps</code>), resolved per variant. Liquids (milk, juice, ...) scale per litre and aren't listed. <a href="{{ ('/' ~ lang ~ '/') | url }}sources/foods/">Full details &rarr;</a></p>
@@ -26,7 +26,7 @@ permalink: "{{ lang }}/foods/index.html"
     <td><span class="tag">{{ f.type }}</span></td>
     <td>{{ f.foodCategory }}</td>
     <td>{{ f.satiety }}</td>
-    <td>{% if f.health != null %}{{ f.health }}{% endif %}</td>
+    <td>{{ f.health }}</td>
     <td>{% if f.mealSatiety != null %}{{ f.mealSatiety }}{% endif %}</td>
     <td><span class="tag">{{ f.sourceMod }}</span></td>
   </tr>

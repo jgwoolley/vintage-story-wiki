@@ -24,6 +24,12 @@
       "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$",
       "examples": ["1.22.7"]
     },
+    "prodWikiUrl": {
+      "type": "string",
+      "description": "Where the production wiki is deployed (GitHub Pages). The build info page links to it, even on a local build.",
+      "format": "uri",
+      "examples": ["https://jgwoolley.github.io/vintage-story-wiki/"]
+    },
     "mods": {
       "type": "array",
       "description": "Mods from mods.vintagestory.at to download and ingest alongside the vanilla game. A mod present in Mods/ but missing here is skipped by ingest.",

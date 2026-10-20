@@ -15,6 +15,7 @@ import { materialVolumes, type ChiselShape } from "vs-schematic/chisel.js";
 import { looksLikePortfolio, parsePortfolioXml } from "vs-schematic/chiselExport.js";
 import { createChiselPreview } from "vs-schematic/chiselPreview.js";
 import type { HostMessage, WebviewMessage } from "../protocol.js";
+import type { ViewerSettings } from "vs-schematic/viewerSettings.js";
 import "./style.css";
 
 declare function acquireVsCodeApi(): { postMessage(message: WebviewMessage): void };
@@ -42,9 +43,12 @@ interface BlockMeta {
 
 const HIGHLIGHT = "#00ffff";
 
+// The vsSchematic.showCenterMarker / showGrid settings, pushed by the host (src/extension.ts).
+let settings: ViewerSettings = { centerMarker: false, grid: false };
+
 // Either the schematic voxel viewer or a chiseled shape preview (a ChiselTools shape file); both only need dispose/resetView.
 let viewer: VoxelViewer<Voxel> | null = null;
-let shapeViewer: { dispose(): void; resetView(): void } | null = null;
+let shapeViewer: { dispose(): void; resetView(): void; setSettings(settings: ViewerSettings): void } | null = null;
 let data: SchematicJson | null = null;
 let voxels: Voxel[] = [];
 let blockMeta = new Map<string, BlockMeta>();
@@ -161,7 +165,7 @@ function loadShape(name: string, shape: ChiselShape): void {
   viewer?.dispose();
   viewer = null;
   shapeViewer?.dispose();
-  shapeViewer = createChiselPreview(els.viewport, shape, stringToColor);
+  shapeViewer = createChiselPreview(els.viewport, shape, stringToColor, settings);
   if (!shapeViewer) showError("WebGL isn't available in this webview, so the 3D view can't be shown.");
 }
 
@@ -205,7 +209,7 @@ function load(name: string, text: string): void {
   els.summary.textContent = `${name}: ${voxels.length.toLocaleString()} blocks, ${blockMeta.size} kinds`;
 
   viewer?.dispose();
-  viewer = createVoxelViewer(els.viewport, { voxels, label: `3D view of ${name}` });
+  viewer = createVoxelViewer(els.viewport, { voxels, label: `3D view of ${name}`, settings });
   if (!viewer) showError("WebGL isn't available in this webview, so the 3D view can't be shown.");
   restyle();
   renderLegend();
@@ -245,6 +249,11 @@ window.addEventListener("message", (event: MessageEvent<HostMessage>) => {
   const message = event.data;
   if (message.type === "schematic") load(message.name, message.text);
   else if (message.type === "error") showError(message.message);
+  else if (message.type === "settings") {
+    settings = { centerMarker: message.centerMarker, grid: message.grid };
+    viewer?.setSettings(settings);
+    shapeViewer?.setSettings(settings);
+  }
 });
 
 vscode.postMessage({ type: "ready" });

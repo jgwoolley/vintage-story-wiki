@@ -1,0 +1,15 @@
+<p>
+This tool reads no game data of its own. The file you upload is the ChiselTools mod's "portfolio" format, which the
+mod writes with <code>.pf save &lt;name&gt;</code>: an XML dump of its <code>PantographData</code> class, found by decompiling
+<code>chiseltools.dll</code> (version 1.17.9, the one in <code>vs-manifest.json</code>).
+</p>
+<ul>
+<li><code>voxeldata</code> &mdash; base64 of a protobuf-net <code>List&lt;uint&gt;</code>: the block's cuboids, packed the way the game's own chiseled blocks store them
+(see the research page).</li>
+<li><code>matdata</code> &mdash; base64 of a protobuf-net <code>int[]</code> of block ids (ignored on load: the mod re-resolves materials from <code>blockcodes</code>).</li>
+<li><code>blockcodes</code> &mdash; the material block codes, in the same order the cuboids' material index refers to.</li>
+<li><code>name</code> &mdash; the name the shape was saved under.</li>
+</ul>
+<p>
+Block colours come from the same <code>Nf3tBlockColors.json</code> as the schematic viewer, and the material names from the wiki's own block names.
+</p>

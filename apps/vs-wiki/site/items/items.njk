@@ -47,7 +47,7 @@ eleventyComputed:
   <tbody>
     <tr><th>Satiety</th><td>{{ food.satiety }}</td></tr>
     <tr><th>Food category</th><td><a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}foods/?category={{ food.foodCategory | urlencode }}">{{ food.foodCategory }}</a></td></tr>
-    {% if food.health != null %}<tr><th>Health</th><td>{{ food.health }}</td></tr>{% endif %}
+    <tr><th>Health</th><td>{{ food.health }}</td></tr>
     {% if food.mealSatiety != null %}<tr><th>Satiety in a meal</th><td>{{ food.mealSatiety }}</td></tr>{% endif %}
   </tbody>
 </table>

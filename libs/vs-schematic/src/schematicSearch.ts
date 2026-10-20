@@ -4,6 +4,8 @@
 // schematics it fetched and decompressed; tests feed it hand-built ones.
 import { decodeBlockEntity } from "./schematicDecode.js";
 import type { TreeAttributes } from "./schematicDecode.js";
+import { itemStacksWithPath } from "./blockEntityInfo.js";
+import type { ItemStack } from "./blockEntityInfo.js";
 import { decodeChiseledBlock, queryKeys, shapeKey } from "./chisel.js";
 import type { ChiselShape, ShapeMatchOptions } from "./chisel.js";
 import type { SchematicJson } from "./schematicVoxels.js";
@@ -98,21 +100,9 @@ export interface SchematicMatch {
 
 export const hasMatch = (m: SchematicMatch): boolean => m.placed > 0 || m.chiseled > 0 || m.containers.length > 0 || m.possible.length > 0;
 
-type ItemStack = { itemClass: "block" | "item"; id: number; stackSize: number; attributes?: TreeAttributes };
-
-function isItemStack(value: unknown): value is ItemStack {
-  const v = value as Partial<ItemStack> | null;
-  return !!v && typeof v === "object" && (v.itemClass === "block" || v.itemClass === "item") && typeof v.id === "number";
-}
-
-/** Every item stack anywhere in a decoded entity (slots can nest under any container-specific key). */
-function* itemStacks(value: unknown, depth = 0): Generator<ItemStack> {
-  if (!value || typeof value !== "object" || depth > 8) return;
-  if (isItemStack(value)) {
-    yield value;
-    return;
-  }
-  for (const child of Object.values(value)) yield* itemStacks(child, depth + 1);
+/** Every item stack anywhere in a decoded entity. */
+function* itemStacks(value: unknown): Generator<ItemStack> {
+  for (const { stack } of itemStacksWithPath(value)) yield stack;
 }
 
 /**

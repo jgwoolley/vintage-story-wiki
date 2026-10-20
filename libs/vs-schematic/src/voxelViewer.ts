@@ -10,6 +10,7 @@
 // Frames are rendered on demand (camera change / resize / restyle), never in a continuous loop.
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/OrbitControls.js";
+import { watchViewerSettings, type ViewerSettings } from "./viewerSettings.js";
 
 /**
  * Integer grid position (y is up) plus a default color. Callers may attach any other fields
@@ -35,12 +36,22 @@ export interface VoxelViewerOptions<V extends ViewerVoxel> {
   label?: string;
   /** Default camera offset direction from the model's center (y up). */
   viewDirection?: [number, number, number];
+  /**
+   * Whether `x/y/z` are the centers of cells that sit on integer positions (true, the default: schematic and
+   * recipe voxels -- a cell's bottom face is at y - 0.5) or whether box edges fall on integers (false: chiseled
+   * block cuboids, whose min/max are integers on a 16x16x16 grid). It decides where the y = 0 grid sits.
+   */
+  cellsCenteredOnIntegers?: boolean;
+  /** Center marker / grid options. Omitted: follow the wiki's stored settings (viewerSettings.ts) and update live. */
+  settings?: ViewerSettings;
 }
 
 export interface VoxelViewer<V extends ViewerVoxel> {
   /** Restyle every voxel; omit `styleFn` to show all voxels plainly. Rebuilds the instanced meshes. */
   setStyle(styleFn?: (voxel: V, index: number) => VoxelStyle): void;
   resetView(): void;
+  /** Turn the center marker / y = 0 grid on or off. */
+  setSettings(settings: ViewerSettings): void;
   /** The voxel under a viewport point (e.g. a click), or null. Only opaque voxels are pickable. */
   pick(clientX: number, clientY: number): { voxel: V; index: number } | null;
   dispose(): void;
@@ -73,7 +84,7 @@ function edgeTexture(): THREE.CanvasTexture {
  */
 export function createVoxelViewer<V extends ViewerVoxel>(
   container: HTMLElement,
-  { voxels, label = "3D voxel view", viewDirection = [1, 1.1, 1.4] }: VoxelViewerOptions<V>,
+  { voxels, label = "3D voxel view", viewDirection = [1, 1.1, 1.4], cellsCenteredOnIntegers = true, settings }: VoxelViewerOptions<V>,
 ): VoxelViewer<V> | null {
   let renderer: THREE.WebGLRenderer;
   try {
@@ -122,6 +133,47 @@ export function createVoxelViewer<V extends ViewerVoxel>(
 
   function render(): void {
     renderer.render(scene, camera);
+  }
+
+  // ---- display aids: the center marker and the y = 0 grid ----
+  const aids = new THREE.Group();
+  scene.add(aids);
+  const edgePhase = cellsCenteredOnIntegers ? 0.5 : 0; // where cell edges fall relative to integers, in data space
+  const clearAids = () => {
+    for (const child of [...aids.children]) {
+      aids.remove(child);
+      (child as THREE.Mesh).geometry?.dispose();
+      const material = (child as THREE.Mesh).material;
+      for (const m of Array.isArray(material) ? material : material ? [material] : []) m.dispose();
+    }
+  };
+
+  function applySettings(next: ViewerSettings): void {
+    clearAids();
+    if (next.grid) {
+      const step = Math.max(extent.x, extent.z) > 128 ? 16 : 1;
+      const lo = (v: number) => Math.floor((v - step - edgePhase) / step) * step + edgePhase;
+      const hi = (v: number) => Math.ceil((v + step - edgePhase) / step) * step + edgePhase;
+      const [x0, x1, z0, z1] = [lo(min.x), hi(max.x), lo(min.z), hi(max.z)];
+      const y = -edgePhase - offset.y;
+      const points: number[] = [];
+      for (let x = x0; x <= x1; x += step) points.push(x - offset.x, y, z0 - offset.z, x - offset.x, y, z1 - offset.z);
+      for (let z = z0; z <= z1; z += step) points.push(x0 - offset.x, y, z - offset.z, x1 - offset.x, y, z - offset.z);
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.Float32BufferAttribute(points, 3));
+      aids.add(new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({ color: 0x8a8a8a, transparent: true, opacity: 0.6 })));
+    }
+    if (next.centerMarker) {
+      // Drawn on top of the shape (no depth test) so it is visible from inside the solid. It sits at the
+      // origin, which is both the middle of the bounding box and the point the camera orbits.
+      const size = Math.max(0.25, Math.max(extent.x, extent.y, extent.z) * 0.03);
+      const dot = new THREE.Mesh(new THREE.SphereGeometry(size, 16, 12), new THREE.MeshBasicMaterial({ color: 0xff00ff, depthTest: false }));
+      const axes = new THREE.AxesHelper(size * 4);
+      (axes.material as THREE.Material).depthTest = false;
+      dot.renderOrder = axes.renderOrder = 999;
+      aids.add(dot, axes);
+    }
+    render();
   }
 
   function resize(): void {
@@ -203,10 +255,15 @@ export function createVoxelViewer<V extends ViewerVoxel>(
     return { voxel: voxels[index], index };
   }
 
+  const stopWatching = settings ? undefined : watchViewerSettings(applySettings);
+  if (settings) applySettings(settings);
+
   const resizeObserver = new ResizeObserver(resize);
   resizeObserver.observe(container);
 
   function dispose(): void {
+    stopWatching?.();
+    clearAids();
     resizeObserver.disconnect();
     controls.dispose();
     for (const mesh of meshes) mesh.material.dispose();
@@ -220,5 +277,5 @@ export function createVoxelViewer<V extends ViewerVoxel>(
   resize();
   resetView();
 
-  return { setStyle, resetView, pick, dispose, render };
+  return { setStyle, resetView, setSettings: applySettings, pick, dispose, render };
 }

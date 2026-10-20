@@ -51,6 +51,11 @@ permalink: "{{ lang }}/tools/schematic/index.html"
     <p id="schematicError" class="schematic-error" role="alert" hidden></p>
 
     <div class="control-block">
+      <label class="check"><input type="checkbox" id="optCenter"> Center marker</label>
+      <label class="check"><input type="checkbox" id="optGrid"> Grid at y = 0</label>
+      <a href="{{ ('/' ~ lang ~ '/') | url }}settings/" class="muted">All settings</a>
+    </div>
+    <div class="control-block">
       <div class="schematic-row">
         <span>Layer (Y-axis):</span>
         <span id="layerLabel" class="schematic-accent">All Floors</span>
@@ -93,16 +98,25 @@ permalink: "{{ lang }}/tools/schematic/index.html"
   </aside>
 
   <div class="schematic-stage">
-    <div id="viewport" class="schematic-viewport" aria-live="polite"></div>
-    <p class="muted schematic-hint">
-      Rotate: left-drag &middot; Pan: right-drag &middot; Zoom: wheel &middot; Inspect: click a block. <code>meta-filler</code> (a worldgen marker) starts hidden; click it in the list to show it.
-      Source: <a href="https://github.com/jgwoolley/vintage-story-schematic-preview/">vintage-story-schematic-preview</a>
-      (history merged into this repo).
-    </p>
-    <div id="inspector" class="schematic-panel" hidden>
-      <h3>Block Traits</h3>
-      <div id="traitContent"></div>
-      <button type="button" id="closeInspector">Close</button>
+    <div class="stage-tabs" role="tablist" aria-label="View">
+      <button type="button" role="tab" id="tabSchematic" class="layer-tab active" aria-selected="true">Schematic</button>
+      <button type="button" role="tab" id="tabDetails" class="layer-tab" aria-selected="false">Block details</button>
+    </div>
+    <div id="schematicPane" class="stage-pane">
+      <div id="viewport" class="schematic-viewport" aria-live="polite"></div>
+      <p class="muted schematic-hint">
+        Rotate: left-drag &middot; Pan: right-drag &middot; Zoom: wheel &middot; Inspect: click a block. <code>meta-filler</code> (a worldgen marker) starts hidden; click it in the list to show it.
+        Source: <a href="https://github.com/jgwoolley/vintage-story-schematic-preview/">vintage-story-schematic-preview</a>
+        (history merged into this repo).
+      </p>
+      <div id="inspector" class="schematic-panel" hidden>
+        <h3>Block Traits</h3>
+        <div id="traitContent"></div>
+        <button type="button" id="closeInspector">Close</button>
+      </div>
+    </div>
+    <div id="detailsPane" class="stage-pane schematic-panel" hidden>
+      <div id="blockDetails"><p class="muted">Click a block in the schematic to see its details here.</p></div>
     </div>
   </div>
 </div>

@@ -111,3 +111,17 @@ test("nameMatcher is a case-insensitive substring, or a glob with *", () => {
   assert.ok(!nameMatcher("aged*bricks")("Aged granite"));
   assert.ok(nameMatcher("(Cracked)")("Wet dirty gravel  (Cracked)"), "regex characters are literal");
 });
+
+import { inventoryOf } from "../src/blockEntityInfo.js";
+
+test("inventoryOf lists the item stacks of a decoded entity through the schematic's code tables", () => {
+  const attrs = {
+    blockCode: "game:chest-east",
+    inventory: { slots: { "0": { itemClass: "item", id: 7, stackSize: 3 }, "1": { itemClass: "block", id: 2, stackSize: 1, attributes: { totalChance: 0.5 } }, "2": { itemClass: "item", id: 99, stackSize: 1 } } },
+  };
+  assert.deepEqual(inventoryOf(attrs, { "2": "game:rock-granite" }, { "7": "game:firewood" }).map((e) => [e.path, e.code, e.kind, e.stackSize]), [
+    ["inventory.slots.0", "game:firewood", "item", 3],
+    ["inventory.slots.1", "game:rock-granite", "block", 1],
+    ["inventory.slots.2", null, "item", 1],
+  ]);
+});

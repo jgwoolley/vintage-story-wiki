@@ -13,6 +13,7 @@ import { writeCompressedSchematics } from "./schematicFiles.js";
 import { extractDecorCatalog } from "./models/decor.js";
 import { extractGear } from "./models/gear.js";
 import { extractFoods } from "./models/foods.js";
+import { extractWaypointIcons } from "./models/waypointIcons.js";
 import { extractLoreBooks, buildLoreSections } from "./models/lore.js";
 import { attachLoreLocations } from "./models/loreLocations.js";
 import { extractDeposits } from "./models/deposits.js";
@@ -617,6 +618,7 @@ function main(): void {
   writeGenerated("clothing", clothing);
   writeGenerated("gear", gear);
   writeGenerated("foods", foods);
+  writeGenerated("waypointIcons", extractWaypointIcons(sources));
   writeGenerated("foodsById", foodsById);
   writeGenerated("books", books);
   writeGenerated("lore", loreChapters);

@@ -2,6 +2,7 @@
   "$schema": "./vs-manifest.schema.json",
   "serverBranch": "stable",
   "serverVersion": "1.22.7",
+  "prodWikiUrl": "https://jgwoolley.github.io/vintage-story-wiki/",
   "mods": [
     {
       "modid": "betterruins",

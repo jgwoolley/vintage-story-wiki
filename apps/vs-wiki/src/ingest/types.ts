@@ -8,6 +8,8 @@ export interface ModManifestEntry {
 export interface VsManifest {
   serverBranch: string; // e.g. "stable" -- which cdn.vintagestory.at release channel to fetch from
   serverVersion: string; // e.g. "1.22.7" -- the vanilla dedicated server version to fetch
+  /** Where the production wiki is deployed; the build info page links to it (also on local builds). */
+  prodWikiUrl?: string;
   mods: ModManifestEntry[];
   /** Items/blocks to force into the item index even when no recipe/drop/worldgen/trade/dialogue
    * rule reaches them (e.g. static translocators). Each entry is a `domain:code` glob (`*`
@@ -812,6 +814,12 @@ export interface GearEntry {
   bestMiningSpeed?: number; // highest multiplier across the item's `miningspeed` material table (e.g. 6 for a tin bronze pickaxe on stone/ore/metal)
 }
 
+/** One waypoint icon the in-game world map offers (see `extractWaypointIcons` in `models/waypointIcons.ts`). */
+export interface WaypointIcon {
+  code: string; // what a waypoint's `icon` field and `/waypoint addati` take: the svg's file name without extension or leading ordering number
+  source: string; // modid that ships the icon; "game" for vanilla
+}
+
 /**
  * One edible item/block variant with its `nutritionProps`, read from `itemtypes/` and `blocktypes/` (see
  * `extractFoods` in `models/foods.ts`). Each entry also gets a normal `/items/` page via `ensureSpawnTarget`,
@@ -827,7 +835,7 @@ export interface FoodEntry {
   missingTranslation: boolean;
   type: string; // the definition's own base code, e.g. "fruit", "redmeat" -- the "what kind of food" column
   satiety: number; // satiety points restored when eaten on its own (`nutritionProps.satiety`)
-  health?: number; // health change when eaten (`nutritionProps.health`); negative for poisonous ones; absent when the game doesn't set it (0)
+  health: number; // health change when eaten (`nutritionProps.health`); negative for poisonous ones; 0 when the game doesn't set it
   foodCategory: string; // `nutritionProps.foodcategory`: Fruit, Vegetable, Grain, Protein, Dairy, ... (a balanced diet needs several)
   mealSatiety?: number; // satiety it counts for as an ingredient of a cooked meal (`nutritionPropsWhenInMeal.satiety`), only when that differs from eating it alone
 }

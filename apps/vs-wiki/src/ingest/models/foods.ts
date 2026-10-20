@@ -45,7 +45,7 @@ export function extractFoods(index: AssetIndex, lang: LangResolver): FoodEntry[]
         missingTranslation: missing,
         type: variant.baseCode,
         satiety,
-        health: health || undefined,
+        health: health ?? 0, // 0 when the game sets none, so the column sorts as numbers
         foodCategory: props.foodcategory[0].toUpperCase() + props.foodcategory.slice(1), // files write both "Vegetable" and "vegetable"; the game parses it case-insensitively
         mealSatiety: inMeal !== undefined && inMeal !== satiety ? inMeal : undefined,
       });
