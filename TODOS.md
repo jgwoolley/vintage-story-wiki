@@ -1,12 +1,17 @@
 # TODOS
-- Download for extensions
-- Implement the map renderer into the Map from https://github.com/jgwoolley/vintage-story-launcher
+
+- Implement the map renderer into the Map from https://github.com/jgwoolley/vintage-story-launcher (also stored locally)
 
 # Phase
 
+- shouldn't have to add .pf extension for it to work. thats not how qp saves schematics. they have no file type. Does open with mean I can't manually select the file?
 - just remove the "tools" concept and put them into relevant sections.
 - handbook resolutions could be resolved
 - Can you make sure that documentation hasn't driffted, like source documents + such?
+- CHANGELOG does not appear to be updated (or is there no changelog)
+- research what if i created a completely custom build system.
+- Merge "seed climate lookup" + waypoint planner into one map tool.
+- Nf3t's Vintage Story Wiki
 
 # Phase
 

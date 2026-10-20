@@ -37,6 +37,7 @@ actually in those files, nothing more.
   or upload yours, and download them), a WayPoint route planner, a game-calendar converter, an alloy
   ratio calculator, and a seed climate lookup (temperature and rainfall for a world seed, and which
   wild plants fit); a few more are planned and described on that page.
+- **VS Code extension** — the schematic and chiseled-shape previews inside VS Code, downloadable from the wiki.
 - **Sources** — exactly which raw game files feed each page above, and how, for anyone curious
   past "trust me."
 - **Research** — investigation notes for features being considered or only partly built (each

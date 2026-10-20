@@ -77,7 +77,7 @@ TypeScript source, which `tsx` and `esbuild` consume directly). Libs never impor
   the wiki's schematic viewer, minus the wiki-specific parts). `esbuild.mjs` bundles both halves into `dist/`,
   aliasing `three/addons/OrbitControls.js` the way the wiki's importmap does. The webview HTML shell
   (`src/webviewHtml.ts`, strict nonce-only CSP) is plain string building so it is unit tested without VS Code.
-  `npm run build:extension` bundles and packages a `.vsix` (`apps/vs-vscode-extension/`, gitignored); `npm run build -w vs-vscode-extension` bundles only. It has
+  `npm run build:extension` bundles and packages a `.vsix` (`apps/vs-vscode-extension/`, gitignored; CI runs it before the site build and Eleventy copies it to `/assets/downloads/`, described on `/<lang>/extension/` via the `extensionInfo` global in `eleventy.config.js`; a local build without it shows how to make one and links to the production copy); `npm run build -w vs-vscode-extension` bundles only. It has
   not been run inside a real VS Code yet (see `RESEARCH.md` topic 8); to try it, open the repo in VS Code and
   launch an Extension Development Host on `apps/vs-vscode-extension`.
 

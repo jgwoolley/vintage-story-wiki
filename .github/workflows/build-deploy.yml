@@ -57,6 +57,10 @@ jobs:
       - name: Build libraries
         run: npm run build:libs
 
+      # Packages the VS Code extension to a .vsix, which Eleventy copies to /assets/downloads/ for the /extension/ page.
+      - name: Package VS Code extension
+        run: npm run build:extension
+
       - name: Ingest game data
         run: npm run ingest
 

@@ -170,6 +170,10 @@ permalink: "{{ lang }}/index.html"
     <span class="muted">Which mods, beyond vanilla, this build includes.</span>
     <span class="muted">{{ generated.mods.length }} installed</span>
   </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}extension/">
+    <strong><span class="card-icon" aria-hidden="true">🧱</span> VS Code extension</strong>
+    <span class="muted">Download the extension that previews schematics and chiseled shapes in VS Code.</span>
+  </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}research/">
     <strong><span class="card-icon" aria-hidden="true">🔬</span> Research</strong>
     <span class="muted">Investigation notes for features being considered or in progress.</span>

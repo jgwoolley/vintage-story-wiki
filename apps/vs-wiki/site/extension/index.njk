@@ -1,0 +1,52 @@
+---
+title: VS Code extension - Vintage Story Wiki
+description: Download the VS Code extension that previews Vintage Story schematics and ChiselTools chiseled-block shapes in 3D.
+layout: layouts/base.njk
+permalink: "{{ lang }}/extension/index.html"
+---
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "VS Code extension"}]) }}
+<h1>VS Code extension</h1>
+<p class="muted">
+  {{ extensionInfo.displayName }} previews Vintage Story schematics (<code>.json</code> and the wiki's <code>.json.gz</code> copies) and
+  QPTech ChiselTools shape files as interactive 3D models without leaving VS Code &mdash; the same viewer as the wiki's
+  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/">schematic viewer</a> and
+  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/chisel-shape/">chiseled shape viewer</a>.
+</p>
+
+<h2>Download</h2>
+{% if extensionInfo.available %}
+<p>
+  <a class="button-like" href="{{ '/' | url }}assets/downloads/{{ extensionInfo.fileName }}" download>Download {{ extensionInfo.fileName }}</a>
+  <span class="muted">version {{ extensionInfo.version }}, {{ (extensionInfo.sizeBytes / 1048576) | round(1) }} MB &middot; built with this version of the wiki</span>
+</p>
+{% else %}
+<div class="card">
+  <p>This build of the wiki didn't package the extension, so there is no file to download from this copy.</p>
+  {% if buildInfo.prodWikiUrl %}<p>The production wiki has it: <a href="{{ buildInfo.prodWikiUrl }}en/extension/">{{ buildInfo.prodWikiUrl }}en/extension/</a>.</p>{% endif %}
+  <p class="muted">To include it locally, run <code>npm run build:extension</code> and then <code>npm run rebuild</code>.</p>
+</div>
+{% endif %}
+
+<h2>Install</h2>
+<ol>
+  <li>Download the <code>.vsix</code> file above.</li>
+  <li>In VS Code open the Extensions view, choose <strong>&hellip; &rarr; Install from VSIX&hellip;</strong> and pick the file &mdash; or run
+    <code>code --install-extension {{ extensionInfo.fileName }}</code> in a terminal.</li>
+</ol>
+
+<h2>Using it</h2>
+<ul>
+  <li>The preview never replaces VS Code's normal JSON editor. Right-click a schematic (or a ChiselTools shape file) in the Explorer and choose
+    <strong>Preview Schematic or Chisel Shape</strong>, use the button in the editor title bar, or pick <strong>Open With&hellip; &rarr; Vintage Story Schematic Preview</strong>.</li>
+  <li>Shape files saved by ChiselTools (<code>.pf save</code>) live in the <code>chiselportfolio</code> folder inside your <code>VintagestoryData</code> folder; files there, and anything named <code>*.pf</code>, open in the preview.</li>
+  <li>Orbit, pan and zoom; click a block to see its decoded block-entity data; filter and hide block kinds in the list; peel a structure away from the top with the <strong>Up to Y</strong> slider.</li>
+</ul>
+
+<h2>Settings</h2>
+<ul>
+  <li><code>vsSchematic.showCenterMarker</code> &mdash; a marker at the middle of the shape (the camera's orbit point).</li>
+  <li><code>vsSchematic.showGrid</code> &mdash; a grid on the y = 0 plane.</li>
+</ul>
+
+<p class="muted">The extension type-checks, bundles and packages in this project's CI, but it has not been launched in a real VS Code by the maintainers, so expect rough edges.</p>

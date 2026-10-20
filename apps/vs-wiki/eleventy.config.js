@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { execSync, execFileSync } from "node:child_process";
 import MarkdownIt from "markdown-it";
@@ -94,6 +94,24 @@ export default function (eleventyConfig) {
       // Only meaningful for an actual Actions run -- a local build has no run id to link to even
       // though it might still resolve a repoSlug (e.g. from `git remote`).
       runUrl: isCi && runId && repoSlug ? `https://github.com/${repoSlug}/actions/runs/${runId}` : undefined,
+    };
+  });
+
+  // The VS Code extension's packaged .vsix (`npm run build:extension`, run by CI before the site build), served
+  // from /assets/downloads/ by the passthrough below and described on /<lang>/extension/. `available` is false
+  // on a local build that never packaged it; the page then says how, and links to the production wiki's copy.
+  eleventyConfig.addGlobalData("extensionInfo", () => {
+    const pkg = JSON.parse(readFileSync("apps/vs-vscode-extension/package.json", "utf8"));
+    const fileName = `${pkg.name}-${pkg.version}.vsix`;
+    const path = join("apps/vs-vscode-extension", fileName);
+    const available = existsSync(path);
+    return {
+      displayName: pkg.displayName,
+      description: pkg.description,
+      version: pkg.version,
+      fileName,
+      available,
+      sizeBytes: available ? statSync(path).size : undefined,
     };
   });
 
@@ -322,6 +340,8 @@ export default function (eleventyConfig) {
   // the relative `./voxelViewer.js`-style imports between them keep resolving. (Declarations and
   // source maps in dist/ are deliberately not copied.)
   eleventyConfig.addPassthroughCopy({ "libs/vs-schematic/dist/*.js": "assets" });
+  // The packaged VS Code extension, if `npm run build:extension` has produced one (a missing file is skipped).
+  eleventyConfig.addPassthroughCopy({ "apps/vs-vscode-extension/*.vsix": "assets/downloads" });
   // Three.js (the 3D voxel viewer's only dependency, pinned exactly in package.json) is served
   // from our own /assets/vendor/three/ rather than a CDN, so the pinned npm version is the one that
   // actually ships. three.module.min.js imports ./three.core.min.js by relative path, so both go
