@@ -75,17 +75,18 @@ jobs:
           restore-keys: eleventy-timing-
 
       - name: Build site
-        # GitHub Pages project sites (no custom domain) serve from
-        # https://<user>.github.io/<repo>/ rather than the domain root, so every internal
-        # link/asset needs that repo-name prefix -- see eleventy.config.js's pathPrefix.
+        # The site is served from the root of the custom domain below, so there is no path
+        # prefix. (Without a custom domain, GitHub Pages project sites serve from
+        # https://<user>.github.io/<repo>/ and every link/asset would need that repo-name
+        # prefix -- see eleventy.config.js's pathPrefix.)
         # SITE_URL gives og:image/og:url an absolute origin, since Open Graph wants one.
         # apps/vs-wiki/scripts/build-site.ts is a thin wrapper around the real `eleventy` CLI that times the
         # whole build and writes apps/vs-wiki/site/_data/generated/eleventyBuildTiming.json for the *next*
         # build to surface on /<lang>/build/ -- see that script's own comment for why Eleventy
         # can't report this about itself.
         env:
-          PATH_PREFIX: /${{ github.event.repository.name }}/
-          SITE_URL: https://${{ github.repository_owner }}.github.io
+          PATH_PREFIX: /
+          SITE_URL: https://vintagestory-wiki.nf3t.com
         run: npx tsx apps/vs-wiki/scripts/build-site.ts
 
       - name: Save Eleventy build timing for the next run
