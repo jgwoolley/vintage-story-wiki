@@ -30,3 +30,10 @@ server behaviors (its attack AI tasks), resolved for that exact variant -- e.g. 
 entity <code>class</code>, every behavior <code>code</code> and every <code>aitasks[].code</code>, linked through
 <code>apps/vs-wiki/src/ingest/csharpClassMap.json</code> where vssurvivalmod implements them.
 </p>
+<p>
+<strong>3D model.</strong> The shape file an entity's <code>client.shape</code> (or <code>shapeByType</code>) names is read
+from <code>shapes/entity/**</code> and drawn as plain boxes: each element's <code>from</code>/<code>to</code> and its
+rotation about <code>rotationOrigin</code> (a child is positioned relative to its parent and inherits its rotation). Textures are not in the
+dedicated-server download, so every texture name gets a placeholder color instead, and animations are not shown --
+it is the rest pose.
+</p>

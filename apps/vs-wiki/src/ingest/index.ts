@@ -10,6 +10,7 @@ import { handbookItemRefs } from "./codeUtil.js";
 import { extractStructures } from "./models/structures.js";
 import { extractSchematics } from "./models/schematics.js";
 import { writeCompressedSchematics } from "./schematicFiles.js";
+import { extractModels } from "./models/shapes.js";
 import { extractDecorCatalog } from "./models/decor.js";
 import { extractGear } from "./models/gear.js";
 import { extractFoods } from "./models/foods.js";
@@ -598,6 +599,10 @@ function main(): void {
   const rockStrataById = Object.fromEntries(rockStrata.map((r) => [r.id, r]));
   const traitsById = Object.fromEntries(traits.map((t) => [t.code, t]));
   const dialogueById = Object.fromEntries(dialogue.map((d) => [d.id, d]));
+
+  step("Extracting item and creature 3D models");
+  const modelStats = extractModels(index, itemIndex, creatures);
+  console.log(`  ${modelStats.items} items and ${modelStats.creatures} creatures have a shape, ${modelStats.files} distinct shape files (${(modelStats.bytes / 1e6).toFixed(1)} MB gzipped)`);
 
   step("Extracting block display names (schematic viewer legend)");
   const blockNames = extractBlockNames(index, lang);

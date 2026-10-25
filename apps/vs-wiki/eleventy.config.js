@@ -357,6 +357,8 @@ export default function (eleventyConfig) {
     // Every worldgen schematic, gzip-compressed by ingest (src/ingest/schematicFiles.ts), for the
     // viewer's `?schematic=` mode. A missing folder (ingest not run yet) is simply skipped.
     "apps/vs-wiki/site/_data/generated/schematicFiles": "assets/schematics/world",
+    // Item and creature shapes, compacted and gzipped by ingest (src/ingest/models/shapes.ts), for the model previews.
+    "apps/vs-wiki/site/_data/generated/modelFiles": "assets/models",
   });
   // ~50 MB of gzip files: in `npm run serve`, serve them in place instead of copying them again.
   eleventyConfig.setServerPassthroughCopyBehavior("passthrough");

@@ -172,7 +172,7 @@ the existing catalogs (items, decor, etc.)?
 **Status: not researched yet** -- notes on what the investigation will need.
 
 **The question**: today `npm run build` = `ingest` (minutes of asset parsing) + Eleventy over everything.
-The tool pages (`/tools/schematic/`, `/tools/waypoints/`, `/tools/calendar/`, `/nf3t/`) and shared
+The tool pages (`/tools/schematic/`, `/tools/waypoints/`, `/tools/calendar/`, `/nf3t/git-merge/`) and shared
 assets are pure client-side and don't need ingest data. Could a change to only those be built and
 deployed without re-running ingest -- and could the build be split so those are "the only thing that
 generates"?

@@ -25,6 +25,8 @@ export interface ViewerVoxel {
   sx?: number;
   sy?: number;
   sz?: number;
+  /** Rotation (x, y, z, w) about the box's own center; used for rotated elements of item/creature models. */
+  quaternion?: [number, number, number, number];
 }
 
 /** `null` hides the voxel; `opacity < 1` draws it as a translucent ghost. */
@@ -111,8 +113,19 @@ export function createVoxelViewer<V extends ViewerVoxel>(
   const max = new THREE.Vector3(-Infinity, -Infinity, -Infinity);
   for (const v of voxels) {
     const half = new THREE.Vector3((v.sx ?? 1) / 2, (v.sy ?? 1) / 2, (v.sz ?? 1) / 2);
-    min.min(new THREE.Vector3(v.x, v.y, v.z).sub(half));
-    max.max(new THREE.Vector3(v.x, v.y, v.z).add(half));
+    const center = new THREE.Vector3(v.x, v.y, v.z);
+    if (v.quaternion) {
+      // A rotated box: take its eight rotated corners, so the frame fits the whole model.
+      const q = new THREE.Quaternion(...v.quaternion);
+      for (let corner = 0; corner < 8; corner++) {
+        const p = new THREE.Vector3(corner & 1 ? half.x : -half.x, corner & 2 ? half.y : -half.y, corner & 4 ? half.z : -half.z).applyQuaternion(q).add(center);
+        min.min(p);
+        max.max(p);
+      }
+    } else {
+      min.min(center.clone().sub(half));
+      max.max(center.clone().add(half));
+    }
   }
   if (!voxels.length) {
     min.set(-0.5, -0.5, -0.5);
@@ -130,6 +143,9 @@ export function createVoxelViewer<V extends ViewerVoxel>(
   const meshes: THREE.InstancedMesh<THREE.BoxGeometry, THREE.MeshLambertMaterial>[] = [];
   const matrix = new THREE.Matrix4();
   const color = new THREE.Color();
+  const position = new THREE.Vector3();
+  const quaternion = new THREE.Quaternion();
+  const scale = new THREE.Vector3();
 
   function render(): void {
     renderer.render(scene, camera);
@@ -229,8 +245,9 @@ export function createVoxelViewer<V extends ViewerVoxel>(
       const mesh = new THREE.InstancedMesh(geometry, material, entries.length);
       mesh.renderOrder = translucent ? 1 : 0;
       entries.forEach(({ voxel, color: c }, i) => {
-        matrix.makeScale(voxel.sx ?? 1, voxel.sy ?? 1, voxel.sz ?? 1);
-        matrix.setPosition(voxel.x - offset.x, voxel.y - offset.y, voxel.z - offset.z);
+        if (voxel.quaternion) quaternion.set(...voxel.quaternion);
+        else quaternion.identity();
+        matrix.compose(position.set(voxel.x - offset.x, voxel.y - offset.y, voxel.z - offset.z), quaternion, scale.set(voxel.sx ?? 1, voxel.sy ?? 1, voxel.sz ?? 1));
         mesh.setMatrixAt(i, matrix);
         mesh.setColorAt(i, color.set(c));
       });

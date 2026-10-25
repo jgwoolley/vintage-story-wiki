@@ -12,6 +12,7 @@ eleventyComputed:
 {% import "macros/datatable.njk" as dt %}
 {% import "macros/breadcrumb.njk" as bc %}
 {% import "macros/temperature.njk" as tmp %}
+{% import "macros/model.njk" as mdl %}
 {{ bc.trail(lang, [{label: "Items & Blocks", url: "items/"}, {label: item.displayName}]) }}
 
 <h1>{{ item.displayName }}</h1>
@@ -23,6 +24,7 @@ eleventyComputed:
 {% if item.missingTranslation %}<p class="warning">No display name found in any lang file &mdash; showing the raw code.</p>{% endif %}
 {% if item.includedByManifest %}<p class="muted">Listed explicitly in the wiki's <code>vs-manifest.json</code> (<code>includeItems</code>: <code>{{ item.includedByManifest }}</code>), so it has a page even if nothing else here links to it.</p>{% endif %}
 {% if item.description %}<div class="card">{{ item.description | safe }}</div>{% endif %}
+{% if item.model.path %}{{ mdl.preview(item.model, item.displayName) }}{% endif %}
 {% set blockDrops = generated.blockDropsById[item.domain ~ ':' ~ item.code] %}
 
 {% set itemTags = item.tags | default([]) %}

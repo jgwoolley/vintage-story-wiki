@@ -1,0 +1,14 @@
+{#
+  Read-only 3D preview of an item's or creature's shape (`model` is an ItemIndexEntry.model / LootSourceGroup.model).
+  Untextured: the dedicated-server download has no textures, so each texture key gets a hash color. The styling reuses
+  the schematic page's .schematic-preview rules. Needs only the `url` filter, so it works imported without context.
+#}
+{% macro preview(model, name) %}
+<h2>3D model</h2>
+<div id="modelPreview" class="schematic-preview" data-src="{{ '/' | url }}assets/models/{{ model.domain }}/{{ model.path }}.json.gz" data-name="{{ name }}">
+  <div class="preview-stage" aria-live="polite"></div>
+  <p class="preview-status muted">3D preview needs JavaScript.</p>
+</div>
+<p class="muted">Drag to rotate, right-drag to pan, scroll to zoom. Shape only: the colors are placeholders (one per texture), not the real textures, and animations are not shown. From <code>{{ model.domain }}:shapes/{{ model.path }}.json</code>.</p>
+<script type="module" src="{{ '/' | url }}assets/modelPage.js"></script>
+{% endmacro %}

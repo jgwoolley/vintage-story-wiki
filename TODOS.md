@@ -12,6 +12,7 @@ are independent unless noted.
   explicitly that there isn't one.
 - [ ] Launch the VS Code extension in a real VS Code (it has only ever been type-checked and bundled) and confirm the CI step that
   packages it and the wiki's `/extension/` download work after the next push.
+  - [ ] See ../nifi-extension, it uses playright to take screenshots
 - [ ] ChiselTools shape files have no extension (QP saves them as plain names in `chiselportfolio`). Files in that folder and `*.pf`
   now open in the preview; check that "Open With..." lets you pick the preview for any file, and that nothing still needs a `.pf`
   extension.
@@ -37,6 +38,7 @@ are independent unless noted.
 
 - [ ] Draw chiseled blocks as their real shape in the main schematic view (today only the block panel and the shape pages do);
   mind the 171k-cuboid worst case (`brsunrift`). See RESEARCH.md topic 6.
+- [ ] Model Preview for items / creatures
 - [ ] Real block textures instead of hash colours (also helps every other block in the viewers).
 - [ ] Waypoint icon previews in the add-waypoint dropdown (needs the svg files, which the dedicated server download doesn't ship).
 

@@ -3,10 +3,11 @@
     "id": "items",
     "title": "Items & Blocks",
     "listingUrl": "items/",
-    "modelFiles": ["apps/vs-wiki/src/ingest/crossref.ts", "apps/vs-wiki/src/ingest/csharpClassMap.json", "apps/vs-wiki/scripts/map-csharp-classes.ts", "apps/vs-wiki/src/ingest/models/loot.ts", "apps/vs-wiki/src/ingest/models/deposits.ts", "apps/vs-wiki/src/ingest/models/blockpatches.ts", "apps/vs-wiki/src/ingest/models/trees.ts", "apps/vs-wiki/src/ingest/models/trades.ts", "apps/vs-wiki/src/ingest/models/dialogue.ts"],
+    "modelFiles": ["apps/vs-wiki/src/ingest/crossref.ts", "apps/vs-wiki/src/ingest/csharpClassMap.json", "apps/vs-wiki/scripts/map-csharp-classes.ts", "apps/vs-wiki/src/ingest/models/loot.ts", "apps/vs-wiki/src/ingest/models/deposits.ts", "apps/vs-wiki/src/ingest/models/blockpatches.ts", "apps/vs-wiki/src/ingest/models/trees.ts", "apps/vs-wiki/src/ingest/models/trades.ts", "apps/vs-wiki/src/ingest/models/dialogue.ts", "apps/vs-wiki/src/ingest/models/shapes.ts", "apps/vs-wiki/site/assets/modelPage.js", "libs/vs-schematic/src/shapeBoxes.ts", "libs/vs-schematic/src/modelPreview.ts"],
     "globs": [
       "recipes/**/*.json",
-      "itemtypes/**/*.json (only drops/tags/maxstacksize/class/behaviors read, not the full definition; for ItemStackRandomizer items, e.g. itemtypes/meta/stackrandomizer*.json, the per-variant `stacks` pool too)",
+      "shapes/item/**/*.json (the 3D model of each item whose `shape`/`shapeByType` names one; geometry only)",
+      "itemtypes/**/*.json (only drops/tags/maxstacksize/class/behaviors/shape read, not the full definition; for ItemStackRandomizer items, e.g. itemtypes/meta/stackrandomizer*.json, the per-variant `stacks` pool too)",
       "blocktypes/**/*.json (only drops/tags/maxstacksize/class/entityClass/behaviors/entityBehaviors read, not the full definition)",
       "entities/**/*.json (only death/harvestable drops read)",
       "worldgen/deposits/**/*.json",
@@ -30,8 +31,8 @@
     "id": "creatures",
     "title": "Creatures",
     "listingUrl": "creatures/",
-    "modelFiles": ["apps/vs-wiki/src/ingest/models/loot.ts", "apps/vs-wiki/src/ingest/models/dialogue.ts"],
-    "globs": ["entities/**/*.json", "config/dialogue/*.json"]
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/loot.ts", "apps/vs-wiki/src/ingest/models/dialogue.ts", "apps/vs-wiki/src/ingest/models/shapes.ts", "apps/vs-wiki/site/assets/modelPage.js", "libs/vs-schematic/src/shapeBoxes.ts", "libs/vs-schematic/src/modelPreview.ts"],
+    "globs": ["entities/**/*.json", "shapes/entity/**/*.json (the 3D model named by each entity's `client.shape`; geometry only)", "config/dialogue/*.json"]
   },
   {
     "id": "structures",

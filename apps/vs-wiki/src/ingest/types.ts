@@ -40,6 +40,16 @@ export interface ModInfo {
 // Asset-loading shapes live in the vs-wiki-core package; re-exported so ingest code keeps one import site.
 export type { AssetSource, LoadedAsset, AssetIndex, PatchOp } from "vs-wiki-core/types.js";
 
+/**
+ * A shape file (`shapes/<path>.json`) an item or creature is drawn with. Ingest writes a compacted, gzipped copy
+ * (geometry only, see libs/vs-schematic/src/shapeBoxes.ts) served at `assets/models/<domain>/<path>.json.gz`.
+ */
+export interface ModelRef {
+  domain: string; // the domain the shape file was found in (may differ from the item's own, e.g. a mod using a vanilla shape)
+  path: string; // path under `shapes/` without the extension, e.g. "item/ingot"
+  gzBytes: number; // size of the served .json.gz
+}
+
 /** A bare domain:code pair, used wherever a reference doesn't need the full `IngredientSpec` shape. */
 export interface Code {
   domain: string;
@@ -192,6 +202,7 @@ export interface LootSourceGroup {
   sourceKind: "block" | "entity";
   sourceMod: string;
   entityStats?: EntityStats; // only set when sourceKind === "entity"
+  model?: ModelRef; // entities only: the creature's 3D shape (its `client.shape`), when it names a shape file
   entries: LootEntry[];
 }
 
@@ -318,6 +329,7 @@ export interface ItemIndexEntry {
   codeRefs?: CodeRef[];
   randomPool?: RandomPoolStack[]; // `ItemStackRandomizer` items only: everything it can turn into, most likely first (see extractStackRandomizerPools in models/loot.ts). The randomizer placed in a world-generated chest may also carry its own `totalChance` attribute (chance to generate nothing at all) -- per-instance data, not in this definition.
   generatedBy?: RandomizerSource[]; // randomizer items that can generate this item/block, most likely first (the reverse of `randomPool`)
+  model?: ModelRef; // the item's 3D shape, when its JSON names a shape file (see models/shapes.ts); drawn untextured, since the server download ships no textures
   includedByManifest?: string; // the vs-manifest.json `includeItems` pattern that matched this entry, when one did (set even if other rules also reach it) // the C# classes/behaviors this item/block's own JSON names (see attachItemMetadata in crossref.ts); absent when it names none
 }
 

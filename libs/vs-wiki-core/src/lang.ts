@@ -108,6 +108,35 @@ function composeTapestryName(lang: DomainLang | undefined, prefix: "tapestry" | 
   return template.replace("{0}", matched);
 }
 
+/**
+ * `animalbot-<creature code>` (`entities/animal/animalbot*.json`, class `EntityAnimalBot`) is the developer test bot that
+ * wraps a real animal, e.g. `animalbot-goat-sirohi-baby-female`; the game authors no lang key for any of the ~120
+ * variants. Names it after the wrapped creature's own `item-creature-<code>` key ("Animal bot: Sirohi goat kid (female)").
+ * `playerbot` is the same kind of dev entity with no variants, and no key either.
+ */
+function composeBotName(lang: DomainLang | undefined, code: string): string | undefined {
+  if (code === "playerbot") return "Player bot";
+  if (!code.startsWith("animalbot-")) return undefined;
+  const inner = lookup(lang, keyFor("entity", code.slice("animalbot-".length)));
+  return inner ? `Animal bot: ${inner}` : undefined;
+}
+
+/**
+ * `villager-<culture>-<gender>-<role>-<name>` (e.g. `villager-nadiya-female-blacksmith-gerhardt`): the game only authors
+ * a lang key for the ~20 villagers that really exist, but the variant groups multiply every role by every name. A person's
+ * name is the `nametag-<name>` key; the role is the code's own segment (`farmer1` is still a Farmer). Falls back to nothing
+ * when the name has no nametag, so a code that isn't shaped like this stays raw.
+ */
+function composeVillagerName(lang: DomainLang | undefined, code: string): string | undefined {
+  const m = /^villager-[a-z]+-(male|female)-([a-z]+)\d*-([a-z]+)$/.exec(code);
+  if (!m) return undefined;
+  const [, gender, role, person] = m;
+  const name = person === "generic" ? "" : lookup(lang, `nametag-${person}`); // "generic" = a villager with no personal name
+  if (name === undefined) return undefined;
+  const roleLabel = role === "generic" ? "Villager" : role[0].toUpperCase() + role.slice(1);
+  return `${roleLabel}${name ? ` ${name}` : ""} (${gender})`;
+}
+
 /** Loads lang/en.json for every active domain (own-domain first, vanilla game/lang as shared fallback). */
 export function buildLangResolver(index: AssetIndex, lang = "en"): LangResolver {
   // Mods can author a lang key as a literal "<domain>:<realkey>" string inside their *own*
@@ -148,7 +177,10 @@ export function buildLangResolver(index: AssetIndex, lang = "en"): LangResolver 
         composeOreName(domainLang, code) ??
         composeOreName(vanillaFallback, code) ??
         composeMetalBlockName(domainLang, code) ??
-        composeMetalBlockName(vanillaFallback, code);
+        composeMetalBlockName(vanillaFallback, code) ??
+        (kind === "entity"
+          ? composeBotName(domainLang, code) ?? composeBotName(vanillaFallback, code) ?? composeVillagerName(domainLang, code) ?? composeVillagerName(vanillaFallback, code)
+          : undefined);
       if (name) return { name, missing: false };
       return { name: code, missing: true };
     },

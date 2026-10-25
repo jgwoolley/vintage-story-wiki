@@ -148,6 +148,15 @@ worldgen rule (where/how often to spawn) that *references* schematics. They are 
   `/assets/schematics/world/<domain>/<relPath>.json.gz`. `schematicViewer.js` fetches one on demand and
   unpacks it with the browser's `DecompressionStream`. Redistributing these files (vanilla and mods) is a
   deliberate choice; each schematic page says whose files they are.
+- **Item and creature models**: `models/shapes.ts` resolves each item's `shape`/`shapeByType` and each entity's
+  `client.shape` (placeholders substituted from the variant's groups; invalid-regex `shapeByType` keys fall back to the
+  flat `shape`), looks the file up in the loaded asset index (`shapes/...`, already there because the loader reads every
+  JSON), reduces it with `compactShape` (geometry only: boxes, rotations, one texture key per element) and writes it once
+  gzipped to `_data/generated/modelFiles/`, served at `/assets/models/<domain>/<path>.json.gz`. `ItemIndexEntry.model` /
+  `LootSourceGroup.model` point at it. In the browser `modelPage.js` loads it and `libs/vs-schematic/src/modelPreview.ts`
+  draws `shapeToBoxes` output (rotations composed parent-first about each `rotationOrigin`; a child's coordinates are relative to its parent's `from`, per `ShapeElement.GetLocalTransformMatrix`) on the shared voxel viewer
+  (boxes got an optional `quaternion`). **Untextured**: the server download has no textures, so each texture key gets a hash
+  color; animations are ignored (rest pose); blocks are not covered.
 - **Two viewers, one core**: each schematic page embeds a read-only preview (`schematicPreview.js`: rotate/pan/zoom
   only, no legend/slider/picking; files over 1.5 MB compressed wait for a click, the rest load when scrolled into
   view) with a button into the full viewer (`schematicViewer.js`, which also has Download for whatever is loaded:

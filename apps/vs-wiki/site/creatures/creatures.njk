@@ -11,6 +11,7 @@ eleventyComputed:
 {% import "macros/datatable.njk" as dt %}
 {% import "macros/breadcrumb.njk" as bc %}
 {% import "macros/temperature.njk" as tmp %}
+{% import "macros/model.njk" as mdl %}
 {{ bc.trail(lang, [{label: "Creatures", url: "creatures/"}, {label: source.sourceDisplayName}]) }}
 
 <h1>{{ source.sourceDisplayName }}</h1>
@@ -18,6 +19,8 @@ eleventyComputed:
   <code>{{ source.sourceDomain }}:{{ source.sourceCode }}</code>
   &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ source.sourceMod }}</a>
 </p>
+
+{% if source.model.path %}{{ mdl.preview(source.model, source.sourceDisplayName) }}{% endif %}
 
 {% if source.entityStats %}
 <h2>Stats</h2>

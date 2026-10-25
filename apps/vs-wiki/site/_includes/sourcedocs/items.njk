@@ -66,3 +66,12 @@ Guide, dialogue and class text links to items with <code>handbook://item-&lt;cod
 <code>/items/</code> page, and <code>index.ts</code> then makes sure every referenced item or block that really
 exists has a page, even if no recipe, drop or spawn rule reaches it (muddy gravel, bony soil, pit kilns).
 </p>
+
+<h3>3D model</h3>
+<p>
+An item whose JSON names a shape (<code>shape</code>, or the best <code>shapeByType</code> match, with
+<code>{group}</code> placeholders filled in) gets a rotatable preview of that file from <code>shapes/item/**</code>.
+The shape is a tree of boxes; each element's rotation about its <code>rotationOrigin</code> is applied, and a child is positioned relative to its parent and inherits that rotation, by
+its children. It is untextured -- the dedicated-server download ships no textures -- so each texture name gets a
+placeholder color. Blocks have no preview yet, and wildcard shapes (a random pick among several files) are skipped.
+</p>
