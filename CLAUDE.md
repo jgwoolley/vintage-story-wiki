@@ -139,24 +139,22 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   block drops already had. Silently zeroed out real drops for any entity whose drops vary by
   variant (confirmed: shiver/bowtorn/drifter's harvestable drops, locust's death drops). If you
   add another drop-reading code path, use the same two-step fallback, not just the flat array.
-- **Trader specialization → trader entity is resolved via `variantgroups`, not an explicit
-  field** — there isn't one in the game data. `entities/humanoid/trader-{male,female}.json`
-  declare a `variantgroups` entry `{code: "type", states: [...specialization codes...]}`, and the
-  entity's own `attributes.tradePropsFile: "config/tradelists/trader-{type}"` substitutes that
-  same `type` variant value into the tradelist filename — so the `type` variant *state itself* is
-  the specialization code, and that's the only join key available. `apps/vs-wiki/src/ingest/index.ts`
-  re-expands `entities/` via `expandVariants` after both `extractTrades` and `extractLoot` have
-  run (not reusing `extractLoot`'s `creatureRoster`, since `CreatureRosterEntry` only keeps the
-  already-flattened code, not each variant's `groupValues`) and attaches every matching concrete
-  entity (domain + code, e.g. `trader-male-treasurehunter-cold`) to that specialization's
-  `TradeList.traderEntities` array — generalized by checking variant-group overlap with loaded
-  specialization codes, not hardcoded to the literal string "trader", so a modded trader entity
-  would be picked up the same way. One specialization resolves to several concrete entities
-  (every gender x climate combination); the 8 vanilla `villager-*` tradelists intentionally
-  resolve to zero, since named villagers aren't assigned a specialization through this mechanism
-  at all. If you add another cross-reference that needs a variant's `groupValues` (not just its
-  flattened code), you'll likely need to re-run `expandVariants` the same way rather than reaching
-  into `creatureRoster`.
+- **Trade list → entity is resolved through the entity's own `attributes.tradePropsFile` /
+  `tradePropsFileByType`** (placeholders like `{type}` filled from that variant's `groupValues`; the
+  list id is `<domain>:<file name minus a "trader-" prefix>`). Wandering traders use
+  `config/tradelists/trader-{type}` (the `type` variant state is the specialization); `villager.json`
+  maps individual villagers by glob (`*-tobias` → `villager-tobias`). `apps/vs-wiki/src/ingest/index.ts`
+  re-expands `entities/` via `expandVariants` (not `creatureRoster`, which drops `groupValues`) and
+  appends each match to `TradeList.traderEntities`; creature pages link back to their lists. A listing of
+  the generic `clutter` block carries `clutterType` (its `type` attribute) and links to `/clutter/<type>/`.
+  The older `variantgroups`-overlap join was replaced by this; don't resurrect it.
+- **`expandVariants` honors `allowedVariants` / `AllowedVariants` (and skip) case-insensitively** — the
+  game's JSON reading is case-insensitive and `villager.json` spells it `AllowedVariants`; missing that
+  once generated ~600 nonexistent villagers (and 600 junk `/creatures/` pages). If a family of variants
+  looks wildly over-generated, check the key's spelling first.
+- **Every `<table>` paginates**: `apps/vs-wiki/site/assets/datatable.js` pages any plain table outside a
+  `.datatable` that has more than 20 body rows (Prev/Next only, no search/sort); `data-no-paginate` opts
+  out. Anything that needs search/filter/sort should still be a `datatable` macro.
 - **Breadcrumb pattern**: every page except the home page and the root redirect calls the
   `trail(lang, crumbs)` macro (`apps/vs-wiki/site/_includes/macros/breadcrumb.njk`, imported per-template —
   there's no automatic base-layout injection) right before its `<h1>`, rendering

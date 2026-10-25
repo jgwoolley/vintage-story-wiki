@@ -156,7 +156,9 @@ worldgen rule (where/how often to spawn) that *references* schematics. They are 
   `LootSourceGroup.model` point at it. In the browser `modelPage.js` loads it and `libs/vs-schematic/src/modelPreview.ts`
   draws `shapeToBoxes` output (rotations composed parent-first about each `rotationOrigin`; a child's coordinates are relative to its parent's `from`, per `ShapeElement.GetLocalTransformMatrix`) on the shared voxel viewer
   (boxes got an optional `quaternion`). **Untextured**: the server download has no textures, so each texture key gets a hash
-  color; animations are ignored (rest pose); blocks are not covered.
+  color; animations are ignored (rest pose); blocks are not covered, except clutter types, whose shape is the
+  `attributes.types` entry of their clutter blocktype (same path rule as the game's `BlockShapeFromAttributes.LoadTypes`) and which
+  have their own `/clutter/<type>/` pages.
 - **Two viewers, one core**: each schematic page embeds a read-only preview (`schematicPreview.js`: rotate/pan/zoom
   only, no legend/slider/picking; files over 1.5 MB compressed wait for a click, the rest load when scrolled into
   view) with a button into the full viewer (`schematicViewer.js`, which also has Download for whatever is loaded:

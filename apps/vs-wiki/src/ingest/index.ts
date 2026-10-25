@@ -22,13 +22,13 @@ import { extractBlockPatchSpawns } from "./models/blockpatches.js";
 import { extractTrees, extractFruitTrees } from "./models/trees.js";
 import { extractRockStrata } from "./models/rockstrata.js";
 import { extractTapestryInstances } from "./models/tapestryInstances.js";
-import { extractClutterTypes } from "./models/clutterInstances.js";
+import { extractClutterTypes, clutterLangName } from "./models/clutterInstances.js";
 import { extractGuides } from "./models/guides.js";
 import { extractTrades } from "./models/trades.js";
 import { extractDialogue } from "./models/dialogue.js";
 import { extractTraits, extractCharacterClasses } from "./models/classes.js";
 import { buildBlockCodeToSchematicIndex, buildItemCodeToSchematicIndex, buildSchematicToStructureIndex, findStructuresContaining } from "./structureContents.js";
-import { expandVariants } from "vs-wiki-core/variantExpander.js";
+import { expandVariants, resolveByType, substitutePlaceholders } from "vs-wiki-core/variantExpander.js";
 import { buildLangResolver } from "vs-wiki-core/lang.js";
 import { extractBlockNames } from "./models/blockNames.js";
 import type { IngestStepTiming } from "./types.js";
@@ -309,42 +309,54 @@ function main(): void {
   const dialogueRewardCount = dialogue.reduce((n, d) => n + d.rewards.length, 0);
   console.log(`  ${dialogue.length} NPCs with dialogue, ${dialogueRewardCount} reward-granting dialogue lines`);
 
-  // Cross-reference each specialization against the trader entities that actually use it. VS has
-  // no explicit "specialization" field anywhere: `entities/humanoid/trader-{male,female}.json`
-  // declare a `variantgroups` entry `{ code: "type", states: [...specialization codes...] }`, and
-  // `attributes.tradePropsFile: "config/tradelists/trader-{type}"` substitutes that same `type`
-  // variant value into the tradelist filename -- so the specialization code (the `{type}` variant
-  // state, e.g. "treasurehunter") IS the join key. Re-expands entities/ rather than reusing
-  // extractLoot's creatureRoster because CreatureRosterEntry doesn't retain each variant's
-  // groupValues (only the already-flattened code), and we need the `type` value specifically, not
-  // just the concrete code, to know which specialization a variant belongs to. Deliberately not
-  // hardcoded to "trader" -- any entity (vanilla or modded) whose `type` variantgroup states
-  // overlap a loaded specialization code is picked up the same way.
-  step("Cross-referencing trader specializations against trader entity variants");
-  const specializationCodes = new Set(trades.map((t) => t.id.split(/:(.+)/)[1]));
-  const traderEntitiesByType = new Map<string, import("./types.js").TraderEntityRef[]>();
+  // Cross-reference each trade list against the entities that actually use it. The game has no explicit
+  // link: an entity's `attributes.tradePropsFile` (or its glob-keyed `tradePropsFileByType`) names the list's
+  // file, with `{group}` placeholders filled in from that variant's own variant groups.
+  // `trader-{male,female}.json` use `"config/tradelists/trader-{type}"` (the `type` group is the specialization),
+  // `villager.json` maps individual villagers with `tradePropsFileByType` ("*-tobias" -> "villager-tobias").
+  // The list id is `<domain>:<file name without the "trader-" prefix>` (see extractTrades), so that is the join key.
+  // Deliberately not hardcoded to "trader": any entity, vanilla or modded, that names a loaded list is picked up.
+  // Re-expands entities/ rather than reusing extractLoot's creatureRoster because CreatureRosterEntry doesn't
+  // retain each variant's groupValues, which the placeholders need.
+  step("Cross-referencing trade lists against the entity variants that use them");
+  const tradeByCode = new Map<string, import("./types.js").TradeList[]>();
+  for (const t of trades) {
+    const code = t.id.split(/:(.+)/)[1];
+    tradeByCode.set(code, [...(tradeByCode.get(code) ?? []), t]);
+  }
   for (const variant of expandVariants(index, ["entities/"])) {
-    const groups = (variant.json as { variantgroups?: { code: string; states?: string[] }[] }).variantgroups ?? [];
-    const typeGroup = groups.find((g) => g.code === "type" && (g.states ?? []).some((s) => specializationCodes.has(s)));
-    if (!typeGroup) continue;
-    const type = variant.groupValues["type"];
-    if (!type || !specializationCodes.has(type)) continue;
-    const list = traderEntitiesByType.get(type) ?? [];
-    list.push({ domain: variant.domain, code: variant.code });
-    traderEntitiesByType.set(type, list);
+    const attributes = (variant.json as { attributes?: Record<string, unknown> }).attributes;
+    if (!attributes) continue;
+    let file: unknown;
+    try {
+      file = resolveByType(attributes.tradePropsFileByType as Record<string, string> | undefined, variant.code);
+    } catch {
+      // an invalid-regex glob key in some file; fall through to the flat attribute
+    }
+    file ??= attributes.tradePropsFile;
+    if (typeof file !== "string") continue;
+    const base = substitutePlaceholders(file, variant.groupValues).split("/").pop()?.replace(/\.json$/, "") ?? "";
+    const candidates = tradeByCode.get(base.replace(/^trader-/, ""));
+    const trade = candidates?.find((t) => t.domain === variant.domain) ?? candidates?.[0];
+    if (trade) trade.traderEntities.push({ domain: variant.domain, code: variant.code });
   }
   for (const trade of trades) {
     const specialization = trade.id.split(/:(.+)/)[1];
-    trade.traderEntities = traderEntitiesByType.get(specialization) ?? [];
     const first = trade.traderEntities[0];
     const entityName = first ? lang.displayName("entity", first.domain, first.code) : undefined;
-    trade.displayName =
+    const baseName =
       entityName && !entityName.missing
         ? entityName.name.replace(/\s*\([^)]*\)\s*$/, "")
         : `${specialization.charAt(0).toUpperCase()}${specialization.slice(1)} trader`;
+    // A named villager's lang name is only the job ("Innkeeper"); append the person's own name(s) from `nametag-<name>`
+    // (villager-liga is shared by Liga and Arzhur, so every entity's name is listed).
+    const people = [...new Set(trade.traderEntities.filter((e) => e.code.startsWith("villager-")).map((e) => lang.raw(e.domain, `nametag-${e.code.split("-").pop()}`)))].filter(
+      (n): n is string => !!n
+    );
+    trade.displayName = people.length ? `${baseName} ${people.join(" / ")}` : baseName;
   }
   console.log(
-    `  ${trades.filter((t) => t.traderEntities.length).length}/${trades.length} specializations matched to at least one trader entity variant`
+    `  ${trades.filter((t) => t.traderEntities.length).length}/${trades.length} trade lists matched to at least one entity variant`
   );
 
   step("Extracting player traits and starting classes");
@@ -600,9 +612,35 @@ function main(): void {
   const traitsById = Object.fromEntries(traits.map((t) => [t.code, t]));
   const dialogueById = Object.fromEntries(dialogue.map((d) => [d.id, d]));
 
+  // Clutter that traders sell (Tobias's lamps, gadget piles, books) is chosen by the listing's `type` attribute; make sure
+  // each such type has a clutter page even when no worldgen schematic places it, and record who sells it.
+  for (const trade of trades) {
+    for (const listing of trade.selling) {
+      if (!listing.clutterType) continue;
+      let entry = clutter.find((c) => c.type === listing.clutterType);
+      if (!entry) {
+        const name = clutterLangName(lang, listing.domain, listing.code, listing.clutterType);
+        entry = {
+          id: listing.clutterType,
+          type: listing.clutterType,
+          domain: listing.domain === "survival" || listing.domain === "creative" ? "game" : listing.domain,
+          displayName: name ?? listing.clutterType,
+          missingTranslation: name === undefined,
+          sourceMod: trade.sourceMod,
+          blockCodes: [listing.code],
+          structures: [],
+        };
+        clutter.push(entry);
+      }
+      if (!entry.blockCodes.includes(listing.code)) entry.blockCodes.push(listing.code);
+      entry.soldBy = [...new Set([...(entry.soldBy ?? []), trade.id])];
+    }
+  }
+  clutter.sort((a, b) => a.displayName.localeCompare(b.displayName));
+
   step("Extracting item and creature 3D models");
-  const modelStats = extractModels(index, itemIndex, creatures);
-  console.log(`  ${modelStats.items} items and ${modelStats.creatures} creatures have a shape, ${modelStats.files} distinct shape files (${(modelStats.bytes / 1e6).toFixed(1)} MB gzipped)`);
+  const modelStats = extractModels(index, itemIndex, creatures, clutter);
+  console.log(`  ${modelStats.items} items, ${modelStats.creatures} creatures and ${modelStats.clutter}/${clutter.length} clutter types have a shape, ${modelStats.files} distinct shape files (${(modelStats.bytes / 1e6).toFixed(1)} MB gzipped)`);
 
   step("Extracting block display names (schematic viewer legend)");
   const blockNames = extractBlockNames(index, lang);

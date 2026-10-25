@@ -28,3 +28,13 @@ world generation, which isn't visible in schematic data.</p>
 vanilla and BetterRuins schematics decodes without error (<code>npm run decode-stats</code>), and
 <code>npm test</code> pins each attribute type.</p>
 </div>
+
+<h3>Detail pages and 3D models</h3>
+<p>
+Each type has its own page with a rotatable, untextured 3D model. The shape comes from the blocktype's
+<code>attributes.types</code> entry whose <code>code</code> equals the type, mirroring the game's
+<code>BlockShapeFromAttributes.LoadTypes</code>: <code>&lt;shapeBasePath&gt;/&lt;code&gt;.json</code> unless the entry has its own
+<code>shapePath</code> (relative to the same folder, or absolute under <code>shapes/</code> when it starts with
+<code>/</code>). A few types (<code>carcass-fish</code>, some Maltie's Firearms piles and wall mounts) name no shape that exists, so they have no model.
+Placement variation the game applies per block (random rotation and height jitter) is not shown.
+</p>

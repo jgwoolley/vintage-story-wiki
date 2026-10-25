@@ -1,0 +1,42 @@
+---
+pagination:
+  data: generated.clutter
+  size: 1
+  alias: clutter
+permalink: "{{ lang }}/clutter/{{ clutter.id | slugify }}/index.html"
+layout: layouts/base.njk
+eleventyComputed:
+  title: "{{ clutter.displayName }} - Vintage Story Wiki"
+---
+{% import "macros/breadcrumb.njk" as bc %}
+{% import "macros/model.njk" as mdl %}
+{{ bc.trail(lang, [{label: "Clutter", url: "clutter/"}, {label: clutter.displayName}]) }}
+
+<h1>{{ clutter.displayName }}</h1>
+<p class="muted">
+  <span class="tag">clutter</span>
+  <code>{{ clutter.type }}</code>
+  &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ clutter.sourceMod }}</a>
+  &middot; placed as {% for b in clutter.blockCodes %}<code>{{ b }}</code>{% if not loop.last %}, {% endif %}{% endfor %}
+</p>
+{% if clutter.missingTranslation %}<p class="warning">No display name found in any lang file &mdash; showing the raw type.</p>{% endif %}
+
+{% if clutter.model.path %}{{ mdl.preview(clutter.model, clutter.displayName) }}{% else %}
+<p class="muted">No 3D model: the game's data names no shape file for this type.</p>
+{% endif %}
+
+{% if clutter.soldBy.length %}
+<h2>Sold by traders ({{ clutter.soldBy.length }})</h2>
+<ul>
+{% for tradeId in clutter.soldBy %}{% set trade = generated.trades | findById(tradeId) %}{% if trade.id %}
+  <li><a href="{{ ('/' ~ lang ~ '/') | url }}traders/{{ trade.id | slugify }}/">{{ trade.displayName }}</a></li>
+{% endif %}{% endfor %}
+</ul>
+{% endif %}
+
+<h2>Found in structures ({{ clutter.structures.length }})</h2>
+<ul>
+{% for s in clutter.structures %}{% set structure = generated.structures | findById(s.structureId) %}{% if structure.id %}
+  <li><a href="{{ ('/' ~ lang ~ '/') | url }}structures/{{ structure.id | slugify }}/">{{ structure.name or structure.code }}</a>{% if s.count > 1 %} &times;{{ s.count }}{% endif %}</li>
+{% endif %}{% endfor %}
+</ul>

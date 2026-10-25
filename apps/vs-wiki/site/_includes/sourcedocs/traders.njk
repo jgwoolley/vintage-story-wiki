@@ -6,11 +6,12 @@ tapestry listed many times under different "type" values) are collapsed to one l
 those variations are randomized/cosmetic rather than distinct tradeable things.
 </p>
 <p>
-There's no explicit field anywhere linking a specialization to the trader entity that actually
-uses it -- <code>entities/humanoid/trader-{male,female}.json</code>'s own <code>variantgroups</code>
-declares a <code>type</code> dimension whose states <em>are</em> the specialization codes, and the
-entity's <code>attributes.tradePropsFile</code> substitutes that same value into the tradelist
-filename. Every concrete entity variant whose <code>type</code> matches a loaded specialization's
-code is linked back to it; the 8 <code>villager-*</code> tradelists intentionally resolve to no
-entity, since named villagers aren't assigned a specialization through this mechanism at all.
+There's no list of "who trades what" anywhere -- an entity's own <code>attributes.tradePropsFile</code>
+(or its glob-keyed <code>tradePropsFileByType</code>) names the tradelist file, with <code>{group}</code>
+placeholders filled in from that variant's variant groups. Wandering traders use
+<code>config/tradelists/trader-{type}</code>, where the <code>type</code> state <em>is</em> the specialization;
+<code>villager.json</code> maps each named villager with <code>tradePropsFileByType</code>
+(<code>*-tobias</code> &rarr; <code>villager-tobias</code>; Liga and Arzhur share <code>villager-liga</code>). Every
+concrete entity variant resolving to a loaded list is linked back to it (and its creature page links here).
+A listing of the generic <code>clutter</code> block links to the clutter type it names (its <code>type</code> attribute), e.g. Tobias's lanterns and books.
 </p>

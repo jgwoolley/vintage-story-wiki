@@ -19,7 +19,7 @@ permalink: "{{ lang }}/clutter/index.html"
 {% call dt.datatable(40, "Search clutter or structures...", ["Name", "Type", "Block", "Found in structures", "Mod"]) %}
 {% for c in generated.clutter %}
   <tr data-search="{{ c.type }} {{ c.displayName }}" data-category="{{ c.blockCodes[0] }}" data-mod="{{ c.sourceMod }}" data-mod-label="{{ generated.mods | modName(c.sourceMod) }}">
-    <td>{{ c.displayName }}{% if c.missingTranslation %} <span class="tag">no lang key</span>{% endif %}</td>
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}clutter/{{ c.id | slugify }}/">{{ c.displayName }}</a>{% if c.missingTranslation %} <span class="tag">no lang key</span>{% endif %}</td>
     <td><code>{{ c.type }}</code></td>
     <td>{% for b in c.blockCodes %}<code>{{ b }}</code>{% if not loop.last %}, {% endif %}{% endfor %}</td>
     <td>{% for s in c.structures %}{% set structure = generated.structures | findById(s.structureId) %}{% if structure.id %}<a href="{{ ('/' ~ lang ~ '/') | url }}structures/{{ structure.id | slugify }}/">{{ structure.name or structure.code }}</a>{% if s.count > 1 %} &times;{{ s.count }}{% endif %}{% if not loop.last %}, {% endif %}{% endif %}{% endfor %}</td>

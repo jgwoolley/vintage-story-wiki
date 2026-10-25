@@ -22,7 +22,7 @@ permalink: "{{ lang }}/trades/index.html"
 {% for trade in generated.trades | sort(false, false, "id") %}
   {% for listing in trade.selling %}
   <tr data-search="{{ listing.domain }}:{{ listing.code }} {{ generated.items | displayName(listing.domain, listing.code) }} {{ trade.id }}" data-category="{{ listing.direction }}" data-mod="{{ trade.sourceMod }}" data-mod-label="{{ generated.mods | modName(trade.sourceMod) }}">
-    <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ listing.domain }}/{{ listing.code | slugify }}/">{{ generated.items | displayName(listing.domain, listing.code) }}</a></td>
+    <td>{% if listing.clutterType %}{% set clutterItem = generated.clutter | findById(listing.clutterType) %}<a href="{{ ('/' ~ lang ~ '/') | url }}clutter/{{ listing.clutterType | slugify }}/">{{ clutterItem.displayName or listing.clutterType }}</a> <span class="muted">(clutter)</span>{% else %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ listing.domain }}/{{ listing.code | slugify }}/">{{ generated.items | displayName(listing.domain, listing.code) }}</a>{% endif %}</td>
     <td>
       <a href="{{ ('/' ~ lang ~ '/') | url }}traders/{{ trade.id | slugify }}/">{{ trade.displayName }}</a>
       {% if trade.traderEntities.length %} <a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}creatures/{{ trade.traderEntities[0].domain }}/{{ trade.traderEntities[0].code | slugify }}/" title="{{ trade.traderEntities.length }} matching trader entity variant(s)">entity</a>{% endif %}
@@ -38,7 +38,7 @@ permalink: "{{ lang }}/trades/index.html"
   {% endfor %}
   {% for listing in trade.buying %}
   <tr data-search="{{ listing.domain }}:{{ listing.code }} {{ generated.items | displayName(listing.domain, listing.code) }} {{ trade.id }}" data-category="{{ listing.direction }}" data-mod="{{ trade.sourceMod }}" data-mod-label="{{ generated.mods | modName(trade.sourceMod) }}">
-    <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ listing.domain }}/{{ listing.code | slugify }}/">{{ generated.items | displayName(listing.domain, listing.code) }}</a></td>
+    <td>{% if listing.clutterType %}{% set clutterItem = generated.clutter | findById(listing.clutterType) %}<a href="{{ ('/' ~ lang ~ '/') | url }}clutter/{{ listing.clutterType | slugify }}/">{{ clutterItem.displayName or listing.clutterType }}</a> <span class="muted">(clutter)</span>{% else %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ listing.domain }}/{{ listing.code | slugify }}/">{{ generated.items | displayName(listing.domain, listing.code) }}</a>{% endif %}</td>
     <td>
       <a href="{{ ('/' ~ lang ~ '/') | url }}traders/{{ trade.id | slugify }}/">{{ trade.displayName }}</a>
       {% if trade.traderEntities.length %} <a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}creatures/{{ trade.traderEntities[0].domain }}/{{ trade.traderEntities[0].code | slugify }}/" title="{{ trade.traderEntities.length }} matching trader entity variant(s)">entity</a>{% endif %}

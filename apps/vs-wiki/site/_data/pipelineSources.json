@@ -94,8 +94,8 @@
     "id": "clutter",
     "title": "Clutter",
     "listingUrl": "clutter/",
-    "modelFiles": ["apps/vs-wiki/src/ingest/models/clutterInstances.ts", "libs/vs-schematic/src/schematicDecode.ts"],
-    "globs": ["blocktypes/clutter.json", "blocktypes/devastation/clutter-devastation.json", "blocktypes/aquatic/clutter-aquatic.json", "worldgen/schematics/**/*.json (BlockEntities attribute blobs, decoded)", "lang/*.json (clutter-<type> keys)"]
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/clutterInstances.ts", "apps/vs-wiki/src/ingest/models/shapes.ts", "libs/vs-schematic/src/schematicDecode.ts", "libs/vs-schematic/src/shapeBoxes.ts"],
+    "globs": ["blocktypes/clutter.json", "blocktypes/devastation/clutter-devastation.json", "blocktypes/aquatic/clutter-aquatic.json", "shapes/block/clutter/**, shapes/block/aquatic/clutter/**, shapes/block/devastation/machinery/** (the 3D model of each type; geometry only)", "worldgen/schematics/**/*.json (BlockEntities attribute blobs, decoded)", "lang/*.json (clutter-<type> keys)"]
   },
   {
     "id": "clothing",

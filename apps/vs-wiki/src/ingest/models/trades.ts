@@ -1,12 +1,17 @@
 import type { AssetIndex, TradeList, TradeListing } from "../types.js";
 import { assetsUnderAnyDomain } from "vs-wiki-core/assetLoader.js";
 
-type RawListing = { code?: string; type?: string; stacksize?: number; stock?: { avg?: number; var?: number }; price?: { avg?: number; var?: number } };
+type RawListing = { code?: string; type?: string; stacksize?: number; stock?: { avg?: number; var?: number }; price?: { avg?: number; var?: number }; attributes?: { type?: unknown } };
 
-function normalizeListings(raw: RawListing[], tradeListId: string, direction: "selling" | "buying"): TradeListing[] {
+function normalizeListings(raw: RawListing[], tradeListId: string, direction: "selling" | "buying", defaultDomain: string): TradeListing[] {
   const out: TradeListing[] = [];
   raw.forEach((r, i) => {
     if (!r.code) return;
+    // A listing may name its item's domain ("betterruins:locatormap-mine1", added to a vanilla list by a mod's patch);
+    // a bare code is the list's own domain.
+    const colon = r.code.indexOf(":");
+    const domain = colon >= 0 ? r.code.slice(0, colon) : defaultDomain;
+    const code = colon >= 0 ? r.code.slice(colon + 1) : r.code;
     const stockAvg = r.stock?.avg;
     const stockVar = r.stock?.var;
     const priceAvg = r.price?.avg;
@@ -15,9 +20,10 @@ function normalizeListings(raw: RawListing[], tradeListId: string, direction: "s
       id: `${tradeListId}#${direction}#${i}`,
       tradeListId,
       direction,
-      domain: "survival",
-      code: r.code,
+      domain,
+      code,
       itemKind: r.type === "block" ? "block" : "item",
+      ...(/^clutter/.test(code) && typeof r.attributes?.type === "string" ? { clutterType: r.attributes.type } : {}),
       stacksize: r.stacksize,
       stockAvg,
       stockVar,
@@ -41,7 +47,8 @@ function normalizeListings(raw: RawListing[], tradeListId: string, direction: "s
  * `{money, selling: {list}, buying: {list}}` object. Trade entries can repeat the same base
  * `code` with different `attributes` (e.g. a tapestry listed many times under different "type"
  * attribute values) -- not modeled here, only the base code/price/stock range is kept, since the
- * attribute variations are themselves cosmetic/randomized rather than distinct tradeable things.
+ * attribute variations are themselves cosmetic/randomized rather than distinct tradeable things. The one exception is
+ * the generic `clutter` block, whose `type` attribute IS what is being sold (`TradeListing.clutterType`).
  * Trader *personality* assignment (which specialization a given trader entity uses, picked via a
  * `variantgroups`-driven `type` on `entities/humanoid/trader-{male,female}.json`) is cross-
  * referenced in `index.ts` after this and entity extraction have both run -- see
@@ -70,8 +77,8 @@ export function extractTrades(index: AssetIndex): TradeList[] {
       sourceMod: asset.modid,
       moneyAvg: json.money?.avg,
       moneyVar: json.money?.var,
-      selling: normalizeListings(json.selling?.list ?? [], id, "selling"),
-      buying: normalizeListings(json.buying?.list ?? [], id, "buying"),
+      selling: normalizeListings(json.selling?.list ?? [], id, "selling", asset.domain),
+      buying: normalizeListings(json.buying?.list ?? [], id, "buying", asset.domain),
       // Populated in index.ts, after the trader entities themselves are extracted -- see
       // TraderEntityRef's doc comment for why that cross-reference can't happen here.
       traderEntities: [],

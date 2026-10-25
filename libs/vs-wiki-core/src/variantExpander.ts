@@ -95,8 +95,10 @@ export function expandVariants(index: AssetIndex, categoryPrefixes: string[]): C
     // Entries may be globs ("spear-generic-*"), so match with globToRegExp rather than exact set
     // membership; `skipVariants` is the inverse list and is honored the same way.
     const toMatchers = (list: unknown) => (Array.isArray(list) ? (list as string[]).map(globToRegExp) : undefined);
-    const allowList = toMatchers(json.allowedVariants);
-    const skipList = toMatchers(json.skipVariants);
+    // The game's JSON reading is case-insensitive, and some files spell them `AllowedVariants` / `SkipVariants`
+    // (villager.json lists its 20 real villagers that way; ignoring it generated ~600 nonexistent ones).
+    const allowList = toMatchers(json.allowedVariants ?? json.AllowedVariants);
+    const skipList = toMatchers(json.skipVariants ?? json.SkipVariants);
 
     const resolvedGroups = groups.map((g) => ({ code: groupCode(index, asset.domain, g), states: resolveGroupStates(index, asset.domain, g) }));
     for (const combo of cartesian(resolvedGroups)) {

@@ -283,6 +283,8 @@ export interface ClutterType {
   sourceMod: string; // mod of the first structure the type was seen in
   blockCodes: string[]; // which clutter block code(s) carry it: "clutter" | "clutter-devastation" | "clutter-aquatic"
   structures: { structureId: string; count: number }[]; // structures whose schematics place it, and how many times
+  soldBy?: string[]; // TradeList ids of the traders who sell it (clutter reached only through a trade has no `structures`)
+  model?: ModelRef; // the type's 3D shape: the blocktype's `attributes.types` entry for it names a shape file (see models/shapes.ts)
 }
 
 /** One world-generated structure, normalized across all 4 `StructureKind` registries. */
@@ -578,6 +580,7 @@ export interface TradeListing {
   domain: string;
   code: string;
   itemKind: "item" | "block";
+  clutterType?: string; // generic `clutter` block listings only: the `type` attribute that decides what is actually sold (e.g. "tobias-lantern"); matches a `ClutterType.type`
   stacksize?: number;
   stockAvg?: number;
   stockVar?: number;

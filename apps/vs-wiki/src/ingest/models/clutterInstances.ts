@@ -18,6 +18,13 @@ import { decodeBlockEntity } from "vs-schematic/schematicDecode.js";
  * (`clutter-golem-skull` -> "Eidolon skull"); the `devastation`/`aquatic` variants use their own
  * block code as the class prefix, so both prefixes are tried before giving up.
  */
+/** `BlockClutter`'s display name for a type: the lang key `<block code>-<type with "/" -> "-">`, trying the block's own code and then plain `clutter`. */
+export function clutterLangName(lang: LangResolver, domain: string, blockCode: string, type: string): string | undefined {
+  const langKey = type.replace(/\//g, "-");
+  const bareCode = blockCode.includes(":") ? blockCode.slice(blockCode.indexOf(":") + 1) : blockCode;
+  return [bareCode, "clutter"].map((p) => lang.raw(domain, `${p}-${langKey}`)).find((n) => n !== undefined);
+}
+
 export function extractClutterTypes(
   schematicsByDomain: Map<string, SchematicFile[]>,
   schematicToStructure: Map<string, Set<string>>,
@@ -77,9 +84,7 @@ export function extractClutterTypes(
       const id = type;
       let entry = byId.get(id);
       if (!entry) {
-        const langKey = type.replace(/\//g, "-");
-        const prefixes = [bare(blockCode), "clutter"];
-        const name = prefixes.map((p) => lang.raw(domain, `${p}-${langKey}`)).find((n) => n !== undefined);
+        const name = clutterLangName(lang, domain, blockCode, type);
         entry = {
           id,
           type,
