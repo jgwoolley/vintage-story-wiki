@@ -3,6 +3,7 @@ title: Crops - Vintage Story Wiki
 layout: layouts/base.njk
 permalink: "{{ lang }}/crops/index.html"
 ---
+{% import "macros/itemlink.njk" as il %}
 {% import "macros/datatable.njk" as dt %}
 {% import "macros/breadcrumb.njk" as bc %}
 {% import "macros/temperature.njk" as tmp %}
@@ -31,7 +32,7 @@ permalink: "{{ lang }}/crops/index.html"
 {% call dt.datatable(40, "Search spawn patches...", ["Blocks", "Category", "Nutrient", "Nutrient use", "Growth (months)", "Temp (°C)", "Rain", "Mod"]) %}
 {% for patch in generated.blockPatches | sort(false, false, "category") %}
   <tr data-search="{{ patch.blockCodes | join(' ') }}" data-category="{{ patch.category }}"{% if patch.crop.requiredNutrient %} data-tags="nutrient-{{ patch.crop.requiredNutrient | lower }}"{% endif %} data-mod="{{ patch.sourceMod }}" data-mod-label="{{ generated.mods | modName(patch.sourceMod) }}">
-    <td>{% for c in patch.blockCodes %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ patch.domain }}/{{ c | slugify }}/">{{ generated.items | displayName(patch.domain, c) }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</td>
+    <td>{% for c in patch.blockCodes %}{{ il.link(lang, generated.items, patch.domain, c) }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
     <td><span class="tag">{{ patch.category }}</span></td>
     <td>{% if patch.crop.requiredNutrient %}<span class="tag" title="{{ {N: 'Nitrogen', P: 'Phosphorus', K: 'Potassium'}[patch.crop.requiredNutrient] or patch.crop.requiredNutrient }}">{{ patch.crop.requiredNutrient }}</span> {{ {N: 'Nitrogen', P: 'Phosphorus', K: 'Potassium'}[patch.crop.requiredNutrient] }}{% endif %}</td>
     <td>{% if patch.crop.nutrientConsumption != null %}{{ patch.crop.nutrientConsumption }}{% endif %}</td>

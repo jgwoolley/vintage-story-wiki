@@ -3,6 +3,7 @@ title: Fruit Trees - Vintage Story Wiki
 layout: layouts/base.njk
 permalink: "{{ lang }}/fruit-trees/index.html"
 ---
+{% import "macros/itemlink.njk" as il %}
 {% import "macros/datatable.njk" as dt %}
 {% import "macros/breadcrumb.njk" as bc %}
 {% import "macros/temperature.njk" as tmp %}
@@ -20,7 +21,7 @@ permalink: "{{ lang }}/fruit-trees/index.html"
 {% call dt.datatable(40, "Search fruit varieties...", ["Fruit", "Temp (°C)", "Rain", "Mod"]) %}
 {% for ft in generated.fruitTrees | sort(false, false, "variety") %}
   <tr data-search="{{ ft.variety }} {{ ft.fruitItemCode }}" data-mod="{{ ft.sourceMod }}" data-mod-label="{{ generated.mods | modName(ft.sourceMod) }}">
-    <td>{% if ft.fruitItemCode %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ ft.domain }}/{{ ft.fruitItemCode | slugify }}/">{{ generated.items | displayName(ft.domain, ft.fruitItemCode) }}</a>{% else %}{{ ft.variety }}{% endif %}</td>
+    <td>{% if ft.fruitItemCode %}{{ il.link(lang, generated.items, ft.domain, ft.fruitItemCode) }}{% else %}{{ ft.variety }}{% endif %}</td>
     <td>{{ tmp.range(ft.minTemp, ft.maxTemp) }}</td>
     <td>{{ ft.minRain }}&ndash;{{ ft.maxRain }}</td>
     <td><span class="tag">{{ ft.sourceMod }}</span></td>

@@ -8,7 +8,7 @@ import { expandVariants, resolveByType } from "vs-wiki-core/variantExpander.js";
  * so this finds `name` or `name + "ByType"` in whatever casing the file used and resolves the latter
  * against the concrete variant code (most specific glob wins, see `resolveByType`).
  */
-function prop(obj: unknown, name: string, concreteCode: string): unknown {
+export function prop(obj: unknown, name: string, concreteCode: string): unknown {
   if (!obj || typeof obj !== "object") return undefined;
   const wanted = name.toLowerCase();
   let byType: Record<string, unknown> | undefined;
@@ -20,7 +20,7 @@ function prop(obj: unknown, name: string, concreteCode: string): unknown {
   return byType ? resolveByType(byType, concreteCode) : undefined;
 }
 
-const num = (v: unknown): number | undefined => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
+export const num = (v: unknown): number | undefined => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
 
 /**
  * Weapons, tools and ammo with combat/durability stats, read from `itemtypes/` variants: anything

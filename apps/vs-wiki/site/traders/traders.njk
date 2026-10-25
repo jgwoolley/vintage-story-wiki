@@ -8,6 +8,7 @@ layout: layouts/base.njk
 eleventyComputed:
   title: "{{ trade.displayName }} - Vintage Story Wiki"
 ---
+{% import "macros/itemlink.njk" as il %}
 {% import "macros/datatable.njk" as dt %}
 {% import "macros/breadcrumb.njk" as bc %}
 {{ bc.trail(lang, [{label: "Traders", url: "traders/"}, {label: trade.displayName}]) }}
@@ -29,7 +30,7 @@ eleventyComputed:
 {% call dt.datatable(20, "Search what this trader sells...", ["Item", "Price min (per stack)", "Price max (per stack)", "Stock min (stacks)", "Stock max (stacks)", "Items per stack"]) %}
 {% for listing in trade.selling %}
   <tr data-search="{{ listing.code }}">
-    <td>{% if listing.clutterType %}{% set clutterItem = generated.clutter | findById(listing.clutterType) %}<a href="{{ ('/' ~ lang ~ '/') | url }}clutter/{{ listing.clutterType | slugify }}/">{{ clutterItem.displayName or listing.clutterType }}</a> <span class="muted">(clutter)</span>{% else %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ listing.domain }}/{{ listing.code | slugify }}/">{{ generated.items | displayName(listing.domain, listing.code) }}</a>{% endif %}</td>
+    <td>{% if listing.clutterType %}{% set clutterItem = generated.clutter | findById(listing.clutterType) %}<a href="{{ ('/' ~ lang ~ '/') | url }}clutter/{{ listing.clutterType | slugify }}/">{{ clutterItem.displayName or listing.clutterType }}</a> <span class="muted">(clutter)</span>{% else %}{{ il.link(lang, generated.items, listing.domain, listing.code) }}{% endif %}</td>
     <td>{% if listing.priceMin != null %}{{ listing.priceMin | round(2) }}{% endif %}</td>
     <td>{% if listing.priceMax != null %}{{ listing.priceMax | round(2) }}{% endif %}</td>
     <td>{% if listing.stockMin != null %}{{ listing.stockMin | round(2) }}{% endif %}</td>
@@ -43,7 +44,7 @@ eleventyComputed:
 {% call dt.datatable(20, "Search what this trader buys...", ["Item", "Price min (per stack)", "Price max (per stack)", "Stock min (stacks)", "Stock max (stacks)", "Items per stack"]) %}
 {% for listing in trade.buying %}
   <tr data-search="{{ listing.code }}">
-    <td>{% if listing.clutterType %}{% set clutterItem = generated.clutter | findById(listing.clutterType) %}<a href="{{ ('/' ~ lang ~ '/') | url }}clutter/{{ listing.clutterType | slugify }}/">{{ clutterItem.displayName or listing.clutterType }}</a> <span class="muted">(clutter)</span>{% else %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ listing.domain }}/{{ listing.code | slugify }}/">{{ generated.items | displayName(listing.domain, listing.code) }}</a>{% endif %}</td>
+    <td>{% if listing.clutterType %}{% set clutterItem = generated.clutter | findById(listing.clutterType) %}<a href="{{ ('/' ~ lang ~ '/') | url }}clutter/{{ listing.clutterType | slugify }}/">{{ clutterItem.displayName or listing.clutterType }}</a> <span class="muted">(clutter)</span>{% else %}{{ il.link(lang, generated.items, listing.domain, listing.code) }}{% endif %}</td>
     <td>{% if listing.priceMin != null %}{{ listing.priceMin | round(2) }}{% endif %}</td>
     <td>{% if listing.priceMax != null %}{{ listing.priceMax | round(2) }}{% endif %}</td>
     <td>{% if listing.stockMin != null %}{{ listing.stockMin | round(2) }}{% endif %}</td>

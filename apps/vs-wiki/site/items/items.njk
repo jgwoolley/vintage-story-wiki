@@ -8,11 +8,13 @@ layout: layouts/base.njk
 eleventyComputed:
   title: "{{ item.displayName }} - Vintage Story Wiki"
 ---
+{% import "macros/itemlink.njk" as il %}
 {% import "macros/recipe.njk" as rc %}
 {% import "macros/datatable.njk" as dt %}
 {% import "macros/breadcrumb.njk" as bc %}
 {% import "macros/temperature.njk" as tmp %}
 {% import "macros/model.njk" as mdl %}
+{% import "macros/wearable.njk" as wr %}
 {{ bc.trail(lang, [{label: "Items & Blocks", url: "items/"}, {label: item.displayName}]) }}
 
 <h1>{{ item.displayName }}</h1>
@@ -23,7 +25,7 @@ eleventyComputed:
 </p>
 {% if item.missingTranslation %}<p class="warning">No display name found in any lang file &mdash; showing the raw code.</p>{% endif %}
 {% if item.includedByManifest %}<p class="muted">Listed explicitly in the wiki's <code>vs-manifest.json</code> (<code>includeItems</code>: <code>{{ item.includedByManifest }}</code>), so it has a page even if nothing else here links to it.</p>{% endif %}
-{% if item.description %}<div class="card">{{ item.description | safe }}</div>{% endif %}
+{% if item.description %}<div class="card">{{ item.description | replace("__LANG__", ('/' ~ lang ~ '/') | url) | safe }}</div>{% endif %}
 {% if item.model.path %}{{ mdl.preview(item.model, item.displayName) }}{% endif %}
 {% set blockDrops = generated.blockDropsById[item.domain ~ ':' ~ item.code] %}
 
@@ -38,6 +40,26 @@ eleventyComputed:
       <td>{% for t in itemTags %}<a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}items/?tag={{ t | urlencode }}">{{ t }}</a>{% endfor %}</td>
     </tr>
     {% endif %}
+  </tbody>
+</table>
+{% endif %}
+
+{% set wearable = generated.wearablesById[item.domain ~ ':' ~ item.code] %}
+{% if wearable.id %}{{ wr.stats(lang, wearable, generated.repairMaterials, generated.items) }}{% endif %}
+
+{% set gearStats = generated.gearById[item.domain ~ ':' ~ item.code] %}
+{% if gearStats.id %}
+<h2>{{ gearStats.category | capitalize }} stats</h2>
+<table>
+  <tbody>
+    <tr><th>Kind</th><td><a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}weapons/?tag={{ gearStats.type | urlencode }}">{{ gearStats.type }}</a></td></tr>
+    {% if gearStats.durability != null %}<tr><th>Durability</th><td>{{ gearStats.durability }} <span class="muted">uses before it breaks</span></td></tr>{% endif %}
+    {% if gearStats.attackPower != null %}<tr><th>Attack power</th><td>{{ gearStats.attackPower }} <span class="muted">damage per melee hit (a bare hand is 1)</span></td></tr>{% endif %}
+    {% if gearStats.attackRange != null %}<tr><th>Reach</th><td>{{ gearStats.attackRange }} blocks</td></tr>{% endif %}
+    {% if gearStats.damage != null %}<tr><th>Ranged damage</th><td>{{ gearStats.damage }} <span class="muted">a bow's or sling's base damage, or an arrow's or bullet's modifier added to it</span></td></tr>{% endif %}
+    {% if gearStats.damageTier != null %}<tr><th>Attack tier</th><td>{{ gearStats.damageTier }} <span class="muted">compared with armor's protection tier</span></td></tr>{% endif %}
+    {% if gearStats.toolTier != null %}<tr><th>Tool tier</th><td>{{ gearStats.toolTier }} <span class="muted">what it can mine or work (copper 2, bronze 3, iron 4, steel 5)</span></td></tr>{% endif %}
+    {% if gearStats.bestMiningSpeed != null %}<tr><th>Best mining speed</th><td>&times;{{ gearStats.bestMiningSpeed }}</td></tr>{% endif %}
   </tbody>
 </table>
 {% endif %}
@@ -192,7 +214,7 @@ eleventyComputed:
 {% for entry in blockDrops.entries %}
   <tr data-category="{{ entry.mechanism }}">
     <td>{{ entry.mechanism }}{% if entry.panningKeyPattern %}<br><span class="muted tag">{{ entry.panningKeyPattern }}</span>{% endif %}</td>
-    <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ entry.drop.domain }}/{{ entry.drop.code | slugify }}/">{{ generated.items | displayName(entry.drop.domain, entry.drop.code) }}</a></td>
+    <td>{{ il.link(lang, generated.items, entry.drop.domain, entry.drop.code) }}</td>
     <td>
       {% if entry.drop.chanceAvg != null %}{{ entry.drop.chanceAvg | percent }}{% endif %}
       {% if entry.drop.quantityAvg != null %}&times;{{ entry.drop.quantityAvg | round(2) }}{% if entry.drop.quantityVar %} (&plusmn;{{ entry.drop.quantityVar }}){% endif %}{% endif %}
@@ -202,12 +224,29 @@ eleventyComputed:
       {% if entry.drop.dropModbyStat %}<span class="tag">scales with {{ entry.drop.dropModbyStat }}</span>{% endif %}
       {% if entry.stackRandomizerCode %}
         {% set containerParts = entry.stackRandomizerCode.split(':') %}
-        <span class="tag">from <a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ containerParts[0] }}/{{ containerParts[1] | slugify }}/">{{ generated.items | displayName(containerParts[0], containerParts[1]) }}</a></span>
+        <span class="tag">from {{ il.link(lang, generated.items, containerParts[0], containerParts[1]) }}</span>
       {% endif %}
     </td>
   </tr>
 {% endfor %}
 {% endcall %}
+{% endif %}
+
+{% if wearable.protection %}
+{% set repairRecipes = [] %}
+{% for recipeId in item.producedBy %}{% set r = generated.recipesById[recipeId] %}{% if r.id and r.name and "repair" in r.name %}{% set repairRecipes = (repairRecipes.push(r), repairRecipes) %}{% endif %}{% endfor %}
+{% if repairRecipes.length %}
+<h2>Repair recipes ({{ repairRecipes.length }})</h2>
+<p class="muted">Put the damaged piece in the crafting grid with these materials. Repairing costs about half the materials of making it new and keeps the piece's wear history.</p>
+{% call dt.datatable(20, "Search repair recipes...", ["Recipe", "Ingredients → output"]) %}
+{% for recipe in repairRecipes %}
+  <tr>
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/">{{ recipe | recipeTitle(generated.items) }}</a></td>
+    <td>{{ rc.summary(lang, recipe | contextualRecipe(item.domain, item.code), generated.items) }}</td>
+  </tr>
+{% endfor %}
+{% endcall %}
+{% endif %}
 {% endif %}
 
 {% if item.producedBy.length %}
@@ -255,7 +294,7 @@ eleventyComputed:
       {{ loot.mechanism }}
       {% if loot.stackRandomizerCode %}
         {% set containerParts = loot.stackRandomizerCode.split(':') %}
-        <br><span class="muted tag">from <a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ containerParts[0] }}/{{ containerParts[1] | slugify }}/">{{ generated.items | displayName(containerParts[0], containerParts[1]) }}</a></span>
+        <br><span class="muted tag">from {{ il.link(lang, generated.items, containerParts[0], containerParts[1]) }}</span>
       {% endif %}
     </td>
     <td>
@@ -280,8 +319,8 @@ eleventyComputed:
 {% for stack in item.randomPool %}
   <tr data-search="{{ stack.code }} {{ stack.attributes.type }}" data-category="{{ stack.kind }}">
     <td>
-      <a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ stack.domain }}/{{ stack.code | slugify }}/">{{ generated.items | displayName(stack.domain, stack.code) }}</a>
-      {% if stack.attributes.type %}<br><span class="muted tag">type: <a href="{{ ('/' ~ lang ~ '/') | url }}clutter/?q={{ stack.attributes.type | urlencode }}">{{ stack.attributes.type }}</a></span>{% endif %}
+      {{ il.link(lang, generated.items, stack.domain, stack.code) }}
+      {% if stack.attributes.type %}<br><span class="muted tag">type: {% set clutterType = generated.clutter | findById(stack.attributes.type) %}{% if clutterType.id %}<a href="{{ ('/' ~ lang ~ '/') | url }}clutter/{{ clutterType.id | slugify }}/">{{ stack.attributes.type }}</a>{% else %}{{ stack.attributes.type }}{% endif %}</span>{% endif %}
     </td>
     <td><span class="tag">{{ stack.kind }}</span></td>
     <td>{{ stack.chance | percent }}</td>
@@ -299,7 +338,7 @@ eleventyComputed:
   <tbody>
 {% for src in item.generatedBy %}
   <tr>
-    <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ src.domain }}/{{ src.code | slugify }}/">{{ generated.items | displayName(src.domain, src.code) }}</a></td>
+    <td>{{ il.link(lang, generated.items, src.domain, src.code) }}</td>
     <td>{{ src.chance | percent }}</td>
   </tr>
 {% endfor %}

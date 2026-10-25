@@ -14,6 +14,10 @@ export interface ShapeElement {
   rotationX?: number;
   rotationY?: number;
   rotationZ?: number;
+  /** The element's own name; only used to find it as a `stepParent`. */
+  name?: string;
+  /** Name of the element of another shape (the player body) this element is attached to; see `attachToBase`. */
+  stepParent?: string;
   /** Texture key of the element's first textured face, without the leading "#" (e.g. "metal"). */
   texture?: string;
   children?: ShapeElement[];
@@ -57,11 +61,13 @@ export function compactShape(raw: unknown): CompactShape {
     const el = e as Record<string, unknown> | null;
     if (!el || !isVec(el.from) || !isVec(el.to)) return undefined;
     const out: ShapeElement = { from: el.from, to: el.to };
+    if (typeof el.name === "string" && el.name) out.name = el.name;
     if (isVec(el.rotationOrigin) && el.rotationOrigin.some((n) => n !== 0)) out.rotationOrigin = el.rotationOrigin;
     for (const axis of ["rotationX", "rotationY", "rotationZ"] as const) {
       const angle = el[axis];
       if (typeof angle === "number" && angle !== 0) out[axis] = angle;
     }
+    if (typeof el.stepParentName === "string" && el.stepParentName) out.stepParent = el.stepParentName;
     const faces = el.faces as Record<string, { texture?: unknown; enabled?: unknown }> | undefined;
     if (faces && typeof faces === "object") {
       for (const side of FACE_ORDER) {
@@ -80,6 +86,37 @@ export function compactShape(raw: unknown): CompactShape {
   };
   const elements = (raw as { elements?: unknown } | null)?.elements;
   return { elements: Array.isArray(elements) ? elements.map(compactElement).filter((e): e is ShapeElement => !!e) : [] };
+}
+
+/**
+ * Worn items (armor, clothes) are shapes whose top-level elements name a `stepParentName`: a bone of the player body they hang on
+ * (`UpperTorso`, `UpperArmR`...). On their own they have no place to be, so they would all pile up at the origin. This hangs each such
+ * element under the named element of `base` (the body shape) as a child, which is what the game does when it dresses the model, and strips
+ * the body's own textures so only the worn pieces draw while the body still supplies every pivot and pose. Elements whose parent isn't
+ * found stay top-level. A shape with no `stepParent` elements is returned unchanged.
+ */
+export function attachToBase(shape: CompactShape, base: CompactShape): CompactShape {
+  if (!shape.elements.some((e) => e.stepParent)) return shape;
+  const hidden = (el: ShapeElement): ShapeElement => {
+    const { texture: _texture, ...rest } = el;
+    return { ...rest, ...(el.children ? { children: el.children.map(hidden) } : {}) };
+  };
+  const body = base.elements.map(hidden);
+  const find = (els: ShapeElement[], name: string): ShapeElement | undefined => {
+    for (const el of els) {
+      if (el.name === name) return el;
+      const inChild = el.children && find(el.children, name);
+      if (inChild) return inChild;
+    }
+    return undefined;
+  };
+  const loose: ShapeElement[] = [];
+  for (const el of shape.elements) {
+    const parent = el.stepParent ? find(body, el.stepParent) : undefined;
+    if (parent) (parent.children ??= []).push(el);
+    else loose.push(el);
+  }
+  return { elements: [...body, ...loose] };
 }
 
 function rotation(rx: number, ry: number, rz: number): Mat3 {

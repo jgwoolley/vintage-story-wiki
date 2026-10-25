@@ -28,6 +28,11 @@ permalink: "{{ lang }}/index.html"
     <span class="muted">Durability, damage, reach and tier of every weapon, tool and arrow.</span>
     <span class="muted">{{ generated.gear.length }} entries</span>
   </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}armor/">
+    <strong><span class="card-icon" aria-hidden="true">🛡️</span> Armor</strong>
+    <span class="muted">Protection, durability, warmth and side effects of every armor piece.</span>
+    <span class="muted">{{ generated.armor.length }} entries</span>
+  </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}foods/">
     <strong><span class="card-icon" aria-hidden="true">🍞</span> Foods</strong>
     <span class="muted">Satiety, health and food category of every food.</span>

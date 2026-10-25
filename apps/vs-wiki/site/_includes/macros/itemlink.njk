@@ -1,0 +1,18 @@
+{#
+  A link to an item's page that is never dead: the page link when the item exists, a search link for a wildcard code
+  ("plank-*") only when that search finds something, otherwise plain text (abstract recipe codes like "dough" or "fruit"
+  aren't items). `lang` is an explicit parameter, `items` is `generated.items`; `label` overrides the shown text.
+#}
+{% macro link(lang, items, domain, code, label) %}
+{%- if items | itemExists(domain, code) -%}
+<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ domain }}/{{ code | slugify }}/">{{ label or (items | displayName(domain, code)) }}</a>
+{%- elif "*" in code or "{" in code -%}
+  {%- if items | searchHasMatch(code | wildcardQuery) -%}
+<a href="{{ ('/' ~ lang ~ '/') | url }}items/?q={{ code | wildcardQuery | urlencode }}">{{ label or code }}</a>
+  {%- else -%}
+<code>{{ label or code }}</code>
+  {%- endif -%}
+{%- else -%}
+<span title="No item page: not a block or item the game defines on its own">{{ label or code }}</span>
+{%- endif -%}
+{% endmacro %}

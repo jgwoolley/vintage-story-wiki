@@ -155,6 +155,14 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
 - **Every `<table>` paginates**: `apps/vs-wiki/site/assets/datatable.js` pages any plain table outside a
   `.datatable` that has more than 20 body rows (Prev/Next only, no search/sort); `data-no-paginate` opts
   out. Anything that needs search/filter/sort should still be a `datatable` macro.
+- **Item links go through `macros/itemlink.njk`** (`il.link(lang, generated.items, domain, code[, label])`), never a hand-written
+  `items/{{ domain }}/{{ code | slugify }}/` href: recipes name abstract codes (`dough`, `fruit`) and patterns that have no page, and a
+  dead link or an empty `?q=` search is a bug the user will find. After any template or ingest change that touches links, run
+  `npm run build` then `npm run check-links` (verifies every internal href and that every `?q=` search matches a row); it must
+  print "No broken links". Delete `_site/` first if you removed pages, or stale ones hide/cause failures.
+- **`/armor/` is a full listing page** (`generated.armor`, `extractArmor`), with source page `sourcedocs/armor.njk`; its rows are `ensureSpawnTarget`-ed so every one links to an item page.
+- **Wearable stats** (`models/wearables.ts`, `generated.wearablesById`) merge `attributes` with the glob-matched `attributesByType`
+  (some files, e.g. `upperbody.json`, put `warmth` only in the latter) and read `*ByType` keys case-insensitively via `gear.ts`'s `prop`.
 - **Breadcrumb pattern**: every page except the home page and the root redirect calls the
   `trail(lang, crumbs)` macro (`apps/vs-wiki/site/_includes/macros/breadcrumb.njk`, imported per-template —
   there's no automatic base-layout injection) right before its `<h1>`, rendering

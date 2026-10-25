@@ -3,7 +3,10 @@ import { dirname, join } from "node:path";
 import { gzipSync } from "node:zlib";
 import type { AssetIndex, ClutterType, ItemIndexEntry, LootSourceGroup, ModelRef } from "../types.js";
 import { expandVariants, resolveByType, substitutePlaceholders, type ConcreteVariant } from "vs-wiki-core/variantExpander.js";
-import { compactShape } from "vs-schematic/shapeBoxes.js";
+import { attachToBase, compactShape } from "vs-schematic/shapeBoxes.js";
+
+/** The player body shape that worn items (armor, clothes) hang their elements on via `stepParentName`. */
+const BODY_SHAPE = "game:shapes/entity/humanoid/seraph-faceless.json";
 
 /** Where the compacted, gzipped shape files are written; Eleventy copies this folder to `assets/models/` (see eleventy.config.js). */
 export const MODEL_FILES_DIR = "apps/vs-wiki/site/_data/generated/modelFiles";
@@ -72,7 +75,9 @@ function createModelWriter(index: AssetIndex, outDir: string, stats: ModelStats)
     if (!found) return undefined;
     const key = `${found.domain}:${found.path}`;
     if (!written.has(key)) {
-      const compact = compactShape(found.json);
+      let compact = compactShape(found.json);
+      const body = index.get(BODY_SHAPE);
+      if (body) compact = attachToBase(compact, compactShape(body.json));
       if (!compact.elements.length) {
         written.set(key, -1);
       } else {

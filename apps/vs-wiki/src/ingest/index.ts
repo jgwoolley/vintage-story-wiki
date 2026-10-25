@@ -6,11 +6,12 @@ import { listSchematicFiles, newDecodeStats, type DecodeStats, type SchematicFil
 import { collectPatches, filterPatches, applyPatches } from "vs-wiki-core/patchEngine.js";
 import { extractRecipes } from "./models/recipes.js";
 import { extractLoot, extractStackRandomizerPools } from "./models/loot.js";
-import { handbookItemRefs } from "./codeUtil.js";
+import { handbookItemRefs, rewriteHandbookLinks } from "./codeUtil.js";
 import { extractStructures } from "./models/structures.js";
 import { extractSchematics } from "./models/schematics.js";
 import { writeCompressedSchematics } from "./schematicFiles.js";
 import { extractModels } from "./models/shapes.js";
+import { extractWearables, extractRepairMaterials, extractArmor } from "./models/wearables.js";
 import { extractDecorCatalog } from "./models/decor.js";
 import { extractGear } from "./models/gear.js";
 import { extractFoods } from "./models/foods.js";
@@ -556,6 +557,32 @@ function main(): void {
   }
   console.log(`  item index grown to ${itemIndex.size} after adding NPC-reward-only items`);
 
+  // Every real item/block a recipe names exactly should have a page, since recipes link their ingredients and outputs (the
+  // cooking and barrel recipes name some that nothing else reaches, e.g. crushed sphalerite). Wildcard patterns are not
+  // expanded -- that would add thousands of pages -- and abstract codes like "dough" or "fruit", which aren't items at all, are
+  // left out; the templates render both without a dead link (see macros/itemlink.njk).
+  {
+    const before = itemIndex.size;
+    for (const recipe of recipes) {
+      for (const spec of [...recipe.ingredients, recipe.output] as { domain?: string; code?: string; validStacks?: { domain: string; code: string }[] }[]) {
+        const refs = [{ domain: spec.domain ?? recipe.domain, code: spec.code }, ...(spec.validStacks ?? [])];
+        for (const { domain, code } of refs) {
+          const kind = code && !/[*{]/.test(code) ? concreteCodes.get(`${domain}:${code}`) : undefined;
+          if (code && kind) ensureSpawnTarget(domain, code, kind);
+        }
+      }
+    }
+    console.log(`  item index grown by ${itemIndex.size - before} to ${itemIndex.size} after adding real items recipes name`);
+  }
+
+  step("Extracting clothing and armor stats");
+  const wearables = extractWearables(index);
+  const repairMaterials = extractRepairMaterials(index);
+  const armor = extractArmor(wearables, lang);
+  // Armor nothing else reaches (the antique/forlorn sets only appear in worldgen) still gets an item page, since /armor/ links every row.
+  for (const piece of armor) ensureSpawnTarget(piece.domain, piece.code, "item");
+  console.log(`  ${wearables.length} wearable variants with stats (${wearables.filter((w) => w.protection).length} armor, ${wearables.filter((w) => w.warmth).length} with warmth), ${repairMaterials.length} repair materials`);
+
   step("Cross-referencing items against structure schematics");
   // Every item/block in the index -- not just the decor catalog's paintings/tapestries/clothing
   // -- can be placed inside a worldgen schematic (storage vessels, bookshelves/books, etc.), and
@@ -579,6 +606,11 @@ function main(): void {
 
   step("Attaching item descriptions + C# class references");
   attachDescriptionsAndCodeRefs(itemIndex, index, lang);
+  // Item descriptions can carry handbook:// links too (the chisel tools' guide link); rewrite them like guide text.
+  {
+    const guideDomains = new Map(guides.map((g) => [g.id, g.domain]));
+    for (const entry of itemIndex.values()) if (entry.description) entry.description = rewriteHandbookLinks(entry.description, guideDomains);
+  }
   const itemValues = [...itemIndex.values()];
   console.log(
     `  ${itemValues.filter((e) => e.description).length} with a description, ` +
@@ -638,6 +670,31 @@ function main(): void {
   }
   clutter.sort((a, b) => a.displayName.localeCompare(b.displayName));
 
+  // The game's `handbooksearch://` links search its handbook, whose entries are named differently from this wiki's item names
+  // ("meal recipe", "sailboat"); a link whose search would open an empty /items/ table is turned back into plain text.
+  {
+    const rows = [...itemIndex.values()].map((i) => `${i.displayName} ${i.domain}:${i.code} ${i.kind} ${i.sourceMod}`.toLowerCase());
+    const matches = (query: string): boolean => {
+      const q = query.trim().toLowerCase();
+      if (/\s+or\s+/.test(q)) return q.split(/\s+or\s+/).some((t) => t && matches(t));
+      if (q.includes("*")) {
+        const re = new RegExp(q.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*"));
+        return rows.some((r) => re.test(r));
+      }
+      return rows.some((r) => r.includes(q));
+    };
+    const dropDead = (value: unknown): unknown =>
+      typeof value === "string"
+        ? value.replace(/<a href="__LANG__items\/\?q=([^"]*)"[^>]*>([\s\S]*?)<\/a>/g, (whole, encoded: string, label: string) => (matches(decodeURIComponent(encoded)) ? whole : label))
+        : Array.isArray(value)
+          ? value.map(dropDead)
+          : value && typeof value === "object"
+            ? Object.fromEntries(Object.entries(value).map(([k, v]) => [k, dropDead(v)]))
+            : value;
+    traits.forEach((t, i) => (traits[i] = dropDead(t) as typeof t));
+    guides.forEach((g, i) => (guides[i] = dropDead(g) as typeof g));
+  }
+
   step("Extracting item and creature 3D models");
   const modelStats = extractModels(index, itemIndex, creatures, clutter);
   console.log(`  ${modelStats.items} items, ${modelStats.creatures} creatures and ${modelStats.clutter}/${clutter.length} clutter types have a shape, ${modelStats.files} distinct shape files (${(modelStats.bytes / 1e6).toFixed(1)} MB gzipped)`);
@@ -660,6 +717,10 @@ function main(): void {
   writeGenerated("tapestries", tapestries);
   writeGenerated("clothing", clothing);
   writeGenerated("gear", gear);
+  writeGenerated("gearById", Object.fromEntries(gear.map((g) => [g.id, g])));
+  writeGenerated("wearablesById", Object.fromEntries(wearables.map((w) => [w.id, w])));
+  writeGenerated("repairMaterials", repairMaterials);
+  writeGenerated("armor", armor);
   writeGenerated("foods", foods);
   writeGenerated("waypointIcons", extractWaypointIcons(sources));
   writeGenerated("foodsById", foodsById);

@@ -829,6 +829,51 @@ export interface GearEntry {
   bestMiningSpeed?: number; // highest multiplier across the item's `miningspeed` material table (e.g. 6 for a tin bronze pickaxe on stone/ore/metal)
 }
 
+/** The protection an armor piece gives (`attributes.protectionModifiers`), as the game's own tooltip describes it. */
+export interface ArmorProtection {
+  relativeProtection?: number; // share of incoming damage absorbed by percentage (0.4 = 40 %), `relativeProtection`
+  flatDamageReduction?: number; // hit points subtracted from each hit after the percentage, `flatDamageReduction`
+  protectionTier: number; // compared with the attacker's damage tier: a stronger attacker (higher tier) cuts through, `protectionTier`
+  perTierRelativeProtectionLoss?: number[]; // [per tier above, per tier above beyond] -- how much the percentage drops for each tier the attacker outranks it (falls back to `defaultProtLoss`)
+  perTierFlatDamageReductionLoss?: number[]; // the same for the flat reduction
+  highDamageTierResistant?: boolean; // keeps protecting against attackers more than one tier above
+}
+
+/**
+ * Stats of a piece of clothing or armor (`itemtypes/wearable/**`), per concrete variant: what it adds when worn. Read with
+ * the game's own rules (`attributes` merged with the glob-matched `attributesByType`, `*ByType` fallbacks, case-insensitive
+ * keys). Only variants with at least one stat are listed. Clothes have `warmth` and degrade through a `condition`
+ * (repaired by `RepairMaterial`s); armor has `protection` and `durability` (repaired in the grid by "... repair" recipes).
+ */
+export interface WearableStats {
+  id: string; // `${domain}:${code}`, same key as ItemIndexEntry / DecorItem
+  domain: string;
+  code: string;
+  sourceMod: string;
+  groups: Record<string, string>; // the variant's group values, e.g. armor: { bodypart: "body", construction: "chain", material: "iron" }
+  slot?: string; // body slot (`clothescategory`), e.g. "upperbody", "head", "armorbody"
+  warmth?: number; // maximum warmth in °C added to the wearer's body temperature when in perfect condition (`attributes.warmth`); halves as `condition` drops
+  durability?: number; // armor hit points before it breaks (`durability`)
+  rainProtection?: number; // 0-1 share of rain blocked (`attributes.rainProtectionPerc`)
+  protection?: ArmorProtection;
+  statModifiers?: Record<string, number>; // `attributes.statModifiers`: walk speed, healing, hunger, ranged accuracy..., fractions (-0.05 = -5 %)
+}
+
+/** One row of the `/armor/` table: an armor variant's `WearableStats` with the name the wiki shows for it. */
+export interface ArmorEntry extends WearableStats {
+  displayName: string;
+  missingTranslation: boolean;
+  protection: ArmorProtection; // always set here
+}
+
+/** An item or block that repairs worn clothing (`attributes.clothingRepairStrength`), used on the clothing in the character inventory. */
+export interface RepairMaterial {
+  domain: string;
+  code: string; // a concrete code, or `family-*` when several variants (cloth colors, linen orientations) share the strength
+  kind: "item" | "block";
+  strength: number; // share of the clothing's condition restored per use (0.75 = 75 %)
+}
+
 /** One waypoint icon the in-game world map offers (see `extractWaypointIcons` in `models/waypointIcons.ts`). */
 export interface WaypointIcon {
   code: string; // what a waypoint's `icon` field and `/waypoint addati` take: the svg's file name without extension or leading ordering number

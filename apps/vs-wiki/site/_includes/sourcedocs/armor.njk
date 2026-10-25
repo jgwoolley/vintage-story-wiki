@@ -1,0 +1,14 @@
+<p>
+Every <code>itemtypes/</code> variant with the <code>Wearable</code> behavior (or a <code>clothescategory</code>) and an
+<code>attributes.protectionModifiers</code> is an armor row; the vanilla ones come from <code>wearable/seraph/armor.json</code> and
+<code>armor-hide.json</code>. Everything is resolved per concrete variant (<code>armor-body-chain-iron</code>): <code>attributes</code> is merged
+with the glob-matched <code>attributesByType</code>, and <code>durabilityByType</code>, <code>protectionModifiersByType</code> and
+<code>statModifiersByType</code> pick the most specific matching pattern, case-insensitively.
+</p>
+<p>
+<strong>Tier / Protection / Flat</strong> are <code>protectionTier</code>, <code>relativeProtection</code> and <code>flatDamageReduction</code>.
+The per-tier losses (how much each of them drops when the attacker outranks the armor) come from the piece's own
+<code>perTier...Loss</code> arrays or, if it has none, the file's <code>defaultProtLoss</code>; they are shown on the piece's item page, along with
+the "... repair" crafting recipes and every stat modifier. <strong>Warmth</strong> exists only on some pieces (the bear hides).
+<strong>Walk</strong> and <strong>Hunger</strong> are <code>statModifiers.walkSpeed</code> and <code>statModifiers.hungerrate</code>.
+</p>

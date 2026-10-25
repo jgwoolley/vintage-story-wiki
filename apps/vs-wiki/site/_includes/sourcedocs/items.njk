@@ -73,5 +73,18 @@ An item whose JSON names a shape (<code>shape</code>, or the best <code>shapeByT
 <code>{group}</code> placeholders filled in) gets a rotatable preview of that file from <code>shapes/item/**</code>.
 The shape is a tree of boxes; each element's rotation about its <code>rotationOrigin</code> is applied, and a child is positioned relative to its parent and inherits that rotation, by
 its children. It is untextured -- the dedicated-server download ships no textures -- so each texture name gets a
-placeholder color. Blocks have no preview yet, and wildcard shapes (a random pick among several files) are skipped.
+placeholder color. Armor and clothing shapes only describe the pieces, each attached to a named bone of the player's body; those are placed on the body's rest pose (the body itself isn't drawn). Blocks have no preview yet, and wildcard shapes (a random pick among several files) are skipped.
+</p>
+
+<h3>Combat, tool and armor stats</h3>
+<p>
+Weapons, tools and ammunition show the same numbers as the <a href="../weapons/">Weapons &amp; Tools</a> table (durability, attack power,
+reach, damage, attack tier, tool tier, mining speed); armor and clothing show their protection, durability, warmth and stat modifiers (see
+the Clothing source page for how they are read). Armor pages also list the "... repair" recipes that produce them.
+</p>
+<h3>Links that always work</h3>
+<p>
+A recipe or drop naming something the game doesn't define as an item or block on its own (abstract codes like <code>dough</code> or
+<code>fruit</code>) is shown as plain text, and a wildcard like <code>plank-*</code> links to a search only when that search finds a row.
+Run <code>npm run check-links</code> after a build to verify every internal link and search link.
 </p>

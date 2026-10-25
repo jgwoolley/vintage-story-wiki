@@ -45,9 +45,11 @@ export function rewriteHandbookLinks(html: string, guideDomains?: ReadonlyMap<st
     .replace(/handbook:\/\/item-([a-z0-9_.-]+(?::[a-z0-9_.-]+)?)/gi, itemLink("item"))
     .replace(/handbook:\/\/block-([a-z0-9_.-]+(?::[a-z0-9_.-]+)?)/gi, itemLink("block"))
     // A guide's own pageCode (any mod's, e.g. "stonequarry-quarryguide", not just the vanilla two families).
-    .replace(/handbook:\/\/([a-z0-9_.-]+)(?=["<\s]|$)/gi, (m, pageCode: string) => {
-      const domain = guideDomains?.get(pageCode) ?? (/^(?:craftinginfo|gamemechanicinfo)-/i.test(pageCode) ? "survival" : undefined);
-      return domain ? `__LANG__guides/${domain}/${pageCode}/` : m;
+    .replace(/handbook:\/\/((?:[a-z0-9_.-]+:)?[a-z0-9_.-]+)(?=["<\s]|$)/gi, (m, ref: string) => {
+      // A mod's guide ids carry their domain ("chiseltools:chiseltools-guide"), so try the whole reference first; the site's page
+      // path is the slug of that id (colon -> dash), as in guides.njk's permalink.
+      const domain = guideDomains?.get(ref) ?? (/^(?:craftinginfo|gamemechanicinfo)-/i.test(ref) ? "survival" : undefined);
+      return domain ? `__LANG__guides/${domain}/${ref.toLowerCase().replace(/[^a-z0-9]+/g, "-")}/` : m;
     })
     .replace(/handbooksearch:\/\/([^"<]+)/gi, (_m, text) => `__LANG__items/?q=${encodeURIComponent(text)}`);
 }

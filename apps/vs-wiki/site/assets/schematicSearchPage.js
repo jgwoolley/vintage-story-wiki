@@ -76,6 +76,7 @@ function resultRow(schematic, match) {
 
 function tableWithHeaders(headers) {
   const table = document.createElement("table");
+  table.dataset.noPaginate = ""; // pages itself (PAGE_SIZE below)
   const head = document.createElement("tr");
   for (const h of headers) head.append(textEl("th", "", h));
   const thead = document.createElement("thead");

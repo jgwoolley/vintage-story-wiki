@@ -9,6 +9,7 @@ eleventyComputed:
   title: "{{ item.displayName }} - Vintage Story Wiki"
 ---
 {% import "macros/breadcrumb.njk" as bc %}
+{% import "macros/wearable.njk" as wr %}
 {{ bc.trail(lang, [{label: "Clothing", url: "clothing/"}, {label: item.displayName}]) }}
 
 <h1>{{ item.displayName }}</h1>
@@ -22,6 +23,9 @@ eleventyComputed:
 {% else %}
 <p class="muted">No flavor text found for this item in the base game.</p>
 {% endif %}
+
+{% set wearable = generated.wearablesById[item.domain ~ ':' ~ item.code] %}
+{% if wearable.id %}{{ wr.stats(lang, wearable, generated.repairMaterials, generated.items) }}{% endif %}
 
 <h2>Found in structures</h2>
 <p class="muted">

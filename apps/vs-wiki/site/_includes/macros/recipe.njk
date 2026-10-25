@@ -7,12 +7,13 @@
   e.g. "/undefined/items/betterruins/br-schematic-shipwright/"). Always pass `lang` through from
   the call site, same as the `breadcrumb.njk` macro does.
 #}
+{% import "macros/itemlink.njk" as il %}
 {% macro ingredientLabel(lang, items, ing) %}
 {%- if ing.code -%}
   {%- if "*" in ing.code or "{" in ing.code -%}
-    <a href="{{ ('/' ~ lang ~ '/') | url }}items/?q={{ ing.code | wildcardQuery | urlencode }}">{{ ing.code }}</a>{% if ing.allowedVariants %} <span class="muted">({{ ing.allowedVariants | join(", ") }})</span>{% endif %}
+    {{ il.link(lang, items, ing.domain, ing.code) }}{% if ing.allowedVariants %} <span class="muted">({{ ing.allowedVariants | join(", ") }})</span>{% endif %}
   {%- else -%}
-    <a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ ing.domain }}/{{ ing.code | slugify }}/">{{ items | displayName(ing.domain, ing.code) }}</a>
+    {{ il.link(lang, items, ing.domain, ing.code) }}
   {%- endif -%}
 {%- elif ing.tags and ing.isTool -%}
   <a href="{{ ('/' ~ lang ~ '/') | url }}items/?tag={{ ing.tags[0] | urlencode }}">{{ ing.tags[0] | tagLabel }}</a>
@@ -20,7 +21,7 @@
   any {% for t in ing.tags %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/?tag={{ t | urlencode }}">{{ t | tagLabel }}</a>{% if not loop.last %}, {% endif %}{% endfor %}
 {%- elif ing.validStacks and ing.validStacks.length -%}
   {%- for v in ing.validStacks -%}
-    <a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ v.domain }}/{{ v.code | slugify }}/">{{ items | displayName(v.domain, v.code) }}</a>{% if not loop.last %} or {% endif %}
+    {{ il.link(lang, items, v.domain, v.code) }}{% if not loop.last %} or {% endif %}
   {%- endfor -%}
 {%- endif -%}
 {% endmacro %}
@@ -34,9 +35,9 @@
 {% macro outputLabel(lang, items, output, wildcard) %}
 {%- if output.code -%}
   {%- if "{" in output.code -%}
-    <a href="{{ ('/' ~ lang ~ '/') | url }}items/?q={{ output.code | wildcardQuery | urlencode }}"><code>{{ output.code }}</code></a>
+    {{ il.link(lang, items, output.domain, output.code) }}
   {%- else -%}
-    <a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ output.domain }}/{{ output.code | slugify }}/">{{ items | displayName(output.domain, output.code) }}</a>
+    {{ il.link(lang, items, output.domain, output.code) }}
   {%- endif -%}
 {%- endif -%}
 {% endmacro %}

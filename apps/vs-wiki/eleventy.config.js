@@ -147,9 +147,38 @@ export default function (eleventyConfig) {
       .replace(/^-+|-+$/g, "") || "item"
   );
 
-  eleventyConfig.addFilter("displayName", (items, domain, code) => {
-    const item = items.find((i) => i.domain === domain && i.code === code);
-    return item ? item.displayName : code;
+  // `generated.items` is searched thousands of times per build (every recipe ingredient), so key it once per array.
+  const itemMaps = new WeakMap();
+  const itemMap = (items) => {
+    let map = itemMaps.get(items);
+    if (!map) {
+      map = new Map(items.map((i) => [`${i.domain}:${i.code}`, i]));
+      itemMaps.set(items, map);
+    }
+    return map;
+  };
+  eleventyConfig.addFilter("displayName", (items, domain, code) => itemMap(items).get(`${domain}:${code}`)?.displayName ?? code);
+  // Whether an item page exists for domain:code -- templates must not link a page that was never generated.
+  eleventyConfig.addFilter("itemExists", (items, domain, code) => itemMap(items).has(`${domain}:${code}`));
+  // Whether a `?q=` search of the item list finds a row, using the listing's own matching (substring over name, code, kind and
+  // mod; `a or b` = either; `*` = glob), so a wildcard link isn't offered when it would open an empty table.
+  const searchHits = new WeakMap();
+  eleventyConfig.addFilter("searchHasMatch", (items, query) => {
+    let cache = searchHits.get(items);
+    if (!cache) {
+      cache = new Map();
+      searchHits.set(items, cache);
+      cache.rows = items.map((i) => `${i.displayName} ${i.domain}:${i.code} ${i.kind} ${i.sourceMod}`.toLowerCase());
+    }
+    const q = String(query).trim().toLowerCase();
+    if (!cache.has(q)) {
+      const test = (term) =>
+        term.includes("*")
+          ? ((re) => cache.rows.some((r) => re.test(r)))(new RegExp(term.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*")))
+          : cache.rows.some((r) => r.includes(term));
+      cache.set(q, /\s+or\s+/.test(q) ? q.split(/\s+or\s+/).some((t) => t && test(t.trim())) : test(q));
+    }
+    return cache.get(q);
   });
 
   // Every `data-mod="<modid>"` row (the datatable mod filter's matching value) should also carry

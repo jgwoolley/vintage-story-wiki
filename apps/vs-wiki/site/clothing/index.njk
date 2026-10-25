@@ -8,17 +8,20 @@ permalink: "{{ lang }}/clothing/index.html"
 {{ bc.trail(lang, [{label: "Clothing"}]) }}
 <h1>Clothing</h1>
 <p class="muted">
-  Purely decorative/cosmetic wearable items with no recipe or drop table, so they don't appear
-  anywhere else on this wiki &mdash; see the <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a>
+  Wearable items with no recipe or drop table (so they don't appear anywhere else on this wiki), with each one's slot and warmth;
+  armor, which is crafted, is on the <a href="{{ ('/' ~ lang ~ '/') | url }}armor/">Armor</a> page &mdash; see the <a href="{{ ('/' ~ lang ~ '/') | url }}info/">Info</a>
   page for why. {{ generated.clothing.length }} catalogued directly from the game's item
   definitions.
 </p>
 <p class="muted">Source: <code>itemtypes/wearable/seraph/*.json</code>. <a href="{{ ('/' ~ lang ~ '/') | url }}sources/clothing/">Full details &rarr;</a></p>
 
-{% call dt.datatable(60, "Search clothing...", ["Name", "Mod"]) %}
+{% call dt.datatable(60, "Search clothing...", ["Name", "Slot", "Warmth (&deg;C)", "Mod"], "Slot") %}
 {% for item in generated.clothing | sort(false, false, "displayName") %}
-  <tr data-search="{{ item.domain }}:{{ item.code }}" data-mod="{{ item.sourceMod }}" data-mod-label="{{ generated.mods | modName(item.sourceMod) }}"{{ dt.descriptionAttrs(item.description) }}>
+  {% set wearable = generated.wearablesById[item.domain ~ ':' ~ item.code] %}
+  <tr data-search="{{ item.domain }}:{{ item.code }}" data-category="{{ wearable.slot if wearable.id else '' }}" data-mod="{{ item.sourceMod }}" data-mod-label="{{ generated.mods | modName(item.sourceMod) }}"{{ dt.descriptionAttrs(item.description) }}>
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}clothing/{{ item.domain }}/{{ item.code | slugify }}/">{{ item.displayName }}</a></td>
+    <td>{% if wearable.slot %}<span class="tag">{{ wearable.slot }}</span>{% endif %}</td>
+    <td>{% if wearable.warmth %}{{ wearable.warmth }}{% endif %}</td>
     <td><span class="tag">{{ item.sourceMod }}</span></td>
   </tr>
 {% endfor %}

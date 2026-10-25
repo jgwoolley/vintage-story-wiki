@@ -156,9 +156,16 @@ worldgen rule (where/how often to spawn) that *references* schematics. They are 
   `LootSourceGroup.model` point at it. In the browser `modelPage.js` loads it and `libs/vs-schematic/src/modelPreview.ts`
   draws `shapeToBoxes` output (rotations composed parent-first about each `rotationOrigin`; a child's coordinates are relative to its parent's `from`, per `ShapeElement.GetLocalTransformMatrix`) on the shared voxel viewer
   (boxes got an optional `quaternion`). **Untextured**: the server download has no textures, so each texture key gets a hash
-  color; animations are ignored (rest pose); blocks are not covered, except clutter types, whose shape is the
+  color; animations are ignored (rest pose); worn items (armor, clothes), whose elements only name a `stepParentName` bone, are hung on the player body shape (`seraph-faceless`) at ingest (`attachToBase`) so they sit where they would be worn, with the body itself not drawn; blocks are not covered, except clutter types, whose shape is the
   `attributes.types` entry of their clutter blocktype (same path rule as the game's `BlockShapeFromAttributes.LoadTypes`) and which
   have their own `/clutter/<type>/` pages.
+- **Wearables, gear stats and links**: `models/wearables.ts` reads clothing/armor stats per concrete variant (warmth, protection, durability,
+  stat modifiers, rain protection; `attributes` merged with `attributesByType`) into `generated.wearablesById`, and the
+  `clothingRepairStrength` materials into `generated.repairMaterials`; item and clothing pages show them (`macros/wearable.njk`), armor
+  pages also list their "... repair" grid recipes, and item pages show weapon/tool numbers from `generated.gearById`. Templates link items
+  through `macros/itemlink.njk` (page if it exists, search link only if the search finds a row, else plain text), and
+  `npm run check-links` (after a build) verifies every internal link and `?q=` search in `_site/`. Plain tables over 20 rows are paged by
+  `datatable.js`; the datatable search understands `a or b` (the handbook's syntax).
 - **Two viewers, one core**: each schematic page embeds a read-only preview (`schematicPreview.js`: rotate/pan/zoom
   only, no legend/slider/picking; files over 1.5 MB compressed wait for a click, the rest load when scrolled into
   view) with a button into the full viewer (`schematicViewer.js`, which also has Download for whatever is loaded:

@@ -1,0 +1,41 @@
+---
+title: Armor - Vintage Story Wiki
+description: Protection, durability, warmth and side effects of every armor piece, in one sortable table.
+layout: layouts/base.njk
+permalink: "{{ lang }}/armor/index.html"
+---
+{% import "macros/datatable.njk" as dt %}
+{% import "macros/breadcrumb.njk" as bc %}
+{% import "macros/itemlink.njk" as il %}
+{{ bc.trail(lang, [{label: "Armor"}]) }}
+<h1>Armor</h1>
+<p class="muted">
+  {{ generated.armor.length }} armor pieces, each material on its own row. Click a column to sort, or use the filters
+  (Category = body slot, Tags = construction and material, Mod).
+</p>
+<ul class="muted">
+  <li><strong>Tier</strong>: protection tier. An attacker with a higher damage tier (see <a href="{{ ('/' ~ lang ~ '/') | url }}weapons/">Weapons &amp; Tools</a>, <a href="{{ ('/' ~ lang ~ '/') | url }}creatures/">Creatures</a>) cuts through part of the protection.</li>
+  <li><strong>Protection</strong>: share of each hit's damage absorbed. <strong>Flat</strong>: hit points then subtracted from what is left.</li>
+  <li><strong>Durability</strong>: hit points of wear before it breaks. <strong>Warmth</strong>: &deg;C added to body temperature (only some pieces).</li>
+  <li><strong>Walk</strong> and <strong>Hunger</strong>: how wearing it changes walking speed and hunger rate; heavier armor costs more.</li>
+</ul>
+<p class="muted">Source: <code>itemtypes/wearable/seraph/armor*.json</code> (<code>attributes.protectionModifiers</code>, <code>durability</code>, <code>statModifiers</code>, <code>warmth</code>), resolved per variant. <a href="{{ ('/' ~ lang ~ '/') | url }}sources/armor/">Full details &rarr;</a> Clothes (warmth only) are on <a href="{{ ('/' ~ lang ~ '/') | url }}clothing/">Clothing</a>.</p>
+
+{% call dt.datatable(60, "Search armor...", ["Name", "Slot", "Type", "Material", "Tier", "Protection", "Flat", "Durability", "Warmth (&deg;C)", "Walk", "Hunger", "Mod"], "Slot") %}
+{% for a in generated.armor %}
+  <tr data-search="{{ a.domain }}:{{ a.code }}" data-category="{{ a.slot }}" data-tags="{{ a.groups.construction }} {{ a.groups.material }}" data-mod="{{ a.sourceMod }}" data-mod-label="{{ generated.mods | modName(a.sourceMod) }}">
+    <td>{{ il.link(lang, generated.items, a.domain, a.code, a.displayName) }}</td>
+    <td><span class="tag">{{ a.slot }}</span></td>
+    <td>{{ a.groups.construction }}</td>
+    <td>{{ a.groups.material }}</td>
+    <td>{{ a.protection.protectionTier }}</td>
+    <td>{% if a.protection.relativeProtection != null %}{{ (a.protection.relativeProtection * 100) | round(1) }}%{% endif %}</td>
+    <td>{% if a.protection.flatDamageReduction != null %}{{ a.protection.flatDamageReduction }}{% endif %}</td>
+    <td>{% if a.durability %}{{ a.durability }}{% endif %}</td>
+    <td>{% if a.warmth %}{{ a.warmth }}{% endif %}</td>
+    <td>{% if a.statModifiers.walkSpeed %}{{ (a.statModifiers.walkSpeed * 100) | round(1) }}%{% endif %}</td>
+    <td>{% if a.statModifiers.hungerrate %}+{{ (a.statModifiers.hungerrate * 100) | round(1) }}%{% endif %}</td>
+    <td><span class="tag">{{ a.sourceMod }}</span></td>
+  </tr>
+{% endfor %}
+{% endcall %}

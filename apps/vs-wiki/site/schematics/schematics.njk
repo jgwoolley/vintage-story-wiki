@@ -9,6 +9,7 @@ eleventyComputed:
   title: "{{ schematic.relPath }} - Schematic - Vintage Story Wiki"
 ---
 {% import "macros/breadcrumb.njk" as bc %}
+{% import "macros/itemlink.njk" as il %}
 {{ bc.trail(lang, [{label: "Schematics", url: "schematics/"}, {label: schematic.relPath}]) }}
 
 <h1>{{ schematic.relPath }}</h1>
@@ -69,7 +70,7 @@ eleventyComputed:
   {% for raw in schematic.blockCodes | sort %}
     {% set ref = generated | itemRef(raw) %}
     <tr>
-      <td>{% if ref.code %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ ref.domain }}/{{ ref.code | slugify }}/">{{ ref.name }}</a>{% else %}{{ ref.name }}{% endif %}</td>
+      <td>{% if ref.code %}{{ il.link(lang, generated.items, ref.domain, ref.code, ref.name) }}{% else %}{{ ref.name }}{% endif %}</td>
       <td><code>{{ raw }}</code></td>
     </tr>
   {% endfor %}
@@ -85,7 +86,7 @@ eleventyComputed:
   {% for raw in schematic.itemCodes | sort %}
     {% set ref = generated | itemRef(raw) %}
     <tr>
-      <td>{% if ref.code %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ ref.domain }}/{{ ref.code | slugify }}/">{{ ref.name }}</a>{% else %}{{ ref.name }}{% endif %}</td>
+      <td>{% if ref.code %}{{ il.link(lang, generated.items, ref.domain, ref.code, ref.name) }}{% else %}{{ ref.name }}{% endif %}</td>
       <td><code>{{ raw }}</code></td>
     </tr>
   {% endfor %}

@@ -12,6 +12,7 @@
     "clean": "rm -rf .scratch _site libs/*/dist apps/vs-wiki/site/_data/generated",
     "typecheck": "tsc --noEmit && tsc --noEmit -p libs/vs-schematic/tsconfig.json && npm run typecheck -w vs-vscode-extension",
     "test": "tsx --test libs/*/test/*.test.ts apps/*/test/*.test.ts",
+    "check-links": "tsx apps/vs-wiki/scripts/check-links.ts",
     "decode-stats": "tsx apps/vs-wiki/scripts/decode-stats.ts",
     "build:libs": "npm run build -w vs-schematic",
     "build:extension": "npm run package -w vs-vscode-extension"

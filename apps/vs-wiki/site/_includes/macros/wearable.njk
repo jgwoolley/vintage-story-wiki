@@ -1,0 +1,49 @@
+{#
+  Stats of a piece of clothing or armor (`generated.wearablesById[...]`, see WearableStats in types.ts), shared by the item page
+  (armor) and the clothing page. `lang` is an explicit parameter because a macro imported without context can't see it.
+  Clothes with warmth are repaired by the materials in `repairMaterials`; armor is repaired by "... repair" grid recipes,
+  which the calling page lists itself (item pages show them in their own "Repair recipes" section).
+#}
+{% import "macros/itemlink.njk" as il %}
+{% set STAT_LABELS = {
+  walkSpeed: "Walk speed",
+  healingeffectivness: "Healing effectiveness",
+  hungerrate: "Hunger rate",
+  rangedWeaponsAcc: "Ranged weapon accuracy",
+  rangedWeaponsSpeed: "Ranged weapon charge time"
+} %}
+{% macro stats(lang, w, repairMaterials, items) %}
+<h2>{{ "Armor" if w.protection else "Clothing" }} stats</h2>
+<table>
+  <tbody>
+    {% if w.slot %}<tr><th>Worn on</th><td><span class="tag">{{ w.slot }}</span></td></tr>{% endif %}
+    {% if w.protection %}
+    <tr><th>Protection tier</th><td>{{ w.protection.protectionTier }} <span class="muted">(an attacker with a higher damage tier cuts through some of it; compare with a weapon's or creature's tier{% if w.protection.highDamageTierResistant %}. This piece keeps protecting against attackers more than one tier above{% endif %})</span></td></tr>
+    {% if w.protection.relativeProtection != null %}<tr><th>Relative protection</th><td>{{ (w.protection.relativeProtection * 100) | round(1) }}% <span class="muted">of each hit's damage absorbed</span></td></tr>{% endif %}
+    {% if w.protection.flatDamageReduction != null %}<tr><th>Flat damage reduction</th><td>{{ w.protection.flatDamageReduction }} hp <span class="muted">subtracted from each hit after the percentage</span></td></tr>{% endif %}
+    {% if w.protection.perTierRelativeProtectionLoss %}<tr><th>Loss per tier outranked</th><td>{{ (w.protection.perTierRelativeProtectionLoss[0] * 100) | round(1) }}% then {{ (w.protection.perTierRelativeProtectionLoss[1] * 100) | round(1) }}% relative protection, {{ w.protection.perTierFlatDamageReductionLoss[0] }} then {{ w.protection.perTierFlatDamageReductionLoss[1] }} hp flat reduction <span class="muted">for each tier the attacker is above this armor</span></td></tr>{% endif %}
+    {% endif %}
+    {% if w.durability %}<tr><th>Durability</th><td>{{ w.durability }} <span class="muted">hit points of wear before it breaks; protection weakens as it wears</span></td></tr>{% endif %}
+    {% if w.warmth %}<tr><th>Warmth</th><td>+{{ w.warmth }}&nbsp;&deg;C <span class="muted">to the wearer's body temperature in perfect condition; it halves as the item's condition drops</span></td></tr>{% endif %}
+    {% if w.rainProtection %}<tr><th>Rain protection</th><td>{{ (w.rainProtection * 100) | round(0) }}%</td></tr>{% endif %}
+    {% for key, value in w.statModifiers %}
+    <tr><th>{{ STAT_LABELS[key] or key }}</th><td>{% set shown = (-value if key == "rangedWeaponsSpeed" else value) %}{% if shown > 0 %}+{% endif %}{{ (shown * 100) | round(1) }}%</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% if w.warmth and not w.protection %}
+<h3>Repair</h3>
+<p class="muted">Worn clothing loses condition (and with it warmth). Hold one of these in the mouse pointer and click the clothing in your character inventory.</p>
+<table>
+  <thead><tr><th>Material</th><th>Condition restored</th></tr></thead>
+  <tbody>
+  {% for m in repairMaterials %}
+    <tr>
+      <td>{{ il.link(lang, items, m.domain, m.code) }}</td>
+      <td>{{ (m.strength * 100) | round(0) }}%</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endmacro %}

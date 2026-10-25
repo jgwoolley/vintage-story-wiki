@@ -3,7 +3,7 @@
     "id": "items",
     "title": "Items & Blocks",
     "listingUrl": "items/",
-    "modelFiles": ["apps/vs-wiki/src/ingest/crossref.ts", "apps/vs-wiki/src/ingest/csharpClassMap.json", "apps/vs-wiki/scripts/map-csharp-classes.ts", "apps/vs-wiki/src/ingest/models/loot.ts", "apps/vs-wiki/src/ingest/models/deposits.ts", "apps/vs-wiki/src/ingest/models/blockpatches.ts", "apps/vs-wiki/src/ingest/models/trees.ts", "apps/vs-wiki/src/ingest/models/trades.ts", "apps/vs-wiki/src/ingest/models/dialogue.ts", "apps/vs-wiki/src/ingest/models/shapes.ts", "apps/vs-wiki/site/assets/modelPage.js", "libs/vs-schematic/src/shapeBoxes.ts", "libs/vs-schematic/src/modelPreview.ts"],
+    "modelFiles": ["apps/vs-wiki/src/ingest/crossref.ts", "apps/vs-wiki/src/ingest/csharpClassMap.json", "apps/vs-wiki/scripts/map-csharp-classes.ts", "apps/vs-wiki/src/ingest/models/loot.ts", "apps/vs-wiki/src/ingest/models/deposits.ts", "apps/vs-wiki/src/ingest/models/blockpatches.ts", "apps/vs-wiki/src/ingest/models/trees.ts", "apps/vs-wiki/src/ingest/models/trades.ts", "apps/vs-wiki/src/ingest/models/dialogue.ts", "apps/vs-wiki/src/ingest/models/shapes.ts", "apps/vs-wiki/site/assets/modelPage.js", "libs/vs-schematic/src/shapeBoxes.ts", "libs/vs-schematic/src/modelPreview.ts", "apps/vs-wiki/src/ingest/models/wearables.ts", "apps/vs-wiki/src/ingest/models/gear.ts"],
     "globs": [
       "recipes/**/*.json",
       "shapes/item/**/*.json (the 3D model of each item whose `shape`/`shapeByType` names one; geometry only)",
@@ -101,8 +101,8 @@
     "id": "clothing",
     "title": "Clothing",
     "listingUrl": "clothing/",
-    "modelFiles": ["apps/vs-wiki/src/ingest/models/decor.ts"],
-    "globs": ["itemtypes/wearable/seraph/*.json"]
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/decor.ts", "apps/vs-wiki/src/ingest/models/wearables.ts"],
+    "globs": ["itemtypes/wearable/seraph/*.json (also read for warmth, protection, durability, stat modifiers and repair strength)", "itemtypes/**/*.json and blocktypes/**/*.json (attributes.clothingRepairStrength)"]
   },
   {
     "id": "books",
@@ -124,6 +124,13 @@
     "listingUrl": "guides/",
     "modelFiles": ["apps/vs-wiki/src/ingest/models/guides.ts"],
     "globs": ["config/handbook/*.json"]
+  },
+  {
+    "id": "armor",
+    "title": "Armor",
+    "listingUrl": "armor/",
+    "modelFiles": ["apps/vs-wiki/src/ingest/models/wearables.ts", "apps/vs-wiki/src/ingest/models/gear.ts"],
+    "globs": ["itemtypes/wearable/seraph/armor.json", "itemtypes/wearable/seraph/armor-hide.json (and any other Wearable itemtype with attributes.protectionModifiers)"]
   },
   {
     "id": "weapons",

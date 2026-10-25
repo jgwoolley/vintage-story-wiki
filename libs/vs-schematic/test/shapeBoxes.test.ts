@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { compactShape, shapeToBoxes } from "../src/shapeBoxes.js";
+import { attachToBase, compactShape, shapeToBoxes } from "../src/shapeBoxes.js";
 
 const face = (texture: string) => ({ north: { texture, uv: [0, 0, 1, 1] } });
 const near = (a: number, b: number) => assert.ok(Math.abs(a - b) < 1e-6, `${a} != ${b}`);
@@ -54,4 +54,15 @@ test("a child's from and rotationOrigin are relative to its parent's from, as in
 test("a zero-thickness plane is given a sliver instead of vanishing", () => {
   const [box] = shapeToBoxes(compactShape({ elements: [{ from: [0, 0, 0], to: [4, 4, 0], faces: face("#a") }] }));
   assert.ok(box.sz > 0 && box.sz < 1);
+});
+
+test("attachToBase hangs worn elements under the named body element and draws only the worn ones", () => {
+  const base = compactShape({ elements: [{ name: "Torso", from: [10, 20, 30], to: [14, 30, 34], faces: face("#skin"), children: [{ name: "Arm", from: [4, 0, 0], to: [6, 8, 2], faces: face("#skin") }] }] });
+  const worn = compactShape({ elements: [{ name: "Plate", stepParentName: "Arm", from: [1, 1, 1], to: [3, 3, 3], faces: face("#metal") }, { name: "Loose", stepParentName: "Missing", from: [0, 0, 0], to: [1, 1, 1], faces: face("#metal") }] });
+  const boxes = shapeToBoxes(attachToBase(worn, base));
+  assert.equal(boxes.length, 2, "the body's own boxes are not drawn");
+  // Plate: Torso.from + Arm.from + Plate.from + half size = (10+4+1+1, 20+0+1+1, 30+0+1+1)
+  assert.deepEqual([boxes[0].x, boxes[0].y, boxes[0].z], [16, 22, 32]);
+  assert.deepEqual([boxes[1].x, boxes[1].y, boxes[1].z], [0.5, 0.5, 0.5], "an element whose parent is missing stays where it is");
+  assert.equal(attachToBase(base, base), base, "shapes without step parents are returned unchanged");
 });

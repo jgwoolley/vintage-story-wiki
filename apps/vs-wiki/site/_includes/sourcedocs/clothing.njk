@@ -10,3 +10,15 @@ joins the main item index and gets its own dedicated catalog instead.
 schematic's opaque block-entity inventory data (a wardrobe, a chest, ...), which isn't decoded for
 this content type the way tapestries' own block-entity attributes are.
 </p>
+
+<h3>Warmth, protection and repair</h3>
+<p>
+Each wearable's stats (<code>models/wearables.ts</code>) are read per concrete variant from the same
+<code>itemtypes/wearable/**</code> files: <code>attributes.warmth</code> (merged with the glob-matched
+<code>attributesByType</code>), <code>durability</code>, <code>attributes.protectionModifiers</code> (relative protection, flat damage
+reduction, protection tier, per-tier losses, falling back to the file's <code>defaultProtLoss</code>),
+<code>attributes.statModifiers</code> and <code>attributes.rainProtectionPerc</code>. Clothes with warmth are repaired by whatever carries
+<code>attributes.clothingRepairStrength</code> (sewing kit 75&nbsp;%, cloth and linen sheets 50&nbsp;%, flax twine 10&nbsp;%), applied in the
+character inventory; armor is repaired in the crafting grid by the "... repair" recipes, listed on its item page. Armor itself is
+crafted, so its page is an <a href="../items/">item page</a>, not a clothing page.
+</p>

@@ -8,6 +8,7 @@ layout: layouts/base.njk
 eleventyComputed:
   title: "{{ source.sourceDisplayName }} - Vintage Story Wiki"
 ---
+{% import "macros/itemlink.njk" as il %}
 {% import "macros/datatable.njk" as dt %}
 {% import "macros/breadcrumb.njk" as bc %}
 {% import "macros/temperature.njk" as tmp %}
@@ -81,7 +82,7 @@ eleventyComputed:
     {% if spawn.habitatBlocks.length %}
     <tr>
       <th>Needs nearby</th>
-      <td>{% for b in spawn.habitatBlocks %}<a href="{{ ('/' ~ lang ~ '/') | url }}items/?q={{ b | wildcardQuery | urlencode }}"><code>{{ b }}</code></a>{% if not loop.last %}, {% endif %}{% endfor %}</td>
+      <td>{% for b in spawn.habitatBlocks %}{{ il.link(lang, generated.items, "survival", b) }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
       <td>{{ "habitatBlocks" | restrictionInfo }}</td>
     </tr>
     {% endif %}
@@ -98,7 +99,7 @@ eleventyComputed:
 {% for entry in source.entries %}
   <tr data-category="{{ entry.mechanism }}">
     <td>{{ entry.mechanism }}{% if entry.panningKeyPattern %}<br><span class="muted tag">{{ entry.panningKeyPattern }}</span>{% endif %}</td>
-    <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ entry.drop.domain }}/{{ entry.drop.code | slugify }}/">{{ generated.items | displayName(entry.drop.domain, entry.drop.code) }}</a></td>
+    <td>{{ il.link(lang, generated.items, entry.drop.domain, entry.drop.code) }}</td>
     <td>
       {% if entry.drop.chanceAvg != null %}{{ entry.drop.chanceAvg | percent }}{% endif %}
       {% if entry.drop.quantityAvg != null %}&times;{{ entry.drop.quantityAvg | round(2) }}{% if entry.drop.quantityVar %} (&plusmn;{{ entry.drop.quantityVar }}){% endif %}{% endif %}
@@ -108,7 +109,7 @@ eleventyComputed:
       {% if entry.drop.dropModbyStat %}<span class="tag">scales with {{ entry.drop.dropModbyStat }}</span>{% endif %}
       {% if entry.stackRandomizerCode %}
         {% set containerParts = entry.stackRandomizerCode.split(':') %}
-        <span class="tag">from <a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ containerParts[0] }}/{{ containerParts[1] | slugify }}/">{{ generated.items | displayName(containerParts[0], containerParts[1]) }}</a></span>
+        <span class="tag">from {{ il.link(lang, generated.items, containerParts[0], containerParts[1]) }}</span>
       {% endif %}
     </td>
   </tr>
@@ -140,7 +141,7 @@ eleventyComputed:
   <tbody>
 {% for reward in npcDialogue.rewards %}
   <tr>
-    <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ reward.domain }}/{{ reward.code | slugify }}/">{{ generated.items | displayName(reward.domain, reward.code) }}</a></td>
+    <td>{{ il.link(lang, generated.items, reward.domain, reward.code) }}</td>
     <td>{% if reward.stacksize %}&times;{{ reward.stacksize }}{% endif %}</td>
   </tr>
 {% endfor %}
