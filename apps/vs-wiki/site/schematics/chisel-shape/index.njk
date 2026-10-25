@@ -2,10 +2,10 @@
 title: Chiseled shape viewer - Vintage Story Wiki
 description: Upload a QPTech ChiselTools shape file (from .pf save) and see the chiseled block it holds in 3D, with its materials.
 layout: layouts/base.njk
-permalink: "{{ lang }}/tools/chisel-shape/index.html"
+permalink: "{{ lang }}/schematics/chisel-shape/index.html"
 ---
 {% import "macros/breadcrumb.njk" as bc %}
-{{ bc.trail(lang, [{label: "Tools", url: "tools/"}, {label: "Chiseled shape viewer"}]) }}
+{{ bc.trail(lang, [{label: "Schematics", url: "schematics/"}, {label: "Chiseled shape viewer"}]) }}
 <h1>Chiseled shape viewer</h1>
 <p class="muted">
   Upload a shape file saved by QPTech's <a href="https://mods.vintagestory.at/chiseltools">ChiselTools</a> mod
@@ -14,7 +14,7 @@ permalink: "{{ lang }}/tools/chisel-shape/index.html"
   in the game's own schematics. Everything is decoded in your browser; nothing is uploaded anywhere.
 </p>
 
-<div id="chiselShape" data-block-colors="{{ '/' | url }}assets/Nf3tBlockColors.json" data-block-names="{{ '/' | url }}assets/blockNames.json" data-items-url="{{ ('/' ~ lang ~ '/') | url }}items/" data-search-url="{{ ('/' ~ lang ~ '/') | url }}tools/schematic-search/">
+<div id="chiselShape" data-block-colors="{{ '/' | url }}assets/Nf3tBlockColors.json" data-block-names="{{ '/' | url }}assets/blockNames.json" data-items-url="{{ ('/' ~ lang ~ '/') | url }}items/" data-search-url="{{ ('/' ~ lang ~ '/') | url }}schematics/search/">
   <label class="schematic-dropzone" for="csFile">
     <strong>Upload a ChiselTools shape file</strong>
     <span class="muted">Drop a file from your <code>chiselportfolio</code> folder here, or click to browse</span>

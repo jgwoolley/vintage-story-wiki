@@ -51,7 +51,7 @@ could they be summarized into one row?
 
 ## 3. Integrating jgwoolley/vintage-story-schematic-preview (upload + in-browser viewing)
 
-**Status: upload + bundled samples implemented** (`/tools/schematic/`, as an adapter on the shared
+**Status: upload + bundled samples implemented** (`/schematics/viewer/`, as an adapter on the shared
 `voxelViewer.ts`), and **browsing this wiki's own `worldgen/schematics/**` is implemented too**: every
 schematic is gzip-compressed at ingest and fetched on demand (`?schematic=<domain>/<relPath>`); see
 `apps/vs-wiki/site/_includes/sourcedocs/schematics.njk` (`/sources/schematics/`). Each schematic page also embeds a
@@ -79,7 +79,7 @@ schematic-preview project, beyond the decode logic already adapted earlier this 
   description of the repo as using "THREE.js" for rendering — this project currently has zero 3D
   rendering code or library dependency of any kind).
 - Reusing this wiki's own already-downloaded structure schematics (`worldgen/schematics/**`) for
-  "view this wiki's own structures in 3D" (the second half of the existing `/tools/` WIP
+  "view this wiki's own structures in 3D" (the second half of the former `/tools/` WIP
   description) is a second, separable feature from "let a visitor upload their own arbitrary
   schematic file" — the upload case needs no server-side ingest involvement at all (pure
   client-side), while "browse this wiki's own schematics" would need those files made fetchable by
@@ -172,7 +172,7 @@ the existing catalogs (items, decor, etc.)?
 **Status: not researched yet** -- notes on what the investigation will need.
 
 **The question**: today `npm run build` = `ingest` (minutes of asset parsing) + Eleventy over everything.
-The tool pages (`/tools/schematic/`, `/tools/waypoints/`, `/tools/calendar/`, `/nf3t/git-merge/`) and shared
+The tool pages (`/schematics/viewer/`, `/map/`, `/calendar/`, `/nf3t/git-merge/`) and shared
 assets are pure client-side and don't need ingest data. Could a change to only those be built and
 deployed without re-running ingest -- and could the build be split so those are "the only thing that
 generates"?
@@ -272,7 +272,7 @@ CLAUDE.md) or leave the Python tool as a companion. No earlier note in this file
 
 ## Vintage Story temperature from seed
 
-**Status: the easy part is implemented** (`/tools/climate/`, `apps/vs-wiki/site/assets/climate.js`). What is and isn't
+**Status: the easy part is implemented** (`/map/`, `apps/vs-wiki/site/assets/climate.js`). What is and isn't
 ported, and how it was checked, now lives on the site's own source page
 (`apps/vs-wiki/site/_includes/sourcedocs/climate.njk`, shown at `/sources/climate/`), not here. Still open and worth
 researching: porting the simplex wobble (`MapLayerPerlinWobble`), and finding the text-seed to int conversion

@@ -9,3 +9,6 @@ dist
 vssurvivalmod/
 vsapi/
 vsessentialsmod/
+# VS Code extension screenshot run (scripts/screenshots.mjs)
+apps/vs-vscode-extension/.vscode-test/
+apps/vs-vscode-extension/.tmp/

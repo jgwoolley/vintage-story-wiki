@@ -33,11 +33,12 @@ actually in those files, nothing more.
 - **Help Guides** — the game's own in-game handbook articles.
 - **Trades** — every wandering trader's buy/sell listings, in one sortable table.
 - **Classes** — starting character classes, their fixed traits, and starting gear.
-- **Tools** — small interactive tools: a 3D schematic viewer (open any of the game's own schematics,
-  or upload yours, and download them), a WayPoint route planner, a game-calendar converter, an alloy
-  ratio calculator, and a seed climate lookup (temperature and rainfall for a world seed, and which
-  wild plants fit); a few more are planned and described on that page.
-- **VS Code extension** — the schematic and chiseled-shape previews inside VS Code, downloadable from the wiki.
+- **Map** — your waypoints and translocators with a route planner, optionally drawn over the world map your game saved, plus the
+  temperature and rainfall a world seed generates at any point and which wild plants fit.
+- **Schematics** — also has a 3D viewer (open any of the game's own schematics, or upload yours, and download them), a block/item search
+  across every schematic, and a chiseled-shape viewer.
+- **Alloy calculator** (under Recipes) and **Calendar** — a crucible ratio calculator and a game-date converter.
+- **VS Code extension** — the schematic, chiseled-shape and model previews inside VS Code, downloadable from the wiki.
 - **Sources** — exactly which raw game files feed each page above, and how, for anyone curious
   past "trust me."
 - **Research** — investigation notes for features being considered or only partly built (each

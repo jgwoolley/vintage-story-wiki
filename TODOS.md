@@ -4,18 +4,11 @@ Phases are in the order I'd do them: first make sure what exists is true and che
 site, then extend the tools, then change the pipeline, then the larger cross-project and localization work. Items inside a phase
 are independent unless noted.
 
-## Phase 1: Trust what exists (small, no design decisions)
+## Phase 1: Trust what exists (left over)
 
-- [ ] Make sure documentation hasn't drifted: source documents (`site/_includes/sourcedocs/`, `pipelineSources.json`), `README.md`,
-  `INFO.md`, `CLAUDE.md`, `RESEARCH.md`.
-- [ ] CHANGELOG: there doesn't appear to be one. Decide whether to keep one (and generate it from commits/releases) or say
-  explicitly that there isn't one.
-- [ ] Launch the VS Code extension in a real VS Code (it has only ever been type-checked and bundled) and confirm the CI step that
-  packages it and the wiki's `/extension/` download work after the next push.
-  - [ ] See ../nifi-extension, it uses playright to take screenshots
-- [ ] ChiselTools shape files have no extension (QP saves them as plain names in `chiselportfolio`). Files in that folder and `*.pf`
-  now open in the preview; check that "Open With..." lets you pick the preview for any file, and that nothing still needs a `.pf`
-  extension.
+- [ ] After the next push, confirm the CI step that packages the extension and the wiki's `/extension/` download work.
+- [ ] In a real VS Code, confirm "Open With..." lists the preview for an arbitrary file (the selector is now `*`; only the
+  title-bar button and files in a `chiselportfolio` folder were exercised by `npm run screenshots`).
 
 ## Phase 2: Wrong or confusing data
 

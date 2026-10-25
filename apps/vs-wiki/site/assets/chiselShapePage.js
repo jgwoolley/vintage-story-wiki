@@ -1,4 +1,4 @@
-// Page script for /tools/chisel-shape/ (site/tools/chisel-shape/index.njk): upload a ChiselTools shape file
+// Page script for /schematics/chisel-shape/ (site/schematics/chisel-shape/index.njk): upload a ChiselTools shape file
 // (or open a `?shape=&mats=&name=` link) and show the chiseled block it holds. Decoding is
 // libs/vs-schematic/src/chiselExport.ts (parsePortfolioXml); drawing is the shared chiselPreview.js.
 import { shapeFromParams, shapeToParams } from "./chisel.js";

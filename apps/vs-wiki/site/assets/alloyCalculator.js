@@ -1,4 +1,4 @@
-// Alloy ratio calculator (site/tools/alloy/index.njk). Alloy ranges and per-metal bit stack sizes
+// Alloy ratio calculator (site/recipes/alloy-calculator/index.njk). Alloy ranges and per-metal bit stack sizes
 // are rendered into #alloyData by the template from the ingested recipe/item data.
 const CRUCIBLE_SLOTS = 4;
 const BITS_PER_INGOT = 20; // metalbit smeltedRatio in the game data

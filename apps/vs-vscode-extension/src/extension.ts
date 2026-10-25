@@ -20,6 +20,30 @@ async function readSchematicText(uri: vscode.Uri): Promise<string> {
   return new TextDecoder().decode(raw);
 }
 
+/** Where the game keeps the player body model that armor and clothing models hang their pieces on, relative to an assets domain folder. */
+const BODY_SHAPE = ["shapes", "entity", "humanoid", "seraph-faceless.json"];
+
+/**
+ * A worn item's model (`stepParentName` elements) only makes sense on the player body, which is a separate game file. Looks for it where
+ * the game lays it out: `assets/<domain>/shapes/...`, in the model's own domain or in the vanilla `game` one beside it. Undefined when
+ * the file isn't inside such a tree; the preview then shows the pieces unplaced.
+ */
+async function findBodyShape(uri: vscode.Uri): Promise<string | undefined> {
+  const parts = uri.path.split("/");
+  const at = parts.lastIndexOf("shapes");
+  if (at < 1) return undefined;
+  const domainDir = uri.with({ path: parts.slice(0, at).join("/") });
+  const assetsDir = uri.with({ path: parts.slice(0, at - 1).join("/") });
+  for (const dir of [domainDir, vscode.Uri.joinPath(assetsDir, "game"), vscode.Uri.joinPath(assetsDir, "survival")]) {
+    try {
+      return new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(dir, ...BODY_SHAPE)));
+    } catch {
+      // not in this domain; try the next
+    }
+  }
+  return undefined;
+}
+
 class SchematicEditorProvider implements vscode.CustomReadonlyEditorProvider<SchematicDocument> {
   constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -43,7 +67,8 @@ class SchematicEditorProvider implements vscode.CustomReadonlyEditorProvider<Sch
     const post = (message: HostMessage) => webview.postMessage(message);
     const send = async () => {
       try {
-        await post({ type: "schematic", name: fileName, text: await readSchematicText(document.uri) });
+        const text = await readSchematicText(document.uri);
+        await post({ type: "schematic", name: fileName, text, body: text.includes("stepParentName") ? await findBodyShape(document.uri) : undefined });
       } catch (err) {
         await post({ type: "error", message: `Could not read ${fileName}: ${err instanceof Error ? err.message : String(err)}` });
       }

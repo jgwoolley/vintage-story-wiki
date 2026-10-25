@@ -1,0 +1,22 @@
+---
+pagination:
+  data: legacyUrls
+  size: 1
+  alias: moved
+permalink: "{{ lang }}/{{ moved.from }}index.html"
+eleventyExcludeFromCollections: true
+---
+{#- Old addresses (the former /tools/ section) keep working: a redirect page per old URL that forwards to the new one, carrying over the
+    query string and hash (e.g. ?schematic=...). A plain meta refresh is the no-JavaScript fallback. -#}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Moved - Vintage Story Wiki</title>
+  <meta name="robots" content="noindex">
+  <link rel="canonical" href="{{ ('/' ~ lang ~ '/' ~ moved.to) | url }}">
+  <meta http-equiv="refresh" content="0; url={{ ('/' ~ lang ~ '/' ~ moved.to) | url }}">
+  <script>location.replace({{ ('/' ~ lang ~ '/' ~ moved.to) | url | dump | safe }} + location.search + location.hash);</script>
+</head>
+<body><p>This page moved to <a href="{{ ('/' ~ lang ~ '/' ~ moved.to) | url }}">{{ ('/' ~ lang ~ '/' ~ moved.to) | url }}</a>.</p></body>
+</html>

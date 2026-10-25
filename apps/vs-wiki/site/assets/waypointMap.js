@@ -1,4 +1,4 @@
-// SVG map of the waypoints (site/tools/waypoints/index.njk). Replaces the price guide's Cytoscape
+// SVG map of the waypoints (site/map/index.njk), optionally over the explored world map and with a picked-position marker. Replaces the price guide's Cytoscape
 // canvas (useCytoscape.ts): the graph here is just labeled dots on a plane, so plain SVG with a
 // viewBox gives pan/zoom/theming for free without a library dependency.
 const NS = "http://www.w3.org/2000/svg";
@@ -11,10 +11,12 @@ function svg(tag, attrs = {}, text) {
 }
 
 /**
- * Mount a map into `container`. Returns { render(state), focus(waypoint), fit(waypoints) }.
- * `onSelect(waypoint)` fires when a dot is clicked; `render` takes an optional `selectedId` to highlight.
+ * Mount a map into `container`. Returns { render(state), focus(waypoint), fit(waypoints), setBackground(image, frame), setMarker(point) }.
+ * `onSelect(waypoint)` fires when a dot is clicked; `onPick({x, z})` when an empty spot is clicked (not dragged); `render` takes an
+ * optional `selectedId` to highlight. `setBackground({href, x, z, width, height})` draws an image under everything, in world block
+ * coordinates (null removes it); `setMarker({x, z})` draws a crosshair (null removes it).
  */
-export function createWaypointMap(container, { onSelect }) {
+export function createWaypointMap(container, { onSelect, onPick }) {
   const root = svg("svg", { class: "waypoint-map", role: "img", "aria-label": "Waypoint map" });
   container.append(root);
   let view = { cx: 0, cz: 0, span: 200 };
@@ -51,10 +53,21 @@ export function createWaypointMap(container, { onSelect }) {
     applyView();
   });
   const endDrag = () => (drag = null);
-  root.addEventListener("pointerup", endDrag);
+  // A click that wasn't a drag, on the map itself (not a waypoint dot): report the world position under it.
+  root.addEventListener("pointerup", (e) => {
+    const wasClick = drag && !drag.moved && !e.target.closest(".wp-node");
+    endDrag();
+    if (!wasClick || !onPick) return;
+    const rect = container.getBoundingClientRect();
+    const h = view.span;
+    const w = h * ((rect.width || 1) / (rect.height || 1));
+    onPick({ x: view.cx - w / 2 + ((e.clientX - rect.left) / (rect.width || 1)) * w, z: view.cz - h / 2 + ((e.clientY - rect.top) / (rect.height || 1)) * h });
+  });
   root.addEventListener("pointercancel", endDrag);
 
   let last = null;
+  let background = null;
+  let marker = null;
   const redrawLabels = () => last && render(last);
 
   function render({ waypoints, path = [], sourceId, destinationId, selectedId }) {
@@ -62,6 +75,10 @@ export function createWaypointMap(container, { onSelect }) {
     root.replaceChildren();
     applyView();
     const unit = view.span / (container.clientHeight || 400); // user units per CSS pixel
+    if (background) {
+      const { href, x, z, width, height } = background;
+      root.append(svg("image", { href, x, y: z, width, height, class: "wp-background", preserveAspectRatio: "none" }));
+    }
     const onPath = new Set(path.flatMap((s) => [s.from.id, s.to.id]));
     const byId = new Map(waypoints.map((w) => [w.id, w]));
     for (const w of waypoints) {
@@ -80,6 +97,29 @@ export function createWaypointMap(container, { onSelect }) {
       g.addEventListener("keydown", (e) => (e.key === "Enter" || e.key === " ") && onSelect(w));
       root.append(g);
     }
+    if (marker) {
+      const arm = unit * 10;
+      root.append(
+        svg("line", { x1: marker.x - arm, y1: marker.z, x2: marker.x + arm, y2: marker.z, class: "wp-marker", "stroke-width": unit * 2 }),
+        svg("line", { x1: marker.x, y1: marker.z - arm, x2: marker.x, y2: marker.z + arm, class: "wp-marker", "stroke-width": unit * 2 }),
+      );
+    }
+  }
+
+  // `frame` also zooms to show the whole image (used when there are no waypoints to frame instead).
+  function setBackground(image, frame = false) {
+    background = image;
+    if (image && frame) {
+      view.cx = image.x + image.width / 2;
+      view.cz = image.z + image.height / 2;
+      const aspect = (container.clientWidth || 1) / (container.clientHeight || 1);
+      view.span = Math.max(60, image.height * 1.1, (image.width * 1.1) / aspect);
+    }
+    redrawLabels();
+  }
+  function setMarker(point) {
+    marker = point;
+    redrawLabels();
   }
 
   function focus(w) {
@@ -100,5 +140,5 @@ export function createWaypointMap(container, { onSelect }) {
   }
 
   new ResizeObserver(redrawLabels).observe(container);
-  return { render, focus, fit };
+  return { render, focus, fit, setBackground, setMarker };
 }

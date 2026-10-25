@@ -1,6 +1,6 @@
 // Search a Vintage Story schematic for a block or item: placed blocks, chiseled blocks made of it,
 // stacks inside containers (chests, shelves, ground storage, ...) and `stackrandomizer-*` placeholders
-// whose pool can turn into it. Pure (no DOM): the wiki's /tools/schematic-search/ page feeds it
+// whose pool can turn into it. Pure (no DOM): the wiki's /schematics/search/ page feeds it
 // schematics it fetched and decompressed; tests feed it hand-built ones.
 import { decodeBlockEntity } from "./schematicDecode.js";
 import type { TreeAttributes } from "./schematicDecode.js";

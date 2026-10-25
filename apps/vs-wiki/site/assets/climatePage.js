@@ -1,4 +1,4 @@
-// Seed climate lookup (site/tools/climate/index.njk). Wires the form to climate.js (a port of the
+// Seed climate lookup (site/map/index.njk). Wires the form to climate.js (a port of the
 // game's realistic climate generator) and matches the result against the wiki's own wild-plant and
 // tree climate bands, rendered into #climateSpawns by the template.
 import { RealisticClimate, CELL_BLOCKS, temperatureAtY, rainfallAtY, matchingSpawns } from "./climate.js";
@@ -66,20 +66,38 @@ function render() {
   const hits = matchingSpawns(spawns, celsius, rain / 255);
   $("clSpawnCount").textContent = `${hits.length} of ${spawns.length} climate bands match.`;
   const list = $("clSpawnList");
+  // The band's limits, "any" on an open side. Rendered as table rows: datatable.js pages them (20 per page) and re-pages when they change.
+  const band = (lo, hi, fmtBound) => (lo == null && hi == null ? "any" : lo == null ? `up to ${fmtBound(hi)}` : hi == null ? `from ${fmtBound(lo)}` : `${fmtBound(lo)} to ${fmtBound(hi)}`);
+  const cell = (content) => {
+    const td = document.createElement("td");
+    td.append(content);
+    return td;
+  };
   list.replaceChildren(
     ...hits
       .sort((a, b) => a.kind.localeCompare(b.kind) || a.label.localeCompare(b.label))
       .map((h) => {
-        const li = document.createElement("li");
         const a = document.createElement("a");
         a.href = h.url;
         a.textContent = h.label;
-        li.append(`${h.kind}: `, a);
-        return li;
+        const tr = document.createElement("tr");
+        tr.append(
+          cell(h.kind),
+          cell(a),
+          cell(band(h.minTemp, h.maxTemp, (t) => `${t}`)),
+          cell(band(h.minRain, h.maxRain, (r) => `${Math.round(r * 100)}%`)),
+        );
+        return tr;
       }),
   );
   drawMap(w, x, z);
 }
 
 for (const el of document.querySelectorAll("#clForm input, #clForm select, #clPos input")) el.addEventListener("input", render);
+// A click on the map above (waypointsPage.js) sets the position, in blocks from the world spawn.
+document.addEventListener("map:pick", (e) => {
+  $("clX").value = e.detail.x;
+  $("clZ").value = e.detail.z;
+  render();
+});
 render();

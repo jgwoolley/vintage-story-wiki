@@ -48,8 +48,7 @@ package name (`vs-wiki-core/lang.js`, `vs-schematic/schematicDecode.js`; `export
 `build:libs`.** `libs/vs-schematic` has its own tsconfig (with DOM); the root one has none, so DOM use can't leak
 into `schematicDecode.ts`, which the ingest imports. `npm run typecheck` runs all of them (root, vs-schematic, the
 extension). The extension (`apps/vs-vscode-extension`) bundles the lib with esbuild and `npm run build:extension` produces the `.vsix` (bundle only: `npm run build -w vs-vscode-extension`);
-it type-checks, bundles and packages, but has never been launched in a real VS Code, so don't claim it works at
-runtime beyond what's tested. Libs must
+it type-checks, bundles and packages, and `npm run screenshots -w vs-vscode-extension` launches it in a real VS Code (headless Electron + Playwright, software WebGL; needs the libs `apt` list in its README and `vs_server/`) and screenshots a schematic, a chisel shape and model files, so its runtime behaviour *is* verified for those. Don't claim more than that (e.g. Open With... for arbitrary files is only the `*` selector). Libs must
 not import from apps; tests that need wiki files (the sample schematic, ingest's `DecodeStats`) live in
 `apps/vs-wiki/test/`. Path references elsewhere in this file that don't say `libs/` or `apps/` are relative
 to the app that owns them.
@@ -227,10 +226,12 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
 - **Every field in `apps/vs-wiki/src/ingest/types.ts` is documented** (inline `//` or leading `/** */` per
   interface) — keep this true for any new/changed field. This is the single source of truth for
   what each generated JSON shape actually means; don't let it drift into "self-explanatory" silence.
-- **WIP stub page pattern**: `/tools/` still carries a WIP section (painting lookup) for content not built yet — a `.wip-badge`-styled note plus prose saying exactly
-  which raw game files the real implementation would read (see `apps/vs-wiki/site/tools/index.njk`: explain what's
-  planned and where the data already lives, don't just say "coming soon"). The schematic viewer,
-  WayPoint planner, Calendar, Alloy calculator and Seed climate lookup under `/tools/` are real pages, merged from the user's former
+- **WIP stub page pattern**: `/paintings/` still carries a WIP section (which ruins contain a painting) for content not built yet — a `.wip-badge`-styled note plus prose saying exactly
+  which raw game files the real implementation would read (see the end of `apps/vs-wiki/site/paintings/index.njk`: explain what's
+  planned and where the data already lives, don't just say "coming soon"). There is **no "tools" section any more**: the schematic viewer
+  (`/schematics/viewer/`), schematic search, chiseled shape viewer, WayPoint planner + seed climate lookup (merged into `/map/`, with the
+  explored-world-map overlay), Calendar (`/calendar/`) and Alloy calculator (`/recipes/alloy-calculator/`) each live in their own section; old
+  `/tools/...` URLs redirect through `_data/legacyUrls.json`. They are real pages, merged from the user's former
   `vintage-story-schematic-preview` / `vintage-story-price-guide` projects; their pure-client JS is in
   `apps/vs-wiki/site/assets/` (`schematicViewer.js`, `waypoints*.js`, `calendar.js`). The price guide's trades page was
   deliberately not ported (`/trades/` supersedes it). `/guides/` and `/trades/` *used* to be stubs but are
@@ -240,7 +241,7 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   partial at `apps/vs-wiki/site/_includes/sourcedocs/<id>.njk`, rendered through one shared pagination
   template (`apps/vs-wiki/site/sources/sources.njk`, dynamically including `"sourcedocs/" + src.id + ".njk"`
   — Nunjucks `{% include %}` accepts a computed string expression for the template path, this is
-  the one place in the codebase that relies on that). A tool whose logic is a port of game code (e.g. `/tools/climate/`) gets one too: its "Raw game files read"
+  the one place in the codebase that relies on that). A tool whose logic is a port of game code (e.g. `/map/`) gets one too: its "Raw game files read"
   list then says plainly that no asset feeds the logic, and the partial explains what is and isn't ported. Tool pages
   link to their Source page, never to RESEARCH.md (which is going away). If you add a new top-level content type (a
   new `generated.<x>` + its own `apps/vs-wiki/site/<x>/index.njk`), add a matching `pipelineSources.json`
@@ -342,16 +343,14 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   re-implementation. It deliberately omits the simplex `MapLayerPerlinWobble` (~900 blocks of
   displacement), forest/shrub maps and landforms, and supports numeric seeds only (the text-seed hash is
   in closed server code). Don't present its output as exact.
-- **Adding a tool means linking it from all three places**, not just creating the page: the home page
-  tools cards (`apps/vs-wiki/site/index.njk`, the "Tools" grid), the header "Tools" dropdown (`apps/vs-wiki/site/_includes/layouts/base.njk`),
-  and a section on `apps/vs-wiki/site/tools/index.njk`. Point each at the real `tools/<name>/` page (not a `tools/#anchor`)
-  and drop any `wip-badge` / old WIP stub section it replaces. The seed climate lookup shipped with the home
-  card still pointing at its old WIP anchor, which is the mistake this rule exists for. After building, grep
-  `_site/en/index.html` for the new `tools/<name>/` href to confirm.
+- **Adding an interactive page means putting it in its section and linking it from all three places**: the section's own listing page, the
+  home page card grid (`apps/vs-wiki/site/index.njk`, under the matching "Crafting" / "Creatures & World" / "Decor & Lore" heading) and the matching header dropdown
+  (`apps/vs-wiki/site/_includes/layouts/base.njk`). Don't resurrect a "Tools" grouping. If you move or rename a page, add its old URL to
+  `_data/legacyUrls.json`. After building, run `npm run check-links`.
 - **Schematics and structures are separate**: `generated.schematics` (one per file, `SchematicInfo`) holds
   everything about a file; a structure's `schematics` are only `SchematicRef`s (path/glob, its own
   weight/quantity, resolved `schematicIds`). Link to a schematic page with `schematics/{{ schematic.pagePath }}/`
-  (never `slugify(id)`, which collides) and to the viewer with `tools/schematic/?schematic=<domain>/<relPath>`.
+  (never `slugify(id)`, which collides) and to the viewer with `schematics/viewer/?schematic=<domain>/<relPath>`.
   The viewer's files are gzip copies written by ingest (`schematicFiles.ts`) and served by a passthrough
   copy; don't point `fetch` at the raw game files. Schematic ids are the join key for tapestry/clutter/lore
   cross-references, so don't change their format. The schematic page embeds a read-only preview

@@ -381,8 +381,12 @@ export default function (eleventyConfig) {
     "node_modules/three/build/three.core.min.js": "assets/vendor/three/three.core.min.js",
     "node_modules/three/examples/jsm/controls/OrbitControls.js": "assets/vendor/three/addons/OrbitControls.js",
     "node_modules/three/LICENSE": "assets/vendor/three/LICENSE",
+    // sql.js (SQLite as WebAssembly), loaded on demand by the map page to read the game's Maps/<id>.db files.
+    "node_modules/sql.js/dist/sql-wasm.js": "assets/vendor/sql.js/sql-wasm.js",
+    "node_modules/sql.js/dist/sql-wasm.wasm": "assets/vendor/sql.js/sql-wasm.wasm",
+    "node_modules/sql.js/LICENSE": "assets/vendor/sql.js/LICENSE",
     // Sample schematics for the schematic viewer (fetched client-side by assets/schematicViewer.js).
-    "apps/vs-wiki/site/tools/schematic/samples": "assets/schematics",
+    "apps/vs-wiki/site/schematics/viewer/samples": "assets/schematics",
     // Every worldgen schematic, gzip-compressed by ingest (src/ingest/schematicFiles.ts), for the
     // viewer's `?schematic=` mode. A missing folder (ingest not run yet) is simply skipped.
     "apps/vs-wiki/site/_data/generated/schematicFiles": "assets/schematics/world",

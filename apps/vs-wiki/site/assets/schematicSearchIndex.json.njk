@@ -2,5 +2,5 @@
 permalink: assets/schematicSearchIndex.json
 eleventyExcludeFromCollections: true
 ---
-{#- Slim per-schematic code lists for /tools/schematic-search/: lets the page fetch only the schematics that can contain the target. -#}
+{#- Slim per-schematic code lists for /schematics/search/: lets the page fetch only the schematics that can contain the target. -#}
 [{% for s in generated.schematics %}{% if not loop.first %},{% endif %}{{ { domain: s.domain, relPath: s.relPath, name: s.name, pagePath: s.pagePath, gzBytes: s.gzBytes, blockCodes: s.blockCodes, itemCodes: s.itemCodes } | dump | safe }}{% endfor %}]

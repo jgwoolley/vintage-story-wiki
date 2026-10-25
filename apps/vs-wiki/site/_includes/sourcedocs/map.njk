@@ -1,4 +1,15 @@
 <p>
+The map page is three parts on one plane. <strong>Waypoints</strong> (<code>waypoints.js</code>, <code>waypointsPage.js</code>, <code>waypointMap.js</code>)
+come only from what you give it: waypoints you add, a JSON export, or the translocator-locator mod's <code>Nf3tData.json</code> (the
+route search is Dijkstra over straight-line distances, with translocator links costing nothing). Nothing is stored on the server; the list lives in
+your browser's local storage. The <strong>explored world map</strong> (<code>worldMap.js</code>, <code>worldMapPage.js</code>) reads the game client's
+<code>Maps/&lt;savegame id&gt;.db</code> with sql.js (SQLite compiled to WebAssembly, loaded only when you choose a file). Its
+<code>mappiece</code> table has one row per 32&times;32-pixel tile, positioned by <code>(tileZ &lt;&lt; 27) | tileX</code>, whose blob is a protobuf message with one ABGR
+varint per pixel; the tiles are drawn at one pixel per block (sampled and averaged when the explored area is larger than 4096 blocks), and
+laid behind the waypoints in absolute world coordinates. It is a port of the vintage-story-launcher's map preview and has been tested against tiles
+built by hand to that layout, not against a real save file. The <strong>climate</strong> part is described below.
+</p>
+<p>
 This tool is different from the other pages: the climate numbers are not read from a game data
 file, because the game computes them in C# at world-generation time. <code>apps/vs-wiki/site/assets/climate.js</code>
 is a port of that code, written against the game's own source (<code>vsessentialsmod</code>

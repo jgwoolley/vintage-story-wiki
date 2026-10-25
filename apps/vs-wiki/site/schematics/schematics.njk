@@ -20,7 +20,7 @@ eleventyComputed:
 </p>
 
 <p>
-  <a class="button-like" href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/?schematic={{ (schematic.domain ~ '/' ~ schematic.relPath) | urlencode }}">Open in the full viewer &rarr;</a>
+  <a class="button-like" href="{{ ('/' ~ lang ~ '/') | url }}schematics/viewer/?schematic={{ (schematic.domain ~ '/' ~ schematic.relPath) | urlencode }}">Open in the full viewer &rarr;</a>
   <a href="{{ '/' | url }}{{ schematic.assetPath }}" download>Download (.json.gz, {{ schematic.gzBytes | bytes }})</a>
 </p>
 
@@ -29,6 +29,12 @@ eleventyComputed:
   <p class="preview-status muted">3D preview needs JavaScript.</p>
 </div>
 <p class="muted">Drag to rotate, right-drag to pan, scroll to zoom. The full viewer adds the block list, floor slider and block inspector. Worldgen <code>meta-filler</code> markers aren't drawn.</p>
+<div id="schematicTopDownBox" hidden>
+  <h3>From above</h3>
+  <canvas id="schematicTopDown" class="schematic-topdown" aria-label="Map-like view of the schematic from above"></canvas>
+  <p class="muted">Each square is one block column, showing its highest block, lightened where the ground rises and darkened where it drops (lit from the north-west);
+  north is up. Hover a square for its block and position. Worldgen <code>meta-filler</code> markers aren't drawn, so a column that only holds filler is empty.</p>
+</div>
 <script type="module" src="{{ '/' | url }}assets/schematicPreview.js"></script>
 
 <table>

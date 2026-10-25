@@ -51,6 +51,12 @@ const FACE_ORDER = ["north", "east", "south", "west", "up", "down"];
 
 const isVec = (v: unknown): v is Vec => Array.isArray(v) && v.length === 3 && v.every((n) => typeof n === "number" && Number.isFinite(n));
 
+/** Whether parsed JSON is a model (shape) file -- an `elements` tree of boxes -- rather than a schematic, which has `Indices`/`BlockIds` instead. */
+export function looksLikeShape(parsed: unknown): boolean {
+  const p = parsed as { elements?: unknown; Indices?: unknown } | null;
+  return !!p && typeof p === "object" && !p.Indices && Array.isArray(p.elements) && p.elements.some((e) => e && typeof e === "object" && "from" in e && "to" in e);
+}
+
 /**
  * Trims a raw shape file (as parsed from JSON) to a `CompactShape`: drops animations, faces, UVs and everything else
  * that isn't geometry. Elements with a malformed `from`/`to` are dropped (with their children), and a face-less

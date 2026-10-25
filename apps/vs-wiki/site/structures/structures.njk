@@ -49,7 +49,7 @@ eleventyComputed:
           <td><a href="{{ ('/' ~ lang ~ '/') | url }}schematics/{{ schematic.pagePath }}/">{{ schematic.relPath }}</a></td>
           <td>{{ schematic.sizeX }}&times;{{ schematic.sizeY }}&times;{{ schematic.sizeZ }}</td>
           <td>{{ schematic.blockCodeCount }}</td>
-          <td><a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/?schematic={{ (schematic.domain ~ '/' ~ schematic.relPath) | urlencode }}">View</a></td>
+          <td><a href="{{ ('/' ~ lang ~ '/') | url }}schematics/viewer/?schematic={{ (schematic.domain ~ '/' ~ schematic.relPath) | urlencode }}">View</a></td>
         </tr>
         {% endif %}
       {% endfor %}

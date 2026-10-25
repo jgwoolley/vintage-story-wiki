@@ -1,0 +1,11 @@
+[
+  { "from": "tools/", "to": "" },
+  { "from": "tools/schematic/", "to": "schematics/viewer/" },
+  { "from": "tools/schematic-search/", "to": "schematics/search/" },
+  { "from": "tools/chisel-shape/", "to": "schematics/chisel-shape/" },
+  { "from": "tools/alloy/", "to": "recipes/alloy-calculator/" },
+  { "from": "tools/calendar/", "to": "calendar/" },
+  { "from": "tools/waypoints/", "to": "map/" },
+  { "from": "tools/climate/", "to": "map/" },
+  { "from": "sources/climate/", "to": "sources/map/" }
+]

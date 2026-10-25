@@ -50,24 +50,47 @@ description: A statically-generated wiki of Vintage Story crafting recipes, drop
 <body>
   <header class="site-header">
     <a class="brand" href="{{ ('/' ~ lang ~ '/') | url }}"><img src="{{ '/' | url }}assets/icon.svg" alt="" class="app-icon">Vintage Story Wiki</a>
-    <nav>
-      <a href="{{ ('/' ~ lang ~ '/') | url }}items/">Items</a>
-      <a href="{{ ('/' ~ lang ~ '/') | url }}recipes/">Recipes</a>
-    </nav>
     <div class="nav-dropdown">
-      <button type="button" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Tools</button>
+      <button type="button" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Crafting</button>
       <div class="nav-dropdown-panel" hidden>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}items/">Items &amp; Blocks</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}recipes/">Recipes</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}recipes/alloy-calculator/">Alloy calculator</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}weapons/">Weapons &amp; Tools</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}armor/">Armor</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}foods/">Foods</a>
+      </div>
+    </div>
+    <div class="nav-dropdown">
+      <button type="button" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">World</button>
+      <div class="nav-dropdown-panel" hidden>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}map/">Map &amp; waypoints</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}creatures/">Creatures</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}structures/">Structures</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}schematics/">Schematics</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}schematics/viewer/">Schematic viewer</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}schematics/search/">Schematic block/item search</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}schematics/chisel-shape/">Chiseled shape viewer</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}deposits/">Deposits</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}crops/">Crops</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}trees/">Trees</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}fruit-trees/">Fruit trees</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}calendar/">Calendar</a>
+      </div>
+    </div>
+    <div class="nav-dropdown">
+      <button type="button" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Decor &amp; Lore</button>
+      <div class="nav-dropdown-panel" hidden>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}paintings/">Paintings</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}tapestries/">Tapestries</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}clutter/">Clutter</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}clothing/">Clothing</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}books/">Books</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}lore/">Lore</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}guides/">Guides</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}traders/">Traders</a>
         <a href="{{ ('/' ~ lang ~ '/') | url }}trades/">Trades price guide</a>
-        <a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/">Schematic viewer</a>
-        <a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic-search/">Schematic block/item search</a>
-        <a href="{{ ('/' ~ lang ~ '/') | url }}tools/chisel-shape/">Chiseled shape viewer</a>
-        <a href="{{ ('/' ~ lang ~ '/') | url }}tools/waypoints/">WayPoint planner</a>
-        <a href="{{ ('/' ~ lang ~ '/') | url }}tools/calendar/">Calendar</a>
-        <a href="{{ ('/' ~ lang ~ '/') | url }}tools/#paintingtapestry-in-ruins-lookup">Painting/tapestry lookup <span class="wip-badge">WIP</span></a>
-        <a href="{{ ('/' ~ lang ~ '/') | url }}tools/alloy/">Alloy ratio calculator</a>
-        <a href="{{ ('/' ~ lang ~ '/') | url }}tools/climate/">Seed climate lookup</a>
-        <a href="https://www.nf3t.com" target="_blank" rel="noopener noreferrer">Other NF3t tools</a>
-        <a href="{{ ('/' ~ lang ~ '/') | url }}tools/">All tools &rarr;</a>
+        <a href="{{ ('/' ~ lang ~ '/') | url }}classes/">Classes</a>
       </div>
     </div>
     <div class="nav-dropdown nav-info">

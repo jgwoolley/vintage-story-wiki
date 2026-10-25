@@ -4,6 +4,8 @@
 import { createVoxelViewer } from "./voxelViewer.js";
 import { assertSchematic, fetchGzipText, isHiddenByDefault, toVoxels } from "./schematicVoxels.js";
 import { blockColor, loadBlockColors } from "./blockColors.js";
+import { topDownView } from "./topDown.js";
+import { drawTopDown } from "./schematicTopDown.js";
 
 const root = document.getElementById("schematicPreview");
 if (root) {
@@ -35,6 +37,13 @@ if (root) {
         .filter((v) => !isHiddenByDefault(v.code))
         .map((v) => ({ ...v, color: blockColor(v.code, colors) }));
       if (!voxels.length) return say("Nothing to show: this schematic has no visible blocks.");
+      // The same blocks seen from above, as a map.
+      const topCanvas = document.getElementById("schematicTopDown");
+      const view = topCanvas && topDownView(voxels);
+      if (view) {
+        drawTopDown(topCanvas, view, (code) => blockColor(code, colors), (code) => code.replace(/^[^:]+:/, "").replace(/-/g, " "));
+        document.getElementById("schematicTopDownBox").hidden = false;
+      }
       const viewer = createVoxelViewer(stage, { voxels, label: `3D preview of ${root.dataset.name}` });
       if (!viewer) return say("WebGL is unavailable in this browser, so the 3D preview can't be shown.");
       say("");

@@ -1,15 +1,27 @@
 {
   "name": "vs-vscode-extension",
   "displayName": "Vintage Story Schematic Preview",
-  "description": "Preview Vintage Story worldgen schematics (.json / .json.gz) and ChiselTools chiseled-block shapes as interactive 3D models.",
+  "description": "Preview Vintage Story worldgen schematics (.json / .json.gz), item/creature/block model files and ChiselTools chiseled-block shapes as interactive 3D models.",
   "version": "0.1.0",
   "private": true,
   "publisher": "vintage-story-wiki",
   "license": "UNLICENSED",
   "type": "commonjs",
-  "engines": { "vscode": "^1.90.0" },
-  "categories": ["Visualization", "Other"],
-  "keywords": ["vintage story", "schematic", "voxel", "preview"],
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "vintage story",
+    "schematic",
+    "model",
+    "shape",
+    "voxel",
+    "preview"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "customEditors": [
@@ -17,7 +29,20 @@
         "viewType": "vsSchematic.preview",
         "displayName": "Vintage Story Schematic Preview",
         "priority": "option",
-        "selector": [{ "filenamePattern": "*.json" }, { "filenamePattern": "*.json.gz" }, { "filenamePattern": "*.pf" }, { "filenamePattern": "**/chiselportfolio/*" }]
+        "selector": [
+          {
+            "filenamePattern": "*.json"
+          },
+          {
+            "filenamePattern": "*.json.gz"
+          },
+          {
+            "filenamePattern": "*.pf"
+          },
+          {
+            "filenamePattern": "**/chiselportfolio/*"
+          }
+        ]
       }
     ],
     "configuration": {
@@ -38,16 +63,24 @@
     "commands": [
       {
         "command": "vsSchematic.openPreview",
-        "title": "Preview Schematic or Chisel Shape",
+        "title": "Preview Schematic, Model or Chisel Shape",
         "category": "Vintage Story"
       }
     ],
     "menus": {
       "explorer/context": [
-        { "command": "vsSchematic.openPreview", "when": "resourceFilename =~ /\\.(json(\\.gz)?|pf)$/ || resourcePath =~ /chiselportfolio/", "group": "navigation" }
+        {
+          "command": "vsSchematic.openPreview",
+          "when": "resourceFilename =~ /\\.(json(\\.gz)?|pf)$/ || resourcePath =~ /chiselportfolio/",
+          "group": "navigation"
+        }
       ],
       "editor/title": [
-        { "command": "vsSchematic.openPreview", "when": "resourceFilename =~ /\\.(json(\\.gz)?|pf)$/ || resourcePath =~ /chiselportfolio/", "group": "navigation" }
+        {
+          "command": "vsSchematic.openPreview",
+          "when": "resourceFilename =~ /\\.(json(\\.gz)?|pf)$/ || resourcePath =~ /chiselportfolio/",
+          "group": "navigation"
+        }
       ]
     }
   },
@@ -55,12 +88,15 @@
     "build": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p src/webview/tsconfig.json",
+    "screenshots": "npm run build && node scripts/screenshots.mjs",
     "package": "npm run build && vsce package --no-dependencies --allow-missing-repository --skip-license"
   },
   "devDependencies": {
     "@types/vscode": "^1.90.0",
+    "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^3.2.0",
-    "esbuild": "^0.28.2"
+    "esbuild": "^0.28.2",
+    "playwright-core": "^1.64.1"
   },
   "dependencies": {
     "three": "0.180.0",

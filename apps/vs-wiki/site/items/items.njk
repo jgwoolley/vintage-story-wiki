@@ -423,7 +423,7 @@ eleventyComputed:
 
 <h2>Find in schematics</h2>
 <p>
-  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic-search/?code={{ item.code | urlencode }}&amp;kind={{ item.kind | urlencode }}">Search every worldgen schematic for this {{ item.kind }} &rarr;</a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}schematics/search/?code={{ item.code | urlencode }}&amp;kind={{ item.kind | urlencode }}">Search every worldgen schematic for this {{ item.kind }} &rarr;</a>
   <span class="muted">Decodes the schematics in your browser to find where it is placed, what chiseled blocks use it, and which chests could hold it (including random placeholders), which the lists above don't cover.</span>
 </p>
 

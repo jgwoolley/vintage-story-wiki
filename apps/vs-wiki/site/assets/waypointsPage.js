@@ -1,4 +1,4 @@
-// Page controller for site/tools/waypoints/index.njk: state + DOM wiring around waypoints.js
+// Page controller for the waypoint part of site/map/index.njk: state + DOM wiring around waypoints.js
 // (logic) and waypointMap.js (SVG map). Waypoints persist in localStorage only.
 import { shortestPath, stringifyWayPoint, formatCoords, getWaypointCommand, serializeWayPoints, deserializeWayPoints, isModData, modDataSavegames, importModData } from "./waypoints.js";
 import { createWaypointMap } from "./waypointMap.js";
@@ -42,7 +42,20 @@ function setStatus(msg, isError = false) {
 }
 
 // Clicking a dot on the map shows that waypoint in the table; clicking a table row opens the map at it.
-const map = createWaypointMap($("wpMap"), { onSelect: (w) => select(w, { table: true }) });
+const map = createWaypointMap($("wpMap"), { onSelect: (w) => select(w, { table: true }), onPick: pickPosition });
+
+// A click on an empty spot: mark it and hand its position (blocks from the world spawn, like the climate form) to the climate section.
+function pickPosition({ x, z }) {
+  // Without a known spawn, assume the default one: the middle of the world (half the climate form's world size, 512000 for the default 1,024,000).
+  const center = (Number($("clSize").value) || 1024000) / 2;
+  const spawn = state.spawn ?? { x: center, z: center };
+  const relX = Math.round(x - spawn.x), relZ = Math.round(z - spawn.z);
+  map.setMarker({ x, z });
+  $("wpPick").textContent = `Picked X ${relX}, Z ${relZ}${state.spawn ? " (relative to the world spawn)" : " (relative to the world center)"}; the climate section below now shows that position.`;
+  document.dispatchEvent(new CustomEvent("map:pick", { detail: { x: relX, z: relZ } }));
+}
+// The explored world map (worldMapPage.js) arrives as a background image in world block coordinates.
+document.addEventListener("map:background", (e) => map.setBackground(e.detail, state.waypoints.length === 0));
 
 function select(w, { table = false, centerMap = false } = {}) {
   selectedId = w.id;

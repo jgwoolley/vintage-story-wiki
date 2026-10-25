@@ -14,6 +14,8 @@ import { createVoxelViewer, type VoxelViewer } from "vs-schematic/voxelViewer.js
 import { materialVolumes, type ChiselShape } from "vs-schematic/chisel.js";
 import { looksLikePortfolio, parsePortfolioXml } from "vs-schematic/chiselExport.js";
 import { createChiselPreview } from "vs-schematic/chiselPreview.js";
+import { createModelPreview } from "vs-schematic/modelPreview.js";
+import { attachToBase, compactShape, looksLikeShape, shapeToBoxes } from "vs-schematic/shapeBoxes.js";
 import type { HostMessage, WebviewMessage } from "../protocol.js";
 import type { ViewerSettings } from "vs-schematic/viewerSettings.js";
 import "./style.css";
@@ -139,8 +141,8 @@ function showInspector(voxel: Voxel): void {
   els.inspector.hidden = false;
 }
 
-/** A ChiselTools shape file (`.pf save`): draw the chiseled block's boxes, and list its materials with their share of the 4096 voxels. */
-function loadShape(name: string, shape: ChiselShape): void {
+/** Forgets the loaded schematic and disables its controls, for the previews that aren't one (chisel shapes, models). */
+function clearSchematicState(): void {
   showError("");
   data = null;
   voxels = [];
@@ -150,6 +152,50 @@ function loadShape(name: string, shape: ChiselShape): void {
   els.maxY.disabled = true;
   els.maxYValue.textContent = "";
   els.showFiller.checked = false;
+}
+
+/** A Vintage Story model (shape) file: an item, creature or block model, drawn untextured; the legend lists its texture names. */
+function loadModel(name: string, raw: unknown, bodyText: string | undefined): void {
+  clearSchematicState();
+  let shape = compactShape(raw);
+  let placed = "";
+  if (shape.elements.some((e) => e.stepParent)) {
+    // A worn item: its pieces name a bone of the player body, so they need the body file to be placed.
+    if (bodyText) {
+      try {
+        shape = attachToBase(shape, compactShape(JSON.parse(bodyText)));
+        placed = ", placed on the player body";
+      } catch {
+        placed = ", the player body file couldn't be read so pieces are unplaced";
+      }
+    } else {
+      placed = ", pieces unplaced (the player body model seraph-faceless.json wasn't found under a shapes folder)";
+    }
+  }
+  const boxes = shapeToBoxes(shape);
+  els.summary.textContent = `${name}: model, ${boxes.length} boxes${placed}`;
+  els.legend.replaceChildren();
+  const perTexture = new Map<string, number>();
+  for (const box of boxes) perTexture.set(box.texture ?? "", (perTexture.get(box.texture ?? "") ?? 0) + 1);
+  for (const [texture, count] of [...perTexture].sort((a, b) => b[1] - a[1])) {
+    const row = document.createElement("div");
+    row.className = "legend-item";
+    row.title = `texture #${texture}`;
+    const swatch = textEl("span", "color-box", "");
+    swatch.style.background = stringToColor(texture);
+    row.append(swatch, textEl("span", "block-name", texture || "(none)"), textEl("span", "block-count", `${count} boxes`));
+    els.legend.append(row);
+  }
+  viewer?.dispose();
+  viewer = null;
+  shapeViewer?.dispose();
+  shapeViewer = createModelPreview(els.viewport, shape, `3D view of ${name}`, settings);
+  if (!shapeViewer) showError(boxes.length ? "WebGL isn't available in this webview, so the 3D view can't be shown." : `${name} has no boxes to draw.`);
+}
+
+/** A ChiselTools shape file (`.pf save`): draw the chiseled block's boxes, and list its materials with their share of the 4096 voxels. */
+function loadShape(name: string, shape: ChiselShape): void {
+  clearSchematicState();
   const volumes = materialVolumes(shape);
   els.summary.textContent = `${name}: chiseled block, ${shape.cuboids.length} boxes, ${volumes.reduce((a, b) => a + b, 0)} of 4096 voxels`;
   els.legend.replaceChildren();
@@ -169,7 +215,7 @@ function loadShape(name: string, shape: ChiselShape): void {
   if (!shapeViewer) showError("WebGL isn't available in this webview, so the 3D view can't be shown.");
 }
 
-function load(name: string, text: string): void {
+function load(name: string, text: string, body?: string): void {
   if (looksLikePortfolio(text)) {
     try {
       loadShape(name, parsePortfolioXml(text).shape);
@@ -183,9 +229,10 @@ function load(name: string, text: string): void {
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
+    if (looksLikeShape(parsed)) return loadModel(name, parsed, body);
     assertSchematic(parsed);
   } catch (err) {
-    showError(`${name} isn't a Vintage Story schematic: ${err instanceof Error ? err.message : String(err)}`);
+    showError(`${name} isn't a Vintage Story schematic or model: ${err instanceof Error ? err.message : String(err)}`);
     return;
   }
   showError("");
@@ -247,7 +294,7 @@ els.viewport.addEventListener("pointerup", (e) => {
 
 window.addEventListener("message", (event: MessageEvent<HostMessage>) => {
   const message = event.data;
-  if (message.type === "schematic") load(message.name, message.text);
+  if (message.type === "schematic") load(message.name, message.text, message.body);
   else if (message.type === "error") showError(message.message);
   else if (message.type === "settings") {
     settings = { centerMarker: message.centerMarker, grid: message.grid };

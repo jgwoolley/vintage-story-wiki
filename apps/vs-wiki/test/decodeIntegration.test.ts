@@ -8,7 +8,7 @@ import { decodeBlockEntity } from "vs-schematic/schematicDecode.js";
 // the pure decoder tests live in libs/vs-schematic/test.
 
 test("committed sample schematic: every block entity decodes, tapestries and clutter carry a type", () => {
-  const url = new URL("../../../apps/vs-wiki/site/tools/schematic/samples/default.json", import.meta.url);
+  const url = new URL("../../../apps/vs-wiki/site/schematics/viewer/samples/default.json", import.meta.url);
   const schematic = JSON.parse(readFileSync(url, "utf8")) as { BlockEntities: Record<string, string> };
   const codes: Record<string, number> = {};
   for (const blob of Object.values(schematic.BlockEntities)) {

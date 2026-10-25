@@ -1,4 +1,4 @@
-// WayPoint tool logic (site/tools/waypoints/index.njk). Ported from the vintage-story-price-guide
+// WayPoint tool logic (site/map/index.njk). Ported from the vintage-story-price-guide
 // project's utils.ts: pure data/path functions with no DOM, so they're easy to reason about.
 //
 // A waypoint is { id, label, x, z, height, pinned, color, icon, connection? } where x/z are

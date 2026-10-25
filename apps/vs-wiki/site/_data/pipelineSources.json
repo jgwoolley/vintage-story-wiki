@@ -168,17 +168,17 @@
     "globs": ["modinfo.json (one per installed mod .zip)", "Mods/<modid>.meta.json (cached mods.vintagestory.at API response, not a game asset)"]
   },
   {
-    "id": "climate",
-    "title": "Seed climate lookup",
-    "listingUrl": "tools/climate/",
-    "modelFiles": ["apps/vs-wiki/site/assets/climate.js", "apps/vs-wiki/site/assets/climatePage.js", "apps/vs-wiki/site/tools/climate/index.njk", "apps/vs-wiki/test/climate.test.ts", "apps/vs-wiki/src/ingest/models/blockpatches.ts", "apps/vs-wiki/src/ingest/models/trees.ts"],
-    "globs": ["worldgen/blockpatches/*.json (climate bands matched against the result)", "worldgen/treengenproperties.json (tree/shrub climate bands)", "blocktypes/plant/fruittreebranch.json (fruit tree climate bands)", "No game asset feeds the generator itself: it is a port of the game's C# climate code (see below)"]
+    "id": "map",
+    "title": "Map (waypoints, world map and climate)",
+    "listingUrl": "map/",
+    "modelFiles": ["apps/vs-wiki/site/map/index.njk", "apps/vs-wiki/site/assets/waypoints.js", "apps/vs-wiki/site/assets/waypointsPage.js", "apps/vs-wiki/site/assets/waypointMap.js", "apps/vs-wiki/site/assets/worldMap.js", "apps/vs-wiki/site/assets/worldMapPage.js", "apps/vs-wiki/test/worldMap.test.ts", "apps/vs-wiki/site/assets/climate.js", "apps/vs-wiki/site/assets/climatePage.js", "apps/vs-wiki/test/climate.test.ts", "apps/vs-wiki/src/ingest/models/blockpatches.ts", "apps/vs-wiki/src/ingest/models/trees.ts"],
+    "globs": ["No game asset feeds the waypoints or the world map: they come from the files you load (waypoint JSON / the translocator mod's Nf3tData.json, and the client's Maps/<id>.db)", "worldgen/blockpatches/*.json (climate bands matched against the result)", "worldgen/treengenproperties.json (tree/shrub climate bands)", "blocktypes/plant/fruittreebranch.json (fruit tree climate bands)", "No game asset feeds the generator itself: it is a port of the game's C# climate code (see below)"]
   },
   {
     "id": "schematic-search",
     "title": "Schematic block/item search",
-    "listingUrl": "tools/schematic-search/",
-    "modelFiles": ["libs/vs-schematic/src/schematicSearch.ts", "libs/vs-schematic/src/chisel.ts", "apps/vs-wiki/site/assets/schematicSearchPage.js", "apps/vs-wiki/site/assets/schematicSearchIndex.json.njk", "apps/vs-wiki/site/assets/randomizerPools.json.njk", "apps/vs-wiki/site/tools/schematic-search/index.njk", "libs/vs-schematic/test/schematicSearch.test.ts"],
+    "listingUrl": "schematics/search/",
+    "modelFiles": ["libs/vs-schematic/src/schematicSearch.ts", "libs/vs-schematic/src/chisel.ts", "apps/vs-wiki/site/assets/schematicSearchPage.js", "apps/vs-wiki/site/assets/schematicSearchIndex.json.njk", "apps/vs-wiki/site/assets/randomizerPools.json.njk", "apps/vs-wiki/site/schematics/search/index.njk", "libs/vs-schematic/test/schematicSearch.test.ts"],
     "globs": ["worldgen/schematics/**/*.json (every file is fetched and decoded in the browser, as gzip copies)", "itemtypes/**/stackrandomizer*.json (via the randomizer pools: which placeholder can produce what)"]
   },
   {
@@ -191,8 +191,8 @@
   {
     "id": "chisel-shape",
     "title": "Chiseled shape viewer",
-    "listingUrl": "tools/chisel-shape/",
-    "modelFiles": ["libs/vs-schematic/src/chiselExport.ts", "libs/vs-schematic/src/chisel.ts", "libs/vs-schematic/src/chiselPreview.ts", "apps/vs-wiki/site/assets/chiselShapePage.js", "apps/vs-wiki/site/tools/chisel-shape/index.njk", "libs/vs-schematic/test/chisel.test.ts"],
+    "listingUrl": "schematics/chisel-shape/",
+    "modelFiles": ["libs/vs-schematic/src/chiselExport.ts", "libs/vs-schematic/src/chisel.ts", "libs/vs-schematic/src/chiselPreview.ts", "apps/vs-wiki/site/assets/chiselShapePage.js", "apps/vs-wiki/site/schematics/chisel-shape/index.njk", "libs/vs-schematic/test/chisel.test.ts"],
     "globs": ["No game asset feeds this tool: it decodes the ChiselTools mod's own shape file format (read from the mod's compiled code)"]
   }
 ]

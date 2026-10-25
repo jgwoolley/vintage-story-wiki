@@ -2,7 +2,9 @@
 
 /** Host -> webview. */
 export type HostMessage =
-  | { type: "schematic"; name: string; text: string } // the (already gunzipped) schematic JSON text
+  // The (already gunzipped) file's JSON text: a schematic, a ChiselTools shape, or a Vintage Story model (shape) file. `body` is
+  // the player body shape (seraph-faceless.json), found next to a worn item's model so its pieces can be placed on it.
+  | { type: "schematic"; name: string; text: string; body?: string }
   | { type: "error"; message: string } // the file couldn't be read
   | { type: "settings"; centerMarker: boolean; grid: boolean }; // the vsSchematic.* display settings (sent on ready and whenever they change)
 

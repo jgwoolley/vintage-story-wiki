@@ -1,4 +1,4 @@
-// Page script for /tools/schematic-search/ (site/tools/schematic-search/index.njk). The scan itself is
+// Page script for /schematics/search/ (site/schematics/search/index.njk). The scan itself is
 // libs/vs-schematic/src/schematicSearch.ts; this file is the URL params, fetching and results table.
 //
 // URL params (the item page links here): `code` (bare code, `*` wildcards), `kind` (block|item|any),

@@ -22,3 +22,12 @@ permalink: "{{ lang }}/paintings/index.html"
   </tr>
 {% endfor %}
 {% endcall %}
+
+<h2 id="paintingtapestry-in-ruins-lookup">Which ruins contain a painting <span class="wip-badge">WIP</span></h2>
+<p>
+  Right now, each painting page (and every <a href="{{ ('/' ~ lang ~ '/') | url }}items/">item/block</a> page) shows which
+  <a href="{{ ('/' ~ lang ~ '/') | url }}structures/">structures</a> it's found in, built from a flat pass over every schematic's block-code
+  dictionary &mdash; it confirms the code is somewhere in that schematic, not where or how many times. <a href="{{ ('/' ~ lang ~ '/') | url }}tapestries/">Tapestries</a>
+  already get a precise, per-instance version of this (decoded directly from each schematic's block-entity data); a proper lookup for paintings
+  would need the same per-instance decoding, evaluated against <code>worldgen/storystructures.json</code> and <code>worldgen/structures.json</code> directly.
+</p>

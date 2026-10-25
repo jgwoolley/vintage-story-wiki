@@ -12,13 +12,13 @@ and item codes it uses; <code>ItemCodes</code> holds items placed in containers,
 references.
 </p>
 <p>
-The <a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic-search/">schematic block/item search</a> uses the same code lists and the same gzip copies to find where a block or item occurs.
+The <a href="{{ ('/' ~ lang ~ '/') | url }}schematics/search/">schematic block/item search</a> uses the same code lists and the same gzip copies to find where a block or item occurs.
 </p>
 <h3>The 3D view</h3>
 <p>
 For the 3D view the whole file is needed, so every schematic is also written, gzip-compressed (about a fifth
 of the original size), to the site and served as <code>/assets/schematics/world/&lt;domain&gt;/&lt;path&gt;.json.gz</code>.
-The <a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/">schematic viewer</a> fetches one on demand
+The <a href="{{ ('/' ~ lang ~ '/') | url }}schematics/viewer/">schematic viewer</a> fetches one on demand
 (<code>?schematic=&lt;domain&gt;/&lt;path&gt;</code>) and unpacks it in your browser with the browser's built-in
 <code>DecompressionStream</code>. Nothing is decoded at build time beyond the tapestry, clutter and book
 cross-references described on their own source pages.
@@ -39,3 +39,11 @@ VS Code extension that previews schematic files.
 rules; those layout rules aren't part of the data, so a structure is shown as the list of its pieces, not as an
 assembled whole. The files belong to the game and the mods that ship them.</p>
 </div>
+
+<h3>The "From above" map</h3>
+<p>
+Each schematic page also draws the structure as a top-down map in your browser from the same decoded blocks as the 3D preview: for every
+x/z column the highest block that is drawn is painted in that block's color (the BlockColorMod colors the schematic viewer uses, or a hash
+color for blocks it doesn't know), lightened where the ground rises and darkened where it drops, as if lit from the north-west. North is up
+because z grows southwards in the game. It is a plan of the blocks as placed in the file, not a render of how the world looks around them.
+</p>

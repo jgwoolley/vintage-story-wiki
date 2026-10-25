@@ -33,6 +33,10 @@ permalink: "{{ lang }}/index.html"
     <span class="muted">Protection, durability, warmth and side effects of every armor piece.</span>
     <span class="muted">{{ generated.armor.length }} entries</span>
   </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}recipes/alloy-calculator/">
+    <strong><span class="card-icon" aria-hidden="true">🧪</span> Alloy calculator</strong>
+    <span class="muted">Max crucible bits for a target alloy ratio, given item-stack limits.</span>
+  </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}foods/">
     <strong><span class="card-icon" aria-hidden="true">🍞</span> Foods</strong>
     <span class="muted">Satiety, health and food category of every food.</span>
@@ -77,6 +81,26 @@ permalink: "{{ lang }}/index.html"
     <span class="muted">Fruit tree varieties, a separate worldgen system from regular trees.</span>
     <span class="muted">{{ generated.fruitTrees.length }} varieties</span>
   </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}map/">
+    <strong><span class="card-icon" aria-hidden="true">🗺️</span> Map</strong>
+    <span class="muted">Waypoints, translocator routes, your explored world map and the climate a seed generates at any point.</span>
+  </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}schematics/viewer/">
+    <strong><span class="card-icon" aria-hidden="true">🏗️</span> Schematic viewer</strong>
+    <span class="muted">Open a schematic in 3D: block legend, floor slider and decoded block entities.</span>
+  </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}schematics/search/">
+    <strong><span class="card-icon" aria-hidden="true">🔎</span> Schematic block/item search</strong>
+    <span class="muted">Where a block or item is placed in every worldgen schematic.</span>
+  </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}schematics/chisel-shape/">
+    <strong><span class="card-icon" aria-hidden="true">🪨</span> Chiseled shape viewer</strong>
+    <span class="muted">Open a ChiselTools shape file as a 3D model.</span>
+  </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}calendar/">
+    <strong><span class="card-icon" aria-hidden="true">📅</span> Calendar</strong>
+    <span class="muted">Convert a game date into elapsed days and real hours.</span>
+  </a>
 </div>
 
 <h2>Decor &amp; Lore</h2>
@@ -120,51 +144,14 @@ permalink: "{{ lang }}/index.html"
     <span class="muted">Wandering trader specializations: starting coins, and what each buys and sells.</span>
     <span class="muted">{{ generated.trades.length }} entries</span>
   </a>
-  <a href="{{ ('/' ~ lang ~ '/') | url }}classes/">
-    <strong><span class="card-icon" aria-hidden="true">🛡️</span> Classes</strong>
-    <span class="muted">Starting character classes, their fixed traits, and starting gear.</span>
-    <span class="muted">{{ generated.classes.length }} entries</span>
-  </a>
-</div>
-
-<h2>Tools</h2>
-<p class="muted">Interactive tools beyond the generated reference pages -- some built, some still planned. See <a href="{{ ('/' ~ lang ~ '/') | url }}tools/">the tools page</a> for full descriptions.</p>
-<div class="grid-list">
   <a href="{{ ('/' ~ lang ~ '/') | url }}trades/">
     <strong><span class="card-icon" aria-hidden="true">🪙</span> Trades price guide</strong>
     <span class="muted">Every trader's buy/sell listings, flattened into one sortable table.</span>
   </a>
-  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/">
-    <strong><span class="card-icon" aria-hidden="true">🧊</span> Schematic viewer</strong>
-    <span class="muted">Upload and view a .json schematic file in 3D in the browser.</span>
-  </a>
-  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic-search/">
-    <strong><span class="card-icon" aria-hidden="true">🔎</span> Schematic block/item search</strong>
-    <span class="muted">Find which ruins and structures place, chisel or stock a given block or item.</span>
-  </a>
-  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/chisel-shape/">
-    <strong><span class="card-icon" aria-hidden="true">🗿</span> Chiseled shape viewer</strong>
-    <span class="muted">Upload a QPTech ChiselTools shape file and see the chiseled block in 3D.</span>
-  </a>
-  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/waypoints/">
-    <strong><span class="card-icon" aria-hidden="true">🧭</span> WayPoint planner</strong>
-    <span class="muted">Map your waypoints and translocators, and find the cheapest route.</span>
-  </a>
-  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/calendar/">
-    <strong><span class="card-icon" aria-hidden="true">📅</span> Calendar</strong>
-    <span class="muted">Convert an in-game date to elapsed game days and real-life hours.</span>
-  </a>
-  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/#paintingtapestry-in-ruins-lookup">
-    <strong><span class="card-icon" aria-hidden="true">🔍</span> Painting/tapestry-in-ruins lookup <span class="wip-badge">WIP</span></strong>
-    <span class="muted">Which specific ruin variants place a given painting or tapestry.</span>
-  </a>
-  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/alloy/">
-    <strong><span class="card-icon" aria-hidden="true">🧪</span> Alloy ratio calculator</strong>
-    <span class="muted">Max crucible bits for a target alloy ratio, given item-stack limits.</span>
-  </a>
-  <a href="{{ ('/' ~ lang ~ '/') | url }}tools/climate/">
-    <strong><span class="card-icon" aria-hidden="true">🌍</span> Seed climate lookup</strong>
-    <span class="muted">Plug in a seed + climate settings, get the temperature/rain there and which plants and trees fit.</span>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}classes/">
+    <strong><span class="card-icon" aria-hidden="true">🛡️</span> Classes</strong>
+    <span class="muted">Starting character classes, their fixed traits, and starting gear.</span>
+    <span class="muted">{{ generated.classes.length }} entries</span>
   </a>
 </div>
 

@@ -2,10 +2,10 @@
 title: Schematic viewer - Vintage Story Wiki
 description: Upload a Vintage Story schematic .json and inspect it in 3D in the browser -- block legend, floor-by-floor slider, per-block entity data.
 layout: layouts/base.njk
-permalink: "{{ lang }}/tools/schematic/index.html"
+permalink: "{{ lang }}/schematics/viewer/index.html"
 ---
 {% import "macros/breadcrumb.njk" as bc %}
-{{ bc.trail(lang, [{label: "Tools", url: "tools/"}, {label: "Schematic viewer"}]) }}
+{{ bc.trail(lang, [{label: "Schematics", url: "schematics/"}, {label: "Viewer"}]) }}
 <h1>Schematic viewer</h1>
 <p class="muted">
   Open one of the bundled sample schematics, any of the game's own worldgen schematics (from a
@@ -17,7 +17,7 @@ permalink: "{{ lang }}/tools/schematic/index.html"
   block-entity attributes.
 </p>
 
-<div class="schematic-tool" id="schematicTool" data-samples-base="{{ '/' | url }}assets/schematics/" data-world-base="{{ '/' | url }}assets/schematics/world/" data-schematics-url="{{ ('/' ~ lang ~ '/') | url }}schematics/" data-search-url="{{ ('/' ~ lang ~ '/') | url }}tools/schematic-search/" data-items-url="{{ ('/' ~ lang ~ '/') | url }}items/" data-block-colors="{{ '/' | url }}assets/Nf3tBlockColors.json" data-block-names="{{ '/' | url }}assets/blockNames.json">
+<div class="schematic-tool" id="schematicTool" data-samples-base="{{ '/' | url }}assets/schematics/" data-world-base="{{ '/' | url }}assets/schematics/world/" data-schematics-url="{{ ('/' ~ lang ~ '/') | url }}schematics/" data-search-url="{{ ('/' ~ lang ~ '/') | url }}schematics/search/" data-items-url="{{ ('/' ~ lang ~ '/') | url }}items/" data-block-colors="{{ '/' | url }}assets/Nf3tBlockColors.json" data-block-names="{{ '/' | url }}assets/blockNames.json">
   <div id="loadingOverlay" class="schematic-loading" hidden>
     <div class="spinner"></div>
     <div id="loadingText">Processing schematic...</div>

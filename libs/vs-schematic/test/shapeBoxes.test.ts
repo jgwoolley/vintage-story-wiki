@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { attachToBase, compactShape, shapeToBoxes } from "../src/shapeBoxes.js";
+import { attachToBase, looksLikeShape, compactShape, shapeToBoxes } from "../src/shapeBoxes.js";
 
 const face = (texture: string) => ({ north: { texture, uv: [0, 0, 1, 1] } });
 const near = (a: number, b: number) => assert.ok(Math.abs(a - b) < 1e-6, `${a} != ${b}`);
@@ -65,4 +65,12 @@ test("attachToBase hangs worn elements under the named body element and draws on
   assert.deepEqual([boxes[0].x, boxes[0].y, boxes[0].z], [16, 22, 32]);
   assert.deepEqual([boxes[1].x, boxes[1].y, boxes[1].z], [0.5, 0.5, 0.5], "an element whose parent is missing stays where it is");
   assert.equal(attachToBase(base, base), base, "shapes without step parents are returned unchanged");
+});
+
+test("looksLikeShape tells a model file from a schematic and from other JSON", () => {
+  assert.equal(looksLikeShape({ elements: [{ from: [0, 0, 0], to: [1, 1, 1] }] }), true);
+  assert.equal(looksLikeShape({ Indices: [1], BlockIds: [0], BlockCodes: {}, elements: [{ from: [0, 0, 0], to: [1, 1, 1] }] }), false);
+  assert.equal(looksLikeShape({ elements: [] }), false);
+  assert.equal(looksLikeShape({ code: "x" }), false);
+  assert.equal(looksLikeShape(null), false);
 });

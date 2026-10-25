@@ -2,10 +2,10 @@
 title: Schematic block/item search - Vintage Story Wiki
 description: Search every worldgen schematic, in your browser, for a block or item - placed blocks, chiseled materials, container contents and random placeholders.
 layout: layouts/base.njk
-permalink: "{{ lang }}/tools/schematic-search/index.html"
+permalink: "{{ lang }}/schematics/search/index.html"
 ---
 {% import "macros/breadcrumb.njk" as bc %}
-{{ bc.trail(lang, [{label: "Tools", url: "tools/"}, {label: "Schematic block/item search"}]) }}
+{{ bc.trail(lang, [{label: "Schematics", url: "schematics/"}, {label: "Block/item search"}]) }}
 <h1>Schematic block/item search</h1>
 <p class="muted">
   Find which worldgen schematics (ruins, villages, story structures, ...) contain a block or item.
@@ -17,7 +17,7 @@ permalink: "{{ lang }}/tools/schematic-search/index.html"
   <a href="{{ ('/' ~ lang ~ '/') | url }}sources/schematic-search/">How it works &rarr;</a>
 </p>
 
-<div id="schematicSearch" data-index-url="{{ '/' | url }}assets/schematicSearchIndex.json" data-pools-url="{{ '/' | url }}assets/randomizerPools.json" data-world-base="{{ '/' | url }}assets/schematics/world/" data-schematics-url="{{ ('/' ~ lang ~ '/') | url }}schematics/" data-viewer-url="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/" data-block-names="{{ '/' | url }}assets/blockNames.json" data-block-colors="{{ '/' | url }}assets/Nf3tBlockColors.json" data-items-url="{{ ('/' ~ lang ~ '/') | url }}items/">
+<div id="schematicSearch" data-index-url="{{ '/' | url }}assets/schematicSearchIndex.json" data-pools-url="{{ '/' | url }}assets/randomizerPools.json" data-world-base="{{ '/' | url }}assets/schematics/world/" data-schematics-url="{{ ('/' ~ lang ~ '/') | url }}schematics/" data-viewer-url="{{ ('/' ~ lang ~ '/') | url }}schematics/viewer/" data-block-names="{{ '/' | url }}assets/blockNames.json" data-block-colors="{{ '/' | url }}assets/Nf3tBlockColors.json" data-items-url="{{ ('/' ~ lang ~ '/') | url }}items/">
   <form id="ssForm" class="schematic-row-fields" onsubmit="return false">
     <label class="schematic-field">Block or item code <input type="text" id="ssCode" placeholder="e.g. gear-rusty or rock-*" size="32" required></label>
     <label class="schematic-field">Kind
@@ -33,7 +33,7 @@ permalink: "{{ lang }}/tools/schematic-search/index.html"
   <p class="muted">The domain (<code>game:</code>) is optional; <code>*</code> matches anything, so <code>chest-*</code> finds every chest.</p>
   <p class="muted">
     To find a <strong>chiseled block</strong> instead, click one in the
-    <a href="{{ ('/' ~ lang ~ '/') | url }}tools/schematic/">schematic viewer</a> and follow its "Find equivalent chiseled blocks" link, or
+    <a href="{{ ('/' ~ lang ~ '/') | url }}schematics/viewer/">schematic viewer</a> and follow its "Find equivalent chiseled blocks" link, or
     upload a ChiselTools shape file (made with <code>.pf save</code>):
   </p>
   <form id="ssNameForm" class="schematic-row-fields" onsubmit="return false">

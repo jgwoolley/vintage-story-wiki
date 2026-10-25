@@ -166,6 +166,9 @@ worldgen rule (where/how often to spawn) that *references* schematics. They are 
   through `macros/itemlink.njk` (page if it exists, search link only if the search finds a row, else plain text), and
   `npm run check-links` (after a build) verifies every internal link and `?q=` search in `_site/`. Plain tables over 20 rows are paged by
   `datatable.js`; the datatable search understands `a or b` (the handbook's syntax).
+- **Top-down map view**: the schematic page also draws the structure from above, like a map (`libs/vs-schematic/src/topDown.ts`: the highest
+  drawn block of each x/z column plus relief shading lit from the north-west; `assets/schematicTopDown.js` paints it on a canvas with a hover
+  tooltip). `schematicPreview.js` fills it from the same decoded blocks as the 3D preview, so it loads at the same time and also skips `meta-filler`.
 - **Two viewers, one core**: each schematic page embeds a read-only preview (`schematicPreview.js`: rotate/pan/zoom
   only, no legend/slider/picking; files over 1.5 MB compressed wait for a click, the rest load when scrolled into
   view) with a button into the full viewer (`schematicViewer.js`, which also has Download for whatever is loaded:
@@ -248,7 +251,7 @@ consistent with "organize by what the thing is" (see Creatures vs. Items below).
   unless the schematic pins it — see `BlockTapestry.OnLoadCollectibleMappings` in
   `vssurvivalmod`). The decoder itself lives at `libs/vs-schematic/src/schematicDecode.ts`, not under
   `apps/vs-wiki/src/ingest/` — dependency-free TypeScript with no Node or DOM APIs (compiled to browser JS by
-  `npm run build:libs`), since the `/tools/schematic/` viewer (see "Tools" below) and the VS Code extension need
+  `npm run build:libs`), since the `/schematics/viewer/` viewer (see "Tools" below) and the VS Code extension need
   the exact same decode logic client-side; `tapestryInstances.ts` just imports that same file. `/tapestries/` is one
   flat, sortable table of every (structure, possible tapestry) pairing this produces — not a page
   per block code/direction, since direction/code aren't the interesting axis here. Scoped to
@@ -261,7 +264,7 @@ consistent with "organize by what the thing is" (see Creatures vs. Items below).
   (e.g. a chest or wardrobe), which this wiki doesn't decode. This is also a coarser match than
   ideal — it confirms a structure's schematic *contains* the block code somewhere, not that a
   specific ruin/story-structure variant from `worldgen/storystructures.json`/`structures.json` was
-  directly evaluated (see `/tools/`).
+  directly evaluated (see the end of `/paintings/`).
 
 ## Classes & Traits (`models/classes.ts`)
 
@@ -457,9 +460,8 @@ Info page for the visitor-facing version of that caveat.
 - **`/<lang>/research/`** — `RESEARCH.md` published the same way `INFO.md` → `/info/` already
   was (`apps/vs-wiki/eleventy.config.js`'s `researchHtml` global data, `md.render(readFileSync("RESEARCH.md"))`),
   referenced from `/info/`. Investigation notes; each section says whether it has since been implemented.
-- **Header "Tools" dropdown** (`apps/vs-wiki/site/assets/nav.js`, next to the Info link) lists every
-  individual tool (built and WIP) as a direct link, mirroring the home page's own expanded Tools
-  section and `/tools/`'s own per-tool anchors.
+- **Header dropdowns** (`apps/vs-wiki/site/assets/nav.js`: Crafting, World, Decor & Lore, More) list every
+  section's pages, interactive ones included, mirroring the home page's three card groups.
 - **Sort state also round-trips through the URL** (`?sort=<colIndex>&dir=asc|desc`, numbered
   `sort2`/`dir2`/... the same way the filters are) — a sorted view can be bookmarked/shared just
   like a filtered one now, not just reset on reload.
@@ -600,7 +602,7 @@ animal variants).
   grouped by type, with names from the `clutter-<type with "/" → "-">` lang keys and the structures using each.
 - **Crop nutrients**: `models/blockpatches.ts` attaches each crop's `cropProps` (`requiredNutrient` N/P/K,
   `nutrientConsumption`, `totalGrowthMonths`) to its `/crops/` rows; the columns are sortable and filterable.
-- **`/tools/alloy/`** (`apps/vs-wiki/site/assets/alloyCalculator.js`): alloy ranges (`recipes/alloy`) and bit stack sizes are
+- **`/recipes/alloy-calculator/`** (`apps/vs-wiki/site/assets/alloyCalculator.js`): alloy ranges (`recipes/alloy`) and bit stack sizes are
   rendered into the page as JSON; the script finds the most bits a 4-slot crucible holds at a chosen ratio.
 - Trader pages use `TradeList.displayName` (the localized trader entity name without its climate suffix) and show
   min and max price/stock as separate columns.
@@ -619,7 +621,7 @@ re-implementation), `handbookLinks` (`rewriteHandbookLinks`), `schematics` (glob
 paths, the structure→schematic index, gzip round trip and its reuse). The decoder test covers
 `libs/vs-schematic/src/schematicDecode.ts`: Ascii85, each `TreeAttribute` type code, hostile array lengths
 (regression for the slow-ingest bug in `FINDINGS_SLOW.md`) and flat tapestry/clutter blobs; the committed
-`apps/vs-wiki/site/tools/schematic/samples/default.json` is checked by `decodeIntegration`. Blobs are built by hand in the tests rather
+`apps/vs-wiki/site/schematics/viewer/samples/default.json` is checked by `decodeIntegration`. Blobs are built by hand in the tests rather
 than copied from game files. The attribute layouts were
 checked against `vsapi`'s `*Attribute.cs` `FromBytes` (ids 1-16, incl. type 7 ItemStack, which decodes to
 `{itemClass, id, stackSize, attributes}`; `id` indexes the schematic's own `ItemCodes`/`BlockCodes`, no
@@ -649,17 +651,21 @@ so `parseBlockColors` swaps red and blue on load; if the mod is ever fixed to wr
   viewer and the schematic-page previews read it in preference to the bundled file; "Use bundled colors" clears it.
 - The VS Code extension does not use the file yet; it still uses generated colours.
 
-## Tools (`/tools/`)
+## Interactive pages (no "tools" section)
+
+There is no separate tools area: each interactive page lives in the section it belongs to (schematic pages under `/schematics/`, the alloy calculator
+under `/recipes/`, the map at `/map/`, the calendar at `/calendar/`), and the home page cards and the header dropdowns (Crafting, World, Decor &
+Lore) are organised the same way. The old `/tools/...` addresses redirect (`_data/legacyUrls.json` + `redirects/redirects.njk`, which keep the query string).
 
 The schematic viewer, WayPoint planner and calendar were merged in (with git history) from the user's
 former standalone projects `vintage-story-schematic-preview` and `vintage-story-price-guide`; the alloy
 calculator (see above) and the seed climate lookup were written here. All are fully client-side:
 
-- **`/tools/schematic/`** — `apps/vs-wiki/site/tools/schematic/index.njk` + `apps/vs-wiki/site/assets/schematicViewer.js`.
+- **`/schematics/viewer/`** — `apps/vs-wiki/site/schematics/viewer/index.njk` + `apps/vs-wiki/site/assets/schematicViewer.js`.
   A schematic adapter on `voxelViewer.ts` (`Indices`/`BlockIds` → voxels; legend, floor slider,
   click-to-inspect with `schematicDecode.ts` decoding block-entity blobs; its legend names come from
   `generated.blockNames` (`models/blockNames.ts`, served as `/assets/blockNames.json`)). Upload any schematic
-  `.json`, or pick a bundled sample from `apps/vs-wiki/site/tools/schematic/samples/` (copied to
+  `.json`, or pick a bundled sample from `apps/vs-wiki/site/schematics/viewer/samples/` (copied to
   `/assets/schematics/` by an `apps/vs-wiki/eleventy.config.js` passthrough). `?schematic=<domain>/<relPath>` opens one of
   the wiki's own worldgen schematics (see "Schematics vs. structures" below).
   Clicking a chiseled block (block entity with `cuboids` + `materials`) shows a materials table, a mini 3D preview of
@@ -669,7 +675,7 @@ calculator (see above) and the seed climate lookup were written here. All are fu
   (`string[]`, which the loader uses to re-resolve materials index for index), `materialPasteOK` -- to a file with no
   extension in `GetOrCreateDataPath("chiselportfolio")`, i.e. `<VintagestoryData>/chiselportfolio/`. The export is
   verified against that source and the real protobuf bytes, but has not been loaded in a running game.
-- **`/tools/schematic-search/`** — `schematicSearchPage.js` (URL params `code`, `kind`; fetch + results) over the pure
+- **`/schematics/search/`** — `schematicSearchPage.js` (URL params `code`, `kind`; fetch + results) over the pure
   `libs/vs-schematic/src/schematicSearch.ts`. Item pages link here (`?code=<code>&kind=<kind>`). Prefilters with
   `/assets/schematicSearchIndex.json` (each schematic's `BlockCodes`/`ItemCodes`, exact because any hit needs a code
   from those lists) and `/assets/randomizerPools.json` (which `stackrandomizer-*` can produce the target), then
@@ -686,35 +692,35 @@ calculator (see above) and the seed climate lookup were written here. All are fu
   `tab=details`. The stage has two tabs: the 3D schematic, and "Block details" (name, code, position, the chiseled
   shape with materials/export/equivalent search, the inventory -- `blockEntityInfo.ts`'s `inventoryOf`, each stack linking to
   an items search -- and the entity's attributes as JSON).
-- **`/tools/chisel-shape/`** — `chiselShapePage.js`: upload a ChiselTools shape file (or open `?shape=&mats=&name=`) and
+- **`/schematics/chisel-shape/`** — `chiselShapePage.js`: upload a ChiselTools shape file (or open `?shape=&mats=&name=`) and
   render it with the shared `chiselPreview`. 
-- **`/tools/waypoints/`** — `waypoints.js` (pure logic: distance, Dijkstra route, import/export
-  validation), `waypointMap.js` (SVG map), `waypointsPage.js` (DOM wiring); state lives in
-  `localStorage`. This replaces the price guide's React/MUI/Cytoscape implementation with no
-  library dependency. The upload also accepts the translocator-locator mod's `Nf3tData.json` (keyed by savegame GUID:
-  translocators with target locations, the game's waypoints, spawn, last route; the page asks which savegame to
-  load, see `isModData`/`importModData`; coordinates display relative to the savegame's spawn, and a game waypoint on the
-  same spot as a translocator is dropped in favor of the translocator). The page explains where the mod writes it (`ModData`, e.g.
-  `~/.config/VintagestoryData/ModData` on Linux).
-  Clicking a dot selects the waypoint in the table and clicking a table row centres the map on it (the map only takes pointer capture once a drag starts; capturing on pointerdown swallowed clicks on dots). The Add/Edit dialog's icon dropdown is `generated.waypointIcons` (`models/waypointIcons.ts`): the `textures/icons/worldmap/*.svg` names found in vanilla or mod assets plus a committed vanilla list (`waypointIconsVanilla.json`), because the dedicated server download ships no client textures.
-- **`/tools/climate/`** — `apps/vs-wiki/site/assets/climate.js` (pure logic, no DOM: a port of the game's realistic
-  climate generator, i.e. `NoiseClimateRealistic`/`MapLayerClimate`/`Climate.cs`; BigInt for the 64-bit
-  LCG, `Math.fround` for C# floats), `climatePage.js` (DOM wiring + a temperature canvas) and
-  `apps/vs-wiki/site/tools/climate/index.njk`, which embeds every wild patch/tree/fruit-tree climate band from
-  `generated.blockPatches`/`trees`/`fruitTrees` so the page can list what grows at the computed climate.
-  Approximate by design: the game's simplex wobble, forest/shrub maps and landforms aren't ported, and only
-  numeric seeds work. `apps/vs-wiki/test/climate.test.ts` checks the generator against an independent re-implementation.
-- **`/tools/calendar/`** — `calendar.js`, a small game-date → elapsed days / real hours converter.
+- **`/map/`** — one page for waypoints, the explored world map and the seed climate. Waypoints: `waypoints.js` (pure logic: distance, Dijkstra
+  route, import/export validation), `waypointMap.js` (SVG map: pan/zoom, an optional background image and a picked-position marker),
+  `waypointsPage.js` (DOM wiring); state lives in `localStorage`. This replaces the price guide's React/MUI/Cytoscape implementation with no
+  library dependency. The upload also accepts the translocator-locator mod's `Nf3tData.json` (keyed by savegame GUID: translocators with
+  target locations, the game's waypoints, spawn, last route; the page asks which savegame to load, see `isModData`/`importModData`;
+  coordinates display relative to the savegame's spawn, and a game waypoint on the same spot as a translocator is dropped in favor of the
+  translocator). Clicking a dot selects the waypoint in the table and clicking a table row centres the map on it (the map only takes pointer
+  capture once a drag starts; capturing on pointerdown made the click land on the `<svg>`).
+  World map: `worldMap.js` (pure: protobuf tile decode, overview rendering; tested in `test/worldMap.test.ts` against tiles built by hand and a
+  real sql.js database) and `worldMapPage.js` read the client's `Maps/<savegame id>.db` with sql.js (vendored from `node_modules` and loaded
+  only when a file is chosen) and draw it behind the waypoints, ported from the vintage-story-launcher's `VintageStoryMap`. It has not been run against a
+  real save file. Climate: `climate.js` (pure logic, no DOM: a port of the game's realistic climate generator, i.e.
+  `NoiseClimateRealistic`/`MapLayerClimate`/`Climate.cs`; BigInt for the 64-bit LCG, `Math.fround` for C# floats), `climatePage.js` (DOM wiring +
+  a temperature canvas) and the page itself, which embeds every wild patch/tree/fruit-tree climate band from
+  `generated.blockPatches`/`trees`/`fruitTrees` so it can list what grows at the computed climate. Clicking an empty spot on the map sends that position
+  (blocks from the world spawn) to the climate form through a `map:pick` event. Approximate by design: the game's simplex wobble, forest/shrub maps and
+  landforms aren't ported, and only numeric seeds work. `test/climate.test.ts` checks the generator against an independent re-implementation.
+- **`/calendar/`** — `calendar.js`, a small game-date → elapsed days / real hours converter.
 
 The price guide's Next.js trades page was *not* ported: `/trades/` (`models/trades.ts`) supersedes it.
 
-One page is still an intentionally empty stub, explaining in-page what's planned and exactly
-where the underlying game data already lives, rather than silently having no page at all
-(`/guides/` and `/trades/` were in this category once but are both now fully implemented —
-`/trades/` has its own section above; `/guides/` is `models/guides.ts`, sourced from
-`config/handbook/00-starterguide.json` through `19-stonelayers.json`):
+One section is still an intentionally unfinished stub, explaining in-page what's planned and exactly where the underlying game data already
+lives, rather than silently having no page at all (`/guides/` and `/trades/` were in this category once but are both now fully implemented —
+`/trades/` has its own section above; `/guides/` is `models/guides.ts`, sourced from `config/handbook/00-starterguide.json` through
+`19-stonelayers.json`):
 
-- **`/tools/`** — the remaining planned tools: a proper painting/tapestry-in-ruins lookup evaluated directly against
+- **`/paintings/`**, "Which ruins contain a painting" — a proper painting-in-ruins lookup evaluated directly against
   `worldgen/storystructures.json`/`structures.json` (see the "Decor catalog" caveat above).
 
 ## Why not run the game engine directly?

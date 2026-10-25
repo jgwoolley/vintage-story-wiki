@@ -1,4 +1,4 @@
-// Schematic viewer (site/tools/schematic/index.njk): a schematic adapter on the shared
+// Schematic viewer (site/schematics/viewer/index.njk): a schematic adapter on the shared
 // voxelViewer.js core, the way recipeVoxels.js is the recipe adapter. Reads a Vintage Story
 // schematic .json (uploaded, or one of the bundled samples), turns Indices/BlockIds into voxels,
 // and layers the legend / floor slider / click-inspector UI on top. Block-entity attribute blobs

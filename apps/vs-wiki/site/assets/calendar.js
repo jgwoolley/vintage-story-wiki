@@ -1,4 +1,4 @@
-// Calendar tool (site/tools/calendar/index.njk). Same arithmetic as the price guide's calendar
+// Calendar tool (site/calendar/index.njk). Same arithmetic as the price guide's calendar
 // page: 1 game day = 0.8 real hours at default settings; 12 months per year.
 const REAL_HOURS_PER_GAME_DAY = 0.8;
 const MONTHS_PER_YEAR = 12;

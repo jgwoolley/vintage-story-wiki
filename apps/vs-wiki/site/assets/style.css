@@ -511,6 +511,8 @@ th.datatable-sorted[data-sort-dir="desc"] .datatable-th-label::after { content: 
 .waypoint-map { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
 .waypoint-map .wp-link { stroke: var(--muted); stroke-dasharray: 6 4; }
 .waypoint-map .wp-path { stroke: var(--accent); stroke-linecap: round; }
+.waypoint-map .wp-marker { stroke: #e0245e; stroke-linecap: round; }
+.waypoint-map .wp-background { image-rendering: pixelated; }
 .waypoint-map .wp-node { cursor: pointer; }
 .waypoint-map circle { fill: var(--muted); stroke: var(--fg); stroke-width: 0.5; }
 .waypoint-map circle.wp-onpath { fill: var(--accent); }
@@ -596,6 +598,7 @@ tr:target { outline: 2px solid var(--accent); outline-offset: -2px; }
 .schematic-preview .preview-stage canvas { display: block; width: 100%; height: 100%; }
 .schematic-preview .preview-status { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; margin: 0; padding: 1rem; text-align: center; pointer-events: none; }
 .schematic-preview .preview-status[hidden] { display: none; }
+.schematic-topdown { display: block; max-width: 100%; height: auto; image-rendering: pixelated; border: 1px solid var(--border); border-radius: 8px; background: var(--card); }
 .schematic-preview .preview-load { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
 .pager { display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0; }
 .pager[hidden] { display: none; }
