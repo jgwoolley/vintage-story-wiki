@@ -61,12 +61,12 @@
     </div>
   </div>
   <div class="datatable-active-filters" data-datatable-active-filters></div>
-  <table>
+  <div class="datatable-scroll"><table>
     {% if headers %}<thead><tr>{% for h in headers %}<th class="datatable-sortable" data-col="{{ loop.index0 }}"><span class="datatable-th-label">{{ h | safe }}</span></th>{% endfor %}</tr></thead>{% endif %}
     <tbody data-datatable-items>
       {{ caller() }}
     </tbody>
-  </table>
+  </table></div>
   <div class="datatable-pagination" data-datatable-pagination></div>
 </div>
 {% endmacro %}

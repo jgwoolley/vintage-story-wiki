@@ -9,6 +9,7 @@ There are no version numbers or tags: the site is rebuilt and deployed from `mai
 - **A wiki-like look**, after the official Vintage Story wiki: green title bar, left navigation panels (replacing the header dropdowns), parchment pages with serif
   headings and a dark variant, a floating **infobox** with the 3D model and key facts on item, creature and clutter pages, a "Contents" box on longer pages, and the
   technical "Game logic (C#)" tables moved to the bottom of those pages.
+- **Phone fixes** for the new layout: wide tables scroll inside their own box instead of widening the page, and the search box gets its own full-width row with a readable results list.
 - **Site-wide search** in the title bar: type to jump to any item, creature, structure, clutter, painting, clothing, class, guide, book or trader (press `/` to focus it).
 - **Animations** in the 3D model previews: creatures, items and clutter that have animations (a wolf's idle, walk, run...) get an Animation picker that plays
   them in a loop on the wiki pages and in the VS Code extension. Worn armor and clothing stay in their rest pose.
