@@ -1,6 +1,6 @@
 {#
-  Site-wide breadcrumb trail: "Vintage Story Wiki / <Section>" on every listing page, or
-  "Vintage Story Wiki / <Section> / <item display name>" on every paginated detail page. This is
+  Site-wide breadcrumb trail: "Nf3t's Vintage Story Wiki / <Section>" on every listing page, or
+  "Nf3t's Vintage Story Wiki / <Section> / <item display name>" on every paginated detail page. This is
   the one shared place that generates the trail -- it replaces the old one-off
   `<div class="breadcrumb"><a href="...">&larr; All X</a></div>` back-links that used to be
   hand-rolled per template (see e.g. the old items.njk/structures.njk/etc.); don't reintroduce
@@ -8,7 +8,7 @@
 
   Call with `lang` (the global `lang` value) and `crumbs`, an array of `{label, url}` objects for
   every segment *after* the home link, which this macro always renders itself (linking to
-  `('/' ~ lang ~ '/') | url`, labeled "Vintage Story Wiki"). `url`, when present, is a path
+  `('/' ~ lang ~ '/') | url`, labeled "Nf3t's Vintage Story Wiki"). `url`, when present, is a path
   relative to the lang root (e.g. "items/", matching the same idiom every other internal link in
   this codebase uses) and renders as a link; the one entry with no `url` renders as the final,
   unlinked "you are here" segment:
@@ -19,7 +19,7 @@
 #}
 {% macro trail(lang, crumbs) %}
 <nav class="breadcrumb" aria-label="Breadcrumb">
-  <a href="{{ ('/' ~ lang ~ '/') | url }}">Vintage Story Wiki</a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}">Nf3t's Vintage Story Wiki</a>
   {% for crumb in crumbs %}
     <span class="breadcrumb-sep" aria-hidden="true">/</span>
     {% if crumb.url %}<a href="{{ ('/' ~ lang ~ '/') | url }}{{ crumb.url }}">{{ crumb.label }}</a>{% else %}<span class="breadcrumb-current">{{ crumb.label }}</span>{% endif %}

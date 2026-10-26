@@ -31,7 +31,8 @@ if (root) {
     if (viewer.animations.length) {
       select.append(...viewer.animations.map((a) => new Option(a.name, a.code)));
       document.getElementById("modelAnimBox").hidden = false;
-      document.getElementById("modelAnimNote").hidden = false;
+      const note = document.getElementById("modelAnimNote");
+      if (note) note.hidden = false;
       // An unknown code (a link to a model that has no such animation) is ignored, leaving the rest pose.
       if (viewer.animations.some((a) => a.code === params.get("anim"))) select.value = params.get("anim");
       viewer.playAnimation(select.value || null);

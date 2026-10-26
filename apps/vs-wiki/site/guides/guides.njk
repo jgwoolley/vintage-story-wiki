@@ -6,7 +6,7 @@ pagination:
 permalink: "{{ lang }}/guides/{{ guide.domain }}/{{ guide.id | slugify }}/index.html"
 layout: layouts/base.njk
 eleventyComputed:
-  title: "{{ guide.title }} - Vintage Story Wiki"
+  title: "{{ guide.title | safe }} - Vintage Story Wiki"
 ---
 {% import "macros/breadcrumb.njk" as bc %}
 {{ bc.trail(lang, [{label: "Help Guides", url: "guides/"}, {label: guide.title}]) }}

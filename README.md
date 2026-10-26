@@ -460,8 +460,11 @@ Info page for the visitor-facing version of that caveat.
 - **`/<lang>/research/`** — `RESEARCH.md` published the same way `INFO.md` → `/info/` already
   was (`apps/vs-wiki/eleventy.config.js`'s `researchHtml` global data, `md.render(readFileSync("RESEARCH.md"))`),
   referenced from `/info/`. Investigation notes; each section says whether it has since been implemented.
-- **Header dropdowns** (`apps/vs-wiki/site/assets/nav.js`: Crafting, World, Decor & Lore, More) list every
-  section's pages, interactive ones included, mirroring the home page's three card groups.
+- **Wiki-style layout**: a green title bar with a site-wide search box (`assets/wikiSearch.js`, fed by the generated `assets/searchIndex.json`: every
+  page with its own address, ~1.3 MB raw, fetched on first focus; `/` focuses it), left navigation panels (Navigation, Crafting, World, Decor & Lore, About; mirroring the home page's
+  card groups; `nav.js` highlights the current page and makes the sidebar a menu on narrow screens) and the page as parchment with serif headings,
+  after the official Vintage Story wiki's look (own colors, no copied images). Item, creature and clutter pages show an infobox (`macros/infobox.njk`) with the 3D preview and key facts, and
+  pages with several sections get a "Contents" box (`toc.js`).
 - **Sort state also round-trips through the URL** (`?sort=<colIndex>&dir=asc|desc`, numbered
   `sort2`/`dir2`/... the same way the filters are) — a sorted view can be bookmarked/shared just
   like a filtered one now, not just reset on reload.

@@ -1,31 +1,25 @@
-// Header dropdowns ("Tools", "Info"): click a toggle to open/close its panel; opening one closes
-// any other open panel, and a click outside or Escape closes them all. Same close-others-then-open
-// pattern as the datatable filter panels (site/assets/datatable.js), kept as a separate tiny
-// script since it's unrelated to any table.
+// The sidebar (base.njk): marks the link of the page you are on, and on narrow screens the sidebar is a menu opened by the header's menu button.
 (function () {
   document.addEventListener("DOMContentLoaded", () => {
-    const dropdowns = [...document.querySelectorAll(".nav-dropdown")]
-      .map((el) => ({ toggle: el.querySelector(".nav-dropdown-toggle"), panel: el.querySelector(".nav-dropdown-panel") }))
-      .filter((d) => d.toggle && d.panel);
-
-    function setOpen(d, open) {
-      d.panel.hidden = !open;
-      d.toggle.setAttribute("aria-expanded", String(open));
+    const here = location.pathname.replace(/\/index\.html$/, "/");
+    const links = [...document.querySelectorAll(".wiki-sidebar a")];
+    // The most specific sidebar link that is this page or a parent of it ("/en/items/" for "/en/items/survival/x/"), never the main page for everything.
+    let best = null;
+    for (const a of links) {
+      const path = new URL(a.href, location.href).pathname;
+      if (a.target) continue;
+      const isMain = a === links[0];
+      if (here === path || (!isMain && here.startsWith(path))) if (!best || path.length > new URL(best.href, location.href).pathname.length) best = a;
     }
-    const closeAll = () => dropdowns.forEach((d) => setOpen(d, false));
+    best?.classList.add("current");
+    best?.setAttribute("aria-current", "page");
 
-    for (const d of dropdowns) {
-      d.toggle.addEventListener("click", () => {
-        const willOpen = d.panel.hidden;
-        closeAll();
-        setOpen(d, willOpen);
-      });
-    }
-    document.addEventListener("click", (e) => {
-      if (!dropdowns.some((d) => d.toggle.contains(e.target) || d.panel.contains(e.target))) closeAll();
-    });
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeAll();
+    const toggle = document.getElementById("wikiMenuToggle");
+    const sidebar = document.getElementById("wikiSidebar");
+    toggle?.addEventListener("click", () => {
+      const open = !sidebar.classList.contains("open");
+      sidebar.classList.toggle("open", open);
+      toggle.setAttribute("aria-expanded", String(open));
     });
   });
 })();

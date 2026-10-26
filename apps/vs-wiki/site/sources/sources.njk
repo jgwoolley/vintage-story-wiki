@@ -6,7 +6,7 @@ pagination:
 permalink: "{{ lang }}/sources/{{ src.id }}/index.html"
 layout: layouts/base.njk
 eleventyComputed:
-  title: "How {{ src.title }} was built - Vintage Story Wiki"
+  title: "How {{ src.title | safe }} was built - Vintage Story Wiki"
 ---
 {% import "macros/breadcrumb.njk" as bc %}
 {{ bc.trail(lang, [{label: "Sources", url: "sources/"}, {label: src.title}]) }}

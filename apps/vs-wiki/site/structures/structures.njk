@@ -6,7 +6,7 @@ pagination:
 permalink: "{{ lang }}/structures/{{ structure.id | slugify }}/index.html"
 layout: layouts/base.njk
 eleventyComputed:
-  title: "{{ structure.name or structure.code }} - Vintage Story Wiki"
+  title: "{{ (structure.name or structure.code) | safe }} - Vintage Story Wiki"
 ---
 {% import "macros/breadcrumb.njk" as bc %}
 {{ bc.trail(lang, [{label: "Structures", url: "structures/"}, {label: structure.name or structure.code}]) }}

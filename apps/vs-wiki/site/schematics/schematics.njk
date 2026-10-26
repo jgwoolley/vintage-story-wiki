@@ -6,7 +6,7 @@ pagination:
 permalink: "{{ lang }}/schematics/{{ schematic.pagePath }}/index.html"
 layout: layouts/base.njk
 eleventyComputed:
-  title: "{{ schematic.relPath }} - Schematic - Vintage Story Wiki"
+  title: "{{ schematic.relPath | safe }} - Schematic - Vintage Story Wiki"
 ---
 {% import "macros/breadcrumb.njk" as bc %}
 {% import "macros/itemlink.njk" as il %}

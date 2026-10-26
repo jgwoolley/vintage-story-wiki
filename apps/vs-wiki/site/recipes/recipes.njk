@@ -6,7 +6,7 @@ pagination:
 permalink: "{{ lang }}/recipes/{{ recipe.category }}/{{ recipe.id | slugify }}/index.html"
 layout: layouts/base.njk
 eleventyComputed:
-  title: "{{ recipe | recipeTitle(generated.items) }} - Vintage Story Wiki"
+  title: "{{ recipe | recipeTitle(generated.items) | safe }} - Vintage Story Wiki"
 ---
 {% import "macros/itemlink.njk" as il %}
 {% import "macros/breadcrumb.njk" as bc %}

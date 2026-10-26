@@ -1,0 +1,44 @@
+---
+permalink: assets/searchIndex.json
+eleventyExcludeFromCollections: true
+---
+{#- The header search box's index (wikiSearch.js): [title, path under /<lang>/, kind label, extra search text]. Only things with a page of their own. -#}
+[
+{%- set first = true -%}
+{%- macro row(title, path, kind, extra) -%}
+{{ [title, path, kind, extra] | dump | safe }}
+{%- endmacro -%}
+{%- for i in generated.items -%}{% if not first %},{% endif %}{% set first = false %}
+{{ row(i.displayName, "items/" ~ i.domain ~ "/" ~ (i.code | slugify) ~ "/", i.kind | capitalize, i.code) }}
+{%- endfor -%}
+{%- for c in generated.creatures -%},
+{{ row(c.sourceDisplayName, "creatures/" ~ c.sourceDomain ~ "/" ~ (c.sourceCode | slugify) ~ "/", "Creature", c.sourceCode) }}
+{%- endfor -%}
+{%- for s in generated.structures -%},
+{{ row(s.name or s.code, "structures/" ~ (s.id | slugify) ~ "/", "Structure", s.code) }}
+{%- endfor -%}
+{%- for c in generated.clutter -%},
+{{ row(c.displayName, "clutter/" ~ (c.id | slugify) ~ "/", "Clutter", c.type) }}
+{%- endfor -%}
+{%- for p in generated.paintings -%},
+{{ row(p.displayName, "paintings/" ~ p.domain ~ "/" ~ (p.code | slugify) ~ "/", "Painting", p.code) }}
+{%- endfor -%}
+{%- for p in generated.clothing -%},
+{{ row(p.displayName, "clothing/" ~ p.domain ~ "/" ~ (p.code | slugify) ~ "/", "Clothing", p.code) }}
+{%- endfor -%}
+{%- for c in generated.classes -%},
+{{ row(c.displayName, "classes/" ~ c.domain ~ "/" ~ (c.code | slugify) ~ "/", "Class", c.code) }}
+{%- endfor -%}
+{%- for g in generated.guides -%},
+{{ row(g.title, "guides/" ~ g.domain ~ "/" ~ (g.id | slugify) ~ "/", "Guide", "") }}
+{%- endfor -%}
+{%- for b in generated.books -%},
+{{ row(b.title, "books/" ~ b.domain ~ "/" ~ (b.code | slugify) ~ "/", "Book", b.code) }}
+{%- endfor -%}
+{%- for b in generated.lore -%},
+{{ row(b.title, "lore/" ~ b.domain ~ "/" ~ (b.code | slugify) ~ "/", "Lore", b.code) }}
+{%- endfor -%}
+{%- for t in generated.trades -%},
+{{ row(t.displayName, "traders/" ~ (t.id | slugify) ~ "/", "Trader", t.id) }}
+{%- endfor -%}
+]

@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/jgwoolley/vintage-story-wiki/vs-manifest.schema.json",
-  "title": "Vintage Story Wiki manifest",
+  "title": "Nf3t's Vintage Story Wiki manifest",
   "description": "vs-manifest.json: what `npm run download` fetches (the vanilla dedicated server and mods) and extra items/blocks `npm run ingest` should always include. Mirrors the VsManifest interface in src/ingest/types.ts; keep the two in sync.",
   "type": "object",
   "additionalProperties": false,

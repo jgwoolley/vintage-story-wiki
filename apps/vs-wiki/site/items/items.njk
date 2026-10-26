@@ -6,7 +6,7 @@ pagination:
 permalink: "{{ lang }}/items/{{ item.domain }}/{{ item.code | slugify }}/index.html"
 layout: layouts/base.njk
 eleventyComputed:
-  title: "{{ item.displayName }} - Vintage Story Wiki"
+  title: "{{ item.displayName | safe }} - Vintage Story Wiki"
 ---
 {% import "macros/itemlink.njk" as il %}
 {% import "macros/recipe.njk" as rc %}
@@ -14,35 +14,29 @@ eleventyComputed:
 {% import "macros/breadcrumb.njk" as bc %}
 {% import "macros/temperature.njk" as tmp %}
 {% import "macros/model.njk" as mdl %}
+{% import "macros/infobox.njk" as ib %}
 {% import "macros/wearable.njk" as wr %}
 {{ bc.trail(lang, [{label: "Items & Blocks", url: "items/"}, {label: item.displayName}]) }}
 
 <h1>{{ item.displayName }}</h1>
-<p class="muted">
-  <span class="tag">{{ item.kind }}</span>
-  <code>{{ item.domain }}:{{ item.code }}</code>
-  &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ item.sourceMod }}</a>
-</p>
+{% set itemTags = item.tags | default([]) %}
+{% call ib.box(item.displayName) %}
+  {% if item.model.path %}{{ mdl.box(item.model, item.displayName) }}{% endif %}
+  <table class="infobox-rows">
+    <tbody>
+      <tr><th>Kind</th><td><span class="tag">{{ item.kind }}</span></td></tr>
+      <tr><th>Code</th><td><code>{{ item.domain }}:{{ item.code }}</code></td></tr>
+      <tr><th>Mod</th><td><a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ item.sourceMod }}</a></td></tr>
+      {% if item.maxStackSize != null %}<tr><th>Stack size</th><td>{{ item.maxStackSize }}</td></tr>{% endif %}
+      {% if itemTags.length %}<tr><th>Tags</th><td>{% for t in itemTags %}<a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}items/?tag={{ t | urlencode }}">{{ t }}</a>{% endfor %}</td></tr>{% endif %}
+    </tbody>
+  </table>
+{% endcall %}
 {% if item.missingTranslation %}<p class="warning">No display name found in any lang file &mdash; showing the raw code.</p>{% endif %}
 {% if item.includedByManifest %}<p class="muted">Listed explicitly in the wiki's <code>vs-manifest.json</code> (<code>includeItems</code>: <code>{{ item.includedByManifest }}</code>), so it has a page even if nothing else here links to it.</p>{% endif %}
 {% if item.description %}<div class="card">{{ item.description | replace("__LANG__", ('/' ~ lang ~ '/') | url) | safe }}</div>{% endif %}
-{% if item.model.path %}{{ mdl.preview(item.model, item.displayName) }}{% endif %}
 {% set blockDrops = generated.blockDropsById[item.domain ~ ':' ~ item.code] %}
 
-{% set itemTags = item.tags | default([]) %}
-{% if itemTags.length or item.maxStackSize != null %}
-<table>
-  <tbody>
-    {% if item.maxStackSize != null %}<tr><th>Stack size</th><td>{{ item.maxStackSize }}</td></tr>{% endif %}
-    {% if itemTags.length %}
-    <tr>
-      <th>Tags</th>
-      <td>{% for t in itemTags %}<a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}items/?tag={{ t | urlencode }}">{{ t }}</a>{% endfor %}</td>
-    </tr>
-    {% endif %}
-  </tbody>
-</table>
-{% endif %}
 
 {% set wearable = generated.wearablesById[item.domain ~ ':' ~ item.code] %}
 {% if wearable.id %}{{ wr.stats(lang, wearable, generated.repairMaterials, generated.items) }}{% endif %}
@@ -78,31 +72,6 @@ eleventyComputed:
 <p class="muted">Compare it with every other food on <a href="{{ ('/' ~ lang ~ '/') | url }}foods/">the foods page</a>. <a href="{{ ('/' ~ lang ~ '/') | url }}sources/foods/">Where this comes from &rarr;</a></p>
 {% endif %}
 
-{% if item.codeRefs %}
-{#- C# names this item/block's own JSON points at, linked to the implementing file via the
-    committed apps/vs-wiki/src/ingest/csharpClassMap.json (see apps/vs-wiki/scripts/map-csharp-classes.ts). -#}
-{% set codeRoleLabels = {
-  "class": ("Block class" if item.kind == "block" else "Item class"),
-  "entityClass": "Block entity",
-  "behavior": "Behavior",
-  "entityBehavior": "Block entity behavior"
-} %}
-<h2>Game logic (C#)</h2>
-<p class="muted">The C# classes this {{ item.kind }}'s JSON definition hands its behavior to. Files link to <a href="https://github.com/anegostudios/vssurvivalmod">vssurvivalmod</a> on GitHub, pinned to the commit the mapping was made from.</p>
-<table>
-  <thead><tr><th>Role</th><th>Name in JSON</th><th>C# type</th><th>Source file</th></tr></thead>
-  <tbody>
-  {% for ref in item.codeRefs %}
-    <tr>
-      <td>{{ codeRoleLabels[ref.role] }}</td>
-      <td><code>{{ ref.name }}</code></td>
-      <td>{% if ref.type %}<code>{{ ref.type }}</code>{% endif %}</td>
-      <td>{% if ref.url %}<a href="{{ ref.url }}"><code>{{ ref.path }}</code></a>{% else %}<span class="muted">Not in vssurvivalmod (engine, VSEssentials, or a mod DLL)</span>{% endif %}</td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
-{% endif %}
 
 {% if item.rockStrata.length %}
 <h2>How this rock forms</h2>
@@ -166,7 +135,7 @@ eleventyComputed:
 
 {% if item.spawnTrees.length %}
 <h2>Where to find (tree growth)</h2>
-<p class="muted">Climate band this tree species can generate in. See also the full <a href="{{ ('/' ~ lang ~ '/') | url }}trees/">Trees</a> listing.</p>
+<p class="muted">Climate band this tree species can generate in. Each row links to that species in the full <a href="{{ ('/' ~ lang ~ '/') | url }}trees/">Trees</a> listing.</p>
 <table>
   <thead><tr><th>Type</th><th>Species</th><th>Temp (&deg;C)</th><th>Rain</th><th>Forest density</th><th>Soil fertility</th><th>Habitat</th></tr></thead>
   <tbody>
@@ -175,7 +144,7 @@ eleventyComputed:
     {% if tree.id %}
     <tr>
       <td><span class="tag">{{ "shrub" if tree.isShrub else "tree" }}</span></td>
-      <td>{% if tree.saplingCodes and tree.saplingCodes.length %}{{ generated.items | displayName(tree.domain, tree.saplingCodes[0]) }}{% else %}{{ tree.generator }}{% endif %}</td>
+      <td><a href="{{ ('/' ~ lang ~ '/') | url }}trees/?q={{ tree.generator | urlencode }}">{% if tree.saplingCodes and tree.saplingCodes.length %}{{ generated.items | displayName(tree.domain, tree.saplingCodes[0]) }}{% else %}{{ tree.generator }}{% endif %}</a></td>
       <td>{{ tmp.range(tree.minTemp, tree.maxTemp) }}</td>
       <td>{% if tree.minRain != null or tree.maxRain != null %}{{ (tree.minRain if tree.minRain != null else 0) | round(2) }}&ndash;{{ (tree.maxRain if tree.maxRain != null else 1) | round(2) }}{% endif %}</td>
       <td>{% if tree.minForest != null or tree.maxForest != null %}{{ (tree.minForest if tree.minForest != null else 0) | round(2) }}&ndash;{{ (tree.maxForest if tree.maxForest != null else 1) | round(2) }}{% endif %}</td>
@@ -190,7 +159,7 @@ eleventyComputed:
 
 {% if item.spawnFruitTrees.length %}
 <h2>Where to find (fruit tree growth)</h2>
-<p class="muted">See also the full <a href="{{ ('/' ~ lang ~ '/') | url }}fruit-trees/">Fruit Trees</a> listing.</p>
+<p class="muted">Each row links to that variety in the full <a href="{{ ('/' ~ lang ~ '/') | url }}fruit-trees/">Fruit Trees</a> listing.</p>
 <table>
   <thead><tr><th>Variety</th><th>Temp (&deg;C)</th><th>Rain</th></tr></thead>
   <tbody>
@@ -198,7 +167,7 @@ eleventyComputed:
     {% set ft = generated.fruitTreesById[ftId] %}
     {% if ft.id %}
     <tr>
-      <td>{% if ft.fruitItemCode %}{{ generated.items | displayName(ft.domain, ft.fruitItemCode) }}{% else %}{{ ft.variety }}{% endif %}</td>
+      <td><a href="{{ ('/' ~ lang ~ '/') | url }}fruit-trees/?q={{ ft.variety | urlencode }}">{% if ft.fruitItemCode %}{{ generated.items | displayName(ft.domain, ft.fruitItemCode) }}{% else %}{{ ft.variety }}{% endif %}</a></td>
       <td>{{ tmp.range(ft.minTemp, ft.maxTemp) }}</td>
       <td>{% if ft.minRain != null or ft.maxRain != null %}{{ ft.minRain }}&ndash;{{ ft.maxRain }}{% endif %}</td>
     </tr>
@@ -429,4 +398,30 @@ eleventyComputed:
 
 {% if not item.producedBy.length and not item.consumedBy.length and not item.droppedBy.length and not blockDrops.id and not item.spawnDeposits.length and not item.spawnBlockPatches.length and not item.spawnTrees.length and not item.spawnFruitTrees.length and not item.rockStrata.length and not item.tradesSelling.length and not item.tradesBuying.length and not item.appearsInStructures.length and not item.npcRewards.length and not item.randomPool.length and not item.generatedBy.length %}
 <p class="muted">Not produced, consumed, dropped, traded, naturally spawned, found in any structure, or an NPC reward currently catalogued.</p>
+{% endif %}
+
+{% if item.codeRefs %}
+{#- C# names this item/block's own JSON points at, linked to the implementing file via the
+    committed apps/vs-wiki/src/ingest/csharpClassMap.json (see apps/vs-wiki/scripts/map-csharp-classes.ts). -#}
+{% set codeRoleLabels = {
+  "class": ("Block class" if item.kind == "block" else "Item class"),
+  "entityClass": "Block entity",
+  "behavior": "Behavior",
+  "entityBehavior": "Block entity behavior"
+} %}
+<h2>Game logic (C#)</h2>
+<p class="muted">The C# classes this {{ item.kind }}'s JSON definition hands its behavior to. Files link to <a href="https://github.com/anegostudios/vssurvivalmod">vssurvivalmod</a> on GitHub, pinned to the commit the mapping was made from.</p>
+<table>
+  <thead><tr><th>Role</th><th>Name in JSON</th><th>C# type</th><th>Source file</th></tr></thead>
+  <tbody>
+  {% for ref in item.codeRefs %}
+    <tr>
+      <td>{{ codeRoleLabels[ref.role] }}</td>
+      <td><code>{{ ref.name }}</code></td>
+      <td>{% if ref.type %}<code>{{ ref.type }}</code>{% endif %}</td>
+      <td>{% if ref.url %}<a href="{{ ref.url }}"><code>{{ ref.path }}</code></a>{% else %}<span class="muted">Not in vssurvivalmod (engine, VSEssentials, or a mod DLL)</span>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
 {% endif %}

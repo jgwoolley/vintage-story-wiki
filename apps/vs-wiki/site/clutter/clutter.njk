@@ -6,24 +6,27 @@ pagination:
 permalink: "{{ lang }}/clutter/{{ clutter.id | slugify }}/index.html"
 layout: layouts/base.njk
 eleventyComputed:
-  title: "{{ clutter.displayName }} - Vintage Story Wiki"
+  title: "{{ clutter.displayName | safe }} - Vintage Story Wiki"
 ---
 {% import "macros/breadcrumb.njk" as bc %}
 {% import "macros/model.njk" as mdl %}
+{% import "macros/infobox.njk" as ib %}
 {{ bc.trail(lang, [{label: "Clutter", url: "clutter/"}, {label: clutter.displayName}]) }}
 
 <h1>{{ clutter.displayName }}</h1>
-<p class="muted">
-  <span class="tag">clutter</span>
-  <code>{{ clutter.type }}</code>
-  &middot; from <a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ clutter.sourceMod }}</a>
-  &middot; placed as {% for b in clutter.blockCodes %}<code>{{ b }}</code>{% if not loop.last %}, {% endif %}{% endfor %}
-</p>
+{% call ib.box(clutter.displayName) %}
+  {% if clutter.model.path %}{{ mdl.box(clutter.model, clutter.displayName) }}{% endif %}
+  <table class="infobox-rows">
+    <tbody>
+      <tr><th>Kind</th><td><span class="tag">clutter</span></td></tr>
+      <tr><th>Type</th><td><code>{{ clutter.type }}</code></td></tr>
+      <tr><th>Block</th><td>{% for b in clutter.blockCodes %}<code>{{ b }}</code>{% if not loop.last %}, {% endif %}{% endfor %}</td></tr>
+      <tr><th>Mod</th><td><a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ clutter.sourceMod }}</a></td></tr>
+    </tbody>
+  </table>
+{% endcall %}
 {% if clutter.missingTranslation %}<p class="warning">No display name found in any lang file &mdash; showing the raw type.</p>{% endif %}
-
-{% if clutter.model.path %}{{ mdl.preview(clutter.model, clutter.displayName) }}{% else %}
-<p class="muted">No 3D model: the game's data names no shape file for this type.</p>
-{% endif %}
+{% if not clutter.model.path %}<p class="muted">No 3D model: the game's data names no shape file for this type.</p>{% endif %}
 
 {% if clutter.soldBy.length %}
 <h2>Sold by traders ({{ clutter.soldBy.length }})</h2>

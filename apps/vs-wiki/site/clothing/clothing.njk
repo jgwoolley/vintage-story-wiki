@@ -6,7 +6,7 @@ pagination:
 permalink: "{{ lang }}/clothing/{{ item.domain }}/{{ item.code | slugify }}/index.html"
 layout: layouts/base.njk
 eleventyComputed:
-  title: "{{ item.displayName }} - Vintage Story Wiki"
+  title: "{{ item.displayName | safe }} - Vintage Story Wiki"
 ---
 {% import "macros/breadcrumb.njk" as bc %}
 {% import "macros/wearable.njk" as wr %}

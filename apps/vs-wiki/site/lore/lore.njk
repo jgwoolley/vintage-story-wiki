@@ -6,7 +6,7 @@ pagination:
 permalink: "{{ lang }}/lore/{{ book.domain }}/{{ book.code | slugify }}/index.html"
 layout: layouts/base.njk
 eleventyComputed:
-  title: "{{ book.title }} - Vintage Story Wiki"
+  title: "{{ book.title | safe }} - Vintage Story Wiki"
 ---
 {% import "macros/breadcrumb.njk" as bc %}
 {% import "macros/loretext.njk" as lt %}

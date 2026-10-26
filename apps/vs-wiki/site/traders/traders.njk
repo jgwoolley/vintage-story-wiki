@@ -6,7 +6,7 @@ pagination:
 permalink: "{{ lang }}/traders/{{ trade.id | slugify }}/index.html"
 layout: layouts/base.njk
 eleventyComputed:
-  title: "{{ trade.displayName }} - Vintage Story Wiki"
+  title: "{{ trade.displayName | safe }} - Vintage Story Wiki"
 ---
 {% import "macros/itemlink.njk" as il %}
 {% import "macros/datatable.njk" as dt %}

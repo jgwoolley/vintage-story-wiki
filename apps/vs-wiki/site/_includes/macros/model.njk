@@ -3,6 +3,29 @@
   Untextured: the dedicated-server download has no textures, so each texture key gets a hash color. The styling reuses
   the schematic page's .schematic-preview rules. Needs only the `url` filter, so it works imported without context.
 #}
+{#
+  The same preview for inside an infobox: no heading, a shorter caption (the details fold away), and the script. The address keeps the
+  animation and floor choices (`?anim=walk&floor=1`) so a link shares them.
+#}
+{% macro box(model, name) %}
+<div class="model-controls" id="modelControls" hidden>
+  <label id="modelAnimBox" hidden>Animation <select id="modelAnim"><option value="">Rest pose</option></select></label>
+  <label class="model-check"><input type="checkbox" id="modelFloor"> Show floor</label>
+</div>
+<div id="modelPreview" class="schematic-preview" data-src="{{ '/' | url }}assets/models/{{ model.domain }}/{{ model.path }}.json.gz" data-name="{{ name }}">
+  <div class="preview-stage" aria-live="polite"></div>
+  <p class="preview-status muted">3D preview needs JavaScript.</p>
+</div>
+<details class="infobox-note">
+  <summary>About this model</summary>
+  <p>Drag to rotate, right-drag to pan, scroll to zoom. Shape only: the colors are placeholders (one per texture), not the real textures. Animations, where the
+  model has them, play in a loop from the picker (worn armor and clothes have none); the floor is a grid of one-block squares at ground level, to judge size and
+  position. Both choices are kept in the page address (<code>?anim=walk&amp;floor=1</code>), so a link shares them. From
+  <code>{{ model.domain }}:shapes/{{ model.path }}.json</code>.</p>
+</details>
+<script type="module" src="{{ '/' | url }}assets/modelPage.js"></script>
+{% endmacro %}
+
 {% macro preview(model, name) %}
 <h2>3D model</h2>
 <div class="model-controls" id="modelControls" hidden>

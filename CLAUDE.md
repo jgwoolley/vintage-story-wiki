@@ -154,6 +154,7 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
 - **Every `<table>` paginates**: `apps/vs-wiki/site/assets/datatable.js` pages any plain table outside a
   `.datatable` that has more than 20 body rows (Prev/Next only, no search/sort); `data-no-paginate` opts
   out. Anything that needs search/filter/sort should still be a `datatable` macro.
+- **Page titles must be `| safe` in `eleventyComputed`** (`title: "{{ item.displayName | safe }} - ..."`): Nunjucks autoescapes the computed string once and `base.njk` escapes `title` again, so a name with an apostrophe showed `Witch&#39;s hat` in the tab. Parenthesize `a or b` before `| safe`.
 - **Item links go through `macros/itemlink.njk`** (`il.link(lang, generated.items, domain, code[, label])`), never a hand-written
   `items/{{ domain }}/{{ code | slugify }}/` href: recipes name abstract codes (`dough`, `fruit`) and patterns that have no page, and a
   dead link or an empty `?q=` search is a bug the user will find. After any template or ingest change that touches links, run
@@ -166,8 +167,8 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
 - **Breadcrumb pattern**: every page except the home page and the root redirect calls the
   `trail(lang, crumbs)` macro (`apps/vs-wiki/site/_includes/macros/breadcrumb.njk`, imported per-template —
   there's no automatic base-layout injection) right before its `<h1>`, rendering
-  "Vintage Story Wiki / <Section>" on a listing page (`crumbs` is a single `{label}` entry, no
-  `url`, since it's the current page) or "Vintage Story Wiki / <Section> / <item display name>"
+  "Nf3t's Vintage Story Wiki / <Section>" on a listing page (`crumbs` is a single `{label}` entry, no
+  `url`, since it's the current page) or "Nf3t's Vintage Story Wiki / <Section> / <item display name>"
   on a paginated detail page (`crumbs` is `[{label, url: "<section>/"}, {label: <item's display
   name>}]`  — only the last entry omits `url`, rendering unlinked). This replaced the old one-off
   `<div class="breadcrumb"><a href="...">&larr; All X</a></div>` back-links that used to be
@@ -266,12 +267,19 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   `.foo[hidden] { display: none; }` + `.foo:not([hidden]) { display: flex; }` (see
   `.datatable-filter-panel`/`.nav-dropdown-panel` for the pattern). Never write
   `.foo { display: flex; }` on an element anything toggles via `hidden`.
-- **Only one dropdown/flyout panel open at a time, site-wide**: both the datatable filter panels
-  (`apps/vs-wiki/site/assets/datatable.js`, tracked via its module-level `allDimensions` array) and the header
-  "Tools" nav dropdown (`apps/vs-wiki/site/assets/nav.js`) close every other open panel before opening the one
-  that was just clicked — clicking an already-open panel's toggle just closes it. If you add
-  another click-to-open panel anywhere, follow this close-others-then-open-this pattern rather
+- **Only one dropdown/flyout panel open at a time, site-wide**: the datatable filter panels
+  (`apps/vs-wiki/site/assets/datatable.js`, tracked via its module-level `allDimensions` array) close every other open panel before
+  opening the one that was just clicked — clicking an already-open panel's toggle just closes it. (The header no longer has dropdowns; see the
+  next item.) If you add another click-to-open panel anywhere, follow this close-others-then-open-this pattern rather
   than a bare `hidden = !hidden` toggle, which lets multiple panels stack open simultaneously.
+- **The page is laid out like a wiki** (modelled on the official Vintage Story wiki, with its own colors and no copied assets): `base.njk` has a green
+  title bar with the site-wide search box (`assets/wikiSearch.js` over `assets/searchIndex.json.njk`, rows `[title, path, kind, code]`; add a content
+  type there when it gets detail pages), a left sidebar of navigation panels (`nav.js` marks the current page and turns the sidebar into a menu under 860 px) and the
+  page as parchment (`--bg`) on a darker `--page`, with serif headings. Detail pages put their key facts and the 3D preview in a floating **infobox**
+  (`macros/infobox.njk` + `model.njk`'s `box`; items, creatures and clutter), and `toc.js` adds a "Contents" box when a detail page has three or more sections. Keep technical
+  tables ("Game logic (C#)") at the bottom of a detail page. Colors are CSS variables for light and dark (`--page`, `--panel`, `--link`, `--infobox-head`...);
+  don't hardcode new colors. Plain tables size to their content (so they can sit beside an infobox) while datatables fill their box; `.card`, `.datatable` and a few others are
+  `display: flow-root` for the same reason.
 - **3D voxel rendering has one shared core, `libs/vs-schematic/src/voxelViewer.ts`** (Three.js, vendored
   from `node_modules` via `apps/vs-wiki/eleventy.config.js` passthrough + the importmap in `base.njk`, never a
   CDN). It's generic: callers pass `{x,y,z,color}` voxels and restyle via `setStyle(fn)`.
@@ -345,7 +353,7 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   displacement), forest/shrub maps and landforms, and supports numeric seeds only (the text-seed hash is
   in closed server code). Don't present its output as exact.
 - **Adding an interactive page means putting it in its section and linking it from all three places**: the section's own listing page, the
-  home page card grid (`apps/vs-wiki/site/index.njk`, under the matching "Crafting" / "Creatures & World" / "Decor & Lore" heading) and the matching header dropdown
+  home page card grid (`apps/vs-wiki/site/index.njk`, under the matching "Crafting" / "Creatures & World" / "Decor & Lore" heading) and the matching left sidebar panel
   (`apps/vs-wiki/site/_includes/layouts/base.njk`). Don't resurrect a "Tools" grouping. If you move or rename a page, add its old URL to
   `_data/legacyUrls.json`. After building, run `npm run check-links`.
 - **Schematics and structures are separate**: `generated.schematics` (one per file, `SchematicInfo`) holds

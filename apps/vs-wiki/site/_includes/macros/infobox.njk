@@ -1,0 +1,11 @@
+{#
+  A wiki-style infobox: a box floating at the top right of the page with a title bar, then whatever the caller puts inside (a model preview,
+  a `<table class="infobox-rows">` of facts, ...). Used by the item, creature and clutter pages. Usage:
+    {% call ib.box(title) %} ... {% endcall %}
+#}
+{% macro box(title) %}
+<aside class="infobox">
+  <div class="infobox-title">{{ title }}</div>
+  {{ caller() }}
+</aside>
+{% endmacro %}

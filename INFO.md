@@ -33,6 +33,7 @@ actually in those files, nothing more.
 - **Help Guides** — the game's own in-game handbook articles.
 - **Trades** — every wandering trader's buy/sell listings, in one sortable table.
 - **Classes** — starting character classes, their fixed traits, and starting gear.
+- **Search** — the box in the green title bar finds any page with its own address (items, creatures, structures, clutter, paintings, clothing, classes, guides, books and traders); press `/` to jump to it.
 - **Map** — your waypoints and translocators with a route planner, optionally drawn over the world map your game saved, plus the
   temperature and rainfall a world seed generates at any point and which wild plants fit.
 - **Schematics** — also has a 3D viewer (open any of the game's own schematics, or upload yours, and download them), a block/item search

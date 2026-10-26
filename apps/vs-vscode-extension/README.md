@@ -9,7 +9,7 @@ voxel model, without leaving VS Code.
 - An **Up to Y** slider peels the structure away from the top.
 - Also opens Vintage Story **model (shape) files** (`assets/<domain>/shapes/**.json`: items, creatures, blocks, armor, clothes) as an untextured 3D model of boxes, with a legend of the model's texture names. Armor and clothing models only name a bone of the player body; they are placed on it when `shapes/entity/humanoid/seraph-faceless.json` can be found in the same `assets/<domain>/` tree (or the sibling `game` / `survival` one). A model with animations gets an **Animation** picker in the toolbar that plays them in a loop (worn items stay in their rest pose). **Show floor** draws a grid of one-block squares at ground level, to judge where a model sits.
 - Also opens QPTech ChiselTools shape files (saved with `.pf save`, in the `chiselportfolio` folder, or named `*.pf`): the chiseled block's shape in 3D plus its materials.
-- Settings (**File > Preferences > Settings**, search "Vintage Story Schematic Preview"): `vsSchematic.showCenterMarker` draws a marker at the middle of the shape (the camera's orbit point) and `vsSchematic.showGrid` draws a grid on the y = 0 plane. Both apply to open previews immediately.
+- Settings (**File > Preferences > Settings**, search "Nf3t's Vintage Story Schematic Preview"): `vsSchematic.showCenterMarker` draws a marker at the middle of the shape (the camera's orbit point) and `vsSchematic.showGrid` draws a grid on the y = 0 plane. Both apply to open previews immediately.
 - Reloads when the file changes on disk.
 
 ## Using it

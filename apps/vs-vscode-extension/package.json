@@ -1,6 +1,6 @@
 {
   "name": "vs-vscode-extension",
-  "displayName": "Vintage Story Schematic Preview",
+  "displayName": "Nf3t's Vintage Story Schematic Preview",
   "description": "Preview Vintage Story worldgen schematics (.json / .json.gz), item/creature/block model files and ChiselTools chiseled-block shapes as interactive 3D models.",
   "version": "0.1.0",
   "private": true,
@@ -27,7 +27,7 @@
     "customEditors": [
       {
         "viewType": "vsSchematic.preview",
-        "displayName": "Vintage Story Schematic Preview",
+        "displayName": "Nf3t's Vintage Story Schematic Preview",
         "priority": "option",
         "selector": [
           {
@@ -46,7 +46,7 @@
       }
     ],
     "configuration": {
-      "title": "Vintage Story Schematic Preview",
+      "title": "Nf3t's Vintage Story Schematic Preview",
       "properties": {
         "vsSchematic.showCenterMarker": {
           "type": "boolean",
