@@ -3,7 +3,7 @@
 // `rotationOrigin`, and its children are positioned relative to it (see shapeToBoxes). This module only does the geometry (no Three.js, no DOM, so
 // Node tests can import it): `compactShape` trims a raw shape file to what is drawn (ingest writes that), `shapeToBoxes`
 // flattens the tree into world-space boxes. Untextured by design: each box only remembers which texture key its
-// faces use, so the page can give every key its own stable color. Animations are ignored (the static rest pose).
+// faces use, so the page can give every key its own stable color. Animations are kept as keyframes (`CompactAnimation`) and applied by passing a sampled pose to `shapeToBoxes`; without one it is the rest pose.
 
 /** One element of a compacted shape: faces and UVs are gone, the texture key it uses is kept. */
 export interface ShapeElement {
@@ -23,8 +23,36 @@ export interface ShapeElement {
   children?: ShapeElement[];
 }
 
+/** How an animation moves one element at one moment, added to the element's own placement: rotations in degrees, offsets in the shape's 1/16-block units. Missing values are 0. */
+export interface ElementPose {
+  ox?: number;
+  oy?: number;
+  oz?: number;
+  rx?: number;
+  ry?: number;
+  rz?: number;
+}
+
+export interface CompactKeyframe {
+  frame: number;
+  /** Element name -> its pose at this frame; an element is only listed in the keyframes where the animation moves it. */
+  elements: Record<string, ElementPose>;
+}
+
+/** One animation of a shape (`walk`, `idle`...), at the game's 30 frames per second. */
+export interface CompactAnimation {
+  code: string;
+  name?: string;
+  /** Length in frames (`quantityframes`). */
+  frames: number;
+  /** `onAnimationEnd: "Repeat"`: wraps from the last keyframe back to the first; otherwise it holds its last pose. */
+  loop: boolean;
+  keyframes: CompactKeyframe[];
+}
+
 export interface CompactShape {
   elements: ShapeElement[];
+  animations?: CompactAnimation[];
 }
 
 /** A box ready for `createVoxelViewer` (centers and sizes in 1/16 block units), with an optional rotation about its own center. */
@@ -50,6 +78,93 @@ const MIN_THICKNESS = 0.1;
 const FACE_ORDER = ["north", "east", "south", "west", "up", "down"];
 
 const isVec = (v: unknown): v is Vec => Array.isArray(v) && v.length === 3 && v.every((n) => typeof n === "number" && Number.isFinite(n));
+
+const round = (n: number, places = 2) => Math.round(n * 10 ** places) / 10 ** places;
+const POSE_FIELDS: [keyof ElementPose, string][] = [["ox", "offsetX"], ["oy", "offsetY"], ["oz", "offsetZ"], ["rx", "rotationX"], ["ry", "rotationY"], ["rz", "rotationZ"]];
+
+/** Trims a shape file's `animations` to what `samplePose` needs: numbers rounded, zeros dropped, unknown fields ignored. Animations of the newer matrix `version` are skipped. */
+function compactAnimations(raw: unknown): CompactAnimation[] {
+  if (!Array.isArray(raw)) return [];
+  const out: CompactAnimation[] = [];
+  for (const a of raw as Record<string, unknown>[]) {
+    if (!a || typeof a.code !== "string" || typeof a.quantityframes !== "number" || !Array.isArray(a.keyframes) || (a.version ?? 0) !== 0) continue;
+    const keyframes: CompactKeyframe[] = [];
+    for (const k of a.keyframes as Record<string, unknown>[]) {
+      if (typeof k?.frame !== "number" || !k.elements || typeof k.elements !== "object") continue;
+      const elements: Record<string, ElementPose> = {};
+      for (const [name, value] of Object.entries(k.elements as Record<string, Record<string, unknown>>)) {
+        const pose: ElementPose = {};
+        for (const [short, long] of POSE_FIELDS) {
+          const n = value?.[long];
+          if (typeof n === "number" && round(n) !== 0) pose[short] = round(n);
+        }
+        elements[name] = pose;
+      }
+      keyframes.push({ frame: k.frame, elements });
+    }
+    if (!keyframes.length) continue;
+    keyframes.sort((x, y) => x.frame - y.frame);
+    out.push({ code: a.code, ...(typeof a.name === "string" && a.name !== a.code ? { name: a.name } : {}), frames: a.quantityframes, loop: a.onAnimationEnd === "Repeat", keyframes });
+  }
+  return out;
+}
+
+/** The game's animation speed: frames per second. */
+export const ANIMATION_FPS = 30;
+
+const tracks = new WeakMap<CompactAnimation, Map<string, { frame: number; pose: ElementPose }[]>>();
+
+/** Every element's own keyframes of an animation, in frame order. */
+function tracksOf(animation: CompactAnimation): Map<string, { frame: number; pose: ElementPose }[]> {
+  let map = tracks.get(animation);
+  if (!map) {
+    map = new Map();
+    for (const k of animation.keyframes) for (const [name, pose] of Object.entries(k.elements)) (map.get(name) ?? map.set(name, []).get(name)!).push({ frame: k.frame, pose });
+    tracks.set(animation, map);
+  }
+  return map;
+}
+
+/**
+ * The pose of every animated element at `frame` (any real number; a looping animation wraps, others hold their last pose): each element is
+ * interpolated linearly between the keyframes that name it, wrapping from its last keyframe round to its first when the animation loops.
+ */
+export function samplePose(animation: CompactAnimation, frame: number): Record<string, ElementPose> {
+  const t = animation.loop && animation.frames > 0 ? ((frame % animation.frames) + animation.frames) % animation.frames : Math.min(Math.max(frame, 0), animation.frames);
+  const out: Record<string, ElementPose> = {};
+  for (const [name, keys] of tracksOf(animation)) {
+    let before = keys[0], after = keys[0], beforeFrame = keys[0].frame, afterFrame = keys[0].frame;
+    if (keys.length > 1) {
+      const next = keys.findIndex((k) => k.frame > t);
+      if (next === -1) {
+        before = keys[keys.length - 1];
+        beforeFrame = before.frame;
+        after = animation.loop ? keys[0] : before;
+        afterFrame = animation.loop ? keys[0].frame + animation.frames : beforeFrame;
+      } else if (next === 0) {
+        after = keys[0];
+        afterFrame = after.frame;
+        before = animation.loop ? keys[keys.length - 1] : after;
+        beforeFrame = animation.loop ? before.frame - animation.frames : afterFrame;
+      } else {
+        before = keys[next - 1];
+        after = keys[next];
+        beforeFrame = before.frame;
+        afterFrame = after.frame;
+      }
+    }
+    const span = afterFrame - beforeFrame;
+    const f = span > 0 ? (t - beforeFrame) / span : 0;
+    const pose: ElementPose = {};
+    for (const [field] of POSE_FIELDS) {
+      const a = before.pose[field] ?? 0, b = after.pose[field] ?? 0;
+      const v = a + (b - a) * f;
+      if (v !== 0) pose[field] = v;
+    }
+    out[name] = pose;
+  }
+  return out;
+}
 
 /** Whether parsed JSON is a model (shape) file -- an `elements` tree of boxes -- rather than a schematic, which has `Indices`/`BlockIds` instead. */
 export function looksLikeShape(parsed: unknown): boolean {
@@ -91,7 +206,10 @@ export function compactShape(raw: unknown): CompactShape {
     return out;
   };
   const elements = (raw as { elements?: unknown } | null)?.elements;
-  return { elements: Array.isArray(elements) ? elements.map(compactElement).filter((e): e is ShapeElement => !!e) : [] };
+  const compact: CompactShape = { elements: Array.isArray(elements) ? elements.map(compactElement).filter((e): e is ShapeElement => !!e) : [] };
+  const animations = compactAnimations((raw as { animations?: unknown } | null)?.animations);
+  if (animations.length) compact.animations = animations;
+  return compact;
 }
 
 /**
@@ -174,13 +292,15 @@ function toQuaternion(m: Mat3): [number, number, number, number] {
  * `to - from` in that frame. So a child's `from` and `rotationOrigin` are relative to its parent's `from` (not absolute
  * shape coordinates), and it inherits the parent's rotation. Tracked here as a rotation plus an offset.
  */
-export function shapeToBoxes(shape: CompactShape): ShapeBox[] {
+export function shapeToBoxes(shape: CompactShape, pose?: Record<string, ElementPose>): ShapeBox[] {
   const boxes: ShapeBox[] = [];
   const visit = (el: ShapeElement, parentR: Mat3, parentT: Vec): void => {
     const origin = el.rotationOrigin ?? [0, 0, 0];
-    const local = rotation(el.rotationX ?? 0, el.rotationY ?? 0, el.rotationZ ?? 0);
+    // An animation adds to the element's own rotation and moves it inside its rotated frame (the game's GetLocalTransformMatrix, version 0).
+    const p = (el.name && pose?.[el.name]) || undefined;
+    const local = rotation((el.rotationX ?? 0) + (p?.rx ?? 0), (el.rotationY ?? 0) + (p?.ry ?? 0), (el.rotationZ ?? 0) + (p?.rz ?? 0));
     // translate(origin) * R * translate(from - origin) maps a point p of the element's own frame to R*p + (origin + R*(from - origin)).
-    const shift = apply(local, [el.from[0] - origin[0], el.from[1] - origin[1], el.from[2] - origin[2]]);
+    const shift = apply(local, [el.from[0] + (p?.ox ?? 0) - origin[0], el.from[1] + (p?.oy ?? 0) - origin[1], el.from[2] + (p?.oz ?? 0) - origin[2]]);
     const localT: Vec = [origin[0] + shift[0], origin[1] + shift[1], origin[2] + shift[2]];
     const r = mul(parentR, local);
     const rt = apply(parentR, localT);

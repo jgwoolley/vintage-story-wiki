@@ -34,6 +34,6 @@ entity <code>class</code>, every behavior <code>code</code> and every <code>aita
 <strong>3D model.</strong> The shape file an entity's <code>client.shape</code> (or <code>shapeByType</code>) names is read
 from <code>shapes/entity/**</code> and drawn as plain boxes: each element's <code>from</code>/<code>to</code> and its
 rotation about <code>rotationOrigin</code> (a child is positioned relative to its parent and inherits its rotation). Textures are not in the
-dedicated-server download, so every texture name gets a placeholder color instead, and animations are not shown --
-it is the rest pose.
+dedicated-server download, so every texture name gets a placeholder color instead. The model starts in its rest pose; its animations (idle, walk, run...)
+are read from the shape file's keyframes and can be played from the Animation picker.
 </p>

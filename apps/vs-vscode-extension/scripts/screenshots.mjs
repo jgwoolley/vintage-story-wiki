@@ -24,7 +24,7 @@ const outDir = path.join(tmpDir, "screenshots");
 
 /** Files copied into the sample workspace, laid out like the game's assets so the body model can be found next to the armor. */
 const SAMPLES = [
-  ["apps/vs-wiki/site/tools/schematic/samples/small_shrine.json", "small_shrine.json"],
+  ["apps/vs-wiki/site/schematics/viewer/samples/small_shrine.json", "small_shrine.json"],
   ["libs/vs-schematic/test/fixtures/wayshrine-pillar-bottom.pf", "wayshrine-pillar-bottom.pf"],
   // ChiselTools saves shapes with no extension, in the chiselportfolio folder; the preview must still open for such a file.
   ["libs/vs-schematic/test/fixtures/wayshrine-pillar-bottom.pf", "chiselportfolio/wayshrine-noext"],
@@ -39,7 +39,7 @@ const CASES = [
   ["small_shrine.json", /blocks/, "schematic"],
   ["wayshrine-pillar-bottom.pf", /chiseled block/, "chisel"],
   ["admin.json", /model, \d+ boxes/, "model-sword"],
-  ["eurasian-adult.json", /model, \d+ boxes/, "model-wolf"],
+  ["eurasian-adult.json", /model, \d+ boxes/, "model-wolf", "walk"],
   ["body.json", /placed on the player body/, "model-armor"],
   ["wayshrine-noext", /chiseled block/, "chisel-noext"],
 ];
@@ -112,7 +112,7 @@ async function main() {
     if (await page.locator(".part.sidebar").isVisible()) await page.keyboard.press("Control+B");
 
     const results = [];
-    for (const [file, summary, name] of CASES) {
+    for (const [file, summary, name, animation] of CASES) {
       await page.locator(".tabs-container .tab", { hasText: file }).first().click({ timeout: TIMEOUT }).catch((e) => fail(`tab ${file}`, e));
       // The editor title-bar button the extension contributes (the same command as the palette entry).
       await page.locator('.editor-actions a.action-label[aria-label^="Preview Schematic, Model"]').first().click({ timeout: TIMEOUT }).catch((e) => fail("title-bar preview button", e));
@@ -124,6 +124,23 @@ async function main() {
       const error = await view.locator("#error").isVisible();
       if (error) await fail(`${file} shows an error: ${await view.locator("#error").innerText()}`);
       await page.locator(".part.editor").screenshot({ path: path.join(outDir, `${name}.png`) });
+      if (animation) {
+        // Pick an animation from the toolbar: the model must start moving (two frames a moment apart differ).
+        await view.locator("#anim").selectOption(animation);
+        await page.waitForTimeout(500);
+        const first = await page.locator(".part.editor").screenshot();
+        await page.waitForTimeout(400);
+        const second = await page.locator(".part.editor").screenshot();
+        if (first.equals(second)) await fail(`${file} does not animate when "${animation}" is chosen`);
+        await page.locator(".part.editor").screenshot({ path: path.join(outDir, `${name}-${animation}.png`) });
+        results.push(`${file}: "${animation}" plays`);
+        // The floor toggle draws a grid under the model: the picture must change.
+        const before = await page.locator(".part.editor").screenshot();
+        await view.locator("#floor").check({ force: true }); // forced: the switch is drawn by CSS and the model keeps animating, which can trip the stability wait
+        await page.waitForTimeout(500);
+        await page.locator(".part.editor").screenshot({ path: path.join(outDir, `${name}-floor.png`) });
+        results.push(`${file}: floor toggle ${(await page.locator(".part.editor").screenshot()).equals(before) ? "DID NOT CHANGE" : "draws the floor"}`);
+      }
       results.push(`${file}: ${text}`);
     }
     console.log(results.join("\n"));

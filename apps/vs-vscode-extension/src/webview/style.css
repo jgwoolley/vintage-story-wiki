@@ -93,3 +93,27 @@ input[type="search"] {
   font: 12px var(--vscode-editor-font-family, monospace);
   background: var(--vscode-textCodeBlock-background);
 }
+#toolbar .slider[hidden], #toolbar .check[hidden] { display: none; }
+/* The animation picker follows the theme like the other controls (a bare <select> keeps the operating system's light look). */
+select {
+  color: var(--vscode-dropdown-foreground);
+  background: var(--vscode-dropdown-background);
+  border: 1px solid var(--vscode-dropdown-border, var(--vscode-contrastBorder, transparent));
+  padding: 2px 4px;
+  font: inherit;
+}
+select:focus, input[type="search"]:focus { outline: 1px solid var(--vscode-focusBorder); outline-offset: -1px; }
+/* The floor toggle is a switch drawn from theme colors, so it looks right in every theme and doesn't rely on native checkbox rendering. */
+#floorBox { cursor: pointer; user-select: none; }
+#floor {
+  appearance: none; flex: none; position: relative; margin: 0; cursor: pointer;
+  width: 30px; height: 16px; border-radius: 999px;
+  background: var(--vscode-input-background); border: 1px solid var(--vscode-checkbox-border, var(--vscode-contrastBorder, var(--vscode-panel-border)));
+}
+#floor::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--vscode-descriptionForeground); transition: transform 0.12s;
+}
+#floor:checked { background: var(--vscode-button-background); border-color: var(--vscode-button-background); }
+#floor:checked::after { transform: translateX(14px); background: var(--vscode-button-foreground); }
+#floor:focus-visible { outline: 1px solid var(--vscode-focusBorder); outline-offset: 1px; }

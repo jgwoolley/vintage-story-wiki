@@ -14,7 +14,7 @@ import { createVoxelViewer, type VoxelViewer } from "vs-schematic/voxelViewer.js
 import { materialVolumes, type ChiselShape } from "vs-schematic/chisel.js";
 import { looksLikePortfolio, parsePortfolioXml } from "vs-schematic/chiselExport.js";
 import { createChiselPreview } from "vs-schematic/chiselPreview.js";
-import { createModelPreview } from "vs-schematic/modelPreview.js";
+import { createModelPreview, type ModelPreview } from "vs-schematic/modelPreview.js";
 import { attachToBase, compactShape, looksLikeShape, shapeToBoxes } from "vs-schematic/shapeBoxes.js";
 import type { HostMessage, WebviewMessage } from "../protocol.js";
 import type { ViewerSettings } from "vs-schematic/viewerSettings.js";
@@ -35,6 +35,10 @@ const els = {
   maxYValue: $("maxYValue"),
   inspector: $("inspector"),
   traits: $("traits"),
+  floorBox: $("floorBox"),
+  floor: $<HTMLInputElement>("floor"),
+  animBox: $("animBox"),
+  anim: $<HTMLSelectElement>("anim"),
 };
 
 interface BlockMeta {
@@ -144,6 +148,8 @@ function showInspector(voxel: Voxel): void {
 /** Forgets the loaded schematic and disables its controls, for the previews that aren't one (chisel shapes, models). */
 function clearSchematicState(): void {
   showError("");
+  els.animBox.hidden = true;
+  els.floorBox.hidden = true;
   data = null;
   voxels = [];
   blockMeta = new Map();
@@ -189,7 +195,20 @@ function loadModel(name: string, raw: unknown, bodyText: string | undefined): vo
   viewer?.dispose();
   viewer = null;
   shapeViewer?.dispose();
-  shapeViewer = createModelPreview(els.viewport, shape, `3D view of ${name}`, settings);
+  const model: ModelPreview | null = createModelPreview(els.viewport, shape, `3D view of ${name}`, settings);
+  shapeViewer = model;
+  if (model?.animations.length) {
+    // "Rest pose" plus each animation of the model, played in a loop.
+    els.anim.replaceChildren(new Option("Rest pose", ""), ...model.animations.map((a) => new Option(a.name, a.code)));
+    els.anim.onchange = () => model.playAnimation(els.anim.value || null);
+    els.animBox.hidden = false;
+  }
+  if (model) {
+    // The floor (a one-block grid at ground level) helps judge where a model sits.
+    els.floor.checked = false;
+    els.floor.onchange = () => model.setFloor(els.floor.checked);
+    els.floorBox.hidden = false;
+  }
   if (!shapeViewer) showError(boxes.length ? "WebGL isn't available in this webview, so the 3D view can't be shown." : `${name} has no boxes to draw.`);
 }
 

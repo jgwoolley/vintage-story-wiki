@@ -160,6 +160,7 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   `npm run build` then `npm run check-links` (verifies every internal href and that every `?q=` search matches a row); it must
   print "No broken links". Delete `_site/` first if you removed pages, or stale ones hide/cause failures.
 - **`/armor/` is a full listing page** (`generated.armor`, `extractArmor`), with source page `sourcedocs/armor.njk`; its rows are `ensureSpawnTarget`-ed so every one links to an item page.
+- **Model animations**: `compactShape` keeps each animation's keyframes (version-0 only, rounded); `samplePose` + `shapeToBoxes(shape, pose)` apply them (a pose *adds* to the element's rotation and offsets it inside the rotated frame, like `GetLocalTransformMatrix`), `modelPreview.ts` drives the loop through `viewer.setVoxels` (framing stays on the rest pose). Worn items deliberately have none: `attachToBase` drops animations rather than copying the body's into hundreds of files.
 - **Wearable stats** (`models/wearables.ts`, `generated.wearablesById`) merge `attributes` with the glob-matched `attributesByType`
   (some files, e.g. `upperbody.json`, put `warmth` only in the latter) and read `*ByType` keys case-insensitively via `gear.ts`'s `prop`.
 - **Breadcrumb pattern**: every page except the home page and the root redirect calls the

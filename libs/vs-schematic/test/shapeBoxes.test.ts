@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { attachToBase, looksLikeShape, compactShape, shapeToBoxes } from "../src/shapeBoxes.js";
+import { attachToBase, looksLikeShape, samplePose, compactShape, shapeToBoxes } from "../src/shapeBoxes.js";
 
 const face = (texture: string) => ({ north: { texture, uv: [0, 0, 1, 1] } });
 const near = (a: number, b: number) => assert.ok(Math.abs(a - b) < 1e-6, `${a} != ${b}`);
@@ -73,4 +73,42 @@ test("looksLikeShape tells a model file from a schematic and from other JSON", (
   assert.equal(looksLikeShape({ elements: [] }), false);
   assert.equal(looksLikeShape({ code: "x" }), false);
   assert.equal(looksLikeShape(null), false);
+});
+
+const arm = { name: "Arm", from: [0, 0, 0], to: [2, 2, 2], faces: face("#a") };
+
+test("a pose adds to an element's rotation and moves it inside its rotated frame", () => {
+  const shape = compactShape({ elements: [arm] });
+  const [rest] = shapeToBoxes(shape);
+  assert.deepEqual([rest.x, rest.y, rest.z], [1, 1, 1]);
+  const [turned] = shapeToBoxes(shape, { Arm: { rz: 90 } });
+  near(turned.x, -1); near(turned.y, 1); near(turned.z, 1); // (1,1,1) about the origin, +90 degrees around Z
+  const [moved] = shapeToBoxes(shape, { Arm: { ox: 3, oy: -1 } });
+  assert.deepEqual([moved.x, moved.y, moved.z], [4, 0, 1]);
+  const [other] = shapeToBoxes(shape, { Leg: { rz: 90 } });
+  assert.deepEqual([other.x, other.y, other.z], [1, 1, 1], "poses for other elements change nothing");
+});
+
+test("compactShape keeps animations compactly and samplePose interpolates and wraps them", () => {
+  const shape = compactShape({
+    elements: [arm],
+    animations: [
+      { code: "wave", name: "wave", quantityframes: 10, onAnimationEnd: "Repeat", keyframes: [
+        { frame: 0, elements: { Arm: { rotationX: 0, rotationZ: 0.004, offsetX: 0 } } },
+        { frame: 5, elements: { Arm: { rotationZ: 90, offsetX: 4 } } },
+      ] },
+      { code: "slide", quantityframes: 4, onAnimationEnd: "Stop", keyframes: [{ frame: 0, elements: { Arm: {} } }, { frame: 4, elements: { Arm: { offsetY: 8 } } }] },
+      { code: "bad", quantityframes: 4, version: 1, keyframes: [{ frame: 0, elements: {} }] },
+    ],
+  });
+  assert.deepEqual(shape.animations!.map((a) => a.code), ["wave", "slide"], "newer-version animations are skipped");
+  assert.equal(shape.animations![0].name, undefined, "a name equal to the code is dropped");
+  assert.deepEqual(shape.animations![0].keyframes[0].elements.Arm, {}, "zeros and sub-hundredth noise are dropped");
+  const [wave, slide] = shape.animations!;
+  assert.deepEqual(samplePose(wave, 0).Arm, {});
+  assert.deepEqual(samplePose(wave, 2.5).Arm, { rz: 45, ox: 2 });
+  assert.deepEqual(samplePose(wave, 7.5).Arm, { rz: 45, ox: 2 }, "a looping animation returns to its first keyframe");
+  assert.deepEqual(samplePose(wave, 12.5).Arm, { rz: 45, ox: 2 }, "and wraps past its length");
+  assert.deepEqual(samplePose(slide, 2).Arm, { oy: 4 });
+  assert.deepEqual(samplePose(slide, 99).Arm, { oy: 8 }, "a non-looping animation holds its last pose");
 });

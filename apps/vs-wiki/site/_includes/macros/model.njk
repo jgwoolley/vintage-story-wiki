@@ -5,10 +5,15 @@
 #}
 {% macro preview(model, name) %}
 <h2>3D model</h2>
+<div class="model-controls" id="modelControls" hidden>
+  <label id="modelAnimBox" hidden>Animation <select id="modelAnim"><option value="">Rest pose</option></select></label>
+  <label class="model-check"><input type="checkbox" id="modelFloor"> Show floor</label>
+  <span id="modelAnimNote" class="muted" hidden>animations play in a loop; worn items (armor, clothes) have none</span>
+</div>
 <div id="modelPreview" class="schematic-preview" data-src="{{ '/' | url }}assets/models/{{ model.domain }}/{{ model.path }}.json.gz" data-name="{{ name }}">
   <div class="preview-stage" aria-live="polite"></div>
   <p class="preview-status muted">3D preview needs JavaScript.</p>
 </div>
-<p class="muted">Drag to rotate, right-drag to pan, scroll to zoom. Shape only: the colors are placeholders (one per texture), not the real textures, and animations are not shown. From <code>{{ model.domain }}:shapes/{{ model.path }}.json</code>.</p>
+<p class="muted">Drag to rotate, right-drag to pan, scroll to zoom. Shape only: the colors are placeholders (one per texture), not the real textures, and animations, where the model has them, play from the picker above the view; the floor is a grid of one-block squares at ground level, to judge size and position. Both choices are kept in the page address (<code>?anim=walk&amp;floor=1</code>), so a link shares them. From <code>{{ model.domain }}:shapes/{{ model.path }}.json</code>.</p>
 <script type="module" src="{{ '/' | url }}assets/modelPage.js"></script>
 {% endmacro %}

@@ -6,6 +6,11 @@ There are no version numbers or tags: the site is rebuilt and deployed from `mai
 
 ## Unreleased
 
+- **Animations** in the 3D model previews: creatures, items and clutter that have animations (a wolf's idle, walk, run...) get an Animation picker that plays
+  them in a loop on the wiki pages and in the VS Code extension. Worn armor and clothing stay in their rest pose.
+- **Show floor** in the model previews (a one-block grid at ground level, to see where a creature or item sits), and the animation and floor choices are in
+  the page address (`?anim=walk&floor=1`) so a link shares them. The pickers now follow the site's light/dark theme and the VS Code theme.
+- **Climate list is a table**: the plants and trees that fit a climate show their kind, temperature and rainfall bands, 20 per page.
 - **Top-down map view** on every schematic page: the structure seen from above like a map, with relief shading and a hover tooltip.
 - **No more "Tools" section**: each interactive page moved into the section it belongs to (schematic viewer, search and chiseled shape viewer
   under `/schematics/`, the alloy calculator under `/recipes/`, the calendar at `/calendar/`), the header menu and home page are now grouped

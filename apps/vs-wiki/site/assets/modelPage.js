@@ -15,6 +15,40 @@ if (root) {
     status.hidden = !message;
   };
 
+  // The animation and floor choices live in the address (`?anim=walk&floor=1`) so a link shares exactly what you are looking at. Only these two
+  // parameters are touched; replaceState keeps the back button for real navigation.
+  function wireControls(viewer) {
+    const params = new URLSearchParams(location.search);
+    const select = document.getElementById("modelAnim");
+    const floor = document.getElementById("modelFloor");
+    const remember = () => {
+      const next = new URLSearchParams(location.search);
+      if (select.value) next.set("anim", select.value); else next.delete("anim");
+      if (floor.checked) next.set("floor", "1"); else next.delete("floor");
+      const query = next.toString();
+      history.replaceState(null, "", `${location.pathname}${query ? `?${query}` : ""}${location.hash}`);
+    };
+    if (viewer.animations.length) {
+      select.append(...viewer.animations.map((a) => new Option(a.name, a.code)));
+      document.getElementById("modelAnimBox").hidden = false;
+      document.getElementById("modelAnimNote").hidden = false;
+      // An unknown code (a link to a model that has no such animation) is ignored, leaving the rest pose.
+      if (viewer.animations.some((a) => a.code === params.get("anim"))) select.value = params.get("anim");
+      viewer.playAnimation(select.value || null);
+      select.addEventListener("change", () => {
+        viewer.playAnimation(select.value || null);
+        remember();
+      });
+    }
+    document.getElementById("modelControls").hidden = false; // only offered once there is a preview to control
+    floor.checked = params.get("floor") === "1";
+    viewer.setFloor(floor.checked);
+    floor.addEventListener("change", () => {
+      viewer.setFloor(floor.checked);
+      remember();
+    });
+  }
+
   async function start() {
     if (started) return;
     started = true;
@@ -24,6 +58,7 @@ if (root) {
       const viewer = createModelPreview(stage, shape, `3D preview of ${root.dataset.name}`);
       if (!viewer) return say("The 3D preview can't be shown: this browser has no WebGL, or the shape has nothing to draw.");
       say("");
+      wireControls(viewer);
     } catch (err) {
       console.error(err);
       started = false;

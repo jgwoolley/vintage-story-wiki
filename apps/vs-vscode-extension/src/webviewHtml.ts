@@ -40,6 +40,8 @@ export function buildWebviewHtml({ cspSource, nonce, scriptUri, styleUri, title 
     <button id="resetView" type="button">Reset view</button>
     <label class="check"><input id="showFiller" type="checkbox"> Show meta-filler</label>
     <label class="slider">Up to Y <input id="maxY" type="range" min="0" max="0" value="0" disabled> <output id="maxYValue"></output></label>
+    <label class="slider" id="animBox" hidden>Animation <select id="anim"></select></label>
+    <label class="check" id="floorBox" hidden><input id="floor" type="checkbox"> Show floor</label>
     <span id="summary"></span>
   </div>
   <div id="error" role="alert" hidden></div>

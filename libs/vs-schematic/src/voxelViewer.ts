@@ -49,11 +49,18 @@ export interface VoxelViewerOptions<V extends ViewerVoxel> {
 }
 
 export interface VoxelViewer<V extends ViewerVoxel> {
+  /** Replace the voxels (same coordinate space; the camera and framing stay as they were), keeping the current style. Used to animate boxes. */
+  setVoxels(voxels: V[]): void;
   /** Restyle every voxel; omit `styleFn` to show all voxels plainly. Rebuilds the instanced meshes. */
   setStyle(styleFn?: (voxel: V, index: number) => VoxelStyle): void;
   resetView(): void;
   /** Turn the center marker / y = 0 grid on or off. */
   setSettings(settings: ViewerSettings): void;
+  /**
+   * Show or hide a floor: a translucent slab with grid lines every `cell` data units, at the data-space y = 0 plane (the ground a model stands on),
+   * big enough to leave room around the model. Unlike the settings-driven grid it is per viewer and meant for judging where a model sits.
+   */
+  setFloor(visible: boolean, cell?: number): void;
   /** The voxel under a viewport point (e.g. a click), or null. Only opaque voxels are pickable. */
   pick(clientX: number, clientY: number): { voxel: V; index: number } | null;
   dispose(): void;
@@ -192,6 +199,32 @@ export function createVoxelViewer<V extends ViewerVoxel>(
     render();
   }
 
+  // ---- the floor under a model (setFloor) ----
+  const floor = new THREE.Group();
+  scene.add(floor);
+  function setFloor(visible: boolean, cell = 1): void {
+    for (const child of [...floor.children]) {
+      floor.remove(child);
+      (child as THREE.Mesh).geometry?.dispose();
+      const material = (child as THREE.Mesh).material;
+      for (const m of Array.isArray(material) ? material : material ? [material] : []) m.dispose();
+    }
+    if (visible) {
+      const cells = Math.max(2, Math.ceil((Math.max(extent.x, extent.z) * 1.6) / cell / 2) * 2); // an even count, so the grid is centred on the model
+      const size = cells * cell;
+      const y = -edgePhase - offset.y;
+      const slab = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshBasicMaterial({ color: 0x8a8a8a, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false }));
+      slab.rotation.x = -Math.PI / 2;
+      slab.position.y = y - cell * 0.01;
+      const grid = new THREE.GridHelper(size, cells, 0x6a6a6a, 0x8a8a8a);
+      grid.position.y = y;
+      (grid.material as THREE.Material).transparent = true;
+      (grid.material as THREE.Material).opacity = 0.7;
+      floor.add(slab, grid);
+    }
+    render();
+  }
+
   function resize(): void {
     const width = container.clientWidth || 1;
     const height = container.clientHeight || 1;
@@ -216,8 +249,16 @@ export function createVoxelViewer<V extends ViewerVoxel>(
     render();
   }
 
+  let current = voxels;
+  let currentStyle: ((voxel: V, index: number) => VoxelStyle) | undefined;
+  function setVoxels(next: V[]): void {
+    current = next;
+    setStyle(currentStyle);
+  }
+
   // Rebuilds the instanced meshes (cheap at the sizes this is used for).
   function setStyle(styleFn?: (voxel: V, index: number) => VoxelStyle): void {
+    currentStyle = styleFn;
     for (const mesh of meshes) {
       scene.remove(mesh);
       mesh.material.dispose();
@@ -226,7 +267,7 @@ export function createVoxelViewer<V extends ViewerVoxel>(
     meshes.length = 0;
 
     const byOpacity = new Map<number, { voxel: V; index: number; color: THREE.ColorRepresentation }[]>();
-    voxels.forEach((voxel, index) => {
+    current.forEach((voxel, index) => {
       const style = styleFn ? styleFn(voxel, index) : {};
       if (style === null) return;
       const opacity = style.opacity ?? 1;
@@ -269,7 +310,7 @@ export function createVoxelViewer<V extends ViewerVoxel>(
     const hit = raycaster.intersectObjects(meshes.filter((m) => !m.material.transparent))[0];
     if (!hit || hit.instanceId === undefined) return null;
     const index: number = hit.object.userData.voxelIndices[hit.instanceId];
-    return { voxel: voxels[index], index };
+    return { voxel: current[index], index };
   }
 
   const stopWatching = settings ? undefined : watchViewerSettings(applySettings);
@@ -281,6 +322,7 @@ export function createVoxelViewer<V extends ViewerVoxel>(
   function dispose(): void {
     stopWatching?.();
     clearAids();
+    setFloor(false);
     resizeObserver.disconnect();
     controls.dispose();
     for (const mesh of meshes) mesh.material.dispose();
@@ -294,5 +336,5 @@ export function createVoxelViewer<V extends ViewerVoxel>(
   resize();
   resetView();
 
-  return { setStyle, resetView, setSettings: applySettings, pick, dispose, render };
+  return { setStyle, setVoxels, resetView, setSettings: applySettings, setFloor, pick, dispose, render };
 }

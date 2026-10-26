@@ -19,27 +19,21 @@ are independent unless noted.
 - [ ] C# source links: drop the line number if computing it is expensive, and keep only the class name / file. The link to source was
   nice but isn't necessary.
 
-## Phase 3: Reshape the site (one navigation pass)
-
-- [ ] Remove the "tools" concept and put each tool into the section it belongs to (the home page, header menu and `/tools/` page all
-  change together).
-- [ ] Merge the seed climate lookup and the waypoint planner into one map tool.
-- [ ] Bring the map renderer from https://github.com/jgwoolley/vintage-story-launcher (also stored locally) into that map. Depends on the
-  merge above.
-
 ## Phase 4: Chiseled blocks and the extension, next steps
 
 - [ ] Draw chiseled blocks as their real shape in the main schematic view (today only the block panel and the shape pages do);
   mind the 171k-cuboid worst case (`brsunrift`). See RESEARCH.md topic 6.
-- [ ] Model Preview for items / creatures
+- [ ] Animate worn armor and clothing on the player body (the body's animations would have to be shared between items, not copied into every
+  model file). Items and creatures already animate.
+- [ ] Check the `/map/` explored-world overlay against a real `Maps/<id>.db` (it is only tested against hand-made tiles).
 - [ ] Real block textures instead of hash colours (also helps every other block in the viewers).
 - [ ] Waypoint icon previews in the add-waypoint dropdown (needs the svg files, which the dedicated server download doesn't ship).
 
 ## Phase 5: Build and download pipeline
 
 - [ ] Integrate `vs-mod-updater` into the download script (it is its own repo, https://github.com/jgwoolley/vs-mod-updater).
-- [ ] Research: what if I created a completely custom build system (instead of the Eleventy + wrapper scripts setup)? Do this after the
-  site restructure in phase 3 so the question is about the final shape of the site.
+- [ ] Research: what if I created a completely custom build system (instead of the Eleventy + wrapper scripts setup)? The site restructure (no more
+  "tools" section, one `/map/` page) is done, so the question is now about the final shape of the site.
 
 ## Phase 6: Shared with the Nf3t tools
 
