@@ -73,6 +73,10 @@ input[type="search"] {
 .legend-item:hover { background: var(--vscode-list-hoverBackground); }
 .legend-item.hidden-block { opacity: 0.45; text-decoration: line-through; }
 .color-box { flex: none; width: 12px; height: 12px; border: 1px solid var(--vscode-contrastBorder, rgba(128, 128, 128, 0.6)); }
+.texture-box { width: 16px; height: 16px; background-size: cover; image-rendering: pixelated; }
+.texture-status { margin-top: 6px; padding: 4px; color: var(--vscode-descriptionForeground); word-break: break-word; }
+.texture-status:empty { display: none; }
+.texture-status button { margin-top: 4px; }
 .block-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .block-count { color: var(--vscode-descriptionForeground); }
 #inspector {

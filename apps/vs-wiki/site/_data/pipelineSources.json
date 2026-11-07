@@ -164,7 +164,7 @@
     "id": "mods",
     "title": "Mods",
     "listingUrl": "mods/",
-    "modelFiles": ["apps/vs-wiki/src/ingest/modExtractor.ts", "apps/vs-wiki/scripts/download.ts"],
+    "modelFiles": ["apps/vs-wiki/src/ingest/modExtractor.ts", "apps/vs-wiki/scripts/download.ts", "apps/vsdev/src/download/manifest.ts"],
     "globs": ["modinfo.json (one per installed mod .zip)", "Mods/<modid>.meta.json (cached mods.vintagestory.at API response, not a game asset)"]
   },
   {

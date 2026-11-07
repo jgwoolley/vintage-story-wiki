@@ -1,0 +1,18 @@
+---
+title: vsdev - Vintage Story Wiki
+description: "vsdev, the command line tool this wiki is built with: render models, schematics and chiseled shapes headless, download the dedicated server, install and update mods from ModDB, and keep your own mods' ModDB pages in source control."
+layout: layouts/base.njk
+permalink: "{{ lang }}/vsdev/index.html"
+---
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "vsdev"}]) }}
+<div class="card">
+  <p><strong><code>vsdev</code></strong> (npm package <code>{{ vsdevInfo.name }}</code>, version {{ vsdevInfo.version }}) is the command line tool this wiki is built
+  with, made for anyone making Vintage Story mods, people and coding agents alike. It finds the game and your mods the same way this wiki's
+  <a href="{{ ('/' ~ lang ~ '/') | url }}game-files/">Game file locations</a> page describes. Its source is in this wiki's repository:
+  <a href="https://github.com/{{ buildInfo.repoSlug }}/tree/main/apps/vsdev" rel="noopener"><code>apps/vsdev</code></a>. It isn't published to npm yet, so it is
+  installed from a copy of the repository (below). Needs Node {{ vsdevInfo.node }}.</p>
+</div>
+<div class="readme-content">
+{{ vsdevHtml | safe }}
+</div>

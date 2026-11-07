@@ -35,8 +35,11 @@ import { extractBlockNames } from "./models/blockNames.js";
 import type { IngestStepTiming } from "./types.js";
 import { buildItemIndex, attachItemMetadata, attachDescriptionsAndCodeRefs, includeManifestItems } from "./crossref.js";
 import { writeGenerated } from "./write.js";
+import { gameVersionMismatch, wikiGameDir } from "./gamePaths.js";
 
-const SERVER_ASSETS_DIR = "vs_server/assets";
+// The game install by the shared location rule (gamePaths.ts): $VINTAGE_STORY, vs-manifest.json gameDir, else ./vintagestory (or an old ./vs_server).
+const GAME_DIR = wikiGameDir();
+const SERVER_ASSETS_DIR = `${GAME_DIR}/assets`;
 const VANILLA_DOMAINS = ["game", "survival", "creative"];
 
 function loadManifest(): VsManifest {
@@ -76,6 +79,9 @@ function main(): void {
   const ingestStartedAt = Date.now();
 
   const manifest = loadManifest();
+  if (GAME_DIR !== "vintagestory" && GAME_DIR !== "vs_server") console.log(`==> Game files from ${GAME_DIR} (set by $VINTAGE_STORY or vs-manifest.json gameDir)`);
+  const mismatch = gameVersionMismatch(GAME_DIR);
+  if (mismatch) console.warn(`  !!! WARNING: ${mismatch}`);
   const manifestModIds = new Set(manifest.mods.map((m) => m.modid.toLowerCase()));
 
   step("Resolving mods");

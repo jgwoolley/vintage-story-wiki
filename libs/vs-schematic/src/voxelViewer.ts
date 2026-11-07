@@ -10,6 +10,7 @@
 // Frames are rendered on demand (camera change / resize / restyle), never in a continuous loop.
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/OrbitControls.js";
+import { buildFaceBuffers, quadIndices, type ViewerFace } from "./texturedFaces.js";
 import { watchViewerSettings, type ViewerSettings } from "./viewerSettings.js";
 
 /**
@@ -27,7 +28,15 @@ export interface ViewerVoxel {
   sz?: number;
   /** Rotation (x, y, z, w) about the box's own center; used for rotated elements of item/creature models. */
   quaternion?: [number, number, number, number];
+  /**
+   * The box's faces with their textures and UVs (model elements from a shape compacted with faces). Only used when the viewer was
+   * given `textures`: the box is then drawn face by face with real textures instead of as a colored cube.
+   */
+  faces?: ViewerFace[];
 }
+
+/** A decoded texture image, as three.js takes it. */
+export type TextureImage = HTMLImageElement | HTMLCanvasElement | ImageBitmap;
 
 /** `null` hides the voxel; `opacity < 1` draws it as a translucent ghost. */
 export type VoxelStyle = { color?: THREE.ColorRepresentation; opacity?: number } | null;
@@ -46,6 +55,11 @@ export interface VoxelViewerOptions<V extends ViewerVoxel> {
   cellsCenteredOnIntegers?: boolean;
   /** Center marker / grid options. Omitted: follow the wiki's stored settings (viewerSettings.ts) and update live. */
   settings?: ViewerSettings;
+  /**
+   * Texture key -> decoded image. When given, voxels with `faces` are drawn textured (pixelated, alpha-tested); a face whose key
+   * is missing here is drawn plain in the voxel's color. Without it every voxel is a colored cube, as on the wiki.
+   */
+  textures?: Record<string, TextureImage>;
 }
 
 export interface VoxelViewer<V extends ViewerVoxel> {
@@ -93,7 +107,7 @@ function edgeTexture(): THREE.CanvasTexture {
  */
 export function createVoxelViewer<V extends ViewerVoxel>(
   container: HTMLElement,
-  { voxels, label = "3D voxel view", viewDirection = [1, 1.1, 1.4], cellsCenteredOnIntegers = true, settings }: VoxelViewerOptions<V>,
+  { voxels, label = "3D voxel view", viewDirection = [1, 1.1, 1.4], cellsCenteredOnIntegers = true, settings, textures }: VoxelViewerOptions<V>,
 ): VoxelViewer<V> | null {
   let renderer: THREE.WebGLRenderer;
   try {
@@ -148,6 +162,18 @@ export function createVoxelViewer<V extends ViewerVoxel>(
   const geometry = new THREE.BoxGeometry(1, 1, 1);
   const texture = edgeTexture();
   const meshes: THREE.InstancedMesh<THREE.BoxGeometry, THREE.MeshLambertMaterial>[] = [];
+  // Textured mode: one mesh per texture (and opacity) of face quads, each triangle mapped back to its voxel for picking.
+  const faceMeshes: THREE.Mesh<THREE.BufferGeometry, THREE.MeshLambertMaterial>[] = [];
+  const faceTextures = new Map<string, THREE.Texture>();
+  for (const [key, image] of Object.entries(textures ?? {})) {
+    const t = new THREE.Texture(image);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.magFilter = THREE.NearestFilter;
+    t.minFilter = THREE.NearestFilter;
+    t.generateMipmaps = false;
+    t.needsUpdate = true;
+    faceTextures.set(key, t);
+  }
   const matrix = new THREE.Matrix4();
   const color = new THREE.Color();
   const position = new THREE.Vector3();
@@ -265,12 +291,25 @@ export function createVoxelViewer<V extends ViewerVoxel>(
       mesh.dispose();
     }
     meshes.length = 0;
+    for (const mesh of faceMeshes) {
+      scene.remove(mesh);
+      mesh.material.dispose();
+      mesh.geometry.dispose();
+    }
+    faceMeshes.length = 0;
 
+    const faced = new Map<number, { box: V; index: number; color: [number, number, number] }[]>();
     const byOpacity = new Map<number, { voxel: V; index: number; color: THREE.ColorRepresentation }[]>();
     current.forEach((voxel, index) => {
       const style = styleFn ? styleFn(voxel, index) : {};
       if (style === null) return;
       const opacity = style.opacity ?? 1;
+      if (textures && voxel.faces?.length) {
+        color.set(style.color ?? voxel.color ?? DEFAULT_COLOR);
+        if (!faced.has(opacity)) faced.set(opacity, []);
+        faced.get(opacity)!.push({ box: voxel, index, color: [color.r, color.g, color.b] });
+        return;
+      }
       if (!byOpacity.has(opacity)) byOpacity.set(opacity, []);
       byOpacity.get(opacity)!.push({ voxel, index, color: style.color ?? voxel.color ?? DEFAULT_COLOR });
     });
@@ -296,6 +335,31 @@ export function createVoxelViewer<V extends ViewerVoxel>(
       meshes.push(mesh);
       scene.add(mesh);
     }
+
+    for (const [opacity, entries] of faced) {
+      const translucent = opacity < 1;
+      for (const [key, buffers] of buildFaceBuffers(entries, (t) => faceTextures.has(t), offset)) {
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute("position", new THREE.Float32BufferAttribute(buffers.positions, 3));
+        geometry.setAttribute("normal", new THREE.Float32BufferAttribute(buffers.normals, 3));
+        geometry.setAttribute("uv", new THREE.Float32BufferAttribute(buffers.uvs, 2));
+        geometry.setAttribute("color", new THREE.Float32BufferAttribute(buffers.colors, 3));
+        geometry.setIndex(quadIndices(buffers.positions.length / 12));
+        const material = new THREE.MeshLambertMaterial({
+          map: key ? faceTextures.get(key)! : texture,
+          vertexColors: true,
+          alphaTest: key ? 0.1 : 0, // cut-out pixels (leaves, grates) stay see-through
+          transparent: translucent,
+          opacity,
+          depthWrite: !translucent,
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.renderOrder = translucent ? 1 : 0;
+        mesh.userData.triangleVoxels = buffers.triangleVoxels;
+        faceMeshes.push(mesh);
+        scene.add(mesh);
+      }
+    }
     render();
   }
 
@@ -307,7 +371,11 @@ export function createVoxelViewer<V extends ViewerVoxel>(
     );
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(pointer, camera);
-    const hit = raycaster.intersectObjects(meshes.filter((m) => !m.material.transparent))[0];
+    const hit = raycaster.intersectObjects([...meshes, ...faceMeshes].filter((m) => !m.material.transparent))[0];
+    if (hit && hit.instanceId === undefined && hit.faceIndex != null && hit.object.userData.triangleVoxels) {
+      const index: number = hit.object.userData.triangleVoxels[hit.faceIndex];
+      return { voxel: current[index], index };
+    }
     if (!hit || hit.instanceId === undefined) return null;
     const index: number = hit.object.userData.voxelIndices[hit.instanceId];
     return { voxel: current[index], index };
@@ -326,6 +394,11 @@ export function createVoxelViewer<V extends ViewerVoxel>(
     resizeObserver.disconnect();
     controls.dispose();
     for (const mesh of meshes) mesh.material.dispose();
+    for (const mesh of faceMeshes) {
+      mesh.material.dispose();
+      mesh.geometry.dispose();
+    }
+    for (const t of faceTextures.values()) t.dispose();
     geometry.dispose();
     texture.dispose();
     renderer.dispose();

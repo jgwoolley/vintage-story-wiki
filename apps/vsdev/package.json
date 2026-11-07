@@ -1,0 +1,38 @@
+{
+  "name": "@nf3t/vsdev",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "vsdev: Vintage Story dev tools on the command line. Headless rendering of models (with animations), schematics and ChiselTools shapes; game client/server download; ModDB search, info, install with dependencies, update and release checks.",
+  "bin": {
+    "vsdev": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    "./*.js": "./src/*.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "prepack": "node esbuild.mjs",
+    "vsdev": "tsx src/cli.ts",
+    "render": "node esbuild.mjs && tsx src/cli.ts render",
+    "typecheck": "tsc --noEmit -p src/render/page/tsconfig.json"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "ajv": "^8.17.1",
+    "json5": "^2.2.3",
+    "playwright-core": "1.64.1",
+    "tar": "^7.5.22"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "three": "0.180.0",
+    "vs-schematic": "*"
+  }
+}

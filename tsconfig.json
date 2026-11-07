@@ -16,6 +16,7 @@
     "apps/*/test/**/*.ts"
   ],
   "exclude": [
-    "apps/vs-vscode-extension"
+    "apps/vs-vscode-extension",
+    "apps/vsdev/src/render/page"
   ]
 }

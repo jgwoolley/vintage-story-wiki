@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "page.schema.json",
+  "title": "ModDB page",
+  "description": "moddb/<modid>/page.json: the editable fields of a mod's page on mods.vintagestory.at, as written by `vsdev moddb pull` (and ModDbCli's `moddb pull`).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "modid",
+    "moddbId",
+    "name",
+    "side",
+    "type",
+    "tags",
+    "logo",
+    "screenshots"
+  ],
+  "properties": {
+    "modid": {
+      "type": "string",
+      "description": "The modid from modinfo.json; also the folder name.",
+      "pattern": "^[a-z0-9]+$"
+    },
+    "moddbId": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "description": "Numeric id of the page on the mod database; null while the mod is unpublished.",
+      "minimum": 1
+    },
+    "moddbPageId": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "description": "Optional. The id in https://mods.vintagestory.at/show/mod/<id> (the API calls it assetid). Set it for a draft page so `vsdev moddb` can read the draft from its HTML page.",
+      "minimum": 1
+    },
+    "urlalias": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Short page slug (mods.vintagestory.at/<urlalias>), if set."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Display title of the page on the mod database."
+    },
+    "side": {
+      "enum": [
+        "both",
+        "client",
+        "server"
+      ],
+      "description": "Where the mod runs: on both client and server, the client only, or the server only."
+    },
+    "type": {
+      "enum": [
+        "mod",
+        "externaltool",
+        "other"
+      ],
+      "description": "Kind of listing on the mod database: a game mod, an external tool, or something else."
+    },
+    "homepageurl": {
+      "description": "Project homepage link shown on the page, e.g. a forum thread.",
+      "$ref": "#/$defs/link"
+    },
+    "sourcecodeurl": {
+      "description": "Link to the source code repository.",
+      "$ref": "#/$defs/link"
+    },
+    "trailervideourl": {
+      "description": "Link to a trailer or demo video.",
+      "$ref": "#/$defs/link"
+    },
+    "issuetrackerurl": {
+      "description": "Link to where bugs and requests are reported.",
+      "$ref": "#/$defs/link"
+    },
+    "wikiurl": {
+      "description": "Link to documentation or a wiki.",
+      "$ref": "#/$defs/link"
+    },
+    "tags": {
+      "type": "array",
+      "description": "Mod tags, sorted case-insensitively.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "logo": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Logo file on the page as logo.<extension> (the site's hashed CDN name is not stored); null when the page has no logo."
+    },
+    "screenshots": {
+      "type": "array",
+      "description": "File names of the page's screenshots, in the order the site shows them.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$defs": {
+    "link": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A URL starting with http:// or https:// ; the site returns an empty string or null when the link is unset.",
+      "pattern": "^(https?://.+)?$"
+    }
+  }
+}

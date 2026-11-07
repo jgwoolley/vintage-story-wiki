@@ -1,3 +1,5 @@
+# The game install (vsdev game / npm run download); vs_server is its old name
+vintagestory
 vs_server
 Mods
 node_modules
@@ -12,3 +14,9 @@ vsessentialsmod/
 # VS Code extension screenshot run (scripts/screenshots.mjs)
 apps/vs-vscode-extension/.vscode-test/
 apps/vs-vscode-extension/.tmp/
+# vsdev output (renders, downloads) when run inside the repo, and vsdev's own scratch/test output
+.vsdev/
+apps/vsdev/.tmp/
+# npm pack -w @nf3t/vsdev
+nf3t-vsdev-*.tgz
+*.vsix

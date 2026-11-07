@@ -16,7 +16,7 @@ import { looksLikePortfolio, parsePortfolioXml } from "vs-schematic/chiselExport
 import { createChiselPreview } from "vs-schematic/chiselPreview.js";
 import { createModelPreview, type ModelPreview } from "vs-schematic/modelPreview.js";
 import { attachToBase, compactShape, looksLikeShape, shapeToBoxes } from "vs-schematic/shapeBoxes.js";
-import type { HostMessage, WebviewMessage } from "../protocol.js";
+import type { HostMessage, ModelTextures, WebviewMessage } from "../protocol.js";
 import type { ViewerSettings } from "vs-schematic/viewerSettings.js";
 import "./style.css";
 
@@ -161,7 +161,7 @@ function clearSchematicState(): void {
 }
 
 /** A Vintage Story model (shape) file: an item, creature or block model, drawn untextured; the legend lists its texture names. */
-function loadModel(name: string, raw: unknown, bodyText: string | undefined): void {
+function loadModel(name: string, raw: unknown, bodyText: string | undefined, textures: ModelTextures | undefined): void {
   clearSchematicState();
   let shape = compactShape(raw);
   let placed = "";
@@ -189,9 +189,16 @@ function loadModel(name: string, raw: unknown, bodyText: string | undefined): vo
     row.title = `texture #${texture}`;
     const swatch = textEl("span", "color-box", "");
     swatch.style.background = stringToColor(texture);
+    const image = textures?.images[texture];
+    if (image) {
+      // The real texture as the swatch (the 3D view itself is still drawn in the key's color).
+      swatch.classList.add("texture-box");
+      swatch.style.backgroundImage = `url("${image}")`;
+    }
     row.append(swatch, textEl("span", "block-name", texture || "(none)"), textEl("span", "block-count", `${count} boxes`));
     els.legend.append(row);
   }
+  els.legend.append(textureStatus(textures));
   viewer?.dispose();
   viewer = null;
   shapeViewer?.dispose();
@@ -210,6 +217,30 @@ function loadModel(name: string, raw: unknown, bodyText: string | undefined): vo
     els.floorBox.hidden = false;
   }
   if (!shapeViewer) showError(boxes.length ? "WebGL isn't available in this webview, so the 3D view can't be shown." : `${name} has no boxes to draw.`);
+}
+
+/** A line under a model's legend: where its textures came from, or why some are missing, with a button to choose the game folder. */
+function textureStatus(textures: ModelTextures | undefined): HTMLElement {
+  const box = textEl("div", "texture-status", "");
+  if (!textures) return box;
+  const found = Object.keys(textures.images).length;
+  const total = found + textures.missing.length;
+  if (!total) {
+    box.textContent = "The model lists no textures (its item or block type supplies them).";
+    return box;
+  }
+  const where = textures.gameFolder ? ` (game folder: ${textures.gameFolder})` : "";
+  box.append(textEl("div", "", `Textures: ${found} of ${total} found${where}.`));
+  if (textures.missing.length) {
+    box.title = textures.missing.map((m) => `#${m.key}: ${m.ref}`).join("\n");
+    box.append(textEl("div", "", `Missing: ${textures.missing.map((m) => m.ref).join(", ")}`));
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = textures.gameFolder ? "Choose another game folder" : "Choose game folder";
+    button.addEventListener("click", () => vscode.postMessage({ type: "selectGameFolder" }));
+    box.append(button);
+  }
+  return box;
 }
 
 /** A ChiselTools shape file (`.pf save`): draw the chiseled block's boxes, and list its materials with their share of the 4096 voxels. */
@@ -234,7 +265,7 @@ function loadShape(name: string, shape: ChiselShape): void {
   if (!shapeViewer) showError("WebGL isn't available in this webview, so the 3D view can't be shown.");
 }
 
-function load(name: string, text: string, body?: string): void {
+function load(name: string, text: string, body?: string, textures?: ModelTextures): void {
   if (looksLikePortfolio(text)) {
     try {
       loadShape(name, parsePortfolioXml(text).shape);
@@ -248,7 +279,7 @@ function load(name: string, text: string, body?: string): void {
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
-    if (looksLikeShape(parsed)) return loadModel(name, parsed, body);
+    if (looksLikeShape(parsed)) return loadModel(name, parsed, body, textures);
     assertSchematic(parsed);
   } catch (err) {
     showError(`${name} isn't a Vintage Story schematic or model: ${err instanceof Error ? err.message : String(err)}`);
@@ -313,7 +344,7 @@ els.viewport.addEventListener("pointerup", (e) => {
 
 window.addEventListener("message", (event: MessageEvent<HostMessage>) => {
   const message = event.data;
-  if (message.type === "schematic") load(message.name, message.text, message.body);
+  if (message.type === "schematic") load(message.name, message.text, message.body, message.textures);
   else if (message.type === "error") showError(message.message);
   else if (message.type === "settings") {
     settings = { centerMarker: message.centerMarker, grid: message.grid };

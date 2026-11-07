@@ -4,7 +4,31 @@ What changed in this wiki, newest first, grouped by day; only things a visitor o
 There are no version numbers or tags: the site is rebuilt and deployed from `main`, and the footer of every page shows the build time.
 (The VS Code extension has its own version, 0.1.0, in `apps/vs-vscode-extension/package.json`.) Older detail is in `git log`.
 
-## Unreleased
+## 2026-11-07
+
+- **vsdev page** (`/vsdev/`, under About, below Game file locations): the vsdev command line tool's documentation on the wiki. The tool's
+  package is now `@nf3t/vsdev`, matching the `vsdev` command.
+- **Game file locations page** (`/game-files/`, under About): where Vintage Story installs the game and keeps your mods, saves,
+  logs and settings on Windows, Linux and macOS, where a dedicated server keeps its data, and where to download the game and the server.
+
+- **VS Code extension: game folder for textures.** **Vintage Story: Select Game Folder** (setting `vsSchematic.gameFolder`) points the
+  extension at the game client install; a model's legend then shows its real textures and lists any it couldn't find.
+
+- **`vsdev`, Vintage Story dev tools on the command line** (`apps/vsdev`, installable globally), for contributors, modders and
+  coding agents. `vsdev mod` searches ModDB, shows a mod's releases and game versions, installs mods with their dependencies and
+  updates a Mods folder (the Python vs-mod-updater ported, now picking releases for a game version the way the game does, refusing
+  retracted and blocklisted releases and never downgrading) and extracts zips. `vsdev moddb` brings the C# ModDbCli's page tools to
+  any mod project: `check`, `status`, `scaffold`, `pull`, `diff` and the `serve` review page, plus `export`, a static site (for
+  GitHub Pages) that rebuilds your mods' pages with the newest unpublished zips, installable with `vsdev mod install <id> --source
+  <site>`. `vsdev game` downloads the dedicated server; for real textures vsdev uses your installed game (it never downloads the paid client). Where the game, mods and project files are is one rule
+  everywhere (flag, env such as `VINTAGE_STORY`, `vs-manifest.json`, the current folder, then the real install), shown by
+  `vsdev paths`; `npm run download` and ingest use it too. The game (client or server) now lives in `./vintagestory`; an existing
+  `./vs_server` keeps working.
+- **Headless renderer** (`vsdev render`, or `npm run render -w @nf3t/vsdev -- <file>...`) renders a model file, a schematic (`.json`/`.json.gz`) or a QPTech ChiselTools `.pf` shape to PNGs from several angles, on the same viewers
+  as the wiki and the VS Code extension. Models get their real textures with a game client folder (`--game`), worn items sit on the
+  player body, and `--animation walk` (or `all`) writes sampled frames plus a contact sheet of each animation. Schematics are drawn in
+  block colors with chiseled blocks carved, `meta-filler` hidden and an optional `--max-y` cutaway. `--list`/`--json` describe a file
+  without rendering.
 
 - **A wiki-like look**, after the official Vintage Story wiki: green title bar, left navigation panels (replacing the header dropdowns), parchment pages with serif
   headings and a dark variant, a floating **infobox** with the 3D model and key facts on item, creature and clutter pages, a "Contents" box on longer pages, and the

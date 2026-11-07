@@ -2,9 +2,11 @@ import AdmZip from "adm-zip";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import JSON5 from "json5";
+import { wikiModsDir } from "./gamePaths.js";
 import type { ModInfo } from "./types.js";
 
-const MODS_DIR = "Mods";
+// The mod zips, by the shared location rule (gamePaths.ts): $VINTAGE_STORY_DATA/Mods, vs-manifest.json dataDir/Mods, else ./Mods.
+const MODS_DIR = wikiModsDir();
 const SCRATCH_MODS_DIR = ".scratch/mods";
 
 interface ExtractedMod {

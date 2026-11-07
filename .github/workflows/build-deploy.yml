@@ -18,8 +18,8 @@ concurrency:
 jobs:
   build:
     # The whole pipeline (download/ingest/build) is pure Node/npm now -- no system package is
-    # ever shelled out to (the old `tar` CLI dependency in apps/vs-wiki/scripts/download.ts was replaced with
-    # the pure-JS `tar` npm package). `ubuntu-latest` here is just GitHub Actions' standard
+    # ever shelled out to (the old `tar` CLI dependency of the downloader, now apps/vsdev/src/game/download.ts, was
+    # replaced with the pure-JS `tar` npm package). `ubuntu-latest` here is just GitHub Actions' standard
     # GitHub-hosted runner choice, not an actual OS-level requirement of this project.
     runs-on: ubuntu-latest
     steps:
@@ -37,13 +37,18 @@ jobs:
       - name: Cache downloaded game server + mods
         uses: actions/cache@v4
         with:
+          # ./vintagestory: the game install location every tool here uses (vsdev src/locations.ts); it holds the server here.
           path: |
-            vs_server
+            vintagestory
             Mods
           key: vs-data-${{ steps.manifest.outputs.hash }}
 
       - name: Install dependencies
         run: npm ci
+
+      # vsdev's render tests draw in Playwright's headless Chromium (software WebGL); the version matches the pinned playwright-core.
+      - name: Install Chromium for the render tests
+        run: npx playwright-core install --with-deps chromium
 
       - name: Typecheck and unit tests
         run: |

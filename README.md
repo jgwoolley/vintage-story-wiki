@@ -20,9 +20,10 @@ document aimed at visitors; `CLAUDE.md` is for a future AI coding session pickin
    `"$schema"` key so VS Code validates and autocompletes it with no extra setup. Keep the schema
    in sync with `VsManifest` in `apps/vs-wiki/src/ingest/types.ts` when adding a field.
 2. **`npm run download`** (`apps/vs-wiki/scripts/download.ts`) reads that manifest, downloading the vanilla
-   dedicated server into `vs_server/` and mod `.zip` files into `Mods/` (both gitignored) via
-   Node's built-in `fetch`, the mods.vintagestory.at API, and the pure-JS `tar` package for
-   extraction — the whole pipeline is plain Node/npm, no OS-provided tool is ever shelled out to.
+   dedicated server into `vintagestory/` (vsdev's one game folder, client or server; an old `vs_server/` is still read) and mod `.zip` files into `Mods/` (both gitignored). The downloading is
+   `apps/vsdev`' (`installGame`, `installManifestMod`: Node's built-in `fetch`, the mods.vintagestory.at API, and the
+   pure-JS `tar` package for extraction — the whole pipeline is plain Node/npm, no OS-provided tool is ever shelled out to);
+   the wiki's script is a thin wrapper that adds the wiki-only files below.
    Alongside each mod zip it caches `Mods/<modid>.meta.json` (`assetid`, `urlalias`, `logoUrl`)
    from the API response, since `assetid` is the only reliable way to link to a mod's
    mods.vintagestory.at listing (a mod's own `modid` isn't reliably the same as that listing's
@@ -52,10 +53,11 @@ libs/vs-wiki-core/          asset loading, JSON patching, variant expansion, lan
 libs/vs-schematic/          schematic decode, voxel conversion, Three.js voxel viewer (TypeScript)
 apps/vs-wiki/               the wiki: src/ingest, scripts, test, site (Eleventy input), eleventy.config.js
 apps/vs-vscode-extension/   VS Code preview for schematic files
+apps/vsdev/           `vsdev` CLI: headless render, game download, ModDB mods, your mods' ModDB pages, `paths`
 ```
 
 Every command runs **from the repo root**: all pipeline paths are cwd-relative, and the shared data
-(`vs_server/`, `Mods/`, `.scratch/`, `_site/`, `vs-manifest.json`, and the gitignored reference clones
+(`vintagestory/`, `Mods/`, `.scratch/`, `_site/`, `vs-manifest.json`, and the gitignored reference clones
 `vssurvivalmod/`/`vsapi/`/`vsessentialsmod/`) lives there. Apps import libs by package name
 (`vs-wiki-core/lang.js`, `vs-schematic/schematicDecode.js`; each lib's `exports` maps `./*.js` to its
 TypeScript source, which `tsx` and `esbuild` consume directly). Libs never import from apps.
@@ -80,6 +82,27 @@ TypeScript source, which `tsx` and `esbuild` consume directly). Libs never impor
   `npm run build:extension` bundles and packages a `.vsix` (`apps/vs-vscode-extension/`, gitignored; CI runs it before the site build and Eleventy copies it to `/assets/downloads/`, described on `/<lang>/extension/` via the `extensionInfo` global in `eleventy.config.js`; a local build without it shows how to make one and links to the production copy); `npm run build -w vs-vscode-extension` bundles only. It has
   not been run inside a real VS Code yet (see `RESEARCH.md` topic 8); to try it, open the repo in VS Code and
   launch an Extension Development Host on `apps/vs-vscode-extension`.
+- **`apps/vsdev`** is `vsdev`, a command line for Vintage Story development that also works outside this repo (a
+  global install: `npm link -w @nf3t/vsdev`, or `npm pack` + `npm install -g`; `esbuild.mjs` bundles `dist/cli.js` with
+  vs-schematic inlined). `vsdev game` downloads the dedicated server (never the client: it's the paid game, see `src/game/download.ts`; vsdev uses your installed game instead); `vsdev mod` searches ModDB, shows a
+  mod, installs with dependencies, updates a Mods folder (a TypeScript port of the user's Python `vs-mod-updater`, following
+  the game's own `ModDbUtil`/`ModLoader` rules: ModDB's `install-information` picks the release for a game version,
+  retracted releases and the CDN blocklist are refused, no downgrades, `modinfo.json` only at the zip root) and extracts zips.
+  `vsdev moddb` ports the user's C# ModDbCli (`check`, `status`, `scaffold`, `pull`, `diff`, `serve`: page sources in
+  `./moddb/<modid>/` compared with the live site, a local review page over `node:http`) and adds `export`, a static site of
+  the mod pages with the newest zips plus a `mods.json` that `vsdev mod install --source <site>` installs from. `vsdev download`
+  is the manifest download the wiki's `npm run download` wraps. Every location (game install, Mods, game version, Releases,
+  pages) goes through one resolver, `src/locations.ts`: flag, env (`VINTAGE_STORY`, `VINTAGE_STORY_DATA`,
+  `VINTAGE_STORY_VERSION`), `vs-manifest.json`, the cwd, then (reads only) the game's real install and data folders; the
+  wiki's ingest/download use it via `apps/vs-wiki/src/ingest/gamePaths.ts`, without that last tier. `vsdev paths` prints the result. `vsdev render` renders model (shape) files, schematics (`.json`/`.json.gz`) and ChiselTools `.pf`
+  shapes to PNGs from several angles (`npm run render -w @nf3t/vsdev -- <file>...`), for looking at what you are making. `--animation` writes sampled
+  frames plus a contact sheet per animation; `--list`/`--json` describe a file without rendering. `src/inputs.ts` works out the kind
+  and prepares schematic boxes (chiseled blocks cut into cuboids, block colors from `Nf3tBlockColors.json`); `src/page/main.ts`
+  (esbuild-bundled like the extension's webview) draws through `createModelPreview` (`showFrame` for animation stills),
+  `createVoxelViewer` and `createChiselPreview`; `src/render.ts` finds model textures in a game client folder
+  (`libs/vs-schematic/src/textureFiles.ts`), drives Playwright's headless Chromium with software WebGL and screenshots each view.
+  The textured mode is part of the shared viewer: `compactShape(raw, { faces: true })`
+  keeps face UVs and `texturedFaces.ts` builds the quads. See its README.
 
 ## Ingestion pipeline (`apps/vs-wiki/src/ingest/`)
 
@@ -617,8 +640,18 @@ animal variants).
 `npm test` runs every package's `test/*.test.ts` (`libs/*/test`, `apps/*/test`) with Node's built-in runner via
 `tsx --test` (no extra dependency), and CI runs `npm run typecheck` + `npm test` right after `npm ci`. The test
 files: in `libs/vs-schematic/test`, `schematicDecode` (the decoder, below), `schematicVoxels` (packed-index
-voxels, `meta-filler` hidden by default, gzip fetch), `chisel` (cuboid decode and the ChiselTools export bytes, whose expected protobuf bytes were captured from the game's own `SerializerUtil`) and `schematicSearch` (code matching, prefilter, scan of hand-built blobs); in `apps/vs-vscode-extension/test`, `webviewHtml` (CSP and
-element ids of the preview shell); in `apps/vs-wiki/test`, `decodeIntegration` (the committed sample schematic and
+voxels, `meta-filler` hidden by default, gzip fetch), `chisel` (cuboid decode and the ChiselTools export bytes, whose expected protobuf bytes were captured from the game's own `SerializerUtil`), `schematicSearch` (code matching, prefilter, scan of hand-built blobs), `textureFiles` (texture path lookup by domain, the
+game domain's three folders, model tree before game folder) and `texturedFaces` (kept face UVs and texture sizes, face corners,
+UV orientation and rotation, winding, plain fallback); in `apps/vs-vscode-extension/test`, `webviewHtml` (CSP and
+element ids of the preview shell); in `apps/vsdev/test`, `mods` (offline, with a fake ModDB fetch and hand-built zips: the
+game's version ordering and dependency minimums, lenient modinfo parsing, Mods-folder scanning, install/update plans with
+dependencies, retractions, the blocklist and no downgrades, pre-release dependencies, zip-slip, ModDbCli's version rules and
+GitHub outputs, the client download's strip and failure safety), `moddb` (ModDbCli's own test cases ported, with ModDB's page HTML
+built by hand in the test, never saved copies of the site: page files, unified diff, release zips, the comparer, scaffold and the bundled schema, image and HTML
+checks, draft-page parsing, report states/tasks, the review server's routes and Origin/Host/path checks; plus the static export,
+`--source` installs with checksum checks, and the location rule's order with a fake home and env) and `render` (arguments, input detection incl. gzip and `.pf`,
+schematic boxes with a hand-built chiseled block, a generated red-textured cube checked by its drawn pixel, an animated cube's frames and
+contact sheet, a schematic and `.pf` in given block colors, and a vanilla sword / schematic / wolf animation when `vintagestory/` exists); in `apps/vs-wiki/test`, `decodeIntegration` (the committed sample schematic and
 ingest's `DecodeStats`, which need wiki-owned files), `climate` (the seed climate port vs. an independent
 re-implementation), `handbookLinks` (`rewriteHandbookLinks`), `schematics` (glob resolution, ids/page
 paths, the structure→schematic index, gzip round trip and its reuse). The decoder test covers
@@ -762,7 +795,7 @@ The wiki is text-only, and that isn't just an unfinished feature — real icons 
 genuinely blocked, not merely skipped:
 
 - The dedicated server download contains **zero item/block appearance textures**. The only PNGs
-  anywhere in `vs_server/assets/` are ~46 environment/skybox/season-tint images needed for
+  anywhere in the server's `assets/` are ~46 environment/skybox/season-tint images needed for
   server-side world simulation (`textures/environment/...`) — nothing for how an item or block
   actually looks. Textures are a client-only concern, and the headless server never renders
   anything, so Anego Studios doesn't ship them in that download at all.

@@ -2,10 +2,10 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/jgwoolley/vintage-story-wiki/vs-manifest.schema.json",
   "title": "Nf3t's Vintage Story Wiki manifest",
-  "description": "vs-manifest.json: what `npm run download` fetches (the vanilla dedicated server and mods) and extra items/blocks `npm run ingest` should always include. Mirrors the VsManifest interface in src/ingest/types.ts; keep the two in sync.",
+  "description": "vs-manifest.json: what `npm run download` fetches (the vanilla dedicated server and mods) and extra items/blocks `npm run ingest` should always include. Mirrors the VsManifest interface in src/ingest/types.ts; keep the two in sync. Also the config file vsdev (apps/vsdev) reads from the working folder or a parent: the location fields below set where the game, mods, releases and mod pages are (after flags and environment variables, before the folder defaults). A mod project's file may contain only those.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["serverBranch", "serverVersion", "mods"],
+  "required": [],
   "properties": {
     "$schema": {
       "type": "string",
@@ -13,22 +13,56 @@
     },
     "serverBranch": {
       "type": "string",
-      "description": "cdn.vintagestory.at release channel the server is downloaded from.",
-      "examples": ["stable", "unstable"],
+      "description": "cdn.vintagestory.at release channel the server is downloaded from. Default: stable.",
+      "examples": [
+        "stable",
+        "unstable"
+      ],
       "default": "stable",
       "minLength": 1
     },
     "serverVersion": {
       "type": "string",
-      "description": "Vanilla dedicated server version to download, e.g. \"1.22.7\". Changing it changes the CI cache key, so the next build re-downloads everything.",
+      "description": "Vanilla dedicated server version to download, e.g. \"1.22.7\". Changing it changes the CI cache key, so the next build re-downloads everything. Default: 1.22.7.",
       "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$",
-      "examples": ["1.22.7"]
+      "examples": [
+        "1.22.7"
+      ]
+    },
+    "gameVersion": {
+      "type": "string",
+      "description": "The game version (same as serverVersion; this name reads better in a mod project). vsdev uses it to pick mod releases and as the download version."
+    },
+    "gameKind": {
+      "enum": [
+        "client",
+        "server"
+      ],
+      "description": "Which download `vsdev game` and `npm run download` fetch when not told: the whole client (textures, DLLs; includes the server) or the smaller dedicated server. The wiki uses \"server\"."
+    },
+    "gameDir": {
+      "type": "string",
+      "description": "The game install (client or server), relative to this file. After --game-dir and $VINTAGE_STORY; default ./vintagestory (an old ./vs_server is still read). Client and server share this location; gameKind decides which is downloaded."
+    },
+    "dataDir": {
+      "type": "string",
+      "description": "The game data folder whose Mods/ vsdev installs into and the wiki reads, relative to this file. After -p/--data-dir and $VINTAGE_STORY_DATA; default: ./Mods."
+    },
+    "releasesDir": {
+      "type": "string",
+      "description": "The built mod zips `vsdev moddb` works on, relative to this file. Default ./Releases (the VS mod template's output)."
+    },
+    "pagesDir": {
+      "type": "string",
+      "description": "The mods' ModDB page sources (`vsdev moddb`), relative to this file. Default ./moddb."
     },
     "prodWikiUrl": {
       "type": "string",
       "description": "Where the production wiki is deployed (GitHub Pages). The build info page links to it, even on a local build.",
       "format": "uri",
-      "examples": ["https://jgwoolley.github.io/vintage-story-wiki/"]
+      "examples": [
+        "https://jgwoolley.github.io/vintage-story-wiki/"
+      ]
     },
     "mods": {
       "type": "array",
@@ -36,7 +70,9 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["modid"],
+        "required": [
+          "modid"
+        ],
         "properties": {
           "modid": {
             "type": "string",
@@ -59,7 +95,11 @@
         "type": "string",
         "description": "\"domain:code\" glob, e.g. \"survival:statictranslocator-*\". Vanilla items/blocks mostly live in the \"survival\" or \"game\" domain; mod content uses the mod's own domain.",
         "pattern": "^([a-z0-9_-]+:)?[^\\s:]+$",
-        "examples": ["survival:statictranslocator-*", "survival:teleporterbase", "game:*"]
+        "examples": [
+          "survival:statictranslocator-*",
+          "survival:teleporterbase",
+          "game:*"
+        ]
       },
       "uniqueItems": true
     }

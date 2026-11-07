@@ -1,0 +1,65 @@
+---
+title: Game file locations - Vintage Story Wiki
+description: Where Vintage Story installs the game, keeps your mods, saves, logs and settings, and where a dedicated server keeps its data, on Windows, Linux and macOS; and where to download the game and the server.
+layout: layouts/base.njk
+permalink: "{{ lang }}/game-files/index.html"
+---
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Game file locations"}]) }}
+<h1>Game file locations</h1>
+<p class="muted">Where Vintage Story puts things by default on each platform, read from the game's own code and install scripts (sources at the bottom). Every one of these can be changed: the installers ask, and the game and server take a <code>--dataPath</code> option.</p>
+
+<h2 id="download">Getting the game and the server</h2>
+<ul>
+  <li><strong>The game (client)</strong> is bought on the <a href="https://www.vintagestory.at/store/category/1-game-account-game-servers/" rel="noopener">official store</a> (also sold on the <a href="https://www.humblebundle.com/store/vintage-story" rel="noopener">Humble Store</a>). Its installers and archives for Windows, Linux and macOS are then in your account's <a href="https://account.vintagestory.at/" rel="noopener">Client Area</a> (the site's "Downloads" link).</li>
+  <li><strong>The dedicated server</strong> is in the same Client Area downloads. The game's <a href="https://www.vintagestory.at/selfhosting/" rel="noopener">self-hosting page</a> compares the ways to host, and the official wiki's <a href="https://wiki.vintagestory.at/index.php?title=Setting_up_a_Multiplayer_Server" rel="noopener">Setting up a Multiplayer Server</a> walks through it. The client includes everything the server needs, so a game install can also run a server.</li>
+  <li><strong>What this wiki does:</strong> its build downloads the Linux dedicated server archive straight from the game's CDN (<code>cdn.vintagestory.at/gamefiles/&lt;branch&gt;/vs_server_linux-x64_&lt;version&gt;.tar.gz</code>), to read the game's data files. The client's archive is on the same CDN, but neither this wiki nor its <code>vsdev</code> tool downloads it: the client is a paid product, and we haven't asked Anego Studios whether downloading it outside your account is acceptable. Until then, tools that need the client (for textures) use the copy you installed.</li>
+</ul>
+
+<h2 id="install">Where the game is installed</h2>
+<table>
+  <tr><th class="nowrap">Platform</th><th>Default install folder</th></tr>
+  <tr><td class="nowrap">Windows</td><td><code>%APPDATA%\Vintagestory</code> (the installer's default, e.g. <code>C:\Users\&lt;you&gt;\AppData\Roaming\Vintagestory</code>)</td></tr>
+  <tr><td class="nowrap">Linux</td><td><code>~/.local/share/vintagestory</code> (the default <code>install.sh</code> offers; it asks)</td></tr>
+  <tr><td class="nowrap">macOS</td><td>wherever you put the app, usually <code>/Applications</code> (not checked further here)</td></tr>
+</table>
+<p class="muted">The install folder holds the game itself: <code>assets/</code> (the game's data, with a <code>version-&lt;version&gt;.txt</code> naming the version), the <code>.dll</code>s a code mod compiles against, and <code>Mods/</code> with the game's own built-in mods (survival, essentials, creative). The VS mod template's projects find it through the <code>VINTAGE_STORY</code> environment variable.</p>
+
+<h2 id="data">Your data folder: mods, saves, logs, settings</h2>
+<p>The game keeps everything that belongs to you in one folder, <code>VintagestoryData</code>, inside your system's application-data folder:</p>
+<table>
+  <tr><th class="nowrap">Platform</th><th>Data folder</th></tr>
+  <tr><td class="nowrap">Windows</td><td><code>%APPDATA%\VintagestoryData</code></td></tr>
+  <tr><td class="nowrap">Linux</td><td><code>~/.config/VintagestoryData</code> (or <code>$XDG_CONFIG_HOME/VintagestoryData</code> when that is set)</td></tr>
+  <tr><td class="nowrap">macOS</td><td><code>~/Library/Application Support/VintagestoryData</code> (game versions on .NET 8 and later; older ones used <code>~/.config/VintagestoryData</code>, which the game moves over on first start)</td></tr>
+</table>
+<p>Inside it:</p>
+<table>
+  <tr><th class="nowrap">Folder</th><th>Holds</th></tr>
+  <tr><td><code>Mods/</code></td><td>Mods you installed: put a downloaded mod's <code>.zip</code> here as it is, without unpacking it (unpacked mod folders work too)</td></tr>
+  <tr><td><code>ModsByServer/&lt;host&gt;-&lt;port&gt;/</code></td><td>Mods the game downloaded to join a multiplayer server, one folder per server</td></tr>
+  <tr><td><code>ModConfig/</code></td><td>Mods' own settings files</td></tr>
+  <tr><td><code>Saves/</code></td><td>Your single-player worlds</td></tr>
+  <tr><td><code>BackupSaves/</code>, <code>Backups/</code></td><td>World backups</td></tr>
+  <tr><td><code>Playerdata/</code></td><td>Player data</td></tr>
+  <tr><td><code>Logs/</code></td><td>Log files (the first place to look when something breaks)</td></tr>
+  <tr><td><code>Macros/</code></td><td>Your chat macros</td></tr>
+  <tr><td><code>Cache/</code></td><td>Files the game can rebuild</td></tr>
+</table>
+<p class="muted">The game's settings files sit directly in the data folder. Screenshots and recordings go to your Pictures and Videos folders, in a <code>Vintagestory</code> subfolder.</p>
+
+<h2 id="server">A dedicated server</h2>
+<ul>
+  <li><strong>Server files:</strong> wherever you unpack them. The official Linux <code>server.sh</code> script assumes <code>/home/vintagestory/server</code>.</li>
+  <li><strong>Server data</strong> (world, <code>Mods/</code>, config, logs): the <code>--dataPath</code> you start it with. Without one it uses the same <code>VintagestoryData</code> folder as the game, for the user it runs as. <code>server.sh</code> uses <code>/var/vintagestory/data</code>.</li>
+</ul>
+
+<h2 id="tools">Where this wiki's tools look</h2>
+<p>The wiki's build and its <a href="{{ ('/' ~ lang ~ '/') | url }}vsdev/"><code>vsdev</code></a> command line tool find these folders in a fixed order: a command-line option, then an environment variable (<code>VINTAGE_STORY</code> for the install, <code>VINTAGE_STORY_DATA</code> for the data folder), then the project's <code>vs-manifest.json</code>, then <code>./vintagestory</code> and <code>./Mods</code> in the current folder, and only then the default locations above (and only to read: they never install into your game). <code>vsdev paths</code> shows the result.</p>
+
+<h2 id="sources">Sources</h2>
+<ul class="muted">
+  <li>The data folder and its subfolders: <code>GamePaths</code> in the game's API (<code>vsapi</code>, <code>Config/GamePaths.cs</code>).</li>
+  <li>The Linux install folder: the client's <code>install.sh</code>. The server folders: the dedicated server's <code>server.sh</code>.</li>
+  <li><code>ModsByServer</code>: the game's mod download screen (where a server's mods are installed).</li>
+</ul>

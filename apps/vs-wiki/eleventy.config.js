@@ -127,6 +127,14 @@ export default function (eleventyConfig) {
   // README.md/CLAUDE.md/INFO.md, published so it's actually readable without cloning the repo.
   eleventyConfig.addGlobalData("researchHtml", () => md.render(readFileSync("RESEARCH.md", "utf8")));
 
+  // The vsdev page (site/vsdev/index.njk) renders the command line tool's own README (apps/vsdev/README.md), so the page and the
+  // tool's docs are one text and can't drift apart. Its links are all absolute; the version comes from the package itself.
+  eleventyConfig.addGlobalData("vsdevHtml", () => md.render(readFileSync("apps/vsdev/README.md", "utf8")));
+  eleventyConfig.addGlobalData("vsdevInfo", () => {
+    const pkg = JSON.parse(readFileSync("apps/vsdev/package.json", "utf8"));
+    return { name: pkg.name, version: pkg.version, node: pkg.engines?.node ?? "" };
+  });
+
   // Lets CI provide the real deployed origin (e.g. "https://<user>.github.io") for building
   // absolute Open Graph/Twitter image URLs, which unlike internal links are supposed to be
   // absolute per spec. Empty string (default) means og:image falls back to a relative path --

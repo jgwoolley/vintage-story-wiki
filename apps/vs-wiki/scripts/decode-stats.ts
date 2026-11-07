@@ -1,14 +1,16 @@
 // Opt-in corpus check (needs `npm run download` first, so it isn't part of `npm test`): decodes every
 // block entity in every local worldgen schematic and reports failures. The count should stay at 0.
 import { existsSync, readFileSync } from "node:fs";
+import { wikiGameDir } from "../src/ingest/gamePaths.js";
 import { listSchematicFiles } from "../src/ingest/schematicHeader.js";
 import { decodeBlockEntity } from "vs-schematic/schematicDecode.js";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 
 const roots: { domain: string; dir: string }[] = [];
-if (existsSync("vs_server/assets")) {
-  for (const d of readdirSync("vs_server/assets")) roots.push({ domain: d, dir: join("vs_server/assets", d) });
+const gameAssets = join(wikiGameDir(), "assets");
+if (existsSync(gameAssets)) {
+  for (const d of readdirSync(gameAssets)) roots.push({ domain: d, dir: join(gameAssets, d) });
 }
 if (existsSync(".scratch/mods")) {
   for (const mod of readdirSync(".scratch/mods")) {

@@ -10,7 +10,7 @@
     "rebuild": "npm run build:libs && tsx apps/vs-wiki/scripts/build-site.ts",
     "serve": "npm run build:libs && npm run ingest && eleventy --serve --config=apps/vs-wiki/eleventy.config.js",
     "clean": "rm -rf .scratch _site libs/*/dist apps/vs-wiki/site/_data/generated",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p libs/vs-schematic/tsconfig.json && npm run typecheck -w vs-vscode-extension",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p libs/vs-schematic/tsconfig.json && npm run typecheck -w vs-vscode-extension && npm run typecheck -w @nf3t/vsdev",
     "test": "tsx --test libs/*/test/*.test.ts apps/*/test/*.test.ts",
     "check-links": "tsx apps/vs-wiki/scripts/check-links.ts",
     "decode-stats": "tsx apps/vs-wiki/scripts/decode-stats.ts",

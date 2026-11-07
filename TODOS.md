@@ -4,6 +4,28 @@ Phases are in the order I'd do them: first make sure what exists is true and che
 site, then extend the tools, then change the pipeline, then the larger cross-project and localization work. Items inside a phase
 are independent unless noted.
 
+## PHase unsorted
+
+- Links on wiki sections like wikipedia where they are in searchurl params.
+- Posibly merge wiki / vsdev command. "vs-manifest.json" local, user, and system wide.
+- Settings page at top right of the page. Allows you to render chiseled blocks fully, allows you to set what you want filtered out of schematic by default (includes meta block by default).
+- Probably should install correct version rather than always linux.
+- Nf3t's Vintage Story Wiki
+- Update blockcodes.json from wiki?!?
+- Wiki + Mods page on same website?
+- Painting butterfly says no sale, because defaults to 'west'
+  - http://127.0.0.1:8000/en/items/survival/painting-bogfort-north/
+  - Four times in painting for each direction: http://127.0.0.1:8000/en/paintings/
+- move vs-manifest.schema.json into vintagestory website + make it available in cli
+- Look at REVIEW.md
+- Should have skills / plugins configured based on the new cli i wrote.
+- devbox may not be able to test extensions because of lack of some library
+- Review unecissary references to extract.sh and other bash commands.
+- Remove vsserver option as fallback not necissary.
+- Publish vsdev + possible server. Rebane wiki to have @nf3t, and potentially publish as well.
+- http://127.0.0.1:8000/en/items/game/crackedrock-shale/ not getting
+- Move to github issues
+
 ## Phase 1: Trust what exists (left over)
 
 - [ ] After the next push, confirm the CI step that packages the extension and the wiki's `/extension/` download work.

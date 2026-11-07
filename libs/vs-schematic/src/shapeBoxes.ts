@@ -2,10 +2,25 @@
 // A shape is a tree of cuboids on a 16-units-per-block grid; each element may rotate about its own
 // `rotationOrigin`, and its children are positioned relative to it (see shapeToBoxes). This module only does the geometry (no Three.js, no DOM, so
 // Node tests can import it): `compactShape` trims a raw shape file to what is drawn (ingest writes that), `shapeToBoxes`
-// flattens the tree into world-space boxes. Untextured by design: each box only remembers which texture key its
-// faces use, so the page can give every key its own stable color. Animations are kept as keyframes (`CompactAnimation`) and applied by passing a sampled pose to `shapeToBoxes`; without one it is the rest pose.
+// flattens the tree into world-space boxes. Untextured by default: each box only remembers which texture key its
+// faces use, so the page can give every key its own stable color. `compactShape(raw, { faces: true })` also keeps each face's
+// texture key, UV and rotation, for callers that have the game's texture images (a local install); the wiki's ingest doesn't.
+// Animations are kept as keyframes (`CompactAnimation`) and applied by passing a sampled pose to `shapeToBoxes`; without one it is the rest pose.
 
-/** One element of a compacted shape: faces and UVs are gone, the texture key it uses is kept. */
+/** The six faces of an element, in the order the game lists them. */
+export type FaceSide = "north" | "east" | "south" | "west" | "up" | "down";
+
+/** One face of an element, kept only by `compactShape(raw, { faces: true })`. */
+export interface ShapeFace {
+  /** Texture key without "#". */
+  texture: string;
+  /** [u1, v1, u2, v2] in the shape's texture units (`textureWidth`/`textureHeight`, or that key's `textureSizes` entry); u2 < u1 mirrors. */
+  uv: [number, number, number, number];
+  /** Clockwise rotation of the texture on the face, in degrees (0, 90, 180, 270). */
+  rotation?: number;
+}
+
+/** One element of a compacted shape: faces and UVs are gone (unless asked for), the texture key it uses is kept. */
 export interface ShapeElement {
   from: [number, number, number];
   to: [number, number, number];
@@ -20,6 +35,8 @@ export interface ShapeElement {
   stepParent?: string;
   /** Texture key of the element's first textured face, without the leading "#" (e.g. "metal"). */
   texture?: string;
+  /** Every enabled, textured face; only with `compactShape(raw, { faces: true })`. */
+  faces?: Partial<Record<FaceSide, ShapeFace>>;
   children?: ShapeElement[];
 }
 
@@ -53,6 +70,18 @@ export interface CompactAnimation {
 export interface CompactShape {
   elements: ShapeElement[];
   animations?: CompactAnimation[];
+  /** `textureWidth`/`textureHeight` (the units face UVs are in; default 16x16); only with faces. */
+  textureSize?: [number, number];
+  /** Per texture key overrides of `textureSize` (the file's `textureSizes`); only with faces. */
+  textureSizes?: Record<string, [number, number]>;
+}
+
+/** A box face for a textured viewer: UVs normalized to 0..1 of the texture image, v down from the image's top as in the file. */
+export interface BoxFace {
+  side: FaceSide;
+  texture: string;
+  uv: [number, number, number, number];
+  rotation?: number;
 }
 
 /** A box ready for `createVoxelViewer` (centers and sizes in 1/16 block units), with an optional rotation about its own center. */
@@ -66,6 +95,8 @@ export interface ShapeBox {
   /** Rotation (x, y, z, w) about the box center; absent for an axis-aligned box. */
   quaternion?: [number, number, number, number];
   texture?: string;
+  /** The element's faces, when the shape was compacted with faces. */
+  faces?: BoxFace[];
 }
 
 type Vec = [number, number, number];
@@ -173,11 +204,33 @@ export function looksLikeShape(parsed: unknown): boolean {
 }
 
 /**
- * Trims a raw shape file (as parsed from JSON) to a `CompactShape`: drops animations, faces, UVs and everything else
- * that isn't geometry. Elements with a malformed `from`/`to` are dropped (with their children), and a face-less
+ * Trims a raw shape file (as parsed from JSON) to a `CompactShape`: drops faces, UVs and everything else
+ * that isn't geometry or animation. Elements with a malformed `from`/`to` are dropped (with their children), and a face-less
  * element (the game's "empty" bone-like groups) is kept so its rotation still reaches its children.
+ * With `faces: true` it also keeps every face's texture key, UV and rotation and the shape's texture sizes, for drawing real textures.
  */
-export function compactShape(raw: unknown): CompactShape {
+export function compactShape(raw: unknown, options: { faces?: boolean } = {}): CompactShape {
+  const keepFaces = options.faces === true;
+  const compactFaces = (el: Record<string, unknown>): ShapeElement["faces"] => {
+    const faces = el.faces as Record<string, Record<string, unknown> | undefined> | undefined;
+    if (!faces || typeof faces !== "object") return undefined;
+    const out: NonNullable<ShapeElement["faces"]> = {};
+    const span = [0, 1, 2].map((i) => Math.abs((el.to as Vec)[i] - (el.from as Vec)[i]));
+    for (const side of FACE_ORDER as FaceSide[]) {
+      const face = faces[side];
+      if (!face || face.enabled === false || typeof face.texture !== "string") continue;
+      const uv = face.uv;
+      // A face without a uv gets the face's own size from the texture's corner, like an unedited face in the model editor.
+      const [w, h] = side === "up" || side === "down" ? [span[0], span[2]] : side === "east" || side === "west" ? [span[2], span[1]] : [span[0], span[1]];
+      const box: ShapeFace = {
+        texture: face.texture.replace(/^#/, ""),
+        uv: Array.isArray(uv) && uv.length === 4 && uv.every((n) => typeof n === "number" && Number.isFinite(n)) ? (uv as ShapeFace["uv"]) : [0, 0, w, h],
+      };
+      if (typeof face.rotation === "number" && face.rotation % 360 !== 0) box.rotation = ((face.rotation % 360) + 360) % 360;
+      out[side] = box;
+    }
+    return Object.keys(out).length ? out : undefined;
+  };
   const compactElement = (e: unknown): ShapeElement | undefined => {
     const el = e as Record<string, unknown> | null;
     if (!el || !isVec(el.from) || !isVec(el.to)) return undefined;
@@ -199,6 +252,10 @@ export function compactShape(raw: unknown): CompactShape {
         }
       }
     }
+    if (keepFaces) {
+      const kept = compactFaces(el);
+      if (kept) out.faces = kept;
+    }
     if (Array.isArray(el.children)) {
       const children = el.children.map(compactElement).filter((c): c is ShapeElement => !!c);
       if (children.length) out.children = children;
@@ -209,6 +266,18 @@ export function compactShape(raw: unknown): CompactShape {
   const compact: CompactShape = { elements: Array.isArray(elements) ? elements.map(compactElement).filter((e): e is ShapeElement => !!e) : [] };
   const animations = compactAnimations((raw as { animations?: unknown } | null)?.animations);
   if (animations.length) compact.animations = animations;
+  if (keepFaces) {
+    const file = raw as { textureWidth?: unknown; textureHeight?: unknown; textureSizes?: unknown } | null;
+    const positive = (n: unknown): n is number => typeof n === "number" && Number.isFinite(n) && n > 0;
+    compact.textureSize = [positive(file?.textureWidth) ? file.textureWidth : 16, positive(file?.textureHeight) ? file.textureHeight : 16];
+    if (file?.textureSizes && typeof file.textureSizes === "object") {
+      const sizes: Record<string, [number, number]> = {};
+      for (const [key, size] of Object.entries(file.textureSizes as Record<string, unknown>)) {
+        if (Array.isArray(size) && size.length === 2 && positive(size[0]) && positive(size[1])) sizes[key] = [size[0], size[1]];
+      }
+      if (Object.keys(sizes).length) compact.textureSizes = sizes;
+    }
+  }
   return compact;
 }
 
@@ -222,7 +291,7 @@ export function compactShape(raw: unknown): CompactShape {
 export function attachToBase(shape: CompactShape, base: CompactShape): CompactShape {
   if (!shape.elements.some((e) => e.stepParent)) return shape;
   const hidden = (el: ShapeElement): ShapeElement => {
-    const { texture: _texture, ...rest } = el;
+    const { texture: _texture, faces: _faces, ...rest } = el;
     return { ...rest, ...(el.children ? { children: el.children.map(hidden) } : {}) };
   };
   const body = base.elements.map(hidden);
@@ -240,7 +309,22 @@ export function attachToBase(shape: CompactShape, base: CompactShape): CompactSh
     if (parent) (parent.children ??= []).push(el);
     else loose.push(el);
   }
-  return { elements: [...body, ...loose] };
+  // The worn item's texture sizes stay: only its own faces are drawn.
+  const { animations: _animations, elements: _elements, ...textureFields } = shape;
+  return { ...textureFields, elements: [...body, ...loose] };
+}
+
+/** An element's faces with UVs divided by the texture's size (its `textureSizes` entry, else the shape's), so 0..1 spans the image. */
+function boxFaces(faces: NonNullable<ShapeElement["faces"]>, shape: CompactShape): BoxFace[] {
+  const out: BoxFace[] = [];
+  for (const side of FACE_ORDER as FaceSide[]) {
+    const face = faces[side];
+    if (!face) continue;
+    const [w, h] = shape.textureSizes?.[face.texture] ?? shape.textureSize ?? [16, 16];
+    const [u1, v1, u2, v2] = face.uv;
+    out.push({ side, texture: face.texture, uv: [u1 / w, v1 / h, u2 / w, v2 / h], ...(face.rotation ? { rotation: face.rotation } : {}) });
+  }
+  return out;
 }
 
 function rotation(rx: number, ry: number, rz: number): Mat3 {
@@ -317,6 +401,7 @@ export function shapeToBoxes(shape: CompactShape, pose?: Record<string, ElementP
         sx: size[0], sy: size[1], sz: size[2],
         ...(isIdentity(r) ? {} : { quaternion: toQuaternion(r) }),
         texture: el.texture,
+        ...(el.faces ? { faces: boxFaces(el.faces, shape) } : {}),
       });
     }
     for (const child of el.children ?? []) visit(child, r, t);

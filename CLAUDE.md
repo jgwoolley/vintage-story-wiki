@@ -13,7 +13,7 @@ static HTML into `_site/`. Deployed to GitHub Pages via `.github/workflows/build
 
 ```
 npm install
-npm run download   # fetch vanilla server + mods into vs_server/ and Mods/ (gitignored, cached in CI)
+npm run download   # fetch vanilla server + mods into vintagestory/ and Mods/ (gitignored, cached in CI)
 npm run build       # ingest + eleventy build into _site/
 npm run serve       # same, with live reload
 npm run typecheck   # tsc --noEmit over libs/ + apps/
@@ -36,9 +36,49 @@ libs/vs-wiki-core/   asset loading, patching, variant expansion, lang resolution
 libs/vs-schematic/   schematic decode, voxel conversion, Three.js voxel viewer (TypeScript), with tests
 apps/vs-wiki/        the wiki: src/ingest, scripts, test, site (Eleventy input), eleventy.config.js
 apps/vs-vscode-extension/   VS Code custom read-only editor previewing schematic .json/.json.gz (esbuild bundle of vs-schematic)
+apps/vsdev/           `vsdev` CLI (also installable globally): render headless, download the game, ModDB mods, your mods' pages (moddb), `paths`
 ```
 
-Everything is still run **from the repo root** (all pipeline paths are cwd-relative; `vs_server/`, `Mods/`,
+`npm run render -w @nf3t/vsdev -- <file>...` (or `vsdev render` when installed) writes multi-angle PNGs to `./.vsdev/renders/`; use it to look at a model,
+schematic (`.json`/`.json.gz`) or ChiselTools `.pf` shape you are making (e.g. for a mod) instead of guessing from the JSON. The kind
+comes from the content (`src/inputs.ts`). `--list`/`--json` describe a file (a model's animations and frame counts, a schematic's size
+and blocks) without rendering. `--animation <code>|all` writes sampled frames plus a labelled **contact sheet** PNG per animation
+(`ModelPreview.showFrame`, so it is the same posing code as the wiki's animation picker). Schematics use block colors (the wiki's
+`Nf3tBlockColors.json`, or `--block-colors`), and their chiseled blocks are drawn as real cuboids (`--no-chisel` turns this off). Given a game *client* folder
+(`--game`, or the model's own `assets/` tree) it draws real textures: `compactShape(raw, { faces: true })` keeps face UVs,
+`textureFiles.ts` finds the PNGs (shared with the extension's host), and `createModelPreview(..., { textures })` switches the
+shared viewer to its textured mode (`texturedFaces.ts` quads, one mesh per texture). It is still the one 3D code path; the
+wiki itself stays untextured (the server download has no textures, and game art shouldn't be published). Its browser half
+(`src/render/page/`) has its own DOM tsconfig and is excluded from the root one.
+
+The rest of `vsdev` (`apps/vsdev/README.md`, package `@nf3t/vsdev`: the user owns the `@nf3t` npm scope, prefer it for
+packages): `vsdev game` downloads the dedicated server only. **The client is deliberately never downloaded**, though its CDN address is
+known (`vs_client_linux-x64_<v>.tar.gz`): it's the paid game, the ToS frame its download as part of an account, and the user may ask the
+Vintage Story developers whether anonymous fetching is acceptable; until then vsdev uses the user's installed game (`render` finds it in
+the default install location or via `$VINTAGE_STORY`). Don't add a client download (in vsdev, CI or a script) without that confirmation.
+`vsdev mod search|info|install|update|extract` `vsdev mod search|info|install|update|extract` installs other people's mods (`--source <site>` installs from a
+`vsdev moddb export` site's `mods.json`), and `vsdev moddb check|status|scaffold|pull|diff|serve|export` is the port of the user's C#
+ModDbCli (their mods' pages kept in `./moddb/<modid>/`, a local review page, and a static GitHub Pages site with the unpublished zips;
+`diff` output is byte-identical to the C# tool's on translocator-locator-cmd's pages, keep it that way).
+
+**Locations follow one rule** (`apps/vsdev/src/locations.ts`; `vsdev paths` shows the result): flag, then env (`VINTAGE_STORY` = the
+game install, the mod template's own variable; `VINTAGE_STORY_DATA`; `VINTAGE_STORY_VERSION`), then the nearest `vs-manifest.json`
+(`gameDir`, `gameKind`, `dataDir`, `gameVersion`, `releasesDir`, `pagesDir`), then the cwd (`./vintagestory`, with an old `./vs_server` still read, `./Mods`,
+`./Releases`, `./moddb`), then the game's real install/data locations (reads only; writes never default there). Client and server are
+one "game install" location, `./vintagestory` locally (the server download is a strict subset of the client; readers prefer a
+client; `vsdev game` writes a `.vsdev-game.json` marker and only replaces installs carrying it, never a client with a server). The wiki's pipeline
+(`src/ingest/gamePaths.ts`) uses the same rule without the installed tier, and warns when the game install's
+`assets/version-*.txt` isn't the manifest's `serverVersion`; the wiki's `vs-manifest.json` sets `"gameKind": "server"`. Don't add a
+command with its own ad hoc default path: go through the resolver.
+
+`vsdev mod`'s code follows the *game's* rules,
+read from vsapi and a scratch decompile of `VintagestoryLib` (`ModDbUtil`, `ModLoader`, `ModContainer`; never copied into the repo):
+ModDB's `api/v2/mods/install-information?gv=` picks releases (it never picks a pre-release, and its 4041 means both "no such mod" and
+"nothing for this game version"), the CDN blocklist and retractions are refused, versions compare with the game's
+`GameVersion`/`SemVer` rules (`src/mods/versions.ts`), and only a root `modinfo.json` counts. Where the live API differs from the
+game's code (search's `gv[]` returns HTTP 500; `gameversions[]` works), the code says so. Its tests never touch the network.
+
+Everything is still run **from the repo root** (all pipeline paths are cwd-relative; `vintagestory/`, `Mods/`,
 `.scratch/`, `_site/`, `vs-manifest.json` and the reference clones stay at the root). Apps import libs by
 package name (`vs-wiki-core/lang.js`, `vs-schematic/schematicDecode.js`; `exports` map `./*.js`). 
 `libs/vs-schematic` is TypeScript: browsers can't run it, so `npm run build:libs` (`tsc`, run first by `build`/
@@ -48,7 +88,7 @@ package name (`vs-wiki-core/lang.js`, `vs-schematic/schematicDecode.js`; `export
 `build:libs`.** `libs/vs-schematic` has its own tsconfig (with DOM); the root one has none, so DOM use can't leak
 into `schematicDecode.ts`, which the ingest imports. `npm run typecheck` runs all of them (root, vs-schematic, the
 extension). The extension (`apps/vs-vscode-extension`) bundles the lib with esbuild and `npm run build:extension` produces the `.vsix` (bundle only: `npm run build -w vs-vscode-extension`);
-it type-checks, bundles and packages, and `npm run screenshots -w vs-vscode-extension` launches it in a real VS Code (headless Electron + Playwright, software WebGL; needs the libs `apt` list in its README and `vs_server/`) and screenshots a schematic, a chisel shape and model files, so its runtime behaviour *is* verified for those. Don't claim more than that (e.g. Open With... for arbitrary files is only the `*` selector). Libs must
+it type-checks, bundles and packages, and `npm run screenshots -w vs-vscode-extension` launches it in a real VS Code (headless Electron + Playwright, software WebGL; needs the libs `apt` list in its README and `vintagestory/`) and screenshots a schematic, a chisel shape and model files, so its runtime behaviour *is* verified for those. Don't claim more than that (e.g. Open With... for arbitrary files is only the `*` selector). Libs must
 not import from apps; tests that need wiki files (the sample schematic, ingest's `DecodeStats`) live in
 `apps/vs-wiki/test/`. Path references elsewhere in this file that don't say `libs/` or `apps/` are relative
 to the app that owns them.
@@ -320,8 +360,9 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   which is now also cloned at `vsessentialsmod/` but hasn't been checked for this) — `structures.njk` works around it by only formatting as a percent when
   `chance <= 1`, otherwise labeling it a relative weight. If you touch structure chance display
   again, keep that branch rather than assuming it's always a clean probability.
-- **The whole download/ingest/build pipeline is pure Node/npm** — `apps/vs-wiki/scripts/download.ts` uses the
-  pure-JS `tar` package, not a shelled-out system binary. If you add a new external-tool
+- **The whole download/ingest/build pipeline is pure Node/npm** — the downloading (`apps/vsdev/src/game/download.ts`,
+  `src/download/manifest.ts`, which `apps/vs-wiki/scripts/download.ts` wraps to add `Mods/*.meta.json` and the timing file) uses the
+  pure-JS `tar` package, not a shelled-out system binary. Never download the game *client* anywhere (see the vsdev paragraph near the top; the wiki stays untextured). If you add a new external-tool
   dependency to any script, prefer an npm package over shelling out, to keep this property true.
 - **Eleventy cannot report its own total build duration to its own templates** — there's no point
   in its lifecycle where it both knows the number and can still write it into the HTML it's
@@ -352,6 +393,11 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   re-implementation. It deliberately omits the simplex `MapLayerPerlinWobble` (~900 blocks of
   displacement), forest/shrub maps and landforms, and supports numeric seeds only (the text-seed hash is
   in closed server code). Don't present its output as exact.
+- **`/<lang>/game-files/`** ("Game file locations", in the sidebar's About panel) documents where the game, its data folder (Mods, saves,
+  logs) and a dedicated server live per platform, and where the client and server are downloaded from; keep it in sync with
+  `apps/vsdev/src/locations.ts` and the client-download decision. Below it, **`/<lang>/vsdev/`** renders `apps/vsdev/README.md` itself
+  (`vsdevHtml` global, like INFO.md -> `/info/`), so that README is published: keep its links absolute and its text fit for mod makers.
+  Command, package and folder are all `vsdev` (`@nf3t/vsdev`, `apps/vsdev`); keep them matching.
 - **Adding an interactive page means putting it in its section and linking it from all three places**: the section's own listing page, the
   home page card grid (`apps/vs-wiki/site/index.njk`, under the matching "Crafting" / "Creatures & World" / "Decor & Lore" heading) and the matching left sidebar panel
   (`apps/vs-wiki/site/_includes/layouts/base.njk`). Don't resurrect a "Tools" grouping. If you move or rename a page, add its old URL to

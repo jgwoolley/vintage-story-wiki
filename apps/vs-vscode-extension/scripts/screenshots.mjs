@@ -1,11 +1,13 @@
 // Launches a real VS Code with this extension loaded from source, opens a schematic, a ChiselTools shape and a few game model files
 // (a weapon, a creature, armor placed on the player body), and screenshots each preview. It is the check that the extension actually
-// works at runtime (type-checking and bundling can't tell). Needs the game data under the repo's vs_server/ (npm run download).
+// works at runtime (type-checking and bundling can't tell). Needs the game data under the repo's vintagestory/ (npm run download; an old
+// vs_server/ also works).
 //
 //   npm run screenshots                       writes .tmp/screenshots/*.png
 //   VSCODE_TEST_CACHE=/path npm run screenshots   reuse an already downloaded VS Code (default: .vscode-test/ here)
 //
 // Headless: Electron runs with --ozone-platform=headless, so no X server is needed. Modelled on ../nifi-flowfile-extension's script.
+import { existsSync } from "node:fs";
 import { copyFile, mkdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,6 +20,8 @@ const TIMEOUT = 45_000;
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const repo = path.resolve(root, "../..");
+/** The game install, where `npm run download` puts it (an old vs_server/ checkout too). */
+const gameDir = existsSync(path.join(repo, "vintagestory")) ? "vintagestory" : "vs_server";
 const tmpDir = path.join(root, ".tmp");
 const samplesDir = path.join(tmpDir, "samples");
 const outDir = path.join(tmpDir, "screenshots");
@@ -28,10 +32,10 @@ const SAMPLES = [
   ["libs/vs-schematic/test/fixtures/wayshrine-pillar-bottom.pf", "wayshrine-pillar-bottom.pf"],
   // ChiselTools saves shapes with no extension, in the chiselportfolio folder; the preview must still open for such a file.
   ["libs/vs-schematic/test/fixtures/wayshrine-pillar-bottom.pf", "chiselportfolio/wayshrine-noext"],
-  ["vs_server/assets/survival/shapes/item/tool/blade/admin.json", "assets/survival/shapes/item/tool/blade/admin.json"],
-  ["vs_server/assets/survival/shapes/entity/animal/mammal/wolf/eurasian-adult.json", "assets/survival/shapes/entity/animal/mammal/wolf/eurasian-adult.json"],
-  ["vs_server/assets/survival/shapes/entity/humanoid/seraph/armor/plate/body.json", "assets/survival/shapes/entity/humanoid/seraph/armor/plate/body.json"],
-  ["vs_server/assets/game/shapes/entity/humanoid/seraph-faceless.json", "assets/game/shapes/entity/humanoid/seraph-faceless.json"],
+  [`${gameDir}/assets/survival/shapes/item/tool/blade/admin.json`, "assets/survival/shapes/item/tool/blade/admin.json"],
+  [`${gameDir}/assets/survival/shapes/entity/animal/mammal/wolf/eurasian-adult.json`, "assets/survival/shapes/entity/animal/mammal/wolf/eurasian-adult.json"],
+  [`${gameDir}/assets/survival/shapes/entity/humanoid/seraph/armor/plate/body.json`, "assets/survival/shapes/entity/humanoid/seraph/armor/plate/body.json"],
+  [`${gameDir}/assets/game/shapes/entity/humanoid/seraph-faceless.json`, "assets/game/shapes/entity/humanoid/seraph-faceless.json"],
 ];
 
 // [file to open, text the summary must show, screenshot name]

@@ -721,3 +721,6 @@ tr:target { outline: 2px solid var(--accent); outline-offset: -2px; }
 .toc ol ol { padding-left: 1.2rem; margin: 0; }
 .toc ol[hidden] { display: none; }
 .toc-num { color: var(--muted); }
+
+/* Table cells that must not break inside a word (short labels next to a long column, e.g. /game-files/). */
+.nowrap { white-space: nowrap; }

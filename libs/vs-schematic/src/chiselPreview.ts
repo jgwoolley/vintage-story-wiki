@@ -12,13 +12,22 @@ interface ChiselBox extends ViewerVoxel {
   material: number;
 }
 
-/** Mounts a preview into `container` (needs a CSS height); `colorOf(blockCode)` picks each material's color. Null without WebGL. */
-export function createChiselPreview(container: HTMLElement, shape: ChiselShape, colorOf: (code: string) => string, settings?: ViewerSettings): VoxelViewer<ChiselBox> | null {
+/**
+ * Mounts a preview into `container` (needs a CSS height); `colorOf(blockCode)` picks each material's color. `viewDirection` is the
+ * camera's offset from the shape's center (y up), omitted the viewer's default three-quarter view. Null without WebGL.
+ */
+export function createChiselPreview(
+  container: HTMLElement,
+  shape: ChiselShape,
+  colorOf: (code: string) => string,
+  settings?: ViewerSettings,
+  viewDirection?: [number, number, number],
+): VoxelViewer<ChiselBox> | null {
   const boxes: ChiselBox[] = shape.cuboids.map((c) => ({
     x: (c.x1 + c.x2) / 2, y: (c.y1 + c.y2) / 2, z: (c.z1 + c.z2) / 2,
     sx: c.x2 - c.x1, sy: c.y2 - c.y1, sz: c.z2 - c.z1, material: c.material,
   }));
-  const viewer = createVoxelViewer(container, { voxels: boxes, label: "3D view of the chiseled block's shape", cellsCenteredOnIntegers: false, settings }); // box edges, not centers, sit on integers
+  const viewer = createVoxelViewer(container, { voxels: boxes, label: "3D view of the chiseled block's shape", viewDirection, cellsCenteredOnIntegers: false, settings }); // box edges, not centers, sit on integers
   viewer?.setStyle((box) => ({ color: colorOf(shape.materials[box.material]) }));
   return viewer;
 }

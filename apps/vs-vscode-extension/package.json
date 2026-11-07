@@ -57,10 +57,20 @@
           "type": "boolean",
           "default": false,
           "description": "Show a grid on the y = 0 plane (the bottom of the lowest row of blocks) in the preview."
+        },
+        "vsSchematic.gameFolder": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "The Vintage Story **game client** install folder (the one with `assets/survival/textures`), or its `assets` folder. Model previews load their textures from it. The dedicated server download has almost no textures, so it won't do. Use **Vintage Story: Select Game Folder** to pick and check it."
         }
       }
     },
     "commands": [
+      {
+        "command": "vsSchematic.selectGameFolder",
+        "title": "Select Game Folder (for model textures)",
+        "category": "Vintage Story"
+      },
       {
         "command": "vsSchematic.openPreview",
         "title": "Preview Schematic, Model or Chisel Shape",

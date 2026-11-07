@@ -8,6 +8,18 @@ export interface ModManifestEntry {
 export interface VsManifest {
   serverBranch: string; // e.g. "stable" -- which cdn.vintagestory.at release channel to fetch from
   serverVersion: string; // e.g. "1.22.7" -- the vanilla dedicated server version to fetch
+  /** Same as serverVersion (vsdev reads either; mod projects use this name). */
+  gameVersion?: string;
+  /** Which download `npm run download` / `vsdev game` fetch by default: "server" here (small), "client" in a mod project. */
+  gameKind?: "client" | "server";
+  /** Game install, relative to vs-manifest.json; after $VINTAGE_STORY, before ./vintagestory (gamePaths.ts / vsdev locations.ts). */
+  gameDir?: string;
+  /** Game data folder whose Mods/ holds the mod zips; after $VINTAGE_STORY_DATA, before ./Mods. */
+  dataDir?: string;
+  /** vsdev only: the built mod zips (`vsdev moddb`), default ./Releases. */
+  releasesDir?: string;
+  /** vsdev only: the mods' ModDB page sources (`vsdev moddb`), default ./moddb. */
+  pagesDir?: string;
   /** Where the production wiki is deployed; the build info page links to it (also on local builds). */
   prodWikiUrl?: string;
   mods: ModManifestEntry[];
@@ -742,18 +754,12 @@ export interface CharacterClassInfo {
   gear: CharacterClassGearItem[];
 }
 
-/** How one piece of `npm run download` (the server install, or a single mod) resolved this run. */
-export type DownloadAction =
-  | "downloaded" // actually fetched from the network this run
-  | "skipped-present" // already present on disk, left untouched (the common case once cached)
-  | "failed"; // lookup/fetch failed; see the console log for the specific error
-
-/** One mod's outcome within a `npm run download` run, written into `downloadTiming.json`. */
-export interface ModDownloadResult {
-  modid: string;
-  action: DownloadAction;
-  durationMs: number; // wall-clock time spent on just this mod (lookup + fetch + extract, or the skip-check)
-}
+/**
+ * How one piece of `npm run download` (the server install, or a single mod) resolved this run, and one mod's outcome within a run
+ * (written into `downloadTiming.json`). Defined by vsdev, which does the downloading (`apps/vsdev/src/types.ts`).
+ */
+export type { DownloadAction, ModDownloadResult } from "@nf3t/vsdev/types.js";
+import type { DownloadAction, ModDownloadResult } from "@nf3t/vsdev/types.js";
 
 /**
  * Written by `scripts/download.ts` on every run (`site/_data/generated/downloadTiming.json`) --

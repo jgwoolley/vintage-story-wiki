@@ -258,7 +258,11 @@ full unit cube colored by the generic block code. Draw its real sub-block shape 
 - Standalone input (a chiseled item stack's attributes, or an export) isn't covered by anything above; the
   schematic case is the one with real data to test on.
 
-## 7. vs-mod-updater (separate repo, not merged)
+## 7. vs-mod-updater (ported into `vsdev`)
+
+**Update:** the user asked for it, so its install/update/dependency logic now lives in TypeScript as `vsdev mod install` / `vsdev mod
+update` (`apps/vsdev/src/mods/`), on top of the game's own rules (ModDB's install-information endpoint, the blocklist,
+retractions, no downgrades). The Python tool is unchanged in its own repo. The notes below are the earlier state.
 
 The user's Python `vs-mod-updater` lives in its own repo, <https://github.com/jgwoolley/vs-mod-updater>.
 A local copy was briefly placed in this checkout but is being removed; the current plan is to **keep the
