@@ -1,7 +1,6 @@
 {
   "name": "@nf3t/vsdev",
   "version": "0.1.0",
-  "private": true,
   "author": "Nf3t (https://github.com/jgwoolley)",
   "repository": {
     "type": "git",
@@ -55,5 +54,8 @@
     "esbuild": "^0.28.2",
     "three": "0.180.0",
     "@nf3t/vs-schematic": "*"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

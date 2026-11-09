@@ -7,6 +7,7 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, 
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { stripVTControlCharacters } from "node:util";
 import * as tar from "tar";
 import { parseGameArgs } from "../src/commands/game.js";
 import { planLine } from "../src/commands/mod.js";
@@ -177,7 +178,8 @@ test("install: dependencies from modinfo, ModDB's pick, retractions, the blockli
     assert.match(by.bad.error!, /blocklist: vulnerable/);
     assert.equal(by.old.action, "newer-installed", "never a downgrade");
     assert.equal(plan.filter((e) => e.modid === "app").length, 1, "app (a dependency of lib) is resolved once");
-    assert.match(planLine(by.lib), /^\[~\] lib\s+1\.0\.0 -> 1\.5\.0\s+\(dependency of App, needs >= 1\.2\.0\)/);
+    // picocolors colors output whenever $CI is set (GitHub Actions), so compare the plain text.
+    assert.match(stripVTControlCharacters(planLine(by.lib)), /^\[~\] lib\s+1\.0\.0 -> 1\.5\.0\s+\(dependency of App, needs >= 1\.2\.0\)/);
 
     const applied = await applyInstallPlan(plan, { modsDir: dir, outDir: dir, db });
     assert.deepEqual(applied.map((a) => a.error), [undefined, undefined, undefined]);
