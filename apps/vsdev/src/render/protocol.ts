@@ -1,6 +1,6 @@
 // What the Node half (render.ts) passes to the page's window functions (page/main.ts) and gets back. No DOM types, so both the root
 // tsconfig (Node) and the page's DOM tsconfig can import it.
-import type { ChiselShape } from "vs-schematic/chisel.js";
+import type { ChiselShape } from "@nf3t/vs-schematic/chisel.js";
 import type { Vec3 } from "./views.js";
 
 export interface PageOptions {
@@ -53,10 +53,18 @@ export interface ChiselPayload {
   legend: LegendRow[];
 }
 
+/** A scene (src/scene.ts): boxes in 1/16 block units whose faces name texture keys, and the images for those keys. */
+export interface ScenePayload {
+  boxes: import("@nf3t/vs-schematic/shapeBoxes.js").ShapeBox[];
+  /** Texture key -> PNG data: URL. */
+  textures: Record<string, string>;
+}
+
 /** The page's window functions (implemented in page/main.ts). */
 export interface PageApi {
   loadModel(raw: unknown, viewDirection: Vec3, options: ModelOptions): Promise<ModelResult>;
   loadSchematic(payload: SchematicPayload, viewDirection: Vec3, options: PageOptions): { error: string | null };
+  loadScene(payload: ScenePayload, viewDirection: Vec3, options: PageOptions): Promise<{ error: string | null }>;
   loadChisel(payload: ChiselPayload, viewDirection: Vec3, options: PageOptions): { error: string | null };
   /** Poses the loaded model at `frame` of animation `code` (null: the rest pose); `note` is appended to the title. */
   showFrame(code: string | null, frame: number, note: string): void;

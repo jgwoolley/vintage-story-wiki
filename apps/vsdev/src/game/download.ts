@@ -4,13 +4,13 @@
 // later without touching installs it didn't make. Download to a temp file and extract into a temp folder next to the target, and only
 // then replace the old install, so a wrong version or a dropped connection never deletes a working one. Pure-JS `tar`, no system binary.
 //
-// THE CLIENT IS DELIBERATELY NOT DOWNLOADED. We know where it is: the same CDN path with `vs_client_linux-x64_` (a tarball with
-// everything under one top-level `vintagestory/` folder; translocator-locator-cmd's old extract.sh fetched it). But the client is the
-// paid game: Anego Studios' Terms of Service (https://www.vintagestory.at/tos.html) frame downloading it as part of an account that bought
-// it (the Client Area, https://account.vintagestory.at/), and an address that answers without a login is not permission. Until the
-// Vintage Story developers confirm that fetching it this way is acceptable (we may ask them), tools that need the client (textures,
-// DLLs) use the copy the user installed: --game-dir, $VINTAGE_STORY, ./vintagestory, or the default install location. Don't add it back
-// without that confirmation. The same question could be asked about the server download, which this repo has always used.
+// THE CLIENT IS NOT DOWNLOADED BY DEFAULT. It is the same CDN path with `vs_client_linux-x64_` (a tarball with everything under one
+// top-level `vintagestory/` folder; translocator-locator-cmd's old extract.sh fetched it). But the client is the paid game: Anego
+// Studios' Terms of Service (https://www.vintagestory.at/tos.html) frame downloading it as part of an account that bought it (the Client
+// Area, https://account.vintagestory.at/), and an address that answers without a login is not permission. So it only happens when the
+// user asks for it (`--client`) AND states they have checked the terms, or the developers, for their use (`--accept-client-terms`,
+// `acceptClientTerms` here); without both, tools use the copy the user installed (--game-dir, $VINTAGE_STORY, ./vintagestory, or the
+// default install location). Never make the acknowledgement implicit (no default, no env var, no config key): it is the user's statement.
 import { createWriteStream, existsSync, readdirSync } from "node:fs";
 import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -26,15 +26,25 @@ export type GameKind = "server" | "client";
 /** A download that failed for an expected reason (no such version, network); the old install is untouched. */
 export class GameDownloadError extends Error {}
 
-/** Why `--client` / `"gameKind": "client"` doesn't download anything, for the commands to print. */
-export const CLIENT_NOT_DOWNLOADED = `vsdev doesn't download the game client: it's the paid game, downloaded from your account (buy it at
+/** The flag that says the user has checked the policy / the developers; `--client` does nothing without it. */
+export const ACCEPT_CLIENT_TERMS = "--accept-client-terms";
+
+/** Why `--client` / `"gameKind": "client"` doesn't download anything on its own, for the commands to print. */
+export const CLIENT_NOT_DOWNLOADED = `vsdev doesn't download the game client unless you confirm it's allowed for your use: it's the paid game, downloaded from your account (buy it at
 https://www.vintagestory.at/store/category/1-game-account-game-servers/, then get the installer from the Client Area,
 https://account.vintagestory.at/). Install it there, then point vsdev and the mod template's builds at it:
   export VINTAGE_STORY=/path/to/your/game     (Linux default: ~/.local/share/vintagestory, Windows: %APPDATA%\\Vintagestory)
 vsdev also finds it by itself in those default locations, and in ./vintagestory. \`vsdev game --server\` downloads the dedicated
-server, which has the game's data but not its textures.`;
+server, which has the game's data but not its textures.
+If you have read the Terms of Service (https://www.vintagestory.at/tos.html) or checked with the Vintage Story developers and downloading
+the client this way is fine for your use, add ${ACCEPT_CLIENT_TERMS}: \`vsdev game --client ${ACCEPT_CLIENT_TERMS}\`. That is your statement, not
+vsdev's: it never assumes it.`;
 
 export interface GameOptions {
+  /** What to download (default "server"). "client" also needs acceptClientTerms. */
+  kind?: GameKind;
+  /** The user's statement that they checked the terms / the developers and may download the client (ACCEPT_CLIENT_TERMS). */
+  acceptClientTerms?: boolean;
   /** "stable" or "unstable". */
   branch: string;
   version: string;
@@ -47,6 +57,7 @@ export interface GameOptions {
 }
 
 export const serverUrl = (branch: string, version: string) => `https://cdn.vintagestory.at/gamefiles/${branch}/vs_server_linux-x64_${version}.tar.gz`;
+export const clientUrl = (branch: string, version: string) => `https://cdn.vintagestory.at/gamefiles/${branch}/vs_client_linux-x64_${version}.tar.gz`;
 
 export type GamePlan = { action: "install" | "replace" | "skip" | "refuse"; reason: string };
 
@@ -58,10 +69,17 @@ export type GamePlan = { action: "install" | "replace" | "skip" | "refuse"; reas
  * - a server vsdev installed (it has .vsdev-game.json): replace it with the other version;
  * - anything else (an install vsdev didn't make, or other files): skip, and say --force replaces it.
  */
-export function planGameInstall(dir: string, version: string): GamePlan {
+export function planGameInstall(dir: string, version: string, kind: GameKind = "server"): GamePlan {
   if (!existsSync(dir) || readdirSync(dir).length === 0) return { action: "install", reason: "empty" };
   const info = gameInfo(dir);
   const label = info ? `${info.kind}${info.version ? ` ${info.version}` : ""}` : "files that aren't a game install";
+  if (kind === "client") {
+    // Asked for the client: the same client version is present; something vsdev installed (a server, or another client version) is replaced;
+    // anything else is yours and left alone.
+    if (info?.kind === "client" && info.version === version) return { action: "skip", reason: `${dir}/ already has the ${label}` };
+    if (readGameMarker(dir)) return { action: "replace", reason: `replacing the ${label} vsdev installed there` };
+    return { action: "skip", reason: `${dir}/ has ${label}, not installed by vsdev; leaving it alone (--force replaces it)` };
+  }
   if (info && info.version === version) {
     return { action: "skip", reason: `${dir}/ already has the ${label}${info.kind === "client" ? " (which includes the server)" : ""}` };
   }
@@ -74,9 +92,10 @@ export function planGameInstall(dir: string, version: string): GamePlan {
 
 /** Installs the dedicated server into `dir` (see planGameInstall for when an existing folder is skipped, replaced or refused). */
 export async function installServer(opts: GameOptions): Promise<DownloadAction> {
-  const { branch, version, dir, force, fetchImpl = fetch, onProgress, log = console.log } = opts;
+  const { branch, version, dir, force, fetchImpl = fetch, onProgress, log = console.log, kind = "server" } = opts;
+  if (kind === "client" && !opts.acceptClientTerms) throw new GameDownloadError(CLIENT_NOT_DOWNLOADED);
   if (!force) {
-    const plan = planGameInstall(dir, version);
+    const plan = planGameInstall(dir, version, kind);
     if (plan.action === "skip") {
       log(`- ${plan.reason}`);
       return "skipped-present";
@@ -84,14 +103,14 @@ export async function installServer(opts: GameOptions): Promise<DownloadAction> 
     if (plan.action === "refuse") throw new GameDownloadError(plan.reason);
     if (plan.action === "replace") log(`- ${plan.reason}`);
   }
-  const url = serverUrl(branch, version);
+  const url = (kind === "client" ? clientUrl : serverUrl)(branch, version);
   const parent = path.dirname(path.resolve(dir));
   const base = path.basename(path.resolve(dir));
   const archive = path.join(parent, `.${base}.download.tar.gz`);
   const staging = path.join(parent, `.${base}.extracting`);
   await mkdir(parent, { recursive: true });
 
-  log(`==> Downloading the Vintage Story server ${version} (${branch})`);
+  log(`==> Downloading the Vintage Story ${kind} ${version} (${branch})`);
   const res = await fetchImpl(url).catch((err: Error) => {
     throw new GameDownloadError(`${url}: ${err.message}`);
   });
@@ -112,8 +131,8 @@ export async function installServer(opts: GameOptions): Promise<DownloadAction> 
     log(`==> Extracting to ${dir}/`);
     await rm(staging, { recursive: true, force: true });
     await mkdir(staging, { recursive: true });
-    await tar.extract({ file: archive, cwd: staging }); // the server tarball is flat
-    const marker: GameMarker = { kind: "server", version, branch, url, installedAt: new Date().toISOString() };
+    await tar.extract({ file: archive, cwd: staging, strip: kind === "client" ? 1 : 0 }); // the server tarball is flat; the client's has one top-level vintagestory/ folder
+    const marker: GameMarker = { kind, version, branch, url, installedAt: new Date().toISOString() };
     await writeFile(path.join(staging, GAME_MARKER), `${JSON.stringify(marker, null, 2)}\n`);
     await rm(dir, { recursive: true, force: true });
     await rename(staging, dir);
@@ -121,6 +140,6 @@ export async function installServer(opts: GameOptions): Promise<DownloadAction> 
     await rm(archive, { force: true });
     await rm(staging, { recursive: true, force: true });
   }
-  log(`✔ Server installed in ${dir}/`);
+  log(`✔ ${kind === "client" ? "Client" : "Server"} installed in ${dir}/`);
   return "downloaded";
 }

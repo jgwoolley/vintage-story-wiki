@@ -33,6 +33,11 @@ permalink: "{{ lang }}/index.html"
     <span class="muted">Protection, durability, warmth and side effects of every armor piece.</span>
     <span class="muted">{{ generated.armor.length }} entries</span>
   </a>
+  <a href="{{ ('/' ~ lang ~ '/') | url }}variants/">
+    <strong><span class="card-icon" aria-hidden="true">🧩</span> Variants</strong>
+    <span class="muted">Families the game groups together: one ingot, ore or slab in every metal, rock or wood.</span>
+    <span class="muted">{{ generated.variantFamilies.length }} entries</span>
+  </a>
   <a href="{{ ('/' ~ lang ~ '/') | url }}recipes/alloy-calculator/">
     <strong><span class="card-icon" aria-hidden="true">🧪</span> Alloy calculator</strong>
     <span class="muted">Max crucible bits for a target alloy ratio, given item-stack limits.</span>

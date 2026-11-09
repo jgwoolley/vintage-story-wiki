@@ -5,12 +5,12 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { gunzipSync } from "node:zlib";
-import { blockColor, parseBlockColors, type BlockColors } from "vs-schematic/blockColors.js";
-import { decodeChiseledBlock, materialVolumes, type ChiselShape } from "vs-schematic/chisel.js";
-import { looksLikePortfolio, parsePortfolioXml } from "vs-schematic/chiselExport.js";
-import { decodeBlockEntity } from "vs-schematic/schematicDecode.js";
-import { assertSchematic, isHiddenByDefault, toVoxels, type SchematicJson } from "vs-schematic/schematicVoxels.js";
-import { looksLikeShape } from "vs-schematic/shapeBoxes.js";
+import { blockColor, parseBlockColors, type BlockColors } from "@nf3t/vs-schematic/blockColors.js";
+import { decodeChiseledBlock, materialVolumes, type ChiselShape } from "@nf3t/vs-schematic/chisel.js";
+import { looksLikePortfolio, parsePortfolioXml } from "@nf3t/vs-schematic/chiselExport.js";
+import { decodeBlockEntity } from "@nf3t/vs-schematic/schematicDecode.js";
+import { assertSchematic, isHiddenByDefault, toVoxels, type SchematicJson } from "@nf3t/vs-schematic/schematicVoxels.js";
+import { looksLikeShape } from "@nf3t/vs-schematic/shapeBoxes.js";
 
 export class InputError extends Error {}
 

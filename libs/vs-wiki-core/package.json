@@ -1,7 +1,23 @@
 {
-  "name": "vs-wiki-core",
+  "name": "@nf3t/vs-wiki-core",
   "version": "0.1.0",
   "private": true,
+  "author": "Nf3t (https://github.com/jgwoolley)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwoolley/vintage-story-wiki.git",
+    "directory": "libs/vs-wiki-core"
+  },
+  "homepage": "https://github.com/jgwoolley/vintage-story-wiki#readme",
+  "bugs": {
+    "url": "https://github.com/jgwoolley/vintage-story-wiki/issues"
+  },
+  "keywords": [
+    "vintage-story",
+    "modding",
+    "assets"
+  ],
+  "license": "UNLICENSED",
   "type": "module",
   "description": "Vintage Story asset loading: mod/asset indexing, JSON patching, variant expansion, lang resolution.",
   "exports": {

@@ -1,5 +1,5 @@
 import type { AssetIndex, IngredientSpec, NormalizedRecipe, OutputSpec, RecipeCategory } from "../types.js";
-import { assetsUnderAnyDomain } from "vs-wiki-core/assetLoader.js";
+import { assetsUnderAnyDomain } from "@nf3t/vs-wiki-core/assetLoader.js";
 import { splitDomainCode } from "../codeUtil.js";
 
 const CATEGORY_PREFIX: Record<RecipeCategory, string> = {

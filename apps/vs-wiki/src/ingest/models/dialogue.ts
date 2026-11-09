@@ -1,6 +1,6 @@
 import type { AssetIndex, DialogueReward, NpcDialogue } from "../types.js";
-import type { LangResolver } from "vs-wiki-core/lang.js";
-import { expandVariants, resolveByType } from "vs-wiki-core/variantExpander.js";
+import type { LangResolver } from "@nf3t/vs-wiki-core/lang.js";
+import { expandVariants, resolveByType } from "@nf3t/vs-wiki-core/variantExpander.js";
 import { resolveLangRef, rewriteHandbookLinks, splitDomainCode } from "../codeUtil.js";
 import { hasHealthBehavior } from "./loot.js";
 

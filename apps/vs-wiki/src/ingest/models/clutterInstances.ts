@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
 import type { ClutterType, NormalizedStructure } from "../types.js";
-import type { LangResolver } from "vs-wiki-core/lang.js";
+import type { LangResolver } from "@nf3t/vs-wiki-core/lang.js";
 import type { DecodeStats, SchematicFile } from "../schematicHeader.js";
 import { readSchematicBlockCodes, recordDecodeFailure } from "../schematicHeader.js";
 // Same canonical (browser-loadable) decoder the tapestry model uses -- see tapestryInstances.ts.
-import { decodeBlockEntity } from "vs-schematic/schematicDecode.js";
+import { decodeBlockEntity } from "@nf3t/vs-schematic/schematicDecode.js";
 
 /**
  * "Clutter" blocks (`blocktypes/clutter.json`, `clutter-devastation`, `clutter-aquatic`; class

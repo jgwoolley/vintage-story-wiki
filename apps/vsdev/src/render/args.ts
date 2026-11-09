@@ -1,8 +1,34 @@
 // Command-line parsing for the renderer, kept free of I/O so it can be tested on its own.
 import { UsageError } from "../errors.js";
-import { DEFAULT_VIEWS, VIEWS } from "./views.js";
+import { DEFAULT_VIEWS, VIEWS, type Vec3 } from "./views.js";
 
 export { UsageError };
+
+export type Corner = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+
+/** What `vsdev screenshots` draws over a render: a title, a smaller line under it, a logo, on a chosen background. */
+export interface Overlay {
+  title?: string;
+  subtitle?: string;
+  /** Title text height as a fraction of the image's shorter side; default 0.075 (the subtitle is 0.6 of it). */
+  titleSize?: number;
+  /** The logo as a data: URL. */
+  logo?: string;
+  /** Where the text block sits; default top-left. */
+  textAt?: Corner;
+  /** Where the logo sits; default top-right. */
+  logoAt?: Corner;
+  /** Page background (a CSS color, or "transparent" for a transparent PNG); default the renderer's dark grey. */
+  background?: string;
+  /** Fractions (0-1) of the image left free on each side: the model is framed in what remains (e.g. the part of a ModDB card its text doesn't cover). */
+  safe?: Partial<Record<"top" | "right" | "bottom" | "left", number>>;
+  /** Insets the model is framed in when they differ from `safe` (e.g. `safe` plus a band for the title); default `safe`. */
+  frame?: Partial<Record<"top" | "right" | "bottom" | "left", number>>;
+  /** Dim the parts a ModDB card covers (`safe`'s margins and the corner ribbon), to check a layout. */
+  guides?: boolean;
+  /** Draw only the logo, filling the safe area, with no model (an icon). */
+  logoFill?: boolean;
+}
 
 export interface RenderOptions {
   /** Files to render (models, schematics, ChiselTools shapes), as given (resolved against the caller's working directory by the CLI). */
@@ -39,6 +65,16 @@ export interface RenderOptions {
   list: boolean;
   /** Print results as JSON on stdout. */
   json: boolean;
+  /** Extra named view directions (beyond VIEWS) a caller supplies, e.g. a screenshot's own camera angle. */
+  viewVectors?: Record<string, Vec3>;
+  /** Image height when it should differ from `size` (the width), e.g. 1080 for a 1920 x 1080 ModDB image. */
+  height?: number;
+  /** Text and a logo drawn over the image (implies bare). */
+  overlay?: Overlay;
+  /** Leave out the title and the legend, for a clean image. */
+  bare?: boolean;
+  /** With exactly one view: the PNG's file name (instead of <name>-<view>.png). */
+  fileName?: string;
   /** The working directory the game location rule starts from (./vintagestory, vs-manifest.json). */
   cwd?: string;
 }

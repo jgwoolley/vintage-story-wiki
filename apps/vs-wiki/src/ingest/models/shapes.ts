@@ -2,8 +2,8 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { gzipSync } from "node:zlib";
 import type { AssetIndex, ClutterType, ItemIndexEntry, LootSourceGroup, ModelRef } from "../types.js";
-import { expandVariants, resolveByType, substitutePlaceholders, type ConcreteVariant } from "vs-wiki-core/variantExpander.js";
-import { attachToBase, compactShape } from "vs-schematic/shapeBoxes.js";
+import { expandVariants, resolveByType, substitutePlaceholders, type ConcreteVariant } from "@nf3t/vs-wiki-core/variantExpander.js";
+import { attachToBase, compactShape } from "@nf3t/vs-schematic/shapeBoxes.js";
 
 /** The player body shape that worn items (armor, clothes) hang their elements on via `stepParentName`. */
 const BODY_SHAPE = "game:shapes/entity/humanoid/seraph-faceless.json";

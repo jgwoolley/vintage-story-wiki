@@ -21,8 +21,11 @@ though the recipe/loot walk alone never would have":
   <li>block-drop-only blocks (break a block, get an item, with no recipe producing that block)</li>
   <li>tagged tools (<code>attachItemMetadata</code> in <code>crossref.ts</code> -- only ~23 files in the whole game declare a <code>tags</code> array at all)</li>
   <li>trader-only and NPC-dialogue-reward-only items (nothing else references them, but a trade listing or a reward still deserves a page)</li>
-  <li>anything matched by <code>vs-manifest.json</code>'s <code>includeItems</code> globs (<code>includeManifestItems</code> in <code>crossref.ts</code>) -- a hand-picked list for things no rule reaches at all, like static translocators</li>
+  <li>anything matched by <code>vs-manifest.json</code>'s <code>wikiIncludeItems</code> globs (<code>includeManifestItems</code> in <code>crossref.ts</code>) -- a hand-picked list for things no rule reaches at all, like static translocators</li>
 </ul>
+<p>
+  Families of variants (the same ingot in every metal) are listed separately on <a href="{{ ('/' ~ lang ~ '/') | url }}variants/">Variants</a>. Paintings are on <a href="{{ ('/' ~ lang ~ '/') | url }}paintings/">their own page</a> and left out of this listing.
+</p>
 <p>
 Paintings, tapestries, and clothing are a deliberate, separate exception: they never join this
 index at all, since they're pure decor with no recipe/drop/worldgen tie -- they get their own

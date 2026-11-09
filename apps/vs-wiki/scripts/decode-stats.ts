@@ -3,7 +3,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { wikiGameDir } from "../src/ingest/gamePaths.js";
 import { listSchematicFiles } from "../src/ingest/schematicHeader.js";
-import { decodeBlockEntity } from "vs-schematic/schematicDecode.js";
+import { decodeBlockEntity } from "@nf3t/vs-schematic/schematicDecode.js";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 

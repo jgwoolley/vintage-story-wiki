@@ -1,0 +1,26 @@
+---
+title: Variants - Vintage Story Wiki
+description: Families of variants the game groups together, such as the same ingot in every metal or the same ore in every rock.
+layout: layouts/base.njk
+permalink: "{{ lang }}/variants/index.html"
+---
+{% import "macros/datatable.njk" as dt %}
+{% import "macros/breadcrumb.njk" as bc %}
+{{ bc.trail(lang, [{label: "Variants"}]) }}
+<h1>Variants</h1>
+<p class="muted">
+  {{ generated.variantFamilies.length }} families. The game's handbook shows items and blocks that differ only in a variant
+  (metal, rock, wood, grade...) as one cycling icon; this page lists each such family once, with every variant on its own page.
+  <a href="{{ ('/' ~ lang ~ '/') | url }}items/">Items &amp; Blocks</a> still lists every variant separately.
+  <a href="{{ ('/' ~ lang ~ '/') | url }}sources/variants/">Where this comes from &rarr;</a>
+</p>
+{% call dt.datatable(60, "Search variant families...", ["Family", "Example", "Variants"]) %}
+{% for f in generated.variantFamilies | sort(false, false, "key") %}
+  {% set p = f.primary.split(":") %}
+  <tr data-search="{{ f.key }} {{ generated.items | displayName(p[0], p[1]) }}" data-category="{{ generated.items | itemKind(p[0], p[1]) }}">
+    <td><a href="{{ ('/' ~ lang ~ '/') | url }}variants/{{ f.id }}/"><code>{{ f.key.split(":")[1] }}</code></a></td>
+    <td>{{ generated.items | displayName(p[0], p[1]) }}</td>
+    <td>{{ f.members.length }}</td>
+  </tr>
+{% endfor %}
+{% endcall %}

@@ -4,14 +4,26 @@ Vintage Story dev tools on the command line, for anyone (human or coding agent) 
 
 ```
 vsdev render <file>...   render models (with animations), schematics and ChiselTools .pf shapes to PNGs, headless
-vsdev game               download the dedicated server (the game client is never downloaded: see below)
+vsdev game               download the dedicated server (the game client only with --client --accept-client-terms: see below)
 vsdev mod <command>      other people's mods: search, info, install (with dependencies), update, extract
 vsdev moddb <command>    your mods' ModDB pages: check, status, scaffold, pull, diff, serve (review page), export (static site)
 vsdev download           the dedicated server and pinned mods from a vs-manifest.json
+vsdev search <text>...   search the wiki (items, creatures, structures, guides...) from the terminal
+vsdev screenshots [name...] render the schematic screenshots listed in vs-manifest.json to PNGs (for a ModDB page)
+vsdev manifest <command> vs-manifest.json as a requirements file: freeze (folder -> manifest), install (manifest -> folder)
 vsdev paths              where every location below resolves, and why
 ```
 
 Each command has `--help`. Relative paths are taken from the directory you run it in.
+
+## Agent skills
+
+The repo is also a Claude Code marketplace (`.claude-plugin/marketplace.json`, skills in `skills/`) teaching coding agents to use vsdev:
+`vsdev-render`, `vsdev-mods`, `vsdev-game-setup`, `vsdev-moddb`, `vsdev-screenshots` and `vsdev-wiki-search`. Claude Code: `claude plugin marketplace add jgwoolley/vintage-story-wiki`,
+then `claude plugin install vsdev@vintage-story-wiki`. The oh-my-pi marketplace is `.omp-plugin/marketplace.json`; both files are written by `npx @nf3t/skills-pages repo-files . --yes` (rerun it after adding or
+renaming a skill). `vs-manifest.schema.json` is symlinked into the skills that read the manifest (`vsdev-mods`, `vsdev-game-setup`): a git install
+(`claude plugin marketplace add`, a clone) gets it, but skills-pages skips symlinks, so the site's per-skill zips don't. Other agents: `npx skills add jgwoolley/vintage-story-wiki`. Check them with
+`npx @nf3t/skills-pages check . --strict`; keep them in sync when a command changes.
 
 ## Install
 
@@ -45,10 +57,11 @@ downloads stop at 4: vsdev never writes into a real game install unless a flag, 
 | Game version | `--game-version` | `VINTAGE_STORY_VERSION` | `gameVersion` (or `serverVersion`) | the found game install's `assets/version-*.txt` | the newest stable version on ModDB |
 | Built mods | `--releases-dir` | | `releasesDir` | `./Releases` (the template's CakeBuild output) | |
 | Page sources | `--pages-dir` | | `pagesDir` | `./moddb` | |
+| Wiki (`vsdev search`) | `--wiki` | `VSDEV_WIKI_URL` | `prodWikiUrl` | the project's own wiki | |
 
 - **Client and server are one location.** The server download is a strict subset of the client (all its files, `VintagestoryServer`
   included, are in the client, which adds textures, sounds, shaders and the game executable: about 905 MB against 322 MB unpacked).
-  Readers prefer a client (your installed game); `vsdev game` only ever downloads the server. `vsdev render` skips server-only
+  Readers prefer a client (your installed game); `vsdev game` downloads the server (the client only with `--client --accept-client-terms`). `vsdev render` skips server-only
   installs when looking for textures.
 - `vs-manifest.json` is the nearest one in this folder or a parent; paths in it are relative to it. A mod project can pin
   everything in a few lines: `{ "gameDir": "~/.local/share/vintagestory", "gameVersion": "1.22.7", "gameKind": "client" }`
@@ -79,14 +92,16 @@ marker in what it installs):
 
 `--force` always reinstalls.
 
-**The game client is deliberately not downloaded.** We know where it is (the same CDN path with `vs_client_linux-x64_`; the old
-`extract.sh` in translocator-locator-cmd fetched it), but it's the paid game, and the
-[Terms of Service](https://www.vintagestory.at/tos.html) frame downloading it as part of an account that bought it. Until the Vintage
-Story developers confirm that fetching it this way is acceptable (we may ask them), vsdev uses the copy you installed from your
-account (Client Area, `https://account.vintagestory.at/`): it finds it in the default install location by itself, or through
-`--game-dir` / `$VINTAGE_STORY` / `gameDir`. `vsdev game --client` prints this and exits. The note is repeated in
-`src/game/download.ts`; don't add a client download back without that confirmation. The same question could be asked of the server
-download, which the wiki has always used; the wiki's "Game file locations" page says so publicly.
+**The game client is not downloaded by default, and only with your say-so.** It is at the same CDN path with `vs_client_linux-x64_`
+(the old `extract.sh` in translocator-locator-cmd fetched it), but it's the paid game, and the
+[Terms of Service](https://www.vintagestory.at/tos.html) frame downloading it as part of an account that bought it. So
+`vsdev game --client` alone prints where the client comes from (Client Area, `https://account.vintagestory.at/`) and exits. If you have
+read the terms or checked with the Vintage Story developers and downloading it this way is fine for your use, add
+`--accept-client-terms` (`vsdev game --client --accept-client-terms`; `vsdev download` takes the same flag with `"gameKind": "client"`):
+that statement is yours, so there is no default, environment variable or config key for it. The client unpacks to the same location as
+the server (`.vsdev-game.json` records it, so only installs vsdev made are replaced). Most people should still point vsdev at the copy
+they installed: it's found in the default install location, or through `--game-dir` / `$VINTAGE_STORY` / `gameDir`. The note is repeated
+in `src/game/download.ts`.
 
 ## `vsdev mod`
 
@@ -200,6 +215,73 @@ A GitHub Actions job that builds and publishes it (not part of this repo):
       - uses: actions/deploy-pages@v4
 ```
 
+## `vsdev search`
+
+```
+vsdev search <text>... [--kind Item] [--limit 10] [--lang en] [--wiki <url>] [--json]
+```
+
+Searches the wiki the way its header search box does: it fetches `<wiki>/assets/searchIndex.json` (rows of title, page, kind, code) and ranks
+titles that start with the text, then titles with a word that starts with it, then titles and codes that contain it; several words must all
+appear. Prints title, kind, code and the page's address (`--json`: the same as data; exit 1 when nothing matches). `--kind` takes a page kind
+(`Item`, `Block`, `Creature`, `Structure`, `Guide`... the error lists them). The wiki is `--wiki`, else `$VSDEV_WIKI_URL`, else `prodWikiUrl` in
+`vs-manifest.json`, else this project's own deployment, so a fork or a mod project can point it at its own build. Needs the network.
+
+## `vsdev manifest`
+
+`vs-manifest.json` works like a requirements file: its `mods` list pins what a project needs, and both directions are one command.
+
+| Command | |
+|---|---|
+| `freeze [--from mods\|releases] [-p dir] [--releases-dir dir] [--manifest file] [--prune] [--dry-run] [-y]` | like `pip freeze`: write the mods found in a folder into `mods` |
+| `install [--manifest file] [-p dir] [--force]` | like `pip install -r`: download the listed mods into the Mods folder (no game server; `vsdev download` does the server too) |
+
+`freeze --from mods` (the default) reads a game Mods folder by the location rule (`-p`, `$VINTAGE_STORY_DATA`, `dataDir`, `./Mods`, then the
+game's own data folder; `vsdev paths` shows which); `--from releases` reads a mod project's built zips (`releasesDir`, `./Releases`). Each mod
+is pinned at its newest version there (the copy the game would load); zips with no readable `modinfo.json` are listed as skipped. By default
+the list is only added to and updated (entries keep their order and spelling; new mods go at the end); `--prune` also drops listed mods the
+folder doesn't have. It shows the changes and asks first (no terminal: `-y`; `--dry-run` writes nothing). Only `mods` is written, the other
+keys stay, but the file is reformatted as two-space JSON. With no manifest it creates `./vs-manifest.json`. `install` does not follow
+dependencies (pin them, or use `vsdev mod install`).
+
+A mod entry can also carry `"src": "MyModFolder"`, the folder with your own mod's source (where its `modinfo.json` is, relative to `vs-manifest.json`), which maps the modid to its folder name. `freeze` keeps it, and `modSourceDirs` (`src/manifest/edit.ts`) reads it. Nothing else uses it yet.
+
+## `vsdev screenshots`
+
+Renders the schematics you list in `vs-manifest.json` from the camera angles you pick, one PNG each: "create all of these screenshots".
+
+```json
+{
+  "screenshotsDir": "screenshots",
+  "screenshots": [
+    { "name": "ruin-front", "schematic": "betterruins:worldgen/schematics/ruin.json", "view": "south" },
+    { "name": "ruin-corner", "schematic": "schematics/mine.json", "view": [1, 0.6, 1.2], "size": 1600, "maxY": 12 }
+  ]
+}
+```
+
+`vsdev screenshots` renders them all to `./screenshots/<name>.png`; `vsdev screenshots ruin-front` renders one; `--list` shows where each schematic is found without rendering.
+
+- `schematic` is a file relative to `vs-manifest.json`, or `domain:path` inside the game's `assets/` or a mod in `Mods/` (a zip or an unpacked folder; a missing `.json` is added).
+- `view` is `default`, `south`, `east`, `north`, `top`, `back`, or a direction `[x, y, z]` from the model's center (y up, +z south, +x east). `size` is in pixels (default 1280). Also `floor`, `maxY` (a cutaway) and `showFiller`.
+- The game is `./vintagestory` and the mods `./Mods` unless `vs-manifest.json` (`gameDir`, `dataDir`), `$VINTAGE_STORY` / `$VINTAGE_STORY_DATA` or `--game-dir` / `-p` say otherwise (`vsdev paths`).
+- `model` instead of `schematic` renders a shape file (`survival:shapes/block/...`, or a path) with its real textures from the game client (`vsdev render`'s textures; asset names are matched case-insensitively, like the game).
+- `scene` instead of a single source puts several parts in one image, e.g. a player in armor next to a broken translocator:
+
+  ```json
+  { "name": "repair", "view": [-1, 0.5, 1.4], "scene": [
+      { "model": "survival:shapes/block/machine/statictranslocator/broken.json", "at": [0, 0, 0] },
+      { "player": { "wear": ["armor-head-antique-forlorn-pristine", "armor-body-antique-forlorn-pristine", "armor-legs-antique-forlorn-pristine"],
+                    "hold": "rod-cupronickel", "holdScale": 1.8, "animation": "insertgear", "frame": 30 },
+        "at": [1.5, 0, 0.6], "facing": "west" } ] }
+  ```
+
+  A `model` part sits with its block corner at `at` (blocks: x east, y up, z south; `rotationY`, `scale`). A `player` is the seraph body in one of its animations (`insertgear`, `idle1`, `wave`...: `frame` holds one moment, 30 per second), standing with its feet at `at`; its own front is west at `rotationY` 0, or give `facing`. `wear` lists item codes: each is found in the game's `itemtypes`, its shape hangs on the body's bones like in the game, and the body parts it disables (hair under a helmet) are hidden. `hold` / `holdLeft` put an item in a hand using the game's hand attachment point and the item's `tpHandTransform` (or the default). The game draws most items small in the hand, so `holdScale` enlarges them for an image. It is the same untextured-lighting renderer as the rest, not the game's: no face or eyes are painted, one pose, no hair styles. Item and block types are read from the game install only (not from mods).
+- `title`, `subtitle`, `logo` (PNG, JPEG, SVG or WebP, relative to `vs-manifest.json`), `textAt` / `logoAt` (`top-left`, `top-right`, `bottom-left`, `bottom-right`) and `background` (a CSS color) draw text and a logo over the image, for a ModDB banner. `height` makes a non-square image (`"size": 1920, "height": 1080`), and `output` writes the PNG to a path of your choice (e.g. `MyMod/Screenshots/Main.png`) instead of `<screenshotsDir>/<name>.png`.
+- `preset` sets sizes for ModDB: `modicon` (128x128, transparent: the icon the game shows), `moddb-logo` (480x480) and `moddb-logo-wide` (480x320, no margin). A ModDB logo is one of the mod's screenshots, shown on its card with the title and counts over the bottom part and a New!/Draft ribbon across the top-right corner, so these presets frame the subject above that (`safe`: `{ "bottom": 0.3 }` sets your own margins). Icons and logos read best as art only, since the card and mod lists already print the name. Prefer `moddb-logo-wide` (480x320): ModDB makes the 480x480 card image from it, adding the reflection below itself (inferred from BetterRuins' two files), so don't draw one (`"reflection": true` exists for square uploads). An entry with only a `logo` (no `schematic`/`model`) is an icon: the image fills the safe area, e.g. `{ "name": "icon", "logo": "MyMod/modicon.svg", "preset": "modicon", "output": "MyMod/modicon.png" }`.
+- `vsdev screenshots --guides` writes `<name>-guides.png` with the covered areas shaded red, to check a layout before uploading.
+- The images have no title or legend of their own. Blocks are drawn in their block colors and chiseled blocks as their cuboids, like `vsdev render`. Entities inside a schematic (players, creatures) are not drawn, only blocks and chiseled blocks.
+
 ## `vsdev download`
 
 ```
@@ -271,7 +353,7 @@ behind the wiki's and the extension's animation picker. Keyframes are interpolat
 
 ### Textures, colors and limits
 
-- **Model textures** are looked up the way the game does (`vs-schematic/textureFiles.js`). A path without a domain belongs to the
+- **Model textures** are looked up the way the game does (`@nf3t/vs-schematic/textureFiles.js`). A path without a domain belongs to the
   model's own domain. `game:` textures are spread over `assets/survival`, `assets/game` and `assets/creative`. The search covers the
   model's own `assets/` tree first, then `--game`. The dedicated server ships almost no textures, so it is refused. Each face uses its
   own `uv` and `rotation`, pixelated, with cut-out transparency. A key with no image is drawn in its own hash color, and the legend

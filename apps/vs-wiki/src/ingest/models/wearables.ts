@@ -1,6 +1,6 @@
 import type { ArmorEntry, ArmorProtection, AssetIndex, RepairMaterial, WearableStats } from "../types.js";
-import { expandVariants, resolveByType } from "vs-wiki-core/variantExpander.js";
-import type { LangResolver } from "vs-wiki-core/lang.js";
+import { expandVariants, resolveByType } from "@nf3t/vs-wiki-core/variantExpander.js";
+import type { LangResolver } from "@nf3t/vs-wiki-core/lang.js";
 import { num, prop } from "./gear.js";
 
 const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);

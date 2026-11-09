@@ -1,5 +1,5 @@
 import type { AssetIndex, BlockPatchSpawnInfo, CropProps } from "../types.js";
-import { assetsUnderAnyDomain } from "vs-wiki-core/assetLoader.js";
+import { assetsUnderAnyDomain } from "@nf3t/vs-wiki-core/assetLoader.js";
 
 /**
  * Crops, flowers, mushrooms, ferns, berry bushes, grass, and misc. plants/aquatic life are placed

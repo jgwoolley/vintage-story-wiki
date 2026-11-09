@@ -1,4 +1,4 @@
-import type { LangResolver } from "vs-wiki-core/lang.js";
+import type { LangResolver } from "@nf3t/vs-wiki-core/lang.js";
 
 /** Splits a possibly domain-prefixed code ("betterruins:schematic-x" / "rock-*") into {domain, bareCode}. */
 export function splitDomainCode(raw: string, fallbackDomain: string): { domain: string; bareCode: string } {

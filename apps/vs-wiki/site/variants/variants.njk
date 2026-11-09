@@ -1,0 +1,27 @@
+---
+pagination:
+  data: generated.variantFamilies
+  size: 1
+  alias: family
+permalink: "{{ lang }}/variants/{{ family.id }}/index.html"
+layout: layouts/base.njk
+eleventyComputed:
+  title: "Variants of {{ family.key | replace('survival:', '') | safe }} - Vintage Story Wiki"
+---
+{% import "macros/itemlink.njk" as il %}
+{% import "macros/breadcrumb.njk" as bc %}
+{% set p = family.primary.split(":") %}
+{{ bc.trail(lang, [{label: "Variants", url: "variants/"}, {label: family.key.split(":")[1]}]) }}
+<h1>Variants of <code>{{ family.key.split(":")[1] }}</code></h1>
+<p class="muted">
+  {{ family.members.length }} variants the game's handbook groups as one cycling icon. The example it shows first is
+  {{ il.link(lang, generated.items, p[0], p[1]) }}. Each variant has its own page with its own recipes, drops and trades.
+</p>
+<table>
+  <thead><tr><th>Name</th><th>Item Code</th></tr></thead>
+  <tbody>
+  {% for m in family.members %}{% set mp = m.split(":") %}
+    <tr><td>{{ il.link(lang, generated.items, mp[0], mp[1]) }}</td><td><code>{{ m }}</code></td></tr>
+  {% endfor %}
+  </tbody>
+</table>

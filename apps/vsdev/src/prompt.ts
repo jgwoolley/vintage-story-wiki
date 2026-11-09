@@ -1,15 +1,12 @@
-// The [y/N] confirmation before a command changes files. Without a terminal there is nobody to ask, so it refuses unless -y was
-// given (scripts and agents pass -y), rather than silently going ahead or hanging.
-import { createInterface } from "node:readline/promises";
+// The confirmation before a command changes files (clack's yes/no prompt, the same as skills-pages). Without a terminal there is nobody
+// to ask, so it refuses unless -y was given (scripts and agents pass -y), rather than silently going ahead or hanging.
+import { confirm as ask, isCancel } from "@clack/prompts";
 import { CliError } from "./errors.js";
 
 export async function confirm(question: string, yes: boolean): Promise<boolean> {
   if (yes) return true;
-  if (!process.stdin.isTTY) throw new CliError(`${question} needs confirmation: pass -y (no terminal to ask on)`, 2);
-  const rl = createInterface({ input: process.stdin, output: process.stdout });
-  try {
-    return /^y(es)?$/i.test((await rl.question(`${question} [y/N] `)).trim());
-  } finally {
-    rl.close();
-  }
+  const message = question.trim();
+  if (!process.stdin.isTTY || !process.stdout.isTTY) throw new CliError(`${message} needs confirmation: pass -y (no terminal to ask on)`, 2);
+  const answer = await ask({ message, initialValue: false });
+  return !isCancel(answer) && answer;
 }

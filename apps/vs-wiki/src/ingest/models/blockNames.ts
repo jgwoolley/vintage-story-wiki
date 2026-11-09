@@ -1,6 +1,6 @@
 import type { AssetIndex } from "../types.js";
-import type { LangResolver } from "vs-wiki-core/lang.js";
-import { expandVariants } from "vs-wiki-core/variantExpander.js";
+import type { LangResolver } from "@nf3t/vs-wiki-core/lang.js";
+import { expandVariants } from "@nf3t/vs-wiki-core/variantExpander.js";
 
 /** Vanilla assets live in several asset folders, but schematics (and the game at runtime) refer to all of them as the "game" domain. */
 const VANILLA_FOLDER_DOMAINS = new Set(["game", "survival", "creative"]);

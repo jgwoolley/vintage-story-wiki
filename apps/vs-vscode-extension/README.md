@@ -1,4 +1,4 @@
-# Vintage Story Schematic Preview
+# Nf3t's Vintage Story Tools
 
 Preview Vintage Story worldgen schematics (`.json` and the wiki's `.json.gz` copies) as an interactive 3D
 voxel model, without leaving VS Code.
@@ -10,14 +10,14 @@ voxel model, without leaving VS Code.
 - Also opens Vintage Story **model (shape) files** (`assets/<domain>/shapes/**.json`: items, creatures, blocks, armor, clothes) as an untextured 3D model of boxes, with a legend of the model's texture names. Armor and clothing models only name a bone of the player body; they are placed on it when `shapes/entity/humanoid/seraph-faceless.json` can be found in the same `assets/<domain>/` tree (or the sibling `game` / `survival` one). A model with animations gets an **Animation** picker in the toolbar that plays them in a loop (worn items stay in their rest pose). **Show floor** draws a grid of one-block squares at ground level, to judge where a model sits.
 - **Model textures**: run **Vintage Story: Select Game Folder** (or click **Choose game folder** under a model's legend) and pick the game *client* install (the dedicated server has almost no textures; the folder is checked). The setting is `vsSchematic.gameFolder`. A model's legend then shows each texture key's real texture and says which ones couldn't be found; textures in the model's own `assets/<domain>/` tree are found without the setting. The 3D view itself is still drawn in per-key colors for now.
 - Also opens QPTech ChiselTools shape files (saved with `.pf save`, in the `chiselportfolio` folder, or named `*.pf`): the chiseled block's shape in 3D plus its materials.
-- Settings (**File > Preferences > Settings**, search "Nf3t's Vintage Story Schematic Preview"): `vsSchematic.showCenterMarker` draws a marker at the middle of the shape (the camera's orbit point) and `vsSchematic.showGrid` draws a grid on the y = 0 plane. Both apply to open previews immediately.
+- Settings (**File > Preferences > Settings**, search "Nf3t's Vintage Story Tools"): `vsSchematic.showCenterMarker` draws a marker at the middle of the shape (the camera's orbit point) and `vsSchematic.showGrid` draws a grid on the y = 0 plane. Both apply to open previews immediately.
 - Reloads when the file changes on disk.
 
 ## Using it
 
 The preview never replaces VS Code's normal JSON editor. Right-click a schematic in the Explorer and choose
 **Preview Schematic**, use the button in the editor title bar, run **Vintage Story: Preview Schematic** from the
-Command Palette, or pick **Open With... > Vintage Story Schematic Preview**. A JSON file that is neither a schematic nor a model
+Command Palette, or pick **Open With... > Nf3t's Vintage Story Tools**. A JSON file that is neither a schematic nor a model
 shows an error instead of a preview.
 
 ## Developing

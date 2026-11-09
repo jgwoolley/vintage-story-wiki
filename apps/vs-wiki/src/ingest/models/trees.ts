@@ -1,6 +1,6 @@
 import type { AssetIndex, FruitTreeSpawnInfo, TreeSpawnInfo } from "../types.js";
-import { assetsUnderAnyDomain } from "vs-wiki-core/assetLoader.js";
-import { expandVariants, resolveByType } from "vs-wiki-core/variantExpander.js";
+import { assetsUnderAnyDomain } from "@nf3t/vs-wiki-core/assetLoader.js";
+import { expandVariants, resolveByType } from "@nf3t/vs-wiki-core/variantExpander.js";
 
 type RawGenEntry = {
   Generator?: string;

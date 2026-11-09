@@ -1,7 +1,21 @@
 {
-  "name": "vintage-story-wiki",
+  "name": "@nf3t/vintage-story-wiki",
   "version": "0.1.0",
   "private": true,
+  "author": "Nf3t (https://github.com/jgwoolley)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwoolley/vintage-story-wiki.git"
+  },
+  "homepage": "https://github.com/jgwoolley/vintage-story-wiki#readme",
+  "bugs": {
+    "url": "https://github.com/jgwoolley/vintage-story-wiki/issues"
+  },
+  "keywords": [
+    "vintage-story",
+    "wiki"
+  ],
+  "license": "UNLICENSED",
   "type": "module",
   "scripts": {
     "download": "tsx apps/vs-wiki/scripts/download.ts",
@@ -14,7 +28,7 @@
     "test": "tsx --test libs/*/test/*.test.ts apps/*/test/*.test.ts",
     "check-links": "tsx apps/vs-wiki/scripts/check-links.ts",
     "decode-stats": "tsx apps/vs-wiki/scripts/decode-stats.ts",
-    "build:libs": "npm run build -w vs-schematic",
+    "build:libs": "npm run build -w @nf3t/vs-schematic",
     "build:extension": "npm run package -w vs-vscode-extension"
   },
   "devDependencies": {

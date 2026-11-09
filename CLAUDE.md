@@ -18,6 +18,7 @@ npm run build       # ingest + eleventy build into _site/
 npm run serve       # same, with live reload
 npm run typecheck   # tsc --noEmit over libs/ + apps/
 npm run clean        # rm -rf .scratch _site apps/vs-wiki/site/_data/generated
+docker compose up -d  # dev only: serves _site/ at http://vintagestory-wiki.localhost (compose.yml; build with SITE_URL set first)
 ```
 
 `vssurvivalmod/` at the repo root (gitignored) is a clone of the game's C# source
@@ -52,11 +53,11 @@ wiki itself stays untextured (the server download has no textures, and game art 
 (`src/render/page/`) has its own DOM tsconfig and is excluded from the root one.
 
 The rest of `vsdev` (`apps/vsdev/README.md`, package `@nf3t/vsdev`: the user owns the `@nf3t` npm scope, prefer it for
-packages): `vsdev game` downloads the dedicated server only. **The client is deliberately never downloaded**, though its CDN address is
-known (`vs_client_linux-x64_<v>.tar.gz`): it's the paid game, the ToS frame its download as part of an account, and the user may ask the
-Vintage Story developers whether anonymous fetching is acceptable; until then vsdev uses the user's installed game (`render` finds it in
-the default install location or via `$VINTAGE_STORY`). Don't add a client download (in vsdev, CI or a script) without that confirmation.
-`vsdev mod search|info|install|update|extract` `vsdev mod search|info|install|update|extract` installs other people's mods (`--source <site>` installs from a
+packages; every workspace package is `@nf3t/`-scoped except `vs-vscode-extension`, which `vsce` rejects when scoped, see `NAMING.md`): `vsdev game` downloads the dedicated server by default. **The client is only downloaded on `vsdev game --client --accept-client-terms`** (also
+`vsdev download`); `--client` alone just explains where it comes from. It's the paid game and the ToS frame its download as part of an account, so
+the acknowledgement is the user's own statement that they checked the terms / the developers: never default it, read it from env/config, or pass it
+in CI or a script on their behalf. Otherwise vsdev uses the user's installed game (`render` finds it in the default install location or via `$VINTAGE_STORY`).
+`vsdev screenshots [name...]` renders the `screenshots` list of `vs-manifest.json` (schematic, model or a `scene` of models plus a dressed player holding items (`render/scene.ts`, `render/collectible.ts`) + camera angle, `domain:path` read from the game or `Mods/` zips; `commands/screenshots.ts`; wiki-only keys are prefixed `wiki`, e.g. `wikiIncludeItems`). `vsdev search <text>` searches the deployed wiki's `assets/searchIndex.json` (address: `--wiki`, `$VSDEV_WIKI_URL`, `prodWikiUrl` in `vs-manifest.json`, else the project's own; `resolveWikiUrl` in `locations.ts`), and `vsdev manifest freeze|install` treats `vs-manifest.json` like a requirements file (`freeze` writes the mods of a Mods/Releases folder into `mods`, `install` = `download --mods-only`). The repo is also an agent-skills marketplace (`skills/`, `.claude-plugin/` and `.omp-plugin/marketplace.json`, regenerated with `npx @nf3t/skills-pages repo-files . --yes`; `vs-manifest.schema.json` is symlinked into three skills). `vsdev mod search|info|install|update|extract` installs other people's mods (`--source <site>` installs from a
 `vsdev moddb export` site's `mods.json`), and `vsdev moddb check|status|scaffold|pull|diff|serve|export` is the port of the user's C#
 ModDbCli (their mods' pages kept in `./moddb/<modid>/`, a local review page, and a static GitHub Pages site with the unpublished zips;
 `diff` output is byte-identical to the C# tool's on translocator-locator-cmd's pages, keep it that way).
@@ -80,7 +81,7 @@ game's code (search's `gv[]` returns HTTP 500; `gameversions[]` works), the code
 
 Everything is still run **from the repo root** (all pipeline paths are cwd-relative; `vintagestory/`, `Mods/`,
 `.scratch/`, `_site/`, `vs-manifest.json` and the reference clones stay at the root). Apps import libs by
-package name (`vs-wiki-core/lang.js`, `vs-schematic/schematicDecode.js`; `exports` map `./*.js`). 
+package name (`@nf3t/vs-wiki-core/lang.js`, `@nf3t/vs-schematic/schematicDecode.js`; `exports` map `./*.js`). 
 `libs/vs-schematic` is TypeScript: browsers can't run it, so `npm run build:libs` (`tsc`, run first by `build`/
 `rebuild`/`serve` and in CI) compiles it to the gitignored `libs/vs-schematic/dist/`, and an Eleventy passthrough
 (`eleventy.config.js`, `dist/*.js` only) ships that to `/assets/`, so site scripts still import
@@ -134,7 +135,7 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   `ensureSpawnTarget(domain, code, kind)` in `apps/vs-wiki/src/ingest/index.ts` for things with no recipe and
   (for the first three) no drop table. For one-off things no rule reaches at all (static
   translocators, teleporters), don't write a new carve-out: add a `domain:code` glob to
-  `vs-manifest.json`'s `includeItems` (validated by `vs-manifest.schema.json`, which must stay in
+  `vs-manifest.json`'s `wikiIncludeItems` (validated by `vs-manifest.schema.json`, which must stay in
   sync with `VsManifest` in `types.ts`). Paintings/tapestries/clothing (`models/decor.ts`) are a
   separate, parallel carve-out that never joins the item index at all — they get their own
   dedicated top-level pages (`/paintings/`, `/tapestries/`, `/clothing/`) instead, each backed by
@@ -147,6 +148,7 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   thing. If you're asked to surface some other spawn-only/recipe-less content type, pick whichever
   of these two patterns fits (joins the item index vs. gets its own dedicated page) — don't force
   it through `crossref.ts`'s recipe/loot walk either way.
+- **Variant families live on their own `/variants/` pages, not in `/items/`** (`apps/vs-wiki/src/ingest/grouping.ts`: the game's `handbook.groupBy` with `{placeholders}` filled from each variant's values; `generated.variantFamilies`, `ItemIndexEntry.variantFamily`). The user rejected folding them into `/items/` (all ingots became one row), so `/items/` lists every variant; don't fold it again. It runs after every step that adds index entries; add new ones before it. Paintings aren't grouped by the game (each is its own `groupBy` family), so they're left out of `/items/` through `listedElsewhere` and linked to `/paintings/`.
 - **Content is organized by what the thing is, not by mechanism.** `/creatures/` is entity-only
   (stats, spawn conditions, own drop table); a block's drops live directly on that block's own
   `/items/` page (a "Drops" section, forward direction) rather than a separate per-source listing.
@@ -362,7 +364,7 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   again, keep that branch rather than assuming it's always a clean probability.
 - **The whole download/ingest/build pipeline is pure Node/npm** — the downloading (`apps/vsdev/src/game/download.ts`,
   `src/download/manifest.ts`, which `apps/vs-wiki/scripts/download.ts` wraps to add `Mods/*.meta.json` and the timing file) uses the
-  pure-JS `tar` package, not a shelled-out system binary. Never download the game *client* anywhere (see the vsdev paragraph near the top; the wiki stays untextured). If you add a new external-tool
+  pure-JS `tar` package, not a shelled-out system binary. Never download the game *client* in the wiki's pipeline or CI (see the vsdev paragraph near the top; the wiki stays untextured). If you add a new external-tool
   dependency to any script, prefer an npm package over shelling out, to keep this property true.
 - **Eleventy cannot report its own total build duration to its own templates** — there's no point
   in its lifecycle where it both knows the number and can still write it into the HTML it's

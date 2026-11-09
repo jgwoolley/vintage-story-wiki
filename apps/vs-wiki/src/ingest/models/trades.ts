@@ -1,5 +1,5 @@
 import type { AssetIndex, TradeList, TradeListing } from "../types.js";
-import { assetsUnderAnyDomain } from "vs-wiki-core/assetLoader.js";
+import { assetsUnderAnyDomain } from "@nf3t/vs-wiki-core/assetLoader.js";
 
 type RawListing = { code?: string; type?: string; stacksize?: number; stock?: { avg?: number; var?: number }; price?: { avg?: number; var?: number }; attributes?: { type?: unknown } };
 

@@ -165,9 +165,22 @@ export default function (eleventyConfig) {
     }
     return map;
   };
-  eleventyConfig.addFilter("displayName", (items, domain, code) => itemMap(items).get(`${domain}:${code}`)?.displayName ?? code);
+  // Recipes name vanilla things as `game:rope` while the index holds `survival:rope` (the game's `game:` is an alias), so a
+  // lookup tries the vanilla domains before giving up.
+  const VANILLA = ["game", "survival", "creative"];
+  const findItem = (items, domain, code) => {
+    const map = itemMap(items);
+    const hit = map.get(`${domain}:${code}`);
+    if (hit || !VANILLA.includes(domain)) return hit;
+    for (const d of VANILLA) { const h = map.get(`${d}:${code}`); if (h) return h; }
+    return undefined;
+  };
+  eleventyConfig.addFilter("displayName", (items, domain, code) => findItem(items, domain, code)?.displayName ?? code);
+  eleventyConfig.addFilter("itemKind", (items, domain, code) => findItem(items, domain, code)?.kind ?? "");
+  // The domain the index really files domain:code under (`game:` -> `survival:`), for building a page URL.
+  eleventyConfig.addFilter("itemDomain", (items, domain, code) => findItem(items, domain, code)?.domain ?? domain);
   // Whether an item page exists for domain:code -- templates must not link a page that was never generated.
-  eleventyConfig.addFilter("itemExists", (items, domain, code) => itemMap(items).has(`${domain}:${code}`));
+  eleventyConfig.addFilter("itemExists", (items, domain, code) => !!findItem(items, domain, code));
   // Whether a `?q=` search of the item list finds a row, using the listing's own matching (substring over name, code, kind and
   // mod; `a or b` = either; `*` = glob), so a wildcard link isn't offered when it would open an empty table.
   const searchHits = new WeakMap();

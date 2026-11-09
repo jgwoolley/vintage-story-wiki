@@ -1,11 +1,13 @@
 // `vsdev game`: download the Vintage Story dedicated server into the game install location (see src/locations.ts). The client is
 // deliberately not downloaded (see src/game/download.ts); `--client` explains where it comes from.
+import { intro, log, outro, spinner } from "@clack/prompts";
 import path from "node:path";
 import { parseCommand } from "../args.js";
 import { UsageError } from "../errors.js";
 import { CLIENT_NOT_DOWNLOADED, installServer, type GameKind } from "../game/download.js";
 import { defaultLocationEnv, findConfig, resolveGameDir, type LocationEnv } from "../locations.js";
 import { latestStableGameVersion, ModDb } from "../mods/moddb.js";
+import { bold, cyan, dim } from "../moddb/ansi.js";
 import { userCwd } from "../paths.js";
 
 export const GAME_USAGE = `Usage: vsdev game [--server] [options]
@@ -26,7 +28,8 @@ What happens to a folder that isn't empty:
 
 Options:
   --server             download the dedicated server (the default)
-  --client             say where the game client comes from instead (it isn't downloaded)
+  --client             download the game client instead (the paid game: needs --accept-client-terms, else it says where it comes from)
+  --accept-client-terms  you checked the Terms of Service / the Vintage Story developers and may download the client for your use
   --version <v>        game version (default: $VINTAGE_STORY_VERSION, vs-manifest.json, else the newest stable on ModDB)
   --branch <b>         stable or unstable (default: vs-manifest.json serverBranch, else stable)
   --game-dir <dir>     where to install (--dir is the same)
@@ -41,6 +44,8 @@ export interface GameArgs {
   /** Where `dir` came from (--game-dir, $VINTAGE_STORY, vs-manifest.json gameDir, ./vintagestory...). */
   dirFrom: string;
   force: boolean;
+  /** --accept-client-terms: the user's statement that downloading the client is fine for their use. */
+  acceptClientTerms: boolean;
 }
 
 export function parseGameArgs(argv: string[], e: LocationEnv = defaultLocationEnv(userCwd())): GameArgs | "help" {
@@ -52,17 +57,18 @@ export function parseGameArgs(argv: string[], e: LocationEnv = defaultLocationEn
     "game-dir": { type: "string" },
     dir: { type: "string" },
     force: { type: "boolean" },
+    "accept-client-terms": { type: "boolean" },
   });
   if (values.help) return "help";
   if (values.client && values.server) throw new UsageError("pick one of --client and --server");
   const config = e.config === undefined ? findConfig(e.cwd) : e.config ?? undefined;
-  // --client (or "gameKind": "client") only explains where the client comes from; it is never downloaded.
+  // --client (or "gameKind": "client") downloads the client only together with --accept-client-terms; otherwise it explains where it comes from.
   const kind: GameKind = values.server ? "server" : values.client ? "client" : config?.gameKind ?? "server";
   const branch = values.branch ?? config?.serverBranch ?? "stable";
   if (!["stable", "unstable"].includes(branch)) throw new UsageError("--branch must be stable or unstable");
   const target = resolveGameDir({ flag: values["game-dir"] ?? values.dir, mode: "write" }, e);
   const version = values.version ?? e.env.VINTAGE_STORY_VERSION ?? config?.gameVersion;
-  return { kind, branch, version: version?.replace(/^v/i, ""), dir: target.path!, dirFrom: target.label!, force: !!values.force };
+  return { kind, branch, version: version?.replace(/^v/i, ""), dir: target.path!, dirFrom: target.label!, force: !!values.force, acceptClientTerms: !!values["accept-client-terms"] };
 }
 
 /** The newest stable game version on ModDB, or 1.22.7 when ModDB can't be reached. */
@@ -80,26 +86,38 @@ export async function runGame(argv: string[]): Promise<number> {
     console.log(GAME_USAGE);
     return 0;
   }
-  if (options.kind === "client") {
+  if (options.kind === "client" && !options.acceptClientTerms) {
     console.log(CLIENT_NOT_DOWNLOADED);
     return 2;
   }
   const version = options.version ?? (await newestVersion());
-  console.log(`Target: ${options.dir} (from ${options.dirFrom})`);
+  intro(`${bold("vsdev game")} ${dim(`${options.kind} ${version}`)}`);
+  log.info(`Target: ${cyan(options.dir)} ${dim(`(from ${options.dirFrom})`)}`);
+  const tty = !!process.stderr.isTTY;
+  const spin = tty ? spinner() : undefined;
+  spin?.start("Downloading");
   let last = 0;
-  const tty = process.stderr.isTTY;
-  const action = await installServer({
-    ...options,
-    version,
-    onProgress: (done, total) => {
-      if (!tty || Date.now() - last < 200) return;
-      last = Date.now();
-      const mb = (n: number) => (n / 1048576).toFixed(0);
-      process.stderr.write(`\r   ${mb(done)}${total ? ` / ${mb(total)} MB (${Math.floor((done / total) * 100)}%)` : " MB"}   `);
-    },
-  }).finally(() => tty && process.stderr.write("\n"));
-  if (options.dirFrom.startsWith("./") || action === "downloaded") {
-    console.log(`To point vsdev at it (it has no textures; for a mod project's builds point VINTAGE_STORY at your installed game instead): export VINTAGE_STORY="${path.resolve(options.dir)}"`);
+  const mb = (n: number) => (n / 1048576).toFixed(0);
+  let action: Awaited<ReturnType<typeof installServer>>;
+  try {
+    action = await installServer({
+      ...options,
+      version,
+      log: (msg) => (/^(==>|✔)/.test(msg) ? spin?.message(msg.replace(/^(==>|✔)\s*/, "")) : log.info(msg.replace(/^- /, ""))),
+      onProgress: (done, total) => {
+        if (!spin || Date.now() - last < 200) return;
+        last = Date.now();
+        spin.message(`Downloading ${mb(done)}${total ? ` / ${mb(total)} MB (${Math.floor((done / total) * 100)}%)` : " MB"}`);
+      },
+    });
+  } catch (err) {
+    spin?.error("Download failed");
+    throw err;
   }
+  spin?.stop(action === "downloaded" ? "Downloaded" : "Done");
+  if (options.dirFrom.startsWith("./") || action === "downloaded") {
+    log.message(`To point vsdev at it (it has no textures; for a mod project's builds point VINTAGE_STORY at your installed game instead):\n${cyan(`export VINTAGE_STORY="${path.resolve(options.dir)}"`)}`);
+  }
+  outro("Done");
   return 0;
 }

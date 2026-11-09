@@ -1,6 +1,6 @@
 import type { AssetIndex, CodeRef, CSharpClassMap, CSharpRegistrationKind, ItemIndexEntry, LootEntry, NormalizedRecipe } from "./types.js";
-import type { LangResolver } from "vs-wiki-core/lang.js";
-import { expandVariants, globToRegExp, resolveByType, substitutePlaceholders } from "vs-wiki-core/variantExpander.js";
+import type { LangResolver } from "@nf3t/vs-wiki-core/lang.js";
+import { expandVariants, globToRegExp, resolveByType, substitutePlaceholders } from "@nf3t/vs-wiki-core/variantExpander.js";
 import { resolveCodeRef } from "./csharpRefs.js";
 
 
@@ -20,14 +20,44 @@ function cartesianCombos(groups: Record<string, string[]>): Record<string, strin
   return combos;
 }
 
+/** The vanilla asset domains; the game treats `game:` as an alias for them (its items live in `survival`/`creative`). */
+const VANILLA = ["survival", "creative", "game"];
+
+/**
+ * Which mod defines each concrete item/block: `domain:code` -> modid ("game" for vanilla).
+ * Recipes and drop tables name vanilla things as `game:rope` while the asset lives in `survival`, so the
+ * index needs this to put a reference on the real entry (and to credit the real mod, not the referencing one).
+ */
+export type DefinedItems = Map<string, string>;
+
+export function collectDefinedItems(index: AssetIndex): DefinedItems {
+  const defined: DefinedItems = new Map();
+  for (const prefix of ["itemtypes/", "blocktypes/"]) {
+    for (const v of expandVariants(index, [prefix])) {
+      const k = key(v.domain, v.code);
+      if (!defined.has(k)) defined.set(k, v.sourceModid);
+    }
+  }
+  return defined;
+}
+
+/** `game:rope` -> `survival:rope` when only the latter is defined; anything else is returned unchanged. */
+export function canonicalDomain(defined: DefinedItems, domain: string, code: string): string {
+  if (!VANILLA.includes(domain) || defined.has(key(domain, code))) return domain;
+  return VANILLA.find((d) => defined.has(key(d, code))) ?? domain;
+}
+
 export function buildItemIndex(
   recipes: NormalizedRecipe[],
   loot: LootEntry[],
-  lang: LangResolver
+  lang: LangResolver,
+  defined: DefinedItems = new Map()
 ): Map<string, ItemIndexEntry> {
   const items = new Map<string, ItemIndexEntry>();
 
   function ensure(domain: string, code: string, kind: "item" | "block", sourceMod: string): ItemIndexEntry {
+    domain = canonicalDomain(defined, domain, code);
+    sourceMod = defined.get(key(domain, code)) ?? sourceMod;
     const k = key(domain, code);
     let entry = items.get(k);
     if (!entry) {
@@ -225,7 +255,7 @@ export function attachDescriptionsAndCodeRefs(items: Map<string, ItemIndexEntry>
 }
 
 /**
- * vs-manifest.json `includeItems`: force specific items/blocks into the index even when nothing
+ * vs-manifest.json `wikiIncludeItems`: force specific items/blocks into the index even when nothing
  * else reaches them (e.g. static translocators, which have no recipe, drop, or worldgen rule).
  * Each pattern is a `domain:code` glob -- `*` is a wildcard, and a pattern without a `domain:`
  * prefix matches any domain -- tested against every concrete itemtypes/blocktypes variant. Matches

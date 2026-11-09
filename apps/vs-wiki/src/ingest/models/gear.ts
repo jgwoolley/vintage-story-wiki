@@ -1,6 +1,6 @@
 import type { AssetIndex, GearEntry } from "../types.js";
-import type { LangResolver } from "vs-wiki-core/lang.js";
-import { expandVariants, resolveByType } from "vs-wiki-core/variantExpander.js";
+import type { LangResolver } from "@nf3t/vs-wiki-core/lang.js";
+import { expandVariants, resolveByType } from "@nf3t/vs-wiki-core/variantExpander.js";
 
 /**
  * Case-insensitive property read with the engine's `<name>ByType` glob fallback: game JSON mixes

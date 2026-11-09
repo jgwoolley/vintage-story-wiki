@@ -1,5 +1,6 @@
 // `vsdev render <file>...`. Relative paths are resolved against the user's directory (INIT_CWD under `npm run`, which runs
 // workspace scripts from the workspace folder; the process's own directory as a global command).
+import { bold, cyan, dim, green, yellow } from "../moddb/ansi.js";
 import path from "node:path";
 import { CliError } from "../errors.js";
 import { userCwd } from "../paths.js";
@@ -16,23 +17,23 @@ function describe(result: RenderedInput, hint: string): string[] {
   const lines: string[] = [];
   if (result.kind === "model") {
     const s = result.summary;
-    lines.push(`${rel(result.file)}: model, ${s.boxes} boxes, textures ${s.textures.join(", ") || "(none)"}`);
-    if (s.wornItem) lines.push(s.placedOnBody ? "  worn item, placed on the player body" : "  worn item, pieces unplaced (seraph-faceless.json not found under assets/<domain>/shapes or --game)");
+    lines.push(`${cyan(rel(result.file))}${dim(":")} ${bold("model")}, ${s.boxes} boxes, textures ${s.textures.join(", ") || "(none)"}`);
+    if (s.wornItem) lines.push(s.placedOnBody ? dim("  worn item, placed on the player body") : yellow("  worn item, pieces unplaced (seraph-faceless.json not found under assets/<domain>/shapes or --game)"));
     if (s.textured.length || s.missing.length) lines.push(`  textured: ${s.textured.length} of ${s.textures.length} keys`);
-    for (const m of s.missing) lines.push(`  not found: #${m.key} ${m.ref}${hint}`);
+    for (const m of s.missing) lines.push(yellow(`  not found: #${m.key} ${m.ref}${hint}`));
     if (s.animations.length) lines.push(`  animations: ${s.animations.map((a) => `${a.code} (${a.frames} frames)`).join(", ")}`);
   } else if (result.kind === "schematic") {
     const s = result.summary;
-    lines.push(`${rel(result.file)}: schematic, ${s.size.join(" x ")} (x, y, z), ${s.blocks} blocks of ${s.kinds} kinds, ${s.drawn} drawn`);
+    lines.push(`${cyan(rel(result.file))}${dim(":")} ${bold("schematic")}, ${s.size.join(" x ")} (x, y, z), ${s.blocks} blocks of ${s.kinds} kinds, ${s.drawn} drawn`);
     if (s.hiddenFiller) lines.push(`  ${s.hiddenFiller} meta-filler hidden (--show-filler draws them)`);
     if (s.chiseled || s.chiselFailed) lines.push(`  chiseled blocks drawn as cuboids: ${s.chiseled}${s.chiselFailed ? `, unreadable (drawn as cubes): ${s.chiselFailed}` : ""}`);
     lines.push(`  most common: ${s.top.map((t) => `${t.code} x${t.count}`).join(", ")}`);
   } else {
     const s = result.summary;
-    lines.push(`${rel(result.file)}: ChiselTools shape${s.name ? ` "${s.name}"` : ""}, ${s.cuboids} cuboids, ${s.voxels} of 4096 voxels`);
+    lines.push(`${cyan(rel(result.file))}${dim(":")} ${bold("ChiselTools shape")}${s.name ? ` "${s.name}"` : ""}, ${s.cuboids} cuboids, ${s.voxels} of 4096 voxels`);
     lines.push(`  materials: ${s.materials.map((m) => `${m.code} (${m.voxels})`).join(", ")}`);
   }
-  for (const image of result.images) lines.push(`  ${rel(image)}`);
+  for (const image of result.images) lines.push(`  ${green("→")} ${rel(image)}`);
   return lines;
 }
 

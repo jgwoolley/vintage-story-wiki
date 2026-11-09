@@ -41,7 +41,7 @@
       "version": "1.2.7"
     }
   ],
-  "includeItems": [
+  "wikiIncludeItems": [
     "survival:statictranslocator-*",
     "survival:teleporterbase",
     "survival:storagevessel-*",

@@ -1,5 +1,5 @@
 import type { AssetIndex, DepositInfo } from "../types.js";
-import { assetsUnderAnyDomain } from "vs-wiki-core/assetLoader.js";
+import { assetsUnderAnyDomain } from "@nf3t/vs-wiki-core/assetLoader.js";
 
 function bareRock(code: string): string {
   return code.startsWith("rock-") ? code.slice(5) : code;

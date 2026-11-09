@@ -1,20 +1,36 @@
 // The Node half of the renderer: reads each file (src/inputs.ts works out what it is), launches Playwright's headless Chromium
 // (software WebGL, no X server), loads the bundled page (dist/page.js, built by esbuild.mjs) into a blank page and screenshots one
 // view (or animation frame) at a time. Contact sheets are composed in the page and written from here.
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { chromium, type Browser, type Page } from "playwright-core";
-import type { BlockColors } from "vs-schematic/blockColors.js";
-import { attachToBase, compactShape, shapeToBoxes } from "vs-schematic/shapeBoxes.js";
-import { gameAssetsCandidates, resolveTextures, TEXTURE_PROBE, type ResolvedTextures } from "vs-schematic/textureFiles.js";
+import type { BlockColors } from "@nf3t/vs-schematic/blockColors.js";
+import { attachToBase, compactShape, shapeToBoxes } from "@nf3t/vs-schematic/shapeBoxes.js";
+import { gameAssetsCandidates, resolveTextures, TEXTURE_PROBE, type ResolvedTextures } from "@nf3t/vs-schematic/textureFiles.js";
 import { defaultLocationEnv, resolveGameDir } from "../locations.js";
 import { appDir } from "../paths.js";
-import { frameLabel, outputName, sampleFrames, SCHEMATIC_VIEWS, type RenderOptions } from "./args.js";
+import { frameLabel, outputName, sampleFrames, SCHEMATIC_VIEWS, type Overlay, type RenderOptions } from "./args.js";
 import { InputError, loadBlockColors, loadInput, type ChiselInput, type LoadedInput, type SchematicInput, type SchematicSummary } from "./inputs.js";
-import type { ChiselPayload, ModelOptions, PageApi, PageOptions, SchematicPayload } from "./protocol.js";
+import type { ChiselPayload, ModelOptions, PageApi, PageOptions, SchematicPayload, ScenePayload } from "./protocol.js";
 import { DEFAULT_VIEWS, VIEWS } from "./views.js";
 
-const readOptional = (path: string) => readFile(path).then((b) => new Uint8Array(b), () => undefined);
+/** `file`'s real spelling when only its case differs (the game reads asset paths case-insensitively; a shape says `gearboxA`, the file is `gearboxa.png`). */
+async function matchCase(file: string): Promise<string | undefined> {
+  const parts = path.resolve(file).split(path.sep);
+  let dir = parts[0] || path.sep;
+  for (const part of parts.slice(1)) {
+    const names = await readdir(dir).catch(() => [] as string[]);
+    const name = names.includes(part) ? part : names.find((n) => n.toLowerCase() === part.toLowerCase());
+    if (!name) return undefined;
+    dir = path.join(dir, name);
+  }
+  return dir;
+}
+
+export const readOptional = async (file: string): Promise<Uint8Array | undefined> => {
+  const read = (f: string) => readFile(f).then((b) => new Uint8Array(b), () => undefined);
+  return (await read(file)) ?? (await matchCase(file).then((f) => (f ? read(f) : undefined)));
+};
 
 /**
  * The game assets to take textures from, by the location rule (src/locations.ts): --game-dir, $VINTAGE_STORY, vs-manifest.json gameDir,
@@ -178,10 +194,10 @@ export async function renderFiles(options: RenderOptions): Promise<RenderedInput
     throw new RenderError(`could not start Chromium (install it with \`npx playwright-core install chromium\`): ${(err as Error).message.split("\n")[0]}`);
   }
   try {
-    const page = await browser.newPage({ viewport: { width: options.size, height: options.size } });
+    const page = await browser.newPage({ viewport: { width: options.size, height: options.height ?? options.size } });
     const errors: string[] = [];
     page.on("pageerror", (err) => errors.push(err.message));
-    await page.setContent(`<!doctype html><html><head><style>${PAGE_CSS}</style></head><body></body></html>`);
+    await page.setContent(`<!doctype html><html><head><style>${PAGE_CSS}${options.bare || options.overlay ? " #title, #legend { display: none; }" : ""}${options.overlay?.background ? ` html, body { background: ${options.overlay.background.replace(/[;{}<>]/g, "")}; }` : ""}${safeCss(options.overlay?.frame ?? options.overlay?.safe)}</style></head><body></body></html>`);
     await page.addScriptTag({ content: bundle });
     // Each page.evaluate callback is serialized and runs in the page, where globalThis is the window with the PageApi functions
     // (src/page/main.ts); it can't use anything from this file's scope.
@@ -190,24 +206,26 @@ export async function renderFiles(options: RenderOptions): Promise<RenderedInput
       if (error) throw new RenderError(`${file}: ${error}`);
     };
 
+    const viewDirection = (view: string) => options.viewVectors?.[view] ?? VIEWS[view];
     for (const [n, { file, input, textures }] of inputs.entries()) {
       const result = summaries[n];
       const name = path.basename(file);
       const shoot = async (image: string) => {
         await settle(page);
-        await page.screenshot({ path: image });
+        if (options.overlay) await page.evaluate(overlayScript(options.overlay, Math.min(options.size, options.height ?? options.size)));
+        await page.screenshot({ path: image, omitBackground: options.overlay?.background === "transparent" });
         result.images.push(image);
-        result.centerPixels.push(await page.evaluate(`window.samplePixel(${options.size / 2}, ${options.size / 2})`));
+        result.centerPixels.push(await page.evaluate(`window.samplePixel(${options.size / 2}, ${(options.height ?? options.size) / 2})`));
       };
 
       if (input.kind !== "model") {
         for (const view of options.views ?? SCHEMATIC_VIEWS) {
           const opts: PageOptions = { floor: options.floor, title: `${name} - ${view}` };
           const res = input.kind === "schematic"
-            ? await page.evaluate(([p, d, o]) => (globalThis as unknown as PageApi).loadSchematic(p, d, o), [schematicPayload(input), VIEWS[view], opts] as const)
-            : await page.evaluate(([p, d, o]) => (globalThis as unknown as PageApi).loadChisel(p, d, o), [chiselPayload(input), VIEWS[view], opts] as const);
+            ? await page.evaluate(([p, d, o]) => (globalThis as unknown as PageApi).loadSchematic(p, d, o), [schematicPayload(input), viewDirection(view), opts] as const)
+            : await page.evaluate(([p, d, o]) => (globalThis as unknown as PageApi).loadChisel(p, d, o), [chiselPayload(input), viewDirection(view), opts] as const);
           check(file, res.error);
-          await shoot(path.join(options.out, outputName(file, view)));
+          await shoot(path.join(options.out, options.fileName ?? outputName(file, view)));
         }
         continue;
       }
@@ -215,7 +233,7 @@ export async function renderFiles(options: RenderOptions): Promise<RenderedInput
       const summary = result.summary as ModelSummary;
       const load = async (view: string) => {
         const opts: ModelOptions = { floor: options.floor, title: `${name} - ${view}`, textures: textures.images, body: input.body };
-        const res = await page.evaluate(([r, d, o]) => (globalThis as unknown as PageApi).loadModel(r, d, o), [input.raw, VIEWS[view], opts] as const);
+        const res = await page.evaluate(([r, d, o]) => (globalThis as unknown as PageApi).loadModel(r, d, o), [input.raw, viewDirection(view), opts] as const);
         check(file, res.error);
         summary.textured = res.textured;
       };
@@ -225,7 +243,7 @@ export async function renderFiles(options: RenderOptions): Promise<RenderedInput
         if (options.animations === "all") console.warn(`${file}: has no animations; rendering the rest pose`);
         for (const view of options.views ?? DEFAULT_VIEWS) {
           await load(view);
-          await shoot(path.join(options.out, outputName(file, view)));
+          await shoot(path.join(options.out, options.fileName ?? outputName(file, view)));
         }
       } else if (options.frame !== undefined) {
         const animation = animations[0];
@@ -261,8 +279,192 @@ export async function renderFiles(options: RenderOptions): Promise<RenderedInput
   }
 }
 
+/** CSS that frames the viewport inside the margins `safe` leaves (fractions of the image), so the model avoids what a ModDB card covers. */
+function safeCss(safe: Overlay["safe"]): string {
+  if (!safe) return "";
+  const pct = (k: "top" | "right" | "bottom" | "left") => `${Math.max(0, Math.min(0.9, safe[k] ?? 0)) * 100}%`;
+  return ` #viewport { position: absolute; width: auto; height: auto; top: ${pct("top")}; right: ${pct("right")}; bottom: ${pct("bottom")}; left: ${pct("left")}; }`;
+}
+
+/**
+ * A script that (re)draws the overlay: the text block and logo sized from the image size, over the canvas. The page's own background
+ * (a CSS color, from the overlay) is set in the page's stylesheet. Everything goes in as data (JSON), never as markup.
+ */
+function overlayScript(o: Overlay, size: number): string {
+  return `(() => {
+    const o = ${JSON.stringify(o)}, size = ${size};
+    document.getElementById("shot-overlay")?.remove();
+    const root = document.createElement("div");
+    root.id = "shot-overlay";
+    root.style.cssText = "position:absolute;inset:0;pointer-events:none;font-family:system-ui,sans-serif;color:#fff";
+    const pad = size * 0.04;
+    const safe = o.safe || {};
+    const place = (el, corner) => {
+      const [v, h] = corner.split("-");
+      el.style.position = "absolute";
+      el.style[v] = "calc(" + (safe[v] || 0) * 100 + "% + " + pad + "px)";
+      el.style[h] = "calc(" + (safe[h] || 0) * 100 + "% + " + pad + "px)";
+      if (h === "right") el.style.textAlign = "right";
+    };
+    if (o.title || o.subtitle) {
+      const box = document.createElement("div");
+      box.style.cssText = "max-width:" + (o.safe ? "calc(100% - " + 2 * pad + "px)" : size * 0.7 + "px") + ";text-shadow:0 0 " + size * 0.012 + "px #000,0 " + size * 0.004 + "px " + size * 0.01 + "px #000";
+      if (o.title) {
+        const t = document.createElement("div");
+        t.textContent = o.title;
+        t.style.cssText = "font-weight:700;font-style:italic;line-height:1.05;font-size:" + size * (o.titleSize || 0.075) + "px";
+        box.append(t);
+      }
+      if (o.subtitle) {
+        const t = document.createElement("div");
+        t.textContent = o.subtitle;
+        t.style.cssText = "margin-top:" + size * 0.01 + "px;font-weight:600;font-style:italic;font-size:" + size * (o.titleSize || 0.075) * 0.6 + "px";
+        box.append(t);
+      }
+      place(box, o.textAt || "top-left");
+      root.append(box);
+    }
+    if (o.guides) {
+      const shade = (css) => { const d = document.createElement("div"); d.style.cssText = "position:absolute;background:rgba(220,40,40,.35);" + css; root.append(d); };
+      const s = o.safe || {};
+      if (s.bottom) shade("left:0;right:0;bottom:0;height:" + s.bottom * 100 + "%");
+      if (s.top) shade("left:0;right:0;top:0;height:" + s.top * 100 + "%");
+      if (s.left) shade("top:0;bottom:0;left:0;width:" + s.left * 100 + "%");
+      if (s.right) shade("top:0;bottom:0;right:0;width:" + s.right * 100 + "%");
+      const ribbon = size * 0.3;
+      shade("top:0;right:0;width:" + ribbon + "px;height:" + ribbon + "px;clip-path:polygon(0 0,100% 0,100% 100%)");
+    }
+    if (o.logo && o.logoFill) {
+      const img = document.createElement("img");
+      img.src = o.logo;
+      const s = o.safe || {};
+      img.style.cssText = "position:absolute;object-fit:contain;top:" + (s.top || 0) * 100 + "%;bottom:" + (s.bottom || 0) * 100 + "%;left:" + (s.left || 0) * 100 + "%;right:" + (s.right || 0) * 100 + "%;width:" + (1 - (s.left || 0) - (s.right || 0)) * 100 + "%;height:" + (1 - (s.top || 0) - (s.bottom || 0)) * 100 + "%";
+      root.append(img);
+    } else if (o.logo) {
+      const img = document.createElement("img");
+      img.src = o.logo;
+      img.style.cssText = "width:" + size * 0.2 + "px;height:auto;filter:drop-shadow(0 0 " + size * 0.01 + "px rgba(0,0,0,.6))";
+      place(img, o.logoAt || "top-right");
+      root.append(img);
+    }
+    document.body.append(root);
+    return Promise.all([...root.querySelectorAll("img")].map((i) => i.decode().catch(() => {})));
+  })()`;
+}
+
 /** Waits two animation frames: the viewer draws on resize, and its ResizeObserver needs a frame to fire before a screenshot. */
 async function settle(page: Page): Promise<void> {
   // A string, because this file has no DOM lib to type requestAnimationFrame.
   await page.evaluate("new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+}
+
+/** Renders an image-only card (an icon: just `overlay.logo` filling the safe area, `overlay.background`, no model) to `file`. */
+export async function renderLogoCard(file: string, size: number, height: number, overlay: Overlay): Promise<void> {
+  await mkdir(path.dirname(file), { recursive: true });
+  let browser: Browser;
+  try {
+    browser = await chromium.launch({ headless: true });
+  } catch (err) {
+    throw new RenderError(`could not start Chromium (install it with \`npx playwright-core install chromium\`): ${(err as Error).message.split("\n")[0]}`);
+  }
+  try {
+    const page = await browser.newPage({ viewport: { width: size, height } });
+    const background = (overlay.background ?? "transparent").replace(/[;{}<>]/g, "");
+    await page.setContent(`<!doctype html><html><head><style>html, body { margin: 0; background: ${background}; width: 100vw; height: 100vh; overflow: hidden; }</style></head><body></body></html>`);
+    await page.evaluate(overlayScript({ ...overlay, logoFill: true }, Math.min(size, height)));
+    await page.screenshot({ path: file, omitBackground: background === "transparent" });
+  } finally {
+    await browser.close();
+  }
+}
+
+/**
+ * Adds a faded, flipped reflection under whatever `file` (a PNG rendered on a transparent background) shows, then puts it on `background`
+ * (a CSS color; "transparent" keeps it transparent). The reflection starts at the lowest drawn row and is cut off where the image ends,
+ * so a subject framed above the bottom margin of a ModDB card reflects into the part the card's text covers.
+ */
+export async function addReflection(file: string, background: string): Promise<void> {
+  const png = await readFile(file);
+  let browser: Browser;
+  try {
+    browser = await chromium.launch({ headless: true });
+  } catch (err) {
+    throw new RenderError(`could not start Chromium (install it with \`npx playwright-core install chromium\`): ${(err as Error).message.split("\n")[0]}`);
+  }
+  try {
+    const page = await browser.newPage();
+    const script = `(async () => {
+      const bg = ${JSON.stringify(background.replace(/[;{}<>]/g, ""))};
+      const img = new Image();
+      img.src = ${JSON.stringify(`data:image/png;base64,${png.toString("base64")}`)};
+      await img.decode();
+      const w = img.width, h = img.height;
+      const probe = document.createElement("canvas");
+      probe.width = w; probe.height = h;
+      const px = probe.getContext("2d");
+      px.drawImage(img, 0, 0);
+      const data = px.getImageData(0, 0, w, h).data;
+      let top = h, bottom = -1;
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (data[(y * w + x) * 4 + 3] > 10) { if (y < top) top = y; bottom = y; break; }
+      const out = document.createElement("canvas");
+      out.width = w; out.height = h;
+      const o = out.getContext("2d");
+      if (bg !== "transparent") { o.fillStyle = bg; o.fillRect(0, 0, w, h); }
+      o.drawImage(img, 0, 0);
+      const rh = Math.min(Math.round((bottom - top + 1) * 0.7), h - bottom - 1);
+      if (bottom >= 0 && rh > 0) {
+        const r = document.createElement("canvas");
+        r.width = w; r.height = rh;
+        const rx = r.getContext("2d");
+        rx.translate(0, rh); rx.scale(1, -1);
+        rx.drawImage(img, 0, bottom + 1 - rh, w, rh, 0, 0, w, rh);
+        rx.setTransform(1, 0, 0, 1, 0, 0);
+        rx.globalCompositeOperation = "destination-in";
+        const g = rx.createLinearGradient(0, 0, 0, rh);
+        g.addColorStop(0, "rgba(0,0,0,0.45)"); g.addColorStop(1, "rgba(0,0,0,0)");
+        rx.fillStyle = g; rx.fillRect(0, 0, w, rh);
+        o.drawImage(r, 0, bottom + 1);
+      }
+      return out.toDataURL("image/png");
+    })()`;
+    const url = (await page.evaluate(script)) as string;
+    await writeFile(file, Buffer.from(url.replace(/^data:image\/png;base64,/, ""), "base64"));
+  } finally {
+    await browser.close();
+  }
+}
+
+/** Renders a scene (src/scene.ts) to `file`, in the same page, camera and overlay as `renderFiles`. */
+export async function renderScene(
+  scene: ScenePayload, file: string,
+  o: { size: number; height?: number; view: string; viewVectors?: RenderOptions["viewVectors"]; floor: boolean; overlay?: Overlay; title?: string },
+): Promise<void> {
+  const bundle = await readFile(path.join(appDir, "dist/page.js"), "utf8").catch(() => {
+    throw new RenderError("dist/page.js is missing: run `npm run build -w @nf3t/vsdev` first");
+  });
+  await mkdir(path.dirname(file), { recursive: true });
+  let browser: Browser;
+  try {
+    browser = await chromium.launch({ headless: true, args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
+  } catch (err) {
+    throw new RenderError(`could not start Chromium (install it with \`npx playwright-core install chromium\`): ${(err as Error).message.split("\n")[0]}`);
+  }
+  try {
+    const height = o.height ?? o.size;
+    const page = await browser.newPage({ viewport: { width: o.size, height } });
+    const errors: string[] = [];
+    page.on("pageerror", (err) => errors.push(err.message));
+    const background = o.overlay?.background ? ` html, body { background: ${o.overlay.background.replace(/[;{}<>]/g, "")}; }` : "";
+    await page.setContent(`<!doctype html><html><head><style>${PAGE_CSS} #title, #legend { display: none; }${background}${safeCss(o.overlay?.frame ?? o.overlay?.safe)}</style></head><body></body></html>`);
+    await page.addScriptTag({ content: bundle });
+    const direction = o.viewVectors?.[o.view] ?? VIEWS[o.view];
+    const res = await page.evaluate(([p, d, opts]) => (globalThis as unknown as PageApi).loadScene(p, d, opts), [scene, direction, { floor: o.floor, title: o.title ?? "scene" }] as const);
+    if (errors.length) throw new RenderError(`the page failed: ${errors.join("; ")}`);
+    if (res.error) throw new RenderError(res.error);
+    await settle(page);
+    if (o.overlay) await page.evaluate(overlayScript(o.overlay, Math.min(o.size, height)));
+    await page.screenshot({ path: file, omitBackground: o.overlay?.background === "transparent" });
+  } finally {
+    await browser.close();
+  }
 }

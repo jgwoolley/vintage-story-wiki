@@ -1,0 +1,18 @@
+<p>
+  The game's handbook groups items and blocks that differ only in a variant into one cycling icon, through
+  <code>attributes.handbook.groupBy</code> on their type: a list of code wildcards whose <code>{placeholder}</code>s are filled
+  from the variant's own values. <code>armor-{bodypart}-{construction}-*</code> on <code>armor-body-lamellar-iron</code>
+  becomes <code>armor-body-lamellar-*</code>, so that groups one armor piece across materials, not all armor.
+</p>
+<p>
+  <code>apps/vs-wiki/src/ingest/grouping.ts</code> reads every item and block type's <code>groupBy</code>, fills the
+  placeholders per variant and groups the variants that end up with the same first pattern (the game keys on the first one too).
+  A family needs at least two entries in <a href="{{ ('/' ~ lang ~ '/') | url }}items/">Items &amp; Blocks</a>. The example
+  shown first is the variant the type's <code>creativeinventory</code> lists, otherwise the first by code.
+</p>
+<p>
+  The game only applies this grouping inside its reference lists (drops, "found in", host rock); its main handbook list still
+  shows every variant. The wiki follows that: <a href="{{ ('/' ~ lang ~ '/') | url }}items/">Items &amp; Blocks</a> lists every
+  variant, and this page is the separate view of the families. Some families are broader than you might expect (every metal's
+  ingot, every rock's slab) because that is what the game's own rule says.
+</p>

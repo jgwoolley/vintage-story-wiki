@@ -11,6 +11,9 @@ eleventyExcludeFromCollections: true
 {%- for i in generated.items -%}{% if not first %},{% endif %}{% set first = false %}
 {{ row(i.displayName, "items/" ~ i.domain ~ "/" ~ (i.code | slugify) ~ "/", i.kind | capitalize, i.code) }}
 {%- endfor -%}
+{%- for f in generated.variantFamilies -%},
+{{ row(f.key.split(":")[1], "variants/" ~ f.id ~ "/", "Variants", f.key) }}
+{%- endfor -%}
 {%- for c in generated.creatures -%},
 {{ row(c.sourceDisplayName, "creatures/" ~ c.sourceDomain ~ "/" ~ (c.sourceCode | slugify) ~ "/", "Creature", c.sourceCode) }}
 {%- endfor -%}

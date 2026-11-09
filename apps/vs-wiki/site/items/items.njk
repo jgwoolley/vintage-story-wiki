@@ -27,13 +27,15 @@ eleventyComputed:
       <tr><th>Kind</th><td><span class="tag">{{ item.kind }}</span></td></tr>
       <tr><th>Code</th><td><code>{{ item.domain }}:{{ item.code }}</code></td></tr>
       <tr><th>Mod</th><td><a href="{{ ('/' ~ lang ~ '/') | url }}mods/">{{ item.sourceMod }}</a></td></tr>
+      {% if item.listedElsewhere %}<tr><th>{{ {paintings: 'Painting'}[item.listedElsewhere] or (item.listedElsewhere | capitalize) }} Details</th><td><a href="{{ ('/' ~ lang ~ '/') | url }}{{ item.listedElsewhere }}/{{ item.domain }}/{{ item.code | slugify }}/">{{ item.displayName }}</a></td></tr>{% endif %}
+      {% if item.variantFamily %}<tr><th>Variants</th><td><a href="{{ ('/' ~ lang ~ '/') | url }}variants/{{ item.variantFamily }}/">All variants</a></td></tr>{% endif %}
       {% if item.maxStackSize != null %}<tr><th>Stack size</th><td>{{ item.maxStackSize }}</td></tr>{% endif %}
       {% if itemTags.length %}<tr><th>Tags</th><td>{% for t in itemTags %}<a class="tag" href="{{ ('/' ~ lang ~ '/') | url }}items/?tag={{ t | urlencode }}">{{ t }}</a>{% endfor %}</td></tr>{% endif %}
     </tbody>
   </table>
 {% endcall %}
 {% if item.missingTranslation %}<p class="warning">No display name found in any lang file &mdash; showing the raw code.</p>{% endif %}
-{% if item.includedByManifest %}<p class="muted">Listed explicitly in the wiki's <code>vs-manifest.json</code> (<code>includeItems</code>: <code>{{ item.includedByManifest }}</code>), so it has a page even if nothing else here links to it.</p>{% endif %}
+{% if item.includedByManifest %}<p class="muted">Listed explicitly in the wiki's <code>vs-manifest.json</code> (<code>wikiIncludeItems</code>: <code>{{ item.includedByManifest }}</code>), so it has a page even if nothing else here links to it.</p>{% endif %}
 {% if item.description %}<div class="card">{{ item.description | replace("__LANG__", ('/' ~ lang ~ '/') | url) | safe }}</div>{% endif %}
 {% set blockDrops = generated.blockDropsById[item.domain ~ ':' ~ item.code] %}
 

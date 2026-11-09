@@ -1,13 +1,13 @@
 import { readFileSync } from "node:fs";
 import type { AssetIndex, TapestryInstance, TapestryOutcome } from "../types.js";
-import type { LangResolver } from "vs-wiki-core/lang.js";
+import type { LangResolver } from "@nf3t/vs-wiki-core/lang.js";
 import type { DecodeStats, SchematicFile } from "../schematicHeader.js";
 import { readSchematicBlockCodes, recordDecodeFailure } from "../schematicHeader.js";
-import { assetsUnderAnyDomain } from "vs-wiki-core/assetLoader.js";
+import { assetsUnderAnyDomain } from "@nf3t/vs-wiki-core/assetLoader.js";
 // Canonical decode module lives under site/assets/ (not src/ingest/) so it stays directly
 // <script>-loadable for a future browser-side schematic viewer with zero changes -- see
 // CLAUDE.md/README for why. This is a plain relative import across that boundary.
-import { decodeBlockEntity } from "vs-schematic/schematicDecode.js";
+import { decodeBlockEntity } from "@nf3t/vs-schematic/schematicDecode.js";
 
 type TapestryPrefix = "tapestry" | "wallcarving";
 

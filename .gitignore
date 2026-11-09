@@ -20,3 +20,4 @@ apps/vsdev/.tmp/
 # npm pack -w @nf3t/vsdev
 nf3t-vsdev-*.tgz
 *.vsix
+commit.sh

@@ -1,7 +1,23 @@
 {
-  "name": "vs-schematic",
+  "name": "@nf3t/vs-schematic",
   "version": "0.1.0",
   "private": true,
+  "author": "Nf3t (https://github.com/jgwoolley)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwoolley/vintage-story-wiki.git",
+    "directory": "libs/vs-schematic"
+  },
+  "homepage": "https://github.com/jgwoolley/vintage-story-wiki#readme",
+  "bugs": {
+    "url": "https://github.com/jgwoolley/vintage-story-wiki/issues"
+  },
+  "keywords": [
+    "vintage-story",
+    "schematic",
+    "three"
+  ],
+  "license": "UNLICENSED",
   "type": "module",
   "description": "Vintage Story schematic decoding (Ascii85/TreeAttribute block entities), voxel conversion and a Three.js voxel viewer. TypeScript source; `npm run build:libs` compiles dist/ for browsers.",
   "exports": {

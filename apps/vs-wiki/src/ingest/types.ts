@@ -2,6 +2,7 @@
 export interface ModManifestEntry {
   modid: string; // mods.vintagestory.at mod id, e.g. "betterruins"
   version?: string; // pinned release version; omitted means "latest" when downloading
+  src?: string; // your own mod: its source folder (with modinfo.json), relative to vs-manifest.json -- maps modid <-> folder name (vsdev `modSourceDirs`)
 }
 
 /** The whole contents of `vs-manifest.json`. */
@@ -20,7 +21,7 @@ export interface VsManifest {
   releasesDir?: string;
   /** vsdev only: the mods' ModDB page sources (`vsdev moddb`), default ./moddb. */
   pagesDir?: string;
-  /** Where the production wiki is deployed; the build info page links to it (also on local builds). */
+  /** Where the production wiki is deployed; the build info page links to it (also on local builds), and `vsdev search` asks it. */
   prodWikiUrl?: string;
   mods: ModManifestEntry[];
   /** Items/blocks to force into the item index even when no recipe/drop/worldgen/trade/dialogue
@@ -28,7 +29,29 @@ export interface VsManifest {
    * wildcards; the domain part is optional and then matches any domain), matched against every
    * concrete itemtypes/blocktypes variant -- see `includeManifestItems` in crossref.ts. The JSON
    * Schema at vs-manifest.schema.json documents the same shape for editors. */
-  includeItems?: string[];
+  wikiIncludeItems?: string[];
+  /** vsdev only (`vsdev screenshots`; the wiki ignores it): schematic screenshots to render, e.g. for a ModDB page. */
+  screenshots?: ScreenshotEntry[];
+  /** vsdev only: where `vsdev screenshots` writes the PNGs, relative to vs-manifest.json; default ./screenshots. */
+  screenshotsDir?: string;
+}
+
+/** One screenshot `vsdev screenshots` renders from a schematic. */
+export interface ScreenshotEntry {
+  /** File name of the PNG (without .png); also what `vsdev screenshots <name>` selects. */
+  name: string;
+  /** The schematic: a file path relative to vs-manifest.json, or `domain:path` of a schematic inside the game install's assets or a mod in Mods/ (e.g. `betterruins:schematics/ruin.json`). */
+  schematic: string;
+  /** Camera angle: a view name (default, south, east, north, top, back) or a direction [x, y, z] from the center (y up, +z south, +x east). Default: `default`. */
+  view?: string | [number, number, number];
+  /** Width and height in pixels; default 1280. */
+  size?: number;
+  /** Draw a one-block grid at ground level. */
+  floor?: boolean;
+  /** Leave out blocks above this y (a cutaway). */
+  maxY?: number;
+  /** Draw meta-filler blocks (hidden by default). */
+  showFiller?: boolean;
 }
 
 /** Parsed `modinfo.json` from one mod's zip, plus what `modExtractor.ts` detected about it. */
@@ -50,7 +73,7 @@ export interface ModInfo {
 }
 
 // Asset-loading shapes live in the vs-wiki-core package; re-exported so ingest code keeps one import site.
-export type { AssetSource, LoadedAsset, AssetIndex, PatchOp } from "vs-wiki-core/types.js";
+export type { AssetSource, LoadedAsset, AssetIndex, PatchOp } from "@nf3t/vs-wiki-core/types.js";
 
 /**
  * A shape file (`shapes/<path>.json`) an item or creature is drawn with. Ingest writes a compacted, gzipped copy
@@ -344,13 +367,27 @@ export interface ItemIndexEntry {
   randomPool?: RandomPoolStack[]; // `ItemStackRandomizer` items only: everything it can turn into, most likely first (see extractStackRandomizerPools in models/loot.ts). The randomizer placed in a world-generated chest may also carry its own `totalChance` attribute (chance to generate nothing at all) -- per-instance data, not in this definition.
   generatedBy?: RandomizerSource[]; // randomizer items that can generate this item/block, most likely first (the reverse of `randomPool`)
   model?: ModelRef; // the item's 3D shape, when its JSON names a shape file (see models/shapes.ts); drawn untextured, since the server download ships no textures
-  includedByManifest?: string; // the vs-manifest.json `includeItems` pattern that matched this entry, when one did (set even if other rules also reach it) // the C# classes/behaviors this item/block's own JSON names (see attachItemMetadata in crossref.ts); absent when it names none
+  variantFamily?: string; // id of the handbook `groupBy` family this entry belongs to (`VariantFamily.id`, page `/variants/<id>/`); set only when at least two index entries share it, see grouping.ts
+  listedElsewhere?: string; // section (`paintings`) with a dedicated page for this same thing at `<section>/<domain>/<slugified code>/`; the items listing leaves the entry out and its page links there, while the page itself stays so no link breaks
+  includedByManifest?: string; // the vs-manifest.json `wikiIncludeItems` pattern that matched this entry, when one did (set even if other rules also reach it) // the C# classes/behaviors this item/block's own JSON names (see attachItemMetadata in crossref.ts); absent when it names none
 }
 
 /**
  * One possible result of an `ItemStackRandomizer` item (`ItemIndexEntry.randomPool`): the game rolls
  * one of these when the randomizer is resolved (placed in a world-generated chest, dropped, ...).
  */
+/**
+ * A family of variants the game's handbook groups into one cycling icon (`attributes.handbook.groupBy`, e.g.
+ * `armor-{bodypart}-{construction}-*` with the placeholders filled from the variant's own values: the same piece in every
+ * material). Built by grouping.ts into `generated.variantFamilies`; shown only on the `/variants/` pages, never in `/items/`.
+ */
+export interface VariantFamily {
+  id: string; // url-safe and unique; the page is `/variants/<id>/`
+  key: string; // `domain:resolved groupBy pattern`, the wildcard every member matches (e.g. `survival:armor-body-lamellar-*`)
+  primary: string; // `domain:code` of the member the type's `creativeinventory` lists (otherwise the first by code); the family's example
+  members: string[]; // `domain:code` of every member including the primary, sorted by code
+}
+
 export interface RandomPoolStack {
   domain: string;
   code: string;

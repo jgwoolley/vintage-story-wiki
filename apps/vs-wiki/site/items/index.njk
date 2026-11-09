@@ -7,14 +7,15 @@ permalink: "{{ lang }}/items/index.html"
 {% import "macros/breadcrumb.njk" as bc %}
 {{ bc.trail(lang, [{label: "Items & Blocks"}]) }}
 <h1>Items &amp; Blocks</h1>
-<p class="muted">{{ generated.items.length }} distinct items/blocks.</p>
+{% set listed = generated.items | rejectattr("listedElsewhere") | list %}
+<p class="muted">{{ generated.items.length }} distinct items/blocks{% if listed.length != generated.items.length %}, {{ listed.length }} listed here: paintings are on <a href="{{ ('/' ~ lang ~ '/') | url }}paintings/">their own page</a>{% endif %}. The same piece in many materials or rocks (ingots, ores, slabs) is also grouped on the <a href="{{ ('/' ~ lang ~ '/') | url }}variants/">Variants</a> page.</p>
 <div class="coverage-note">
 <p>
   <strong>This is not every item/block the game defines.</strong> An item/block only appears here
   if it's reachable from a <strong>recipe</strong> (an input or an output), a
   <strong>drop table</strong> (dropped by breaking a block or killing a creature), a
   <strong>worldgen spawn rule</strong> (an ore/gem/rock deposit, a crop/flower patch, a tree, a
-  fruit tree), a <strong>trader's buy/sell list</strong>, an <strong>NPC dialogue reward</strong>, or is listed by hand in the wiki's own <code>vs-manifest.json</code> (<code>includeItems</code>, for things like translocators that nothing else reaches).
+  fruit tree), a <strong>trader's buy/sell list</strong>, an <strong>NPC dialogue reward</strong>, or is listed by hand in the wiki's own <code>vs-manifest.json</code> (<code>wikiIncludeItems</code>, for things like translocators that nothing else reaches).
   Pure creative-mode novelties, debug items, and anything else with none of those ties are not
   included -- this is a cross-referenced graph, not a registry dump.
 </p>
@@ -22,7 +23,7 @@ permalink: "{{ lang }}/items/index.html"
 </div>
 
 {% call dt.datatable(60, "Search items & blocks...", ["Name", "Item Code", "Kind", "Mod"]) %}
-{% for item in generated.items | sort(false, false, "displayName") %}
+{% for item in listed | sort(false, false, "displayName") %}
   <tr data-search="{{ item.domain }}:{{ item.code }}" data-category="{{ item.kind }}" data-mod="{{ item.sourceMod }}" data-mod-label="{{ generated.mods | modName(item.sourceMod) }}" data-tags="{{ item.tags | default([]) | join(' ') }}"{{ dt.descriptionAttrs(item.description) }}>
     <td><a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ item.domain }}/{{ item.code | slugify }}/">{{ item.displayName }}</a></td>
     <td><code>{{ item.domain }}:{{ item.code }}</code></td>

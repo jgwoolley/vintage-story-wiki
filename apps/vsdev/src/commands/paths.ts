@@ -1,8 +1,9 @@
 // `vsdev paths`: every location vsdev reads or writes, what it resolved to and why (flag, env, vs-manifest.json, the working directory, or
 // a real install), so "where will this go?" can be answered before running anything. Same resolver as the commands (src/locations.ts).
+import { bold, cyan, dim, green, red } from "../moddb/ansi.js";
 import { parseCommand } from "../args.js";
 import {
-  defaultLocationEnv, findConfig, gameInfo, resolveGameDir, resolveGameVersionLocal, resolveModsDir, resolveProjectDir,
+  defaultLocationEnv, findConfig, gameInfo, resolveGameDir, resolveGameVersionLocal, resolveModsDir, resolveProjectDir, resolveWikiUrl,
   type Resolved,
 } from "../locations.js";
 import { userCwd } from "../paths.js";
@@ -48,17 +49,18 @@ export async function runPaths(argv: string[]): Promise<number> {
     row("Mods: vsdev mod update", resolveModsDir({ mode: "read" }, e)),
     row("Releases (built mod zips)", resolveProjectDir("releasesDir", undefined, e)),
     row("moddb pages", resolveProjectDir("pagesDir", undefined, e)),
+    row("wiki (vsdev search)", resolveWikiUrl(undefined, e)),
     { name: "game version", path: version.version, from: version.label ?? "newest stable on ModDB (asked when needed)", candidates: [] },
   ];
   if (values.json) {
     console.log(JSON.stringify({ cwd: e.cwd, config: config?.file ?? null, locations: rows }, null, 2));
     return 0;
   }
-  console.log(`working directory: ${e.cwd}`);
-  console.log(`vs-manifest.json:  ${config?.file ?? "(none here or above)"}`);
+  console.log(`${dim("working directory:")} ${e.cwd}`);
+  console.log(`${dim("vs-manifest.json: ")} ${config?.file ?? dim("(none here or above)")}`);
   for (const r of rows) {
-    console.log(`\n${r.name}\n  -> ${r.path ?? "(none)"}${r.from ? `  [${r.from}]` : ""}${r.note ? `  ${r.note}` : ""}`);
-    for (const c of r.candidates) console.log(`     ${c.ok ? "+" : "-"} ${c.from.padEnd(44)} ${c.path}`);
+    console.log(`\n${bold(r.name)}\n  ${dim("->")} ${r.path ? cyan(r.path) : dim("(none)")}${r.from ? `  ${dim(`[${r.from}]`)}` : ""}${r.note ? `  ${r.note}` : ""}`);
+    for (const c of r.candidates) console.log(`     ${c.ok ? green("+") : red("-")} ${dim(c.from.padEnd(44))} ${c.path}`);
   }
   return 0;
 }

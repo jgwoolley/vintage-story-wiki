@@ -1,6 +1,6 @@
 import type { AssetIndex, FoodEntry } from "../types.js";
-import type { LangResolver } from "vs-wiki-core/lang.js";
-import { expandVariants, resolveByType } from "vs-wiki-core/variantExpander.js";
+import type { LangResolver } from "@nf3t/vs-wiki-core/lang.js";
+import { expandVariants, resolveByType } from "@nf3t/vs-wiki-core/variantExpander.js";
 
 /** Case-insensitive property read with the `<name>ByType` glob fallback (same idea as `prop` in gear.ts). */
 function prop(obj: Record<string, unknown>, name: string, concreteCode: string): unknown {

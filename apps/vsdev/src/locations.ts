@@ -14,7 +14,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { TEXTURE_PROBE } from "vs-schematic/textureFiles.js";
+import { TEXTURE_PROBE } from "@nf3t/vs-schematic/textureFiles.js";
 
 export type Tier = "flag" | "env" | "config" | "local" | "installed";
 
@@ -48,6 +48,8 @@ export interface LocationConfig {
   serverBranch?: string;
   releasesDir?: string;
   pagesDir?: string;
+  /** prodWikiUrl: the wiki `vsdev search` asks. */
+  wikiUrl?: string;
 }
 
 /** What the resolver looks at; tests pass a fake one. */
@@ -81,7 +83,7 @@ export function findConfig(cwd: string): LocationConfig | undefined {
         file, dir,
         gameDir: str("gameDir"), gameKind: kind === "client" || kind === "server" ? kind : undefined, dataDir: str("dataDir"),
         gameVersion: str("gameVersion") ?? str("serverVersion"), serverBranch: str("serverBranch"),
-        releasesDir: str("releasesDir"), pagesDir: str("pagesDir"),
+        releasesDir: str("releasesDir"), pagesDir: str("pagesDir"), wikiUrl: str("prodWikiUrl"),
       };
     }
     if (path.dirname(dir) === dir) return undefined;
@@ -252,6 +254,21 @@ export function resolveProjectDir(which: "releasesDir" | "pagesDir", flag: strin
   if (flag) candidates.push({ path: path.resolve(e.cwd, expandHome(flag, e.home)), tier: "flag", label: which === "releasesDir" ? "--releases-dir" : "--pages-dir", ok: true });
   if (config?.[which]) candidates.push({ path: fromConfig(config, config[which]!), tier: "config", label: `${config.file} ${which}`, ok: true });
   candidates.push({ path: path.join(e.cwd, local), tier: "local", label: `./${local}`, ok: true });
+  return pick(candidates);
+}
+
+/** The wiki `vsdev search` asks when nothing else says (this project's own deployment). */
+export const DEFAULT_WIKI_URL = "https://jgwoolley.github.io/vintage-story-wiki/";
+
+/** The wiki's base URL, always ending in "/": --wiki, $VSDEV_WIKI_URL, vs-manifest.json prodWikiUrl, else the project's own wiki. */
+export function resolveWikiUrl(flag: string | undefined, e: LocationEnv = defaultLocationEnv(process.cwd())): Resolved {
+  const config = configOf(e);
+  const slash = (u: string) => (u.endsWith("/") ? u : `${u}/`);
+  const candidates: Candidate[] = [];
+  if (flag) candidates.push({ path: slash(flag), tier: "flag", label: "--wiki", ok: true });
+  if (e.env.VSDEV_WIKI_URL) candidates.push({ path: slash(e.env.VSDEV_WIKI_URL), tier: "env", label: "$VSDEV_WIKI_URL", ok: true });
+  if (config?.wikiUrl) candidates.push({ path: slash(config.wikiUrl), tier: "config", label: `${config.file} prodWikiUrl`, ok: true });
+  candidates.push({ path: DEFAULT_WIKI_URL, tier: "local", label: "built-in default", ok: true });
   return pick(candidates);
 }
 

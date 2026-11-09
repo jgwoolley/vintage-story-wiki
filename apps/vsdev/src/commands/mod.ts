@@ -3,6 +3,7 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { parseCommand, table } from "../args.js";
+import { bold, cyan, dim, green, red, yellow } from "../moddb/ansi.js";
 import { CliError, UsageError } from "../errors.js";
 import { extractFolderFor, extractZip } from "../mods/extract.js";
 import { applyInstallPlan, checkUpdates, resolveInstallPlan, type Applied, type PlanEntry } from "../mods/install.js";
@@ -59,6 +60,7 @@ ${FOLDER_OPTIONS}`,
 };
 
 const MARKERS: Record<PlanEntry["action"], string> = { install: "[+]", update: "[~]", current: "[=]", "newer-installed": "[=]", satisfied: "[=]", error: "[x]" };
+const MARKER_COLOR: Record<PlanEntry["action"], (s: string) => string> = { install: green, update: yellow, current: dim, "newer-installed": dim, satisfied: dim, error: red };
 
 /** One plan line, in vs-mod-updater's style. */
 export function planLine(e: PlanEntry): string {
@@ -70,7 +72,8 @@ export function planLine(e: PlanEntry): string {
     : e.action === "satisfied" ? `installed ${e.version} meets ${e.minVersion ? `>= ${e.minVersion}` : "the requirement"}`
     : e.error ?? "failed";
   const reason = (e.requested ? "requested" : `dependency of ${e.requiredBy}${e.minVersion ? `, needs >= ${e.minVersion}` : ""}`) + (e.source ? `, from ${e.source}` : "");
-  return [`${MARKERS[e.action]} ${e.name.padEnd(30)} ${status.padEnd(28)} (${reason})`, ...e.warnings.map((w) => `    ! ${w}`)].join("\n");
+  const color = MARKER_COLOR[e.action];
+  return [`${color(MARKERS[e.action])} ${bold(e.name.padEnd(30))} ${color(status.padEnd(28))} ${dim(`(${reason})`)}`, ...e.warnings.map((w) => yellow(`    ! ${w}`))].join("\n");
 }
 
 const jsonPlan = (plan: PlanEntry[]) => plan.map(({ data: _d, existing, ...e }) => ({ ...e, existing: existing.map((m) => m.source) }));
@@ -82,36 +85,36 @@ function modsFolder(given: string | undefined, mode: "read" | "write", cwd: stri
   if (!found.path) {
     throw new CliError(`no Mods folder found (looked at ${found.candidates.map((c) => c.path).join(", ")}); pass -p <VintagestoryData or Mods folder>`, 2);
   }
-  if (!json) console.log(`Mods folder: ${found.path} (${found.label})`);
+  if (!json) console.log(`${dim("Mods folder:")} ${cyan(found.path!)} ${dim(`(${found.label})`)}`);
   return found.path;
 }
 
 async function gameVersionFor(db: ModDb, given: string | undefined, json: boolean): Promise<string> {
   const { version, source } = await resolveGameVersion(db, given, userCwd());
-  if (!json) console.log(`Game version: ${version} (${source})`);
+  if (!json) console.log(`${dim("Game version:")} ${cyan(version)} ${dim(`(${source})`)}`);
   return version;
 }
 
 async function apply(plan: PlanEntry[], modsDir: string, outDir: string, db: ModDb, yes: boolean, json: boolean, extractDir?: string): Promise<Applied[]> {
   const todo = plan.filter((e) => e.action === "install" || e.action === "update");
   if (!todo.length) {
-    if (!json) console.log(plan.some((e) => e.action === "error") ? "\nNothing to install." : "\nNothing to install; everything is up to date.");
+    if (!json) console.log(plan.some((e) => e.action === "error") ? yellow("\nNothing to install.") : green("\nNothing to install; everything is up to date."));
     return [];
   }
   if (!(await confirm(`\nInstall/update ${todo.length} mod(s) into ${outDir}?`, yes))) {
-    console.log("No changes made.");
+    console.log(dim("No changes made."));
     return [];
   }
   const applied = await applyInstallPlan(plan, { modsDir, outDir, db });
   for (const a of applied) {
     if (!json) {
-      console.log(a.error ? `[x] ${a.entry.name}: ${a.error}` : `[+] ${a.entry.action === "update" ? "Updated" : "Installed"} ${a.entry.name} -> ${a.entry.version ?? "?"} (${path.basename(a.file!)})`);
-      for (const r of a.removed) console.log(`    removed ${r}`);
+      console.log(a.error ? red(`[x] ${a.entry.name}: ${a.error}`) : `${green("[+]")} ${a.entry.action === "update" ? "Updated" : "Installed"} ${bold(a.entry.name)} -> ${cyan(a.entry.version ?? "?")} ${dim(`(${path.basename(a.file!)})`)}`);
+      for (const r of a.removed) console.log(dim(`    removed ${r}`));
     }
     if (extractDir && a.file) {
       const into = extractFolderFor(a.file, extractDir);
       const files = extractZip(a.file, into);
-      if (!json) console.log(`    extracted ${files} files to ${into}`);
+      if (!json) console.log(dim(`    extracted ${files} files to ${into}`));
     }
   }
   return applied;
@@ -137,12 +140,12 @@ async function search(argv: string[]): Promise<number> {
     return 0;
   }
   if (!hits.length) {
-    console.log("No mods found.");
+    console.log(yellow("No mods found."));
     return 0;
   }
   console.log(table([["MODID", "NAME", "AUTHOR", "SIDE", "DOWNLOADS", "LAST RELEASE"], ...hits.map((h) => [
     h.modidstrs?.[0] ?? h.urlalias ?? String(h.modid), h.name, h.author ?? "", h.side ?? "", String(h.downloads ?? ""), (h.lastreleased ?? "").slice(0, 10),
-  ])]));
+  ])], (row, col, cell) => (row === 0 ? bold(cell) : col === 0 ? cyan(cell) : col === 1 ? bold(cell) : col === 2 || col === 5 ? dim(cell) : cell)));
   return 0;
 }
 
@@ -158,17 +161,17 @@ async function info(argv: string[]): Promise<number> {
   }
   const releases = mod.releases ?? [];
   const lines = [
-    `${mod.name} by ${mod.author ?? "?"}`,
-    `  modid ${releases[0]?.modidstr ?? "?"}, side ${mod.side ?? "?"}, ${mod.downloads ?? 0} downloads, ${mod.follows ?? 0} follows`,
-    `  page    https://mods.vintagestory.at/show/mod/${mod.assetid}`,
+    `${bold(mod.name)} ${dim("by")} ${mod.author ?? "?"}`,
+    `  modid ${cyan(releases[0]?.modidstr ?? "?")}, side ${mod.side ?? "?"}, ${mod.downloads ?? 0} downloads, ${mod.follows ?? 0} follows`,
+    `  ${dim("page   ")} ${cyan(`https://mods.vintagestory.at/show/mod/${mod.assetid}`)}`,
   ];
   for (const [label, url] of [["home", mod.homepageurl], ["source", mod.sourcecodeurl], ["issues", mod.issuetrackerurl], ["wiki", mod.wikiurl]]) {
-    if (url) lines.push(`  ${label!.padEnd(7)} ${url}`);
+    if (url) lines.push(`  ${dim(label!.padEnd(7))} ${cyan(url)}`);
   }
-  if (mod.tags?.length) lines.push(`  tags    ${mod.tags.join(", ")}`);
+  if (mod.tags?.length) lines.push(`  ${dim("tags   ")} ${mod.tags.join(", ")}`);
   const shown = values.all ? releases : releases.slice(0, 15);
-  lines.push("", table([["VERSION", "RELEASED", "GAME VERSIONS", "FILE"], ...shown.map((r) => [r.modversion, (r.created ?? "").slice(0, 10), (r.tags ?? []).join(", "), r.filename])]));
-  if (shown.length < releases.length) lines.push(`... ${releases.length - shown.length} older releases (--all shows them)`);
+  lines.push("", table([["VERSION", "RELEASED", "GAME VERSIONS", "FILE"], ...shown.map((r) => [r.modversion, (r.created ?? "").slice(0, 10), (r.tags ?? []).join(", "), r.filename])], (row, col, cell) => (row === 0 ? bold(cell) : col === 0 ? green(cell) : col === 1 || col === 3 ? dim(cell) : cell)));
+  if (shown.length < releases.length) lines.push(dim(`... ${releases.length - shown.length} older releases (--all shows them)`));
   console.log(lines.join("\n"));
   return 0;
 }
@@ -191,7 +194,7 @@ async function sourcesOf(urls: string[] | undefined, json: boolean): Promise<Sou
     try {
       const source = await loadSource(url);
       sources.push(source);
-      if (!json) console.log(`Source: ${source.url} (${source.mods.length} mods: ${source.mods.map((m) => m.modid).join(", ")})`);
+      if (!json) console.log(`${dim("Source:")} ${cyan(source.url)} ${dim(`(${source.mods.length} mods: ${source.mods.map((m) => m.modid).join(", ")})`)}`);
     } catch (err) {
       throw new CliError(`--source ${url}: ${(err as Error).message}`, 2);
     }
@@ -210,7 +213,7 @@ async function install(argv: string[]): Promise<number> {
   const db = new ModDb();
   const gameVersion = await gameVersionFor(db, values["game-version"], json);
   const sources = await sourcesOf(values.source, json);
-  if (!json) console.log(`Resolving ${positionals.join(", ")}${values["no-deps"] ? "" : " and dependencies"} for ${modsDir}${outDir !== modsDir ? ` (writing to ${outDir})` : ""}...\n`);
+  if (!json) console.log(dim(`Resolving ${positionals.join(", ")}${values["no-deps"] ? "" : " and dependencies"} for ${modsDir}${outDir !== modsDir ? ` (writing to ${outDir})` : ""}...\n`));
   const plan = await resolveInstallPlan(positionals.map((spec) => ({ spec })), {
     db, gameVersion, installed: installedIndex(scanLocalMods(modsDir)), deps: !values["no-deps"], allowRetracted: !!values["allow-retracted"], force: !!values.force, sources,
   });
@@ -236,17 +239,18 @@ async function update(argv: string[]): Promise<number> {
   const updating = new Set(result.updates.map((u) => u.modid));
   const deps = result.dependencyPlan.filter((e) => !updating.has(e.modid));
   if (!json) {
-    console.log(`Scanned ${modsDir}: ${result.rows.length} mods\n`);
-    const mark = { update: "[!]", current: "[=]", ahead: "[=]", unknown: "[?]", blocked: "[x]" };
+    console.log(`${dim("Scanned")} ${cyan(modsDir)}${dim(`: ${result.rows.length} mods`)}\n`);
+    const mark = { update: yellow("[!]"), current: dim("[=]"), ahead: dim("[=]"), unknown: dim("[?]"), blocked: red("[x]") };
+    const tint = { update: yellow, current: green, ahead: green, unknown: dim, blocked: red };
     for (const r of result.rows) {
       const status = r.status === "update" ? `${r.installed} -> ${r.latest}` : r.status === "current" ? `${r.installed} (up to date)` : `${r.installed ?? "n/a"}${r.detail ? ` -- ${r.detail}` : ""}`;
-      console.log(`${mark[r.status]} ${r.name.padEnd(30)} ${status}`);
-      if (r.duplicates.length) console.log(`    ! also installed: ${r.duplicates.join(", ")} (the game loads only the highest version)`);
+      console.log(`${mark[r.status]} ${bold(r.name.padEnd(30))} ${tint[r.status](status)}`);
+      if (r.duplicates.length) console.log(yellow(`    ! also installed: ${r.duplicates.join(", ")} (the game loads only the highest version)`));
     }
     const n = (s: string) => result.rows.filter((r) => r.status === s).length;
-    console.log(`\n${n("update")} update(s) available, ${n("current") + n("ahead")} up to date, ${n("unknown")} could not be checked, ${n("blocked")} blocked`);
+    console.log(`\n${(n("update") ? yellow : dim)(`${n("update")} update(s) available`)}, ${green(`${n("current") + n("ahead")} up to date`)}, ${dim(`${n("unknown")} could not be checked`)}, ${(n("blocked") ? red : dim)(`${n("blocked")} blocked`)}`);
     if (deps.length) {
-      console.log("\nDependency check:");
+      console.log(bold("\nDependency check:"));
       for (const e of deps) console.log(planLine(e));
     }
   }

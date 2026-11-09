@@ -1,7 +1,7 @@
 // The preview webview: a VS Code-flavoured counterpart of the wiki's schematic viewer
 // (apps/vs-wiki/site/assets/schematicViewer.js), built on the same vs-schematic package. The host
 // (src/extension.ts) sends the schematic's JSON text; everything else happens here.
-import { decodeBlockEntity } from "vs-schematic/schematicDecode.js";
+import { decodeBlockEntity } from "@nf3t/vs-schematic/schematicDecode.js";
 import {
   assertSchematic,
   isHiddenByDefault,
@@ -9,15 +9,15 @@ import {
   toVoxels,
   type SchematicJson,
   type Voxel,
-} from "vs-schematic/schematicVoxels.js";
-import { createVoxelViewer, type VoxelViewer } from "vs-schematic/voxelViewer.js";
-import { materialVolumes, type ChiselShape } from "vs-schematic/chisel.js";
-import { looksLikePortfolio, parsePortfolioXml } from "vs-schematic/chiselExport.js";
-import { createChiselPreview } from "vs-schematic/chiselPreview.js";
-import { createModelPreview, type ModelPreview } from "vs-schematic/modelPreview.js";
-import { attachToBase, compactShape, looksLikeShape, shapeToBoxes } from "vs-schematic/shapeBoxes.js";
+} from "@nf3t/vs-schematic/schematicVoxels.js";
+import { createVoxelViewer, type VoxelViewer } from "@nf3t/vs-schematic/voxelViewer.js";
+import { materialVolumes, type ChiselShape } from "@nf3t/vs-schematic/chisel.js";
+import { looksLikePortfolio, parsePortfolioXml } from "@nf3t/vs-schematic/chiselExport.js";
+import { createChiselPreview } from "@nf3t/vs-schematic/chiselPreview.js";
+import { createModelPreview, type ModelPreview } from "@nf3t/vs-schematic/modelPreview.js";
+import { attachToBase, compactShape, looksLikeShape, shapeToBoxes } from "@nf3t/vs-schematic/shapeBoxes.js";
 import type { HostMessage, ModelTextures, WebviewMessage } from "../protocol.js";
-import type { ViewerSettings } from "vs-schematic/viewerSettings.js";
+import type { ViewerSettings } from "@nf3t/vs-schematic/viewerSettings.js";
 import "./style.css";
 
 declare function acquireVsCodeApi(): { postMessage(message: WebviewMessage): void };

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { newDecodeStats, recordDecodeFailure } from "../src/ingest/schematicHeader.js";
-import { decodeBlockEntity } from "vs-schematic/schematicDecode.js";
+import { decodeBlockEntity } from "@nf3t/vs-schematic/schematicDecode.js";
 
 // Integration checks that need wiki-owned files (the committed viewer sample, ingest's DecodeStats);
 // the pure decoder tests live in libs/vs-schematic/test.

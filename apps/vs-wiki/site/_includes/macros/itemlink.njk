@@ -5,7 +5,7 @@
 #}
 {% macro link(lang, items, domain, code, label) %}
 {%- if items | itemExists(domain, code) -%}
-<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ domain }}/{{ code | slugify }}/">{{ label or (items | displayName(domain, code)) }}</a>
+<a href="{{ ('/' ~ lang ~ '/') | url }}items/{{ items | itemDomain(domain, code) }}/{{ code | slugify }}/">{{ label or (items | displayName(domain, code)) }}</a>
 {%- elif "*" in code or "{" in code -%}
   {%- if items | searchHasMatch(code | wildcardQuery) -%}
 <a href="{{ ('/' ~ lang ~ '/') | url }}items/?q={{ code | wildcardQuery | urlencode }}">{{ label or code }}</a>

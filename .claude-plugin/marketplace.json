@@ -1,0 +1,88 @@
+{
+  "name": "vintage-story-wiki",
+  "owner": {
+    "name": "jgwoolley",
+    "url": "https://github.com/jgwoolley"
+  },
+  "metadata": {
+    "description": "Agent skills for the vsdev Vintage Story modding CLI, from https://github.com/jgwoolley/vintage-story-wiki"
+  },
+  "plugins": [
+    {
+      "name": "vsdev",
+      "source": "./",
+      "description": "All vsdev skills: render models and schematics, manage mods and vs-manifest.json, set up the game files, manage ModDB pages, and search the wiki.",
+      "strict": false,
+      "skills": [
+        "./skills/vsdev-render",
+        "./skills/vsdev-mods",
+        "./skills/vsdev-game-setup",
+        "./skills/vsdev-moddb",
+        "./skills/vsdev-wiki-search"
+      ]
+    },
+    {
+      "name": "vsdev-render",
+      "description": "Render Vintage Story models, schematics and chisel shapes to PNG with vsdev. Use to preview or inspect a shape/schematic file or list a model's animations.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/vsdev-render"
+      ]
+    },
+    {
+      "name": "vsdev-mods",
+      "description": "Find, install and update other people's Vintage Story mods from ModDB with vsdev. Use for mod search, version checks, installing mods or dependencies, or extracting a mod zip.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/vsdev-mods"
+      ]
+    },
+    {
+      "name": "vsdev-game-setup",
+      "description": "Install and configure vsdev and locate the Vintage Story game, data folder and Mods. Use for dev-environment setup or 'game not found' problems.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/vsdev-game-setup"
+      ]
+    },
+    {
+      "name": "vsdev-moddb",
+      "description": "Manage your own mods' ModDB pages with vsdev. Use to check an upload, review or diff page sources against the live site, or export a release download site.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/vsdev-moddb"
+      ]
+    },
+    {
+      "name": "vsdev-wiki-search",
+      "description": "Search the Nf3t Vintage Story wiki from the terminal with vsdev. Use to look up an item, creature or structure, or find an item code.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/vsdev-wiki-search"
+      ]
+    },
+    {
+      "name": "vintage-story-wiki",
+      "source": "./",
+      "description": "Other skills in vintage-story-wiki",
+      "strict": false,
+      "skills": [
+        "./skills/vsdev-screenshots"
+      ]
+    },
+    {
+      "name": "vsdev-screenshots",
+      "description": "Generate a mod's ModDB banners, card logo and modicon with vsdev from vs-manifest.json. Use to make or batch-update mod screenshots, icons or logos.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/vsdev-screenshots"
+      ]
+    }
+  ]
+}

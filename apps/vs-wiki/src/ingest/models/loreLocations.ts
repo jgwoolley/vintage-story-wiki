@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import type { SchematicFile } from "../schematicHeader.js";
 import { readSchematicItemCodes } from "../schematicHeader.js";
 // Same canonical decoder module the tapestry/clutter models import (Ascii85 only is needed here).
-import { Ascii85 } from "vs-schematic/schematicDecode.js";
+import { Ascii85 } from "@nf3t/vs-schematic/schematicDecode.js";
 import type { LoreBook, LoreFindMethod } from "./lore.js";
 
 /**

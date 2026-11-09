@@ -12,7 +12,7 @@ document aimed at visitors; `CLAUDE.md` is for a future AI coding session pickin
 1. **`vs-manifest.json`** pins the vanilla server version/branch and the list of installed mods
    (`modid` + version). This is the single source of truth for what the wiki documents. Currently
    pinned to vanilla **1.22.7** plus two mods: **BetterRuins** (JSON-only) and **Stone Quarry**
-   (ships compiled code — see "Compiled-code mods" below). Its optional `includeItems` list
+   (ships compiled code — see "Compiled-code mods" below). Its optional `wikiIncludeItems` list
    (`domain:code` globs, e.g. `"survival:statictranslocator-*"`) forces items/blocks into the item
    index that no recipe/drop/worldgen/trade/dialogue rule reaches (`includeManifestItems` in
    `crossref.ts`; ingest warns about patterns that match nothing). The file's shape is described
@@ -42,6 +42,7 @@ npm install
 npm run download   # fetch the pinned vanilla server + mods
 npm run build      # compile libs, ingest game data, build the static site into _site/
 npm run serve      # same, with a local dev server + live reload
+docker compose up -d  # dev only: nginx serves the built _site/ behind the devbox Traefik (compose.yml)
 npm run typecheck  # tsc over the wiki + core lib, the vs-schematic lib (DOM) and the extension
 npm test           # node:test across every package
 ```
@@ -59,7 +60,7 @@ apps/vsdev/           `vsdev` CLI: headless render, game download, ModDB mods, y
 Every command runs **from the repo root**: all pipeline paths are cwd-relative, and the shared data
 (`vintagestory/`, `Mods/`, `.scratch/`, `_site/`, `vs-manifest.json`, and the gitignored reference clones
 `vssurvivalmod/`/`vsapi/`/`vsessentialsmod/`) lives there. Apps import libs by package name
-(`vs-wiki-core/lang.js`, `vs-schematic/schematicDecode.js`; each lib's `exports` maps `./*.js` to its
+(`@nf3t/vs-wiki-core/lang.js`, `@nf3t/vs-schematic/schematicDecode.js`; each lib's `exports` maps `./*.js` to its
 TypeScript source, which `tsx` and `esbuild` consume directly). Libs never import from apps.
 
 - **`libs/vs-wiki-core`** knows nothing about the wiki's content types: only the loaded-asset shapes
@@ -171,6 +172,13 @@ worldgen rule (where/how often to spawn) that *references* schematics. They are 
   `/assets/schematics/world/<domain>/<relPath>.json.gz`. `schematicViewer.js` fetches one on demand and
   unpacks it with the browser's `DecompressionStream`. Redistributing these files (vanilla and mods) is a
   deliberate choice; each schematic page says whose files they are.
+- **Variant families** (`grouping.ts`): the game's handbook folds variants into one icon through
+  `attributes.handbook.groupBy` (e.g. `armor-{bodypart}-{construction}-*`, placeholders filled from each variant's own
+  values, so it groups materials, not all armor). `attachHandbookGroups` builds the same families into
+  `generated.variantFamilies` (primary = the variant the type's `creativeinventory` lists) and sets
+  `ItemIndexEntry.variantFamily`. They are shown only on `/variants/` (one page per family); `/items/` lists every
+  variant, because the game only applies `groupBy` inside its reference lists and some families (all ingots) are too broad
+  to fold. Things with a dedicated page (paintings) get `listedElsewhere` and are left out of `/items/`.
 - **Item and creature models**: `models/shapes.ts` resolves each item's `shape`/`shapeByType` and each entity's
   `client.shape` (placeholders substituted from the variant's groups; invalid-regex `shapeByType` keys fall back to the
   flat `shape`), looks the file up in the loaded asset index (`shapes/...`, already there because the loader reads every
@@ -633,7 +641,7 @@ animal variants).
 - Trader pages use `TradeList.displayName` (the localized trader entity name without its climate suffix) and show
   min and max price/stock as separate columns.
 - Storage vessels, chests, trunks, baskets and cluttered bookshelves are forced into the item index through
-  `vs-manifest.json` `includeItems` globs, so their pages list the structures they appear in.
+  `vs-manifest.json` `wikiIncludeItems` globs, so their pages list the structures they appear in.
 
 ## Testing
 

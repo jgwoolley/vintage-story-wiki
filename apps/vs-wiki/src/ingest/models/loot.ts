@@ -1,6 +1,6 @@
 import type { AssetIndex, CodeRef, CreatureRosterEntry, CSharpRegistrationKind, EntitySpawnInfo, EntityStats, LootEntry } from "../types.js";
-import type { LangResolver } from "vs-wiki-core/lang.js";
-import { expandVariants, resolveByType, substitutePlaceholders } from "vs-wiki-core/variantExpander.js";
+import type { LangResolver } from "@nf3t/vs-wiki-core/lang.js";
+import { expandVariants, resolveByType, substitutePlaceholders } from "@nf3t/vs-wiki-core/variantExpander.js";
 import { splitDomainCode } from "../codeUtil.js";
 import { resolveCodeRef } from "../csharpRefs.js";
 

@@ -1,5 +1,5 @@
 import type { AssetIndex, RockStrataInfo } from "../types.js";
-import { assetsUnderAnyDomain } from "vs-wiki-core/assetLoader.js";
+import { assetsUnderAnyDomain } from "@nf3t/vs-wiki-core/assetLoader.js";
 
 /**
  * Base rock-type placement (`worldgen/rockstrata.json`) is a separate worldgen system from ore/gem

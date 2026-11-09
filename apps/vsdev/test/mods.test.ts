@@ -311,7 +311,34 @@ test("check: ModDbCli's version rules, statuses and GitHub outputs", async () =>
   }
 });
 
-test("server download: skip, refuse over a client, replace only vsdev's own install; the client is never fetched; failures keep the install", async () => {
+test("client download: refused without --accept-client-terms, fetched (flat from its vintagestory/ folder) with it", async () => {
+  const dir = tmp("client");
+  try {
+    const src = path.join(dir, "src", "vintagestory");
+    mkdirSync(path.join(src, "assets", "survival", "textures", "block"), { recursive: true });
+    writeFileSync(path.join(src, "VintagestoryAPI.dll"), "");
+    writeFileSync(path.join(src, "assets", "version-1.22.7.txt"), "");
+    writeFileSync(path.join(src, "assets", "survival", "textures", "block", "linen.png"), "png");
+    const tgz = path.join(dir, "c.tar.gz");
+    await tar.create({ gzip: true, file: tgz, cwd: path.join(dir, "src") }, ["vintagestory"]);
+    const data = readFileSync(tgz);
+    const requested: string[] = [];
+    const fakeFetch = (async (url: string | URL) => (requested.push(String(url)), new Response(new Uint8Array(data)))) as typeof fetch;
+    const target = path.join(dir, "game");
+    const base = { kind: "client" as const, branch: "stable", version: "1.22.7", dir: target, force: false, fetchImpl: fakeFetch, log: () => {} };
+    await assert.rejects(installServer(base), /doesn't download the game client/);
+    assert.deepEqual(requested, [], "nothing is requested without the acknowledgement");
+    assert.equal(await installServer({ ...base, acceptClientTerms: true }), "downloaded");
+    assert.match(requested[0], /\/vs_client_linux-x64_1\.22\.7\.tar\.gz$/);
+    assert.deepEqual(gameInfo(target), { kind: "client", version: "1.22.7" });
+    assert.equal(readGameMarker(target)?.kind, "client");
+    assert.equal(await installServer({ ...base, acceptClientTerms: true }), "skipped-present");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("server download: skip, refuse over a client, replace only vsdev's own install; the client is not fetched by default; failures keep the install", async () => {
   const dir = tmp("game");
   try {
     // Fake server tarballs laid out like the real ones (flat, with the API DLL and assets/version-<v>.txt).
@@ -375,9 +402,10 @@ test("server download: skip, refuse over a client, replace only vsdev's own inst
 
 test("vsdev game options", () => {
   const env = (extra: Partial<LocationEnv> = {}): LocationEnv => ({ cwd: "/w", env: {}, home: "/h", platform: "linux", config: null, ...extra });
-  assert.deepEqual(parseGameArgs([], env()), { kind: "server", branch: "stable", version: undefined, dir: "/w/vintagestory", dirFrom: "./vintagestory", force: false });
-  assert.deepEqual(parseGameArgs(["--server", "--version", "v1.21.6", "--branch", "unstable", "--game-dir", "s", "--force"], env()), { kind: "server", branch: "unstable", version: "1.21.6", dir: "/w/s", dirFrom: "--game-dir", force: true });
-  assert.equal((parseGameArgs(["--client"], env()) as { kind: string }).kind, "client", "--client is parsed (runGame then only explains where the client comes from)");
+  assert.deepEqual(parseGameArgs([], env()), { kind: "server", branch: "stable", version: undefined, dir: "/w/vintagestory", dirFrom: "./vintagestory", force: false, acceptClientTerms: false });
+  assert.deepEqual(parseGameArgs(["--server", "--version", "v1.21.6", "--branch", "unstable", "--game-dir", "s", "--force"], env()), { kind: "server", branch: "unstable", version: "1.21.6", dir: "/w/s", dirFrom: "--game-dir", force: true, acceptClientTerms: false });
+  assert.equal((parseGameArgs(["--client"], env()) as { kind: string }).kind, "client", "--client is parsed (runGame then only explains where it comes from)");
+  assert.equal((parseGameArgs(["--client", "--accept-client-terms"], env()) as { acceptClientTerms: boolean }).acceptClientTerms, true);
   const fromEnv = parseGameArgs([], env({ env: { VINTAGE_STORY: "/opt/vs", VINTAGE_STORY_VERSION: "1.21.0" } }));
   assert.deepEqual(fromEnv !== "help" && [fromEnv.dir, fromEnv.dirFrom, fromEnv.version], ["/opt/vs", "$VINTAGE_STORY", "1.21.0"]);
   const fromConfig = parseGameArgs([], env({ config: { file: "/p/vs-manifest.json", dir: "/p", gameKind: "client", gameDir: "game", serverBranch: "unstable", gameVersion: "1.22.0" } }));

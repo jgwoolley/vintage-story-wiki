@@ -3,11 +3,11 @@
 // extension draw: models through createModelPreview (textured when the CLI found the images, with showFrame for animation stills),
 // schematics through createVoxelViewer (boxes prepared by the CLI's src/inputs.ts, chiseled blocks already cut into cuboids) and
 // ChiselTools shapes through createChiselPreview. Plus a title and a legend.
-import { createChiselPreview } from "vs-schematic/chiselPreview.js";
-import { createModelPreview, type ModelPreview } from "vs-schematic/modelPreview.js";
-import { stringToColor } from "vs-schematic/schematicVoxels.js";
-import { attachToBase, compactShape, shapeToBoxes } from "vs-schematic/shapeBoxes.js";
-import { createVoxelViewer, type VoxelViewer } from "vs-schematic/voxelViewer.js";
+import { createChiselPreview } from "@nf3t/vs-schematic/chiselPreview.js";
+import { createModelPreview, type ModelPreview } from "@nf3t/vs-schematic/modelPreview.js";
+import { stringToColor } from "@nf3t/vs-schematic/schematicVoxels.js";
+import { attachToBase, compactShape, shapeToBoxes } from "@nf3t/vs-schematic/shapeBoxes.js";
+import { createVoxelViewer, type VoxelViewer } from "@nf3t/vs-schematic/voxelViewer.js";
 import type { PageApi } from "../protocol.js";
 
 declare global {
@@ -106,6 +106,25 @@ window.loadSchematic = ({ boxes, colors, legend: rows }, viewDirection, { floor,
   current = viewer;
   viewer.setFloor(floor, 1);
   for (const row of rows) legendRow(legend, row.label, row.color);
+  return { error: null };
+};
+
+window.loadScene = async ({ boxes, textures }, viewDirection, { floor, title }) => {
+  const { viewport } = reset(title);
+  if (!boxes.length) return { error: "the scene has no boxes to draw" };
+  const images: Record<string, HTMLImageElement> = {};
+  for (const [key, url] of Object.entries(textures)) {
+    try {
+      images[key] = await loadImage(url);
+    } catch {
+      // an unreadable PNG: that key stays colored
+    }
+  }
+  const viewer = createVoxelViewer(viewport, { voxels: boxes, label: title, viewDirection, cellsCenteredOnIntegers: false, settings: { centerMarker: false, grid: false }, textures: images });
+  if (!viewer) return { error: "WebGL is unavailable" };
+  viewer.setStyle((box) => ({ color: stringToColor(box.texture ?? "") }));
+  current = viewer;
+  viewer.setFloor(floor, 16);
   return { error: null };
 };
 

@@ -1,6 +1,6 @@
 import type { AssetIndex, CharacterClassGearItem, CharacterClassInfo, TraitInfo, TraitType } from "../types.js";
-import type { LangResolver } from "vs-wiki-core/lang.js";
-import { assetsUnderAnyDomain } from "vs-wiki-core/assetLoader.js";
+import type { LangResolver } from "@nf3t/vs-wiki-core/lang.js";
+import { assetsUnderAnyDomain } from "@nf3t/vs-wiki-core/assetLoader.js";
 import { rewriteHandbookLinks, stripGameRichText } from "../codeUtil.js";
 
 interface RawTrait {

@@ -1,5 +1,5 @@
 import type { AssetIndex, NormalizedStructure, SchematicInfo, SchematicRef, StructureKind } from "../types.js";
-import { assetsUnderAnyDomain } from "vs-wiki-core/assetLoader.js";
+import { assetsUnderAnyDomain } from "@nf3t/vs-wiki-core/assetLoader.js";
 
 // "MinSpawnDistance" is deliberately excluded here -- it's already promoted to the top-level
 // `minSpawnDistance` field below, so including it here would render the same value twice.

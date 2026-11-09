@@ -1,6 +1,6 @@
 import type { AssetIndex, DecorItem, DecorKind } from "../types.js";
-import type { LangResolver } from "vs-wiki-core/lang.js";
-import { expandVariants } from "vs-wiki-core/variantExpander.js";
+import type { LangResolver } from "@nf3t/vs-wiki-core/lang.js";
+import { expandVariants } from "@nf3t/vs-wiki-core/variantExpander.js";
 
 const CLOTHING_FILES = [
   "arm",

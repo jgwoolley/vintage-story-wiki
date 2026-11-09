@@ -1,7 +1,23 @@
 {
-  "name": "vs-wiki",
+  "name": "@nf3t/vs-wiki",
   "version": "0.1.0",
   "private": true,
+  "author": "Nf3t (https://github.com/jgwoolley)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwoolley/vintage-story-wiki.git",
+    "directory": "apps/vs-wiki"
+  },
+  "homepage": "https://github.com/jgwoolley/vintage-story-wiki#readme",
+  "bugs": {
+    "url": "https://github.com/jgwoolley/vintage-story-wiki/issues"
+  },
+  "keywords": [
+    "vintage-story",
+    "wiki",
+    "eleventy"
+  ],
+  "license": "UNLICENSED",
   "type": "module",
   "dependencies": {
     "@11ty/eleventy": "^3.0.0",

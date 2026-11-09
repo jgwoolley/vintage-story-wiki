@@ -3,7 +3,7 @@ import { basename, dirname } from "node:path";
 import { gunzipSync } from "node:zlib";
 import * as vscode from "vscode";
 import type { HostMessage, ModelTextures, WebviewMessage } from "./protocol.js";
-import { gameAssetsCandidates, resolveTextures, TEXTURE_PROBE } from "vs-schematic/textureFiles.js";
+import { gameAssetsCandidates, resolveTextures, TEXTURE_PROBE } from "@nf3t/vs-schematic/textureFiles.js";
 import { buildWebviewHtml } from "./webviewHtml.js";
 
 const VIEW_TYPE = "vsSchematic.preview";

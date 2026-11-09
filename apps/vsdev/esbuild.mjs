@@ -44,7 +44,7 @@ await build({
   plugins: [{
     name: "inline-vs-schematic",
     setup(b) {
-      b.onResolve({ filter: /^vs-schematic\// }, (args) => ({ path: join(here, "../../libs/vs-schematic/src", args.path.slice("vs-schematic/".length).replace(/\.js$/, ".ts")) }));
+      b.onResolve({ filter: /^@nf3t\/vs-schematic\// }, (args) => ({ path: join(here, "../../libs/vs-schematic/src", args.path.slice("@nf3t/vs-schematic/".length).replace(/\.js$/, ".ts")) }));
     },
   }],
   banner: { js: "#!/usr/bin/env node" },

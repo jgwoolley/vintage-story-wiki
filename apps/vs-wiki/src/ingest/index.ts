@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import type { AssetSource, ModInfo, ModSummary, VsManifest } from "./types.js";
 import { loadMod, listModZips } from "./modExtractor.js";
-import { loadAssets } from "vs-wiki-core/assetLoader.js";
+import { loadAssets } from "@nf3t/vs-wiki-core/assetLoader.js";
 import { listSchematicFiles, newDecodeStats, type DecodeStats, type SchematicFile } from "./schematicHeader.js";
-import { collectPatches, filterPatches, applyPatches } from "vs-wiki-core/patchEngine.js";
+import { collectPatches, filterPatches, applyPatches } from "@nf3t/vs-wiki-core/patchEngine.js";
 import { extractRecipes } from "./models/recipes.js";
 import { extractLoot, extractStackRandomizerPools } from "./models/loot.js";
 import { handbookItemRefs, rewriteHandbookLinks } from "./codeUtil.js";
@@ -29,11 +29,12 @@ import { extractTrades } from "./models/trades.js";
 import { extractDialogue } from "./models/dialogue.js";
 import { extractTraits, extractCharacterClasses } from "./models/classes.js";
 import { buildBlockCodeToSchematicIndex, buildItemCodeToSchematicIndex, buildSchematicToStructureIndex, findStructuresContaining } from "./structureContents.js";
-import { expandVariants, resolveByType, substitutePlaceholders } from "vs-wiki-core/variantExpander.js";
-import { buildLangResolver } from "vs-wiki-core/lang.js";
+import { expandVariants, resolveByType, substitutePlaceholders } from "@nf3t/vs-wiki-core/variantExpander.js";
+import { buildLangResolver } from "@nf3t/vs-wiki-core/lang.js";
 import { extractBlockNames } from "./models/blockNames.js";
 import type { IngestStepTiming } from "./types.js";
-import { buildItemIndex, attachItemMetadata, attachDescriptionsAndCodeRefs, includeManifestItems } from "./crossref.js";
+import { attachHandbookGroups } from "./grouping.js";
+import { buildItemIndex, collectDefinedItems, canonicalDomain, attachItemMetadata, attachDescriptionsAndCodeRefs, includeManifestItems } from "./crossref.js";
 import { writeGenerated } from "./write.js";
 import { gameVersionMismatch, wikiGameDir } from "./gamePaths.js";
 
@@ -372,7 +373,8 @@ function main(): void {
   console.log(`  ${traits.length} traits, ${characterClasses.length} starting classes`);
 
   step("Building item index");
-  const itemIndex = buildItemIndex(recipes, loot, lang);
+  const definedItems = collectDefinedItems(index);
+  const itemIndex = buildItemIndex(recipes, loot, lang, definedItems);
   console.log(`  ${itemIndex.size} distinct items/blocks referenced`);
 
   // Ore/gem/rock, crop/flower/etc., tree, and block-drop data is keyed by block code regardless
@@ -381,6 +383,7 @@ function main(): void {
   // "where does this spawn"/"what does this drop" are exactly the kind of question that needs a
   // page even for a block nothing else currently points to.
   function ensureSpawnTarget(domain: string, code: string, kind: "item" | "block" = "block"): import("./types.js").ItemIndexEntry {
+    domain = canonicalDomain(definedItems, domain, code);
     const key = `${domain}:${code}`;
     let entry = itemIndex.get(key);
     if (!entry) {
@@ -391,7 +394,7 @@ function main(): void {
         kind,
         displayName: name,
         missingTranslation: missing,
-        sourceMod: "game",
+        sourceMod: definedItems.get(key) ?? "game",
         producedBy: [],
         consumedBy: [],
         droppedBy: [],
@@ -463,11 +466,14 @@ function main(): void {
   attachItemMetadata(itemIndex, index, ensureSpawnTarget);
   console.log(`  item index grown to ${itemIndex.size} after adding tagged-tool-only items`);
 
-  const includeMatches = includeManifestItems(itemIndex, index, manifest.includeItems ?? [], ensureSpawnTarget);
+  // `includeItems` is the old name of `wikiIncludeItems`; still read so an old manifest keeps working.
+  const legacyInclude = (manifest as { includeItems?: string[] }).includeItems;
+  if (legacyInclude) console.warn("  ! vs-manifest.json `includeItems` was renamed `wikiIncludeItems`");
+  const includeMatches = includeManifestItems(itemIndex, index, manifest.wikiIncludeItems ?? legacyInclude ?? [], ensureSpawnTarget);
   for (const [pattern, count] of includeMatches) {
-    if (count === 0) console.warn(`  ! vs-manifest.json includeItems pattern "${pattern}" matched no item/block variant`);
+    if (count === 0) console.warn(`  ! vs-manifest.json "${pattern}" (wikiIncludeItems) matched no item/block variant`);
   }
-  console.log(`  item index grown to ${itemIndex.size} after adding vs-manifest.json includeItems`);
+  console.log(`  item index grown to ${itemIndex.size} after adding vs-manifest.json wikiIncludeItems`);
 
   // `ItemStackRandomizer` items ("stackrandomizer-ore", ...) are what a world-generated chest
   // actually holds in a schematic; the game swaps each for one random stack from its pool when the
@@ -610,6 +616,31 @@ function main(): void {
   }
   console.log(`  ${itemsWithStructures}/${itemIndex.size} items/blocks found in at least one structure's schematics`);
 
+  step("Grouping variant families and finding items with a dedicated page");
+  let variantFamilies: import("./grouping.js").VariantGroup[] = [];
+  // Things that have their own dedicated page (only paintings so far: tapestries have no detail pages and clothing stays listed because wearables are browsed as items) would otherwise be listed twice
+  // in /items/. Keep their item pages, point them at the dedicated page and let the listing skip them.
+  {
+    const dedicated: [string, import("./types.js").DecorItem[]][] = [["paintings", paintings]];
+    let n = 0;
+    for (const [section, list] of dedicated) {
+      for (const d of list) {
+        const entry = itemIndex.get(`${d.domain}:${d.code}`);
+        if (!entry) continue;
+        entry.listedElsewhere = section;
+        n++;
+      }
+    }
+    console.log(`  ${n} items/blocks have a dedicated page (paintings) and are left out of the items listing`);
+  }
+
+  {
+    const groups = attachHandbookGroups(itemIndex, index);
+    variantFamilies = groups;
+    const grouped = groups.reduce((n, g) => n + g.members.length, 0);
+    console.log(`  ${groups.length} handbook groupBy families covering ${grouped} items/blocks (shown on /variants/, not folded into /items/)`);
+  }
+
   step("Attaching item descriptions + C# class references");
   attachDescriptionsAndCodeRefs(itemIndex, index, lang);
   // Item descriptions can carry handbook:// links too (the chisel tools' guide link); rewrite them like guide text.
@@ -719,6 +750,7 @@ function main(): void {
   writeGenerated("schematics", schematics);
   writeGenerated("decor", decorCatalog);
   writeGenerated("paintings", paintings);
+  writeGenerated("variantFamilies", variantFamilies);
   writeGenerated("clutter", clutter);
   writeGenerated("tapestries", tapestries);
   writeGenerated("clothing", clothing);

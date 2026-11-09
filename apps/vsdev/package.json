@@ -2,6 +2,25 @@
   "name": "@nf3t/vsdev",
   "version": "0.1.0",
   "private": true,
+  "author": "Nf3t (https://github.com/jgwoolley)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwoolley/vintage-story-wiki.git",
+    "directory": "apps/vsdev"
+  },
+  "homepage": "https://github.com/jgwoolley/vintage-story-wiki/tree/main/apps/vsdev#readme",
+  "bugs": {
+    "url": "https://github.com/jgwoolley/vintage-story-wiki/issues"
+  },
+  "keywords": [
+    "vintage-story",
+    "vsdev",
+    "modding",
+    "cli",
+    "moddb",
+    "schematic",
+    "render"
+  ],
   "type": "module",
   "description": "vsdev: Vintage Story dev tools on the command line. Headless rendering of models (with animations), schematics and ChiselTools shapes; game client/server download; ModDB search, info, install with dependencies, update and release checks.",
   "bin": {
@@ -24,15 +43,17 @@
     "typecheck": "tsc --noEmit -p src/render/page/tsconfig.json"
   },
   "dependencies": {
+    "@clack/prompts": "^1.8.1",
     "adm-zip": "^0.5.16",
     "ajv": "^8.17.1",
     "json5": "^2.2.3",
+    "picocolors": "^1.1.1",
     "playwright-core": "1.64.1",
     "tar": "^7.5.22"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",
     "three": "0.180.0",
-    "vs-schematic": "*"
+    "@nf3t/vs-schematic": "*"
   }
 }

@@ -1,20 +1,13 @@
-// Minimal terminal colors (ModDbCli's Ansi.cs): off when the output isn't a terminal or NO_COLOR is set; FORCE_COLOR turns them on.
-const detect = (tty: boolean | undefined) => {
-  if (process.env.NO_COLOR) return false;
-  if (process.env.FORCE_COLOR) return true;
-  return !!tty && process.env.TERM !== "dumb";
-};
-const out = detect(process.stdout.isTTY);
-const err = detect(process.stderr.isTTY);
-const wrap = (code: string, on: boolean) => (text: string) => (on && text ? `\x1b[${code}m${text}\x1b[0m` : text);
+// Terminal colors via picocolors (the same dependency skills-pages uses). It honors NO_COLOR / FORCE_COLOR and turns itself off when
+// stdout isn't a terminal; stderr gets its own instance since it can be a terminal while stdout is piped (or the reverse).
+import pc from "picocolors";
 
-export const green = wrap("32", out);
-export const red = wrap("31", out);
-export const yellow = wrap("33", out);
-export const cyan = wrap("36", out);
-export const dim = wrap("2", out);
-export const bold = wrap("1", out);
-export const redError = wrap("31", err);
+const errColors = pc.createColors(
+  !process.env.NO_COLOR && (!!process.env.FORCE_COLOR || (!!process.stderr.isTTY && process.env.TERM !== "dumb")),
+);
+
+export const { green, red, yellow, cyan, dim, bold } = pc;
+export const redError = errColors.red;
 
 /** "modid: message", the modid in cyan and the message in `color`. */
 export const modLine = (modid: string, message: string, color: (s: string) => string) => `${cyan(modid)}: ${color(message)}`;

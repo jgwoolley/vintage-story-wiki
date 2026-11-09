@@ -378,18 +378,7 @@ function toQuaternion(m: Mat3): [number, number, number, number] {
  */
 export function shapeToBoxes(shape: CompactShape, pose?: Record<string, ElementPose>): ShapeBox[] {
   const boxes: ShapeBox[] = [];
-  const visit = (el: ShapeElement, parentR: Mat3, parentT: Vec): void => {
-    const origin = el.rotationOrigin ?? [0, 0, 0];
-    // An animation adds to the element's own rotation and moves it inside its rotated frame (the game's GetLocalTransformMatrix, version 0).
-    const p = (el.name && pose?.[el.name]) || undefined;
-    const local = rotation((el.rotationX ?? 0) + (p?.rx ?? 0), (el.rotationY ?? 0) + (p?.ry ?? 0), (el.rotationZ ?? 0) + (p?.rz ?? 0));
-    // translate(origin) * R * translate(from - origin) maps a point p of the element's own frame to R*p + (origin + R*(from - origin)).
-    const shift = apply(local, [el.from[0] + (p?.ox ?? 0) - origin[0], el.from[1] + (p?.oy ?? 0) - origin[1], el.from[2] + (p?.oz ?? 0) - origin[2]]);
-    const localT: Vec = [origin[0] + shift[0], origin[1] + shift[1], origin[2] + shift[2]];
-    const r = mul(parentR, local);
-    const rt = apply(parentR, localT);
-    const t: Vec = [rt[0] + parentT[0], rt[1] + parentT[1], rt[2] + parentT[2]];
-
+  walkShape(shape, pose, (el, r, t) => {
     const span: Vec = [el.to[0] - el.from[0], el.to[1] - el.from[1], el.to[2] - el.from[2]];
     // Flat planes (zero thickness on one axis: cloth, leaves, fins) get a sliver so they are visible.
     const size = span.map((n) => (n === 0 ? MIN_THICKNESS : n)) as Vec;
@@ -404,8 +393,106 @@ export function shapeToBoxes(shape: CompactShape, pose?: Record<string, ElementP
         ...(el.faces ? { faces: boxFaces(el.faces, shape) } : {}),
       });
     }
+  });
+  return boxes;
+}
+
+/** An element's frame in the shape's space, in 1/16 block units: `t` is where its `from` corner is, `r` (row-major 3x3) its rotation. */
+export interface ElementFrame {
+  r: [number, number, number, number, number, number, number, number, number];
+  t: [number, number, number];
+}
+
+/** The frame of the first element called `name` (e.g. the player body's `ItemAnchor`, where a held item attaches), posed like shapeToBoxes; undefined when there is none. */
+export function elementFrame(shape: CompactShape, name: string, pose?: Record<string, ElementPose>): ElementFrame | undefined {
+  let found: ElementFrame | undefined;
+  walkShape(shape, pose, (el, r, t) => {
+    if (!found && el.name === name) found = { r, t };
+  });
+  return found;
+}
+
+/** Visits every element with its frame, following the game's `ShapeElement.GetLocalTransformMatrix` (see shapeToBoxes). */
+function walkShape(shape: CompactShape, pose: Record<string, ElementPose> | undefined, visitor: (el: ShapeElement, r: Mat3, t: Vec) => void): void {
+  const visit = (el: ShapeElement, parentR: Mat3, parentT: Vec): void => {
+    const origin = el.rotationOrigin ?? [0, 0, 0];
+    // An animation adds to the element's own rotation and moves it inside its rotated frame (the game's GetLocalTransformMatrix, version 0).
+    const p = (el.name && pose?.[el.name]) || undefined;
+    const local = rotation((el.rotationX ?? 0) + (p?.rx ?? 0), (el.rotationY ?? 0) + (p?.ry ?? 0), (el.rotationZ ?? 0) + (p?.rz ?? 0));
+    // translate(origin) * R * translate(from - origin) maps a point p of the element's own frame to R*p + (origin + R*(from - origin)).
+    const shift = apply(local, [el.from[0] + (p?.ox ?? 0) - origin[0], el.from[1] + (p?.oy ?? 0) - origin[1], el.from[2] + (p?.oz ?? 0) - origin[2]]);
+    const localT: Vec = [origin[0] + shift[0], origin[1] + shift[1], origin[2] + shift[2]];
+    const r = mul(parentR, local);
+    const rt = apply(parentR, localT);
+    const t: Vec = [rt[0] + parentT[0], rt[1] + parentT[1], rt[2] + parentT[2]];
+
+    visitor(el, r, t);
     for (const child of el.children ?? []) visit(child, r, t);
   };
   for (const el of shape.elements) visit(el, IDENTITY, [0, 0, 0]);
-  return boxes;
+}
+
+/** Unit quaternion (x, y, z, w) to a row-major rotation matrix. */
+function fromQuaternion([x, y, z, w]: [number, number, number, number]): Mat3 {
+  return [
+    1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w),
+    2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w),
+    2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y),
+  ];
+}
+
+/**
+ * Moves boxes rigidly: every point p goes to `r * (scale * p) + t` (1/16 block units; `r` a row-major rotation, `scale` uniform). A box keeps
+ * its faces and gets the rotation composed into its own.
+ */
+export function transformBoxes(boxes: ShapeBox[], r: ElementFrame["r"], t: ElementFrame["t"], scale = 1): ShapeBox[] {
+  return boxes.map((b) => {
+    const c = apply(r, [b.x * scale, b.y * scale, b.z * scale]);
+    const own = b.quaternion ? fromQuaternion(b.quaternion) : IDENTITY;
+    const total = mul(r, own);
+    return {
+      ...b,
+      x: c[0] + t[0], y: c[1] + t[1], z: c[2] + t[2],
+      sx: b.sx * scale, sy: b.sy * scale, sz: b.sz * scale,
+      ...(isIdentity(total) ? { quaternion: undefined } : { quaternion: toQuaternion(total) }),
+    };
+  });
+}
+
+/** Rotation matrix for the shape files' rotationX/Y/Z in degrees (the game's order: X, then Y, then Z). */
+export function rotationMatrix(rx: number, ry: number, rz: number): ElementFrame["r"] {
+  return rotation(rx, ry, rz);
+}
+
+/** A collectible's `tpHandTransform` (translation in blocks, rotation in degrees, uniform scale, origin in blocks). */
+export interface HandTransform {
+  translation: [number, number, number];
+  rotation: [number, number, number];
+  scale: number;
+  origin: [number, number, number];
+}
+
+/** The game's default third-person hand transform of an item (`ModelTransform.ItemDefaultTp`); `origin` is the 0.5 block default. */
+export const ITEM_HAND_TRANSFORM: HandTransform = { translation: [-1.5, -1.6, -1.4], rotation: [0, -62, 18], scale: 0.33, origin: [0.5, 0.5, 0.5] };
+/** The same for a block (`ModelTransform.BlockDefaultTp`). */
+export const BLOCK_HAND_TRANSFORM: HandTransform = { translation: [-1.2, -0.9, -0.5], rotation: [0, 0, 0], scale: 0.4, origin: [0.5, 0.5, 0.5] };
+
+/**
+ * Places a held item's boxes in the player's hand, the way the game's `EntityShapeRenderer.RenderItem` builds the matrix:
+ * `anchor * translate(origin) * scale * translate(attachPos + translation) * rotate(attachRot + rotation) * translate(-origin)`,
+ * where `anchor` is the hand element's posed frame (`elementFrame`) and the attachment point sits at `attachPos` (1/16 units) with
+ * `attachRot` (degrees) inside it. The item's boxes are in 1/16 units, its transform's values in blocks.
+ */
+export function holdInHand(
+  boxes: ShapeBox[], anchor: ElementFrame, attach: { pos: Vec; rot: Vec }, hand: HandTransform,
+): ShapeBox[] {
+  const o = hand.origin.map((n) => n * 16) as Vec;
+  const c = [0, 1, 2].map((i) => attach.pos[i] + hand.translation[i] * 16) as Vec;
+  const R = rotation(attach.rot[0] + hand.rotation[0], attach.rot[1] + hand.rotation[1], attach.rot[2] + hand.rotation[2]);
+  const s = hand.scale;
+  // p' = anchor.r * (o + s * (R (p - o) + c)) + anchor.t = (anchor.r * R * s) p + anchor.r * (o + s*c - s*R*o) + anchor.t
+  const Ro = apply(R, o);
+  const inner: Vec = [o[0] + s * c[0] - s * Ro[0], o[1] + s * c[1] - s * Ro[1], o[2] + s * c[2] - s * Ro[2]];
+  const lever = apply(anchor.r, inner);
+  return transformBoxes(boxes, mul(anchor.r, R), [lever[0] + anchor.t[0], lever[1] + anchor.t[1], lever[2] + anchor.t[2]], s);
 }
