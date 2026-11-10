@@ -11,6 +11,8 @@ import { looksLikePortfolio, parsePortfolioXml } from "@nf3t/vs-schematic/chisel
 import { decodeBlockEntity } from "@nf3t/vs-schematic/schematicDecode.js";
 import { assertSchematic, isHiddenByDefault, toVoxels, type SchematicJson } from "@nf3t/vs-schematic/schematicVoxels.js";
 import { looksLikeShape } from "@nf3t/vs-schematic/shapeBoxes.js";
+import type { StatueIo, StatueResult } from "@nf3t/vs-schematic/statue.js";
+import { schematicStatues } from "./statues.js";
 
 export class InputError extends Error {}
 
@@ -23,6 +25,8 @@ export interface SchematicBox {
   sx?: number;
   sy?: number;
   sz?: number;
+  /** Rotation (x, y, z, w) about the box's center (a statue's posed parts); omitted for an axis-aligned box. */
+  quaternion?: [number, number, number, number];
   /** Index into `SchematicInput.codes`. */
   code: number;
 }
@@ -42,6 +46,11 @@ export interface SchematicSummary {
   chiselFailed: number;
   /** Blocks hidden by default (meta-filler) that were left out. */
   hiddenFiller: number;
+  /** Statue blocks (Player Statues mod) drawn as their figure, and the game's invisible multiblock parts left out (a large statue's). */
+  statues: number;
+  multiblock: number;
+  /** Problems drawing statues (a shape or item type not found). */
+  warnings: string[];
 }
 
 export interface ModelInput {
@@ -82,6 +91,8 @@ export interface SchematicOptions {
   /** Draw chiseled blocks as their cuboids (default) rather than whole cubes. */
   chisel: boolean;
   colors?: BlockColors | null;
+  /** Statues already built for this schematic (`schematicStatues`), by packed position; drawn instead of their block. */
+  statues?: Map<number, StatueResult>;
 }
 
 /** The file's text: gunzipped when it starts with the gzip magic bytes, without a byte-order mark. */
@@ -105,7 +116,7 @@ export function schematicBoxes(schematic: SchematicJson, options: SchematicOptio
   const boxes: SchematicBox[] = [];
   const drawnCounts = new Map<string, number>();
   const countDrawn = (code: string) => drawnCounts.set(code, (drawnCounts.get(code) ?? 0) + 1);
-  let drawn = 0, chiseled = 0, chiselFailed = 0, hiddenFiller = 0;
+  let drawn = 0, chiseled = 0, chiselFailed = 0, hiddenFiller = 0, statues = 0, multiblock = 0;
   const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
   for (const v of voxels) {
     if (!options.showFiller && isHiddenByDefault(v.code)) {
@@ -113,8 +124,27 @@ export function schematicBoxes(schematic: SchematicJson, options: SchematicOptio
       continue;
     }
     if (options.maxY !== undefined && v.y > options.maxY) continue;
+    // The game draws nothing for these (shape block/basic/nothing): the space a multiblock (a large statue) takes beyond its own block.
+    if (/^(?:game:)?multiblock-/.test(v.code)) {
+      multiblock++;
+      continue;
+    }
     drawn++;
     [v.x, v.y, v.z].forEach((c, i) => ((lo[i] = Math.min(lo[i], c)), (hi[i] = Math.max(hi[i], c))));
+    const statue = options.statues?.get(v.packed);
+    if (statue?.boxes.length) {
+      statues++;
+      countDrawn(statue.colorCode);
+      const code = codeIndex(statue.colorCode);
+      // Statue boxes are in 1/16 block with the block's corner at 0; the cell spans x - 0.5 .. x + 0.5.
+      for (const b of statue.boxes) {
+        boxes.push({
+          x: v.x - 0.5 + b.x / 16, y: v.y - 0.5 + b.y / 16, z: v.z - 0.5 + b.z / 16, sx: b.sx / 16, sy: b.sy / 16, sz: b.sz / 16,
+          ...(b.quaternion ? { quaternion: b.quaternion } : {}), code,
+        });
+      }
+      continue;
+    }
     const entity = options.chisel ? schematic.BlockEntities?.[String(v.packed)] : undefined;
     if (typeof entity === "string") {
       let shape: ChiselShape | null = null;
@@ -158,6 +188,9 @@ export function schematicBoxes(schematic: SchematicJson, options: SchematicOptio
       chiseled,
       chiselFailed,
       hiddenFiller,
+      statues,
+      multiblock,
+      warnings: [],
     },
   };
 }
@@ -182,7 +215,7 @@ export function bodyCandidates(file: string, gameAssets?: string): string[] {
 }
 
 /** Reads a file and works out what it is. Throws InputError for one that is none of the three. */
-export async function loadInput(file: string, options: SchematicOptions & { gameAssets?: string }): Promise<LoadedInput> {
+export async function loadInput(file: string, options: SchematicOptions & { gameAssets?: string; statueIo?: StatueIo }): Promise<LoadedInput> {
   let text: string;
   try {
     text = decodeText(new Uint8Array(await readFile(file)));
@@ -224,7 +257,11 @@ export async function loadInput(file: string, options: SchematicOptions & { game
   } catch {
     throw new InputError(`${file} isn't a Vintage Story model (no "elements" boxes), schematic (no Indices / BlockIds / BlockCodes) or ChiselTools shape file`);
   }
-  return schematicBoxes(parsed, options);
+  if (!options.statueIo) return schematicBoxes(parsed, options);
+  const { statues, warnings } = await schematicStatues(parsed, options.statueIo);
+  const input = schematicBoxes(parsed, { ...options, statues });
+  input.summary.warnings.push(...warnings);
+  return input;
 }
 
 /** The bundled block colors (the wiki's copy of BlockColorMod's output), or the file given; null when the default file isn't there. */

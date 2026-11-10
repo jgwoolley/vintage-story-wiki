@@ -19,6 +19,7 @@ import { gameInfo, readGameMarker, type LocationEnv } from "../src/locations.js"
 import { extractZip } from "../src/mods/extract.js";
 import { applyInstallPlan, checkUpdates, resolveInstallPlan } from "../src/mods/install.js";
 import { installedIndex, scanLocalMods } from "../src/mods/local.js";
+import { installManifestMod } from "../src/download/manifest.js";
 import { blockReason, latestStableGameVersion, ModDb, parseModSpec, rankSearch, type InstallInfo, type ModDbMod } from "../src/mods/moddb.js";
 import { modDependencies, modInfoFromZip, parseModInfo, toModId } from "../src/mods/modinfo.js";
 import { compareGameVersions, satisfiesMinimum, splitGameVersion } from "../src/mods/versions.js";
@@ -143,6 +144,38 @@ function fakeModDb(spec: {
   }) as typeof fetch;
   return { db: new ModDb(fakeFetch), calls };
 }
+
+test("manifest install: a bumped pin replaces the other zips of its modid, and only those", async () => {
+  const { db } = fakeModDb({
+    install: {},
+    mods: { lib: { releases: [{ modversion: "1.5.0", filename: "lib_1.22.7_1.5.0.zip", mainfile: "https://mods.vintagestory.at/d/lib.zip", tags: ["1.22.7"] }] } },
+    files: { "/d/lib.zip": modZip({ modid: "lib", version: "1.5.0" }) },
+  });
+  const dir = tmp("manifest");
+  const log = () => {};
+  try {
+    writeFileSync(path.join(dir, "Libv1.0.0.zip"), modZip({ modid: "Lib", version: "1.0.0" })); // modid from modinfo.json, not the name
+    writeFileSync(path.join(dir, "lib_1.6.0.zip"), modZip({ modid: "lib", version: "1.6.0" })); // even a newer one: the pin wins
+    writeFileSync(path.join(dir, "other_1.0.0.zip"), modZip({ modid: "other", version: "1.0.0" }));
+    mkdirSync(path.join(dir, "libdev"));
+    writeFileSync(path.join(dir, "libdev", "modinfo.json"), JSON.stringify({ modid: "lib", version: "2.0.0" }));
+    const first = await installManifestMod("lib@1.5.0", { db, modsDir: dir, log });
+    assert.equal(first.action, "downloaded");
+    assert.deepEqual(first.removed?.sort(), ["Libv1.0.0.zip", "lib_1.6.0.zip"]);
+    assert.deepEqual(readdirSync(dir).sort(), ["lib_1.22.7_1.5.0.zip", "libdev", "other_1.0.0.zip"], "other mods and a mod folder are left alone");
+
+    writeFileSync(path.join(dir, "lib_1.0.0.zip"), modZip({ modid: "lib", version: "1.0.0" })); // e.g. restored from a CI cache
+    const again = await installManifestMod("lib@1.5.0", { db, modsDir: dir, log });
+    assert.equal(again.action, "skipped-present");
+    assert.deepEqual(again.removed, ["lib_1.0.0.zip"], "leftovers go even when nothing is downloaded");
+
+    const failed = await installManifestMod("lib@9.9.9", { db, modsDir: dir, log });
+    assert.equal(failed.action, "failed");
+    assert.ok(readdirSync(dir).includes("lib_1.22.7_1.5.0.zip"), "a failed lookup removes nothing");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
 
 test("install: dependencies from modinfo, ModDB's pick, retractions, the blocklist, no downgrades", async () => {
   const { db } = fakeModDb({

@@ -31,6 +31,9 @@ const els = {
   error: $("error"),
   search: $<HTMLInputElement>("search"),
   showFiller: $<HTMLInputElement>("showFiller"),
+  fillerBox: $("fillerBox"),
+  maxYBox: $("maxYBox"),
+  sideActions: $("sideActions"),
   maxY: $<HTMLInputElement>("maxY"),
   maxYValue: $("maxYValue"),
   inspector: $("inspector"),
@@ -145,11 +148,24 @@ function showInspector(voxel: Voxel): void {
   els.inspector.hidden = false;
 }
 
+/** What the open file is; each kind shows only the controls that mean something for it. */
+type Mode = "schematic" | "model" | "chisel";
+
+/**
+ * Shows the toolbar and side-panel controls of one kind of file and hides the rest: meta-filler, the Y slider, and the block filter and
+ * show/hide buttons are for a schematic's many block kinds (a model's textures and a chiseled block's materials are only listed, and
+ * hiding one makes no sense); the animation picker and floor switch are a model's (shown by `loadModel` once it knows it has them).
+ */
+function setMode(mode: Mode): void {
+  const schematic = mode === "schematic";
+  els.fillerBox.hidden = els.maxYBox.hidden = els.search.hidden = els.sideActions.hidden = !schematic;
+  els.animBox.hidden = els.floorBox.hidden = true;
+}
+
 /** Forgets the loaded schematic and disables its controls, for the previews that aren't one (chisel shapes, models). */
-function clearSchematicState(): void {
+function clearSchematicState(mode: Mode): void {
+  setMode(mode);
   showError("");
-  els.animBox.hidden = true;
-  els.floorBox.hidden = true;
   data = null;
   voxels = [];
   blockMeta = new Map();
@@ -160,10 +176,33 @@ function clearSchematicState(): void {
   els.showFiller.checked = false;
 }
 
-/** A Vintage Story model (shape) file: an item, creature or block model, drawn untextured; the legend lists its texture names. */
-function loadModel(name: string, raw: unknown, bodyText: string | undefined, textures: ModelTextures | undefined): void {
-  clearSchematicState();
-  let shape = compactShape(raw);
+/** Decodes a texture PNG (a data: URL from the host) for the 3D view. */
+function loadImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("unreadable texture"));
+    image.src = url;
+  });
+}
+
+/**
+ * A Vintage Story model (shape) file: an item, creature or block model. Faces are drawn with their real textures when the host found
+ * them (the model's own assets tree or the game folder); a texture key without one is drawn in a color. The legend lists the texture keys.
+ */
+async function loadModel(name: string, raw: unknown, bodyText: string | undefined, textures: ModelTextures | undefined, current: () => boolean): Promise<void> {
+  const images: Record<string, HTMLImageElement> = {};
+  await Promise.all(Object.entries(textures?.images ?? {}).map(async ([key, url]) => {
+    try {
+      images[key] = await loadImage(url);
+    } catch {
+      // an unreadable PNG: that key stays colored
+    }
+  }));
+  if (!current()) return; // the file was reloaded while the images decoded
+  const textured = Object.keys(images).length > 0;
+  clearSchematicState("model");
+  let shape = compactShape(raw, { faces: textured });
   let placed = "";
   if (shape.elements.some((e) => e.stepParent)) {
     // A worn item: its pieces name a bone of the player body, so they need the body file to be placed.
@@ -189,9 +228,9 @@ function loadModel(name: string, raw: unknown, bodyText: string | undefined, tex
     row.title = `texture #${texture}`;
     const swatch = textEl("span", "color-box", "");
     swatch.style.background = stringToColor(texture);
-    const image = textures?.images[texture];
+    const image = images[texture] ? textures?.images[texture] : undefined;
     if (image) {
-      // The real texture as the swatch (the 3D view itself is still drawn in the key's color).
+      // The real texture as the swatch, as it is drawn on the model.
       swatch.classList.add("texture-box");
       swatch.style.backgroundImage = `url("${image}")`;
     }
@@ -202,7 +241,7 @@ function loadModel(name: string, raw: unknown, bodyText: string | undefined, tex
   viewer?.dispose();
   viewer = null;
   shapeViewer?.dispose();
-  const model: ModelPreview | null = createModelPreview(els.viewport, shape, `3D view of ${name}`, settings);
+  const model: ModelPreview | null = createModelPreview(els.viewport, shape, `3D view of ${name}`, settings, textured ? { textures: images } : {});
   shapeViewer = model;
   if (model?.animations.length) {
     // "Rest pose" plus each animation of the model, played in a loop.
@@ -245,7 +284,7 @@ function textureStatus(textures: ModelTextures | undefined): HTMLElement {
 
 /** A ChiselTools shape file (`.pf save`): draw the chiseled block's boxes, and list its materials with their share of the 4096 voxels. */
 function loadShape(name: string, shape: ChiselShape): void {
-  clearSchematicState();
+  clearSchematicState("chisel");
   const volumes = materialVolumes(shape);
   els.summary.textContent = `${name}: chiseled block, ${shape.cuboids.length} boxes, ${volumes.reduce((a, b) => a + b, 0)} of 4096 voxels`;
   els.legend.replaceChildren();
@@ -265,7 +304,11 @@ function loadShape(name: string, shape: ChiselShape): void {
   if (!shapeViewer) showError("WebGL isn't available in this webview, so the 3D view can't be shown.");
 }
 
+/** Counts loads, so a model still decoding its textures gives way to a newer load of the file. */
+let loadId = 0;
+
 function load(name: string, text: string, body?: string, textures?: ModelTextures): void {
+  const id = ++loadId;
   if (looksLikePortfolio(text)) {
     try {
       loadShape(name, parsePortfolioXml(text).shape);
@@ -279,12 +322,16 @@ function load(name: string, text: string, body?: string, textures?: ModelTexture
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
-    if (looksLikeShape(parsed)) return loadModel(name, parsed, body, textures);
+    if (looksLikeShape(parsed)) {
+      void loadModel(name, parsed, body, textures, () => id === loadId).catch((err) => showError(`${name} couldn't be shown: ${err instanceof Error ? err.message : String(err)}`));
+      return;
+    }
     assertSchematic(parsed);
   } catch (err) {
     showError(`${name} isn't a Vintage Story schematic or model: ${err instanceof Error ? err.message : String(err)}`);
     return;
   }
+  setMode("schematic");
   showError("");
   data = parsed;
   voxels = toVoxels(parsed);
@@ -343,6 +390,9 @@ els.viewport.addEventListener("pointerup", (e) => {
 });
 
 window.addEventListener("message", (event: MessageEvent<HostMessage>) => {
+  // The extension host's messages are relayed by VS Code's own webview frame, which shares this page's
+  // vscode-webview:// origin; anything else (e.g. a frame the previewed content could open) is ignored.
+  if (event.origin !== window.origin) return;
   const message = event.data;
   if (message.type === "schematic") load(message.name, message.text, message.body, message.textures);
   else if (message.type === "error") showError(message.message);

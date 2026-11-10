@@ -6,7 +6,7 @@ import { listSchematicFiles, newDecodeStats, type DecodeStats, type SchematicFil
 import { collectPatches, filterPatches, applyPatches } from "@nf3t/vs-wiki-core/patchEngine.js";
 import { extractRecipes } from "./models/recipes.js";
 import { extractLoot, extractStackRandomizerPools } from "./models/loot.js";
-import { handbookItemRefs, rewriteHandbookLinks } from "./codeUtil.js";
+import { handbookItemRefs, rewriteHandbookLinks, withoutTrailingParenthetical } from "./codeUtil.js";
 import { extractStructures } from "./models/structures.js";
 import { extractSchematics } from "./models/schematics.js";
 import { writeCompressedSchematics } from "./schematicFiles.js";
@@ -84,6 +84,8 @@ function main(): void {
   const mismatch = gameVersionMismatch(GAME_DIR);
   if (mismatch) console.warn(`  !!! WARNING: ${mismatch}`);
   const manifestModIds = new Set(manifest.mods.map((m) => m.modid.toLowerCase()));
+  // A pin's old zips stay in Mods/ after it is bumped (locally and in CI's Mods/ cache); only the pinned version may load.
+  const pinnedVersions = new Map(manifest.mods.filter((m) => m.version).map((m) => [m.modid.toLowerCase(), m.version!]));
 
   step("Resolving mods");
   const mods: (ModInfo & { domains: string[]; rootDir: string })[] = [];
@@ -91,6 +93,11 @@ function main(): void {
     const { info, extractedDir } = loadMod(zipFile);
     if (!manifestModIds.has(info.modid.toLowerCase())) {
       console.log(`  - ${info.modid} present in Mods/ but not in vs-manifest.json, skipping`);
+      continue;
+    }
+    const pinned = pinnedVersions.get(info.modid.toLowerCase());
+    if (pinned && info.version !== pinned) {
+      console.log(`  - ${zipFile}: ${info.modid} v${info.version}, but vs-manifest.json pins v${pinned}, skipping`);
       continue;
     }
     if (info.hasCompiledCode) {
@@ -354,7 +361,7 @@ function main(): void {
     const entityName = first ? lang.displayName("entity", first.domain, first.code) : undefined;
     const baseName =
       entityName && !entityName.missing
-        ? entityName.name.replace(/\s*\([^)]*\)\s*$/, "")
+        ? withoutTrailingParenthetical(entityName.name)
         : `${specialization.charAt(0).toUpperCase()}${specialization.slice(1)} trader`;
     // A named villager's lang name is only the job ("Innkeeper"); append the person's own name(s) from `nametag-<name>`
     // (villager-liga is shared by Liga and Arzhur, so every entity's name is listed).
@@ -713,7 +720,8 @@ function main(): void {
     const rows = [...itemIndex.values()].map((i) => `${i.displayName} ${i.domain}:${i.code} ${i.kind} ${i.sourceMod}`.toLowerCase());
     const matches = (query: string): boolean => {
       const q = query.trim().toLowerCase();
-      if (/\s+or\s+/.test(q)) return q.split(/\s+or\s+/).some((t) => t && matches(t));
+      const terms = q.split(/\sor\s/);
+      if (terms.length > 1) return terms.some((t) => t && matches(t));
       if (q.includes("*")) {
         const re = new RegExp(q.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*"));
         return rows.some((r) => re.test(r));

@@ -152,7 +152,7 @@ export default function (eleventyConfig) {
     String(str ?? "")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "item"
+      .replace(/^-|-$/g, "") || "item"
   );
 
   // `generated.items` is searched thousands of times per build (every recipe ingredient), so key it once per array.
@@ -197,7 +197,8 @@ export default function (eleventyConfig) {
         term.includes("*")
           ? ((re) => cache.rows.some((r) => re.test(r)))(new RegExp(term.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*")))
           : cache.rows.some((r) => r.includes(term));
-      cache.set(q, /\s+or\s+/.test(q) ? q.split(/\s+or\s+/).some((t) => t && test(t.trim())) : test(q));
+      const terms = q.split(/\sor\s/); // "a or b": the terms are trimmed, so extra spaces around "or" don't matter
+      cache.set(q, terms.length > 1 ? terms.some((t) => t && test(t.trim())) : test(q));
     }
     return cache.get(q);
   });
@@ -264,7 +265,18 @@ export default function (eleventyConfig) {
   // Turns a wildcard/placeholder ingredient code (e.g. "leather-normal-*", "plank-{wood}") into a
   // search query for /items/: "*" is kept and "{...}" placeholders become "*", since datatable.js
   // treats "*" in a query as a glob ("jug-*-fired" must match "jug-blue-fired").
-  eleventyConfig.addFilter("wildcardQuery", (code) => String(code ?? "").replace(/\{[^}]*\}/g, "*"));
+  // (String scanning rather than /\{[^}]*\}/g, which backtracks quadratically on an unclosed "{".)
+  eleventyConfig.addFilter("wildcardQuery", (code) => {
+    const s = String(code ?? "");
+    let out = "", from = 0;
+    for (let open = s.indexOf("{"); open >= 0; open = s.indexOf("{", from)) {
+      const close = s.indexOf("}", open + 1);
+      if (close < 0) break;
+      out += `${s.slice(from, open)}*`;
+      from = close + 1;
+    }
+    return out + s.slice(from);
+  });
 
   // A recipe ingredient's tag-based slot (e.g. `tags: ["tool-hammer"]`) shows this instead of the
   // raw tag string, e.g. "tool-hammer" -> "hammer (tool)" -- the raw tag itself is still what's

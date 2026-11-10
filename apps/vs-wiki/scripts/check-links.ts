@@ -4,6 +4,7 @@
 // exits 1 if there are any. Run after `npm run build`: `npm run check-links`.
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, posix } from "node:path";
+import { replaceTags } from "../src/ingest/codeUtil.js";
 
 const SITE = "_site";
 const PREFIX = (process.env.PATH_PREFIX ?? "/").replace(/\/?$/, "/");
@@ -18,7 +19,7 @@ function walk(dir: string, out: string[] = []): string[] {
 }
 
 const decodeEntities = (s: string) => s.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-const stripTags = (s: string) => decodeEntities(s.replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").toLowerCase();
+const stripTags = (s: string) => decodeEntities(replaceTags(s, " ")).replace(/\s+/g, " ").toLowerCase();
 
 /** Lowercased text of each datatable row of a page (visible text plus data-search), cached per page. */
 const rowCache = new Map<string, string[]>();
@@ -34,7 +35,8 @@ function rowsOf(file: string): string[] {
 }
 
 function rowMatches(row: string, query: string): boolean {
-  if (/\s+or\s+/.test(query)) return query.split(/\s+or\s+/).some((t) => t && rowMatches(row, t.trim()));
+  const terms = query.split(/\sor\s/);
+  if (terms.length > 1) return terms.some((t) => t && rowMatches(row, t.trim()));
   if (query.includes("*")) return new RegExp(query.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*")).test(row);
   return row.includes(query);
 }
@@ -85,7 +87,7 @@ for (const file of walk(SITE)) {
 if (!broken.size) {
   console.log("No broken links.");
 } else {
-  for (const [problem, pages] of [...broken].sort()) console.log(`${problem}\n    on ${[...pages].slice(0, 3).join(", ")}${pages.size > 3 ? ` (+${pages.size - 3} more)` : ""}`);
+  for (const [problem, pages] of [...broken].sort(([a], [b]) => Number(a > b) - Number(a < b))) console.log(`${problem}\n    on ${[...pages].slice(0, 3).join(", ")}${pages.size > 3 ? ` (+${pages.size - 3} more)` : ""}`);
   console.log(`\n${broken.size} distinct broken links.`);
   process.exit(1);
 }

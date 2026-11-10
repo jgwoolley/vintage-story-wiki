@@ -122,7 +122,13 @@ export function unifiedDiff(oldText: string, newText: string, oldName: string, n
 
 const range = (start: number, length: number) => (length === 0 ? `${start},0` : length === 1 ? `${start + 1}` : `${start + 1},${length}`);
 
-const splitLines = (text: string) => (text.length === 0 ? [] : text.replace(/\n+$/, "").split("\n"));
+/** The text's lines, ignoring trailing newlines. */
+function splitLines(text: string): string[] {
+  if (text.length === 0) return [];
+  let end = text.length;
+  while (end > 0 && text[end - 1] === "\n") end--;
+  return text.slice(0, end).split("\n");
+}
 
 function align(a: string[], b: string[]): [Op, string][] {
   const lcs = Array.from({ length: a.length + 1 }, () => new Uint32Array(b.length + 1));

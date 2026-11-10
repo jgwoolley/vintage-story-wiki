@@ -20,9 +20,28 @@ export function extractWaypointIcons(sources: AssetSource[]): WaypointIcon[] {
     const dir = `${source.rootDir}/textures/icons/worldmap`;
     if (!existsSync(dir)) continue;
     for (const file of readdirSync(dir)) {
-      if (file.toLowerCase().endsWith(".svg")) add(file.replace(/\.[^.]*$/, "").replace(/\d+-/, ""), source.modid);
+      if (file.toLowerCase().endsWith(".svg")) add(iconCode(file), source.modid);
     }
   }
   for (const code of vanilla.icons) add(code, "game");
   return [...out.values()].sort((a, b) => a.code.localeCompare(b.code));
+}
+
+/**
+ * WaypointMapLayer's icon code for a file: the name up to its first "." with every `\d+-` removed
+ * (`Regex.Replace(name, @"\d+\-", "")`, so "01-turnip.svg" -> "turnip"). Scanned by hand, since the
+ * regex backtracks quadratically on a long run of digits.
+ */
+export function iconCode(file: string): string {
+  const dot = file.indexOf(".");
+  const name = dot < 0 ? file : file.slice(0, dot);
+  let out = "";
+  for (let i = 0; i < name.length; ) {
+    let j = i;
+    while (j < name.length && name[j] >= "0" && name[j] <= "9") j++;
+    if (j > i && name[j] === "-") i = j + 1; // a number followed by "-": dropped with its dash
+    else if (j > i) { out += name.slice(i, j); i = j; }
+    else out += name[i++];
+  }
+  return out;
 }

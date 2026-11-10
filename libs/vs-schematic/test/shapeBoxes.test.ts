@@ -112,3 +112,19 @@ test("compactShape keeps animations compactly and samplePose interpolates and wr
   assert.deepEqual(samplePose(slide, 2).Arm, { oy: 4 });
   assert.deepEqual(samplePose(slide, 99).Arm, { oy: 8 }, "a non-looping animation holds its last pose");
 });
+
+test("names: boxes carry their element's name and path only when asked", () => {
+  const shape = compactShape({ elements: [
+    { name: "body", from: [0, 0, 0], to: [4, 2, 6], faces: face("#a"), children: [
+      { name: "hinge", from: [0, 2, 0], to: [0, 2, 0], children: [{ name: "lid", from: [0, 0, 0], to: [4, 1, 6], faces: face("#a") }] },
+    ] },
+    { from: [8, 0, 0], to: [9, 1, 1], faces: face("#a") },
+  ] });
+  const plain = shapeToBoxes(shape);
+  assert.ok(plain.every((b) => b.name === undefined && b.path === undefined));
+  const named = shapeToBoxes(shape, undefined, { names: true });
+  // The hinge draws nothing (no faces), but is still part of the lid's path.
+  assert.deepEqual(named.map((b) => [b.name, b.path]), [["body", "body"], ["lid", "body/hinge/lid"], [named[2].name, named[2].path]]);
+  assert.equal(named[2].path, named[2].name);
+  assert.deepEqual(named.map((b) => [b.x, b.y, b.z]), plain.map((b) => [b.x, b.y, b.z]));
+});

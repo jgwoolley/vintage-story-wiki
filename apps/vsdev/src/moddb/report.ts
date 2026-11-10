@@ -110,7 +110,7 @@ export class ReportBuilder {
       r.modDbId = live.modDbId;
       r.live = {
         name: live.name, side: live.side, type: live.type, homepage: live.homepageUrl, sourceCode: live.sourceCodeUrl, trailer: live.trailerVideoUrl,
-        issueTracker: live.issueTrackerUrl, wiki: live.wikiUrl, tags: [...live.tags].sort(),
+        issueTracker: live.issueTrackerUrl, wiki: live.wikiUrl, tags: [...live.tags].sort((a, b) => Number(a > b) - Number(a < b)),
       };
       r.liveDescription = tidyHtml(live.text);
     }
@@ -126,7 +126,7 @@ export class ReportBuilder {
       : "uploaded";
 
     const liveFiles = live ? buildFiles(modid, live) : {};
-    r.files = [...new Set([...Object.keys(local), ...Object.keys(liveFiles)])].sort()
+    r.files = [...new Set([...Object.keys(local), ...Object.keys(liveFiles)])].sort((a, b) => Number(a > b) - Number(a < b))
       .filter((k) => live || k in local)
       .map((k) => ({ name: k, local: local[k] ?? null, live: liveFiles[k] ?? null }));
     this.addReleases(r, local, live, zip, listed);

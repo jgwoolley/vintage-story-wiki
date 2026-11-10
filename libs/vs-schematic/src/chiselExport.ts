@@ -39,7 +39,11 @@ const escapeXml = (s: string): string =>
 
 /** A file name safe to use in `.pf load <name>`: the command takes a single word, and it is a plain file name. */
 export function portfolioFileName(name: string): string {
-  return name.trim().replace(/[^\w-]+/g, "-").replace(/^-+|-+$/g, "") || "chiseled-block";
+  const word = name.trim().replace(/[^\w-]+/g, "-");
+  let start = 0, end = word.length;
+  while (start < end && word[start] === "-") start++;
+  while (end > start && word[end - 1] === "-") end--;
+  return word.slice(start, end) || "chiseled-block";
 }
 
 /** The portfolio file's text (UTF-8, no BOM, like the mod's own StreamWriter output). */

@@ -90,7 +90,7 @@ export function htmlDecode(s: string): string {
 }
 
 const RE = {
-  title: /<h2>\s*<span>.*?<\/span>\s*\/\s*<span>\s*(?<name>.*?)\s*<\/span>\s*<\/h2>/s,
+  title: /<h2>\s*<span>[^<]*<\/span>\s*\/\s*<span>(?<name>[^<]*)<\/span>\s*<\/h2>/, // the name is trimmed by htmlDecode
   tagBlock: /<dd class="tags">(?<tags>.*?)<\/dd>/s,
   tagItem: /<a [^>]*class="tag"[^>]*>(?<t>.*?)<\/a>/gs,
   side: /<dt>Side:<\/dt>\s*<dt>(?<side>[^<]*)<\/dt>/,
@@ -99,7 +99,7 @@ const RE = {
   stage: /<div class="stage">(?<stage>.*?)<\/div>\s*<\/div>\s*(?:<button|<\/div>)/s,
   img: /<img src="(?<url>[^"]*)"/g,
   releaseRow: /<tr data-assetid="\d+"\s*>(?<row>.*?)<\/tr>(?<cl>\s*<tr><td class="collapsable cl-changelog".*?<div class="release-changelog">(?<log>.*?)<\/div><\/div><\/div>\s*<\/td><\/tr>)?/gs,
-  firstCell: /<td>\s*(?<v>[^<\s][^<]*?)\s*<\/td>/,
+  cell: /<td>(?<v>[^<]*)<\/td>/g,
   gameTag: /<span class="tag">(?<g>[^<]*)<\/span>/g,
   fileLink: /class="button square ico-button mod-dl" href="[^"]*">(?<f>[^<]*)<\/a>/,
   cdnHash: /_[0-9a-f]{32}(?=\.[A-Za-z0-9]+$)/,
@@ -146,7 +146,8 @@ export function parseDraftPage(html: string): LiveMod {
   const releases: LiveRelease[] = [];
   for (const r of html.slice(filesTab).matchAll(RE.releaseRow)) {
     const row = r.groups!.row;
-    const version = (RE.firstCell.exec(row)?.groups!.v ?? "").trim();
+    // The first cell with text in it.
+    const version = [...row.matchAll(RE.cell)].map((m) => m.groups!.v.trim()).find((v) => v) ?? "";
     const games = [...row.matchAll(RE.gameTag)].map((m) => m.groups!.g.trim());
     const file = RE.fileLink.exec(row);
     releases.push({ version, fileName: file ? file.groups!.f.trim() : null, gameVersions: games, changelog: r.groups!.cl !== undefined ? r.groups!.log.trim() : null });

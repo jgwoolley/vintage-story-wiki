@@ -28,7 +28,7 @@ export interface VsManifest {
    * rule reaches them (e.g. static translocators). Each entry is a `domain:code` glob (`*`
    * wildcards; the domain part is optional and then matches any domain), matched against every
    * concrete itemtypes/blocktypes variant -- see `includeManifestItems` in crossref.ts. The JSON
-   * Schema at vs-manifest.schema.json documents the same shape for editors. */
+   * Schema at apps/vsdev/src/vs-manifest.schema.json documents the same shape for editors. */
   wikiIncludeItems?: string[];
   /** vsdev only (`vsdev screenshots`; the wiki ignores it): schematic screenshots to render, e.g. for a ModDB page. */
   screenshots?: ScreenshotEntry[];
@@ -42,7 +42,7 @@ export interface ScreenshotEntry {
   name: string;
   /** The schematic: a file path relative to vs-manifest.json, or `domain:path` of a schematic inside the game install's assets or a mod in Mods/ (e.g. `betterruins:schematics/ruin.json`). */
   schematic: string;
-  /** Camera angle: a view name (default, south, east, north, top, back) or a direction [x, y, z] from the center (y up, +z south, +x east). Default: `default`. */
+  /** Camera angle: a view name (default, south, east, north, west, top, bottom, back) or a direction [x, y, z] from the center (y up, +z south, +x east). Default: `default`. */
   view?: string | [number, number, number];
   /** Width and height in pixels; default 1280. */
   size?: number;

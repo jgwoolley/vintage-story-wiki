@@ -5,6 +5,7 @@
 // installManifestMod itself so it can also record each mod's ModDB listing (.meta.json) and timings.
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { readLocalMod, removeLocalMod, scanLocalMods } from "../mods/local.js";
 import { blockReason, formatSpec, parseModSpec, type ModDb, type ModDbMod, type ModDbRelease } from "../mods/moddb.js";
 import type { DownloadAction } from "../types.js";
 
@@ -31,6 +32,8 @@ export interface ManifestModResult {
   mod?: ModDbMod;
   release?: ModDbRelease;
   file?: string;
+  /** Other zips of the same modid removed from `modsDir` (file names): a bumped pin replaces the old zip rather than joining it. */
+  removed?: string[];
   /** Why it failed. */
   error?: string;
 }
@@ -61,10 +64,28 @@ export async function installManifestMod(
   const dest = path.join(modsDir, path.basename(release.filename));
   if (!force && existsSync(dest)) {
     log(`- Mod already present: ${dest} (use --force to re-download)`);
-    return { action: "skipped-present", mod, release, file: dest };
+    return { action: "skipped-present", mod, release, file: dest, removed: removeOtherCopies(modsDir, dest, log) };
   }
   log(`==> Downloading mod ${release.filename}`);
   await db.download(release.mainfile, dest);
   log(`✔ Mod saved to ${dest}`);
-  return { action: "downloaded", mod, release, file: dest };
+  return { action: "downloaded", mod, release, file: dest, removed: removeOtherCopies(modsDir, dest, log) };
+}
+
+/**
+ * Removes the zips in `modsDir` whose modinfo.json names the same modid as `keep` (any version: the manifest pins exactly one). The
+ * modid comes from each zip's modinfo.json, not its file name (`BetterRuinsv0.6.4.zip`). Only zips: a folder may be a mod's
+ * working copy, and .dll/.cs mods can't be read. Nothing is removed when `keep` itself can't be read.
+ */
+function removeOtherCopies(modsDir: string, keep: string, log: (line: string) => void): string[] {
+  const modid = readLocalMod(modsDir, path.basename(keep))?.info?.modid?.toLowerCase();
+  if (!modid) return [];
+  const removed: string[] = [];
+  for (const other of scanLocalMods(modsDir)) {
+    if (other.kind !== "zip" || path.resolve(other.path) === path.resolve(keep) || other.info?.modid?.toLowerCase() !== modid) continue;
+    removeLocalMod(other);
+    removed.push(other.source);
+    log(`- Removed ${other.source} (${other.info.modid} v${other.info.version}, replaced by ${path.basename(keep)})`);
+  }
+  return removed;
 }

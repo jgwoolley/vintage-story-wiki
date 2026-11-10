@@ -154,7 +154,8 @@ function attachClutterModels(index: AssetIndex, clutter: ClutterType[], writeMod
       const block = blocks.get(blockCode.includes(":") ? blockCode.slice(blockCode.indexOf(":") + 1) : blockCode);
       const type = block?.json.attributes?.types?.find((t) => t.code === entry.type);
       if (!block || !type) continue;
-      const basePath = (block.json.attributes?.shapeBasePath ?? "").replace(/\/+$/, "");
+      let basePath = block.json.attributes?.shapeBasePath ?? "";
+      while (basePath.endsWith("/")) basePath = basePath.slice(0, -1);
       const shapePath = type.shapePath ?? type.code!;
       const base = shapePath.startsWith("/") ? shapePath.slice(1) : `${basePath}/${shapePath}`;
       // The block's own domain first, then the domain the type was seen under (a mod patching its own types and shapes in).

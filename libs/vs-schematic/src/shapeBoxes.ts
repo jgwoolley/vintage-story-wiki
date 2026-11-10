@@ -97,6 +97,9 @@ export interface ShapeBox {
   texture?: string;
   /** The element's faces, when the shape was compacted with faces. */
   faces?: BoxFace[];
+  /** The element's name, and the names from its top-level ancestor down to it joined with "/" ("lid/hasp"); only with `shapeToBoxes(..., { names: true })`. */
+  name?: string;
+  path?: string;
 }
 
 type Vec = [number, number, number];
@@ -376,9 +379,9 @@ function toQuaternion(m: Mat3): [number, number, number, number] {
  * `to - from` in that frame. So a child's `from` and `rotationOrigin` are relative to its parent's `from` (not absolute
  * shape coordinates), and it inherits the parent's rotation. Tracked here as a rotation plus an offset.
  */
-export function shapeToBoxes(shape: CompactShape, pose?: Record<string, ElementPose>): ShapeBox[] {
+export function shapeToBoxes(shape: CompactShape, pose?: Record<string, ElementPose>, options: { names?: boolean } = {}): ShapeBox[] {
   const boxes: ShapeBox[] = [];
-  walkShape(shape, pose, (el, r, t) => {
+  walkShape(shape, pose, (el, r, t, path) => {
     const span: Vec = [el.to[0] - el.from[0], el.to[1] - el.from[1], el.to[2] - el.from[2]];
     // Flat planes (zero thickness on one axis: cloth, leaves, fins) get a sliver so they are visible.
     const size = span.map((n) => (n === 0 ? MIN_THICKNESS : n)) as Vec;
@@ -391,6 +394,7 @@ export function shapeToBoxes(shape: CompactShape, pose?: Record<string, ElementP
         ...(isIdentity(r) ? {} : { quaternion: toQuaternion(r) }),
         texture: el.texture,
         ...(el.faces ? { faces: boxFaces(el.faces, shape) } : {}),
+        ...(options.names ? { name: el.name ?? "", path } : {}),
       });
     }
   });
@@ -413,8 +417,9 @@ export function elementFrame(shape: CompactShape, name: string, pose?: Record<st
 }
 
 /** Visits every element with its frame, following the game's `ShapeElement.GetLocalTransformMatrix` (see shapeToBoxes). */
-function walkShape(shape: CompactShape, pose: Record<string, ElementPose> | undefined, visitor: (el: ShapeElement, r: Mat3, t: Vec) => void): void {
-  const visit = (el: ShapeElement, parentR: Mat3, parentT: Vec): void => {
+function walkShape(shape: CompactShape, pose: Record<string, ElementPose> | undefined, visitor: (el: ShapeElement, r: Mat3, t: Vec, path: string) => void): void {
+  const visit = (el: ShapeElement, parentR: Mat3, parentT: Vec, parentPath: string): void => {
+    const path = parentPath ? `${parentPath}/${el.name ?? ""}` : (el.name ?? "");
     const origin = el.rotationOrigin ?? [0, 0, 0];
     // An animation adds to the element's own rotation and moves it inside its rotated frame (the game's GetLocalTransformMatrix, version 0).
     const p = (el.name && pose?.[el.name]) || undefined;
@@ -426,10 +431,10 @@ function walkShape(shape: CompactShape, pose: Record<string, ElementPose> | unde
     const rt = apply(parentR, localT);
     const t: Vec = [rt[0] + parentT[0], rt[1] + parentT[1], rt[2] + parentT[2]];
 
-    visitor(el, r, t);
-    for (const child of el.children ?? []) visit(child, r, t);
+    visitor(el, r, t, path);
+    for (const child of el.children ?? []) visit(child, r, t, path);
   };
-  for (const el of shape.elements) visit(el, IDENTITY, [0, 0, 0]);
+  for (const el of shape.elements) visit(el, IDENTITY, [0, 0, 0], "");
 }
 
 /** Unit quaternion (x, y, z, w) to a row-major rotation matrix. */

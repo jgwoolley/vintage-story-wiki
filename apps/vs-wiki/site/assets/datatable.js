@@ -58,7 +58,7 @@
       const toggle = wrapper ? wrapper.querySelector(".datatable-filter-toggle") : null;
       const panel = wrapper ? wrapper.querySelector(".datatable-filter-panel") : null;
       const labelsByValue = collectValues(attr, labelAttr, multiToken);
-      const values = [...labelsByValue.keys()].sort();
+      const values = [...labelsByValue.keys()].sort((a, b) => Number(a > b) - Number(a < b));
       // The macro can relabel a dimension's button (e.g. "Tier" instead of "Category"); chips reuse that text.
       const dim = {
         name,
@@ -194,7 +194,8 @@
       if (!query) return true;
       // "a or b or c" matches rows containing any of the terms -- the handbook's own search syntax, used by the game's
       // class/guide text links ("sewing kit or chateau or pastoral").
-      if (/\s+or\s+/.test(query)) return query.split(/\s+or\s+/).some((term) => term && matchesQuery(el, term.trim()));
+      const terms = query.split(/\sor\s/); // terms are trimmed, so extra spaces around "or" don't matter
+      if (terms.length > 1) return terms.some((term) => term && matchesQuery(el, term.trim()));
       // `data-search` lets a row be matched on more than its visible text (e.g. an item's raw
       // code, or an entity's tags, as well as its display name), so a deep link by code/tag
       // still finds the right rows even though that text isn't necessarily shown in the row.

@@ -72,7 +72,21 @@ export interface ResolveOptions {
 }
 
 /** Retraction notes are HTML; keep them readable on one line. */
-const plain = (html: string) => html.replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+const plain = (html: string) => stripTags(html.replace(/<br\s*\/?>/gi, " ")).replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+
+/** `s.replace(/<[^>]+>/g, "")` without the regex, which backtracks quadratically on a `<` that is never closed. */
+function stripTags(s: string): string {
+  let out = "", from = 0;
+  for (let open = s.indexOf("<"); open >= 0; open = s.indexOf("<", open + 1)) {
+    const close = s.indexOf(">", open + 1);
+    if (close < 0) break;
+    if (close === open + 1) continue; // "<>" is not a tag
+    out += s.slice(from, open);
+    from = close + 1;
+    open = close;
+  }
+  return out + s.slice(from);
+}
 
 /** The newest release tagged for `gameVersion` (any, without one) that meets `minVersion`, from the mod's listing. */
 async function preReleaseFor(db: ModDb, id: string, minVersion: string, gameVersion: string | undefined): Promise<string | undefined> {

@@ -12,7 +12,8 @@ import { bold, cyan, dim, green } from "../moddb/ansi.js";
 import { userCwd } from "../paths.js";
 import type { Corner } from "../render/args.js";
 import { buildScene, type ScenePartSpec } from "../render/scene.js";
-import { addReflection, gameAssetsFor, readOptional, renderFiles, renderLogoCard, renderScene, RenderError } from "../render/render.js";
+import { statueIo } from "../render/statues.js";
+import { addReflection, gameAssetsFor, pageEnvironment, readOptional, renderFiles, renderLogoCard, renderScene, RenderError } from "../render/render.js";
 import { VIEWS, type Vec3 } from "../render/views.js";
 
 export const SCREENSHOTS_USAGE = `Usage: vsdev screenshots [name...] [--out <dir>] [--manifest <file>] [--list] [--json]
@@ -27,8 +28,9 @@ Renders the "screenshots" listed in vs-manifest.json, one PNG each (<out>/<name>
     ]
   }
 
-Each entry: name, "schematic" (or "model" for a shape file, drawn textured from the game client), and optionally view (default, south, east, north, top, back, or a direction [x, y, z] from the center:
-y up, +z south, +x east), size (width in pixels, default 1280), height (default: same as size; 1920 x 1080 suits ModDB), floor, maxY (cutaway), showFiller.
+Each entry: name, "schematic" (or "model" for a shape file, drawn textured from the game client), and optionally view (default, south, east, north, west, top, bottom, back, or a direction [x, y, z] from the center:
+y up, +z south, +x east), size (width in pixels, default 1280), height (default: same as size; 1920 x 1080 suits ModDB), floor, grass and sky (grass to the
+horizon instead of the floor, and a sky: the game's own textures when a client is found), maxY (cutaway), showFiller.
 Presets (preset): modicon (128x128, transparent, the game's icon), moddb-logo (480x480) and moddb-logo-wide (480x320). A ModDB logo is shown on the
 mod's card with its text over the bottom part and a New!/Draft ribbon across the top-right corner, so these frame the subject above that;
 safe: {"bottom": 0.3} sets your own margins. With only a "logo" (no schematic/model) the image fills the safe area: an icon.
@@ -36,6 +38,10 @@ Scenes: "scene" instead of one source places several parts in one image: models 
 ({ "player": { "wear": ["armor-body-antique-forlorn-pristine", ...], "hold": "rod-cupronickel", "holdScale", "animation": "insertgear", "frame": 30 },
 "at", "facing": "west" }). The player is the seraph body in that animation, dressed in the worn items (found by code in the game's
 itemtypes) and holding items at the game's hand attachment points; textures need the game client. Its front is west at rotationY 0.
+Any part takes "material": one texture for all its faces, worn and held items included (a statue: "game:block/stone/rock/whitemarble1"),
+and "scale" (about a model's block bottom center or a player's feet). A "statue" part is a Player Statues (nf3tstatue) statue, drawn as the
+mod draws it: { "statue": { "block": "nf3tstatue:statue-small-whitemarble", "emote": "cheer", "armor": [...], "hold": "...", "mount": "elkbull",
+"elkPose": "gallop", "tack": { "saddle": "saddle1" }, "noPedestal": false }, "facing": "south" }.
 Overlay options: title, subtitle, logo (an image file), textAt / logoAt (top-left, top-right, bottom-left, bottom-right), background (a CSS
 color); output is the PNG's path (relative to vs-manifest.json) instead of <screenshotsDir>/<name>.png.
 "schematic" and "model" are each a file relative to vs-manifest.json, or domain:path inside the game install's assets/ or a mod in Mods/ (zip or folder).
@@ -103,6 +109,9 @@ export interface ShotEntry {
   /** Height in pixels when not square (`size` is then the width). */
   height?: number;
   floor?: boolean;
+  /** Grass to the horizon instead of the floor grid, and a sky (the game client's textures when found). */
+  grass?: boolean;
+  sky?: boolean;
   maxY?: number;
   showFiller?: boolean;
 }
@@ -130,15 +139,23 @@ export function readShots(manifest: unknown, file: string): ShotEntry[] {
       const parts = e.scene;
       if (!Array.isArray(parts) || !parts.length) fail(`${at}: "scene" must be a list of parts`);
       (parts as Record<string, unknown>[]).forEach((p, j) => {
-        const isModel = typeof p?.model === "string";
-        const isPlayer = !!p?.player && typeof p.player === "object";
-        if (isModel === isPlayer) fail(`${at}: scene[${j}] needs exactly one of "model" or "player"`);
+        const kinds = [typeof p?.model === "string", !!p?.player && typeof p.player === "object", !!p?.statue && typeof p.statue === "object"].filter(Boolean).length;
+        if (kinds !== 1) fail(`${at}: scene[${j}] needs exactly one of "model", "player" or "statue"`);
+        if (p.statue) {
+          const s = p.statue as Record<string, unknown>;
+          if (typeof s.block !== "string" || !/^nf3tstatue:statue(metal)?-(small|large|bust)-[a-z0-9]+$/.test(s.block)) fail(`${at}: scene[${j}].statue.block must be a statue block, e.g. "nf3tstatue:statue-small-whitemarble"`);
+          if (s.mount !== undefined && !["elkcow", "elkbull", ""].includes(s.mount as string)) fail(`${at}: scene[${j}].statue.mount must be elkcow or elkbull`);
+          if (s.elkPose !== undefined && !["stand", "walk", "gallop"].includes(s.elkPose as string)) fail(`${at}: scene[${j}].statue.elkPose must be stand, walk or gallop`);
+          for (const k of ["skin", "clothing", "armor"]) if (s[k] !== undefined && !(Array.isArray(s[k]) && (s[k] as unknown[]).every((c) => typeof c === "string"))) fail(`${at}: scene[${j}].statue.${k} must be a list of codes`);
+        }
         if (p.at !== undefined && !(Array.isArray(p.at) && p.at.length === 3 && p.at.every((n) => typeof n === "number"))) fail(`${at}: scene[${j}].at must be [x, y, z] in blocks`);
         if (p.facing !== undefined && !["north", "east", "south", "west"].includes(p.facing as string)) fail(`${at}: scene[${j}].facing must be north, east, south or west`);
         if (p.rotationY !== undefined && typeof p.rotationY !== "number") fail(`${at}: scene[${j}].rotationY must be degrees`);
+        if (p.scale !== undefined && !(typeof p.scale === "number" && p.scale > 0)) fail(`${at}: scene[${j}].scale must be a number above 0`);
+        if (p.material !== undefined && (typeof p.material !== "string" || !p.material)) fail(`${at}: scene[${j}].material must be a texture, e.g. "game:block/stone/rock/whitemarble1"`);
       });
     }
-    if (e.reflection !== undefined && typeof e.reflection !== "boolean") fail(`${at}: "reflection" must be true or false`);
+    for (const k of ["reflection", "floor", "grass", "sky", "showFiller"]) if (e[k] !== undefined && typeof e[k] !== "boolean") fail(`${at}: "${k}" must be true or false`);
     for (const k of ["title", "subtitle", "logo", "output", "background"]) if (e[k] !== undefined && (typeof e[k] !== "string" || !e[k])) fail(`${at}: "${k}" must be text`);
     if (e.titleSize !== undefined && !(typeof e.titleSize === "number" && e.titleSize > 0.02 && e.titleSize <= 0.4)) fail(`${at}: "titleSize" must be a fraction from 0.02 to 0.4`);
     for (const k of ["textAt", "logoAt"]) if (e[k] !== undefined && !CORNERS.includes(e[k] as string)) fail(`${at}: "${k}" must be one of ${CORNERS.join(", ")}`);
@@ -282,7 +299,7 @@ export async function runScreenshots(argv: string[], e: LocationEnv = defaultLoc
           });
           for (const w of scene.warnings) console.warn(`${shot.name}: ${w}`);
           try {
-            await renderScene({ boxes: scene.boxes, textures: scene.textures }, path.join(dir, file), { size: width, height, view, viewVectors: vector ? { custom: vector } : undefined, floor: !!shot.floor, overlay });
+            await renderScene({ boxes: scene.boxes, textures: scene.textures }, path.join(dir, file), { size: width, height, view, viewVectors: vector ? { custom: vector } : undefined, floor: !!shot.floor, environment: await pageEnvironment(shot, gameAssets), overlay });
           } catch (err) {
             if (err instanceof RenderError) throw new CliError(`${shot.name}: ${err.message}`);
             throw err;
@@ -299,8 +316,9 @@ export async function runScreenshots(argv: string[], e: LocationEnv = defaultLoc
         try {
           const [r] = await renderFiles({
             files: [found.file], out: dir, size: width, height, views: [view], viewVectors: vector ? { custom: vector } : undefined,
-            fileName: file, bare: true, overlay, floor: !!shot.floor, noTextures: what === "schematic", animations: [], frames: 8, showFiller: !!shot.showFiller,
+            fileName: file, bare: true, overlay, floor: !!shot.floor, grass: shot.grass, sky: shot.sky, noTextures: what === "schematic", animations: [], frames: 8, showFiller: !!shot.showFiller,
             maxY: shot.maxY, noChisel: false, list: false, json: false, game: gameDir, cwd: e.cwd,
+            statueIo: statueIo((r) => findAsset(r, gameDir, modsDir, tmp)?.file, gameDir ? path.join(gameDir, "assets") : undefined),
           });
           if (shot.reflection && !values.guides) await addReflection(path.join(dir, file), background ?? "transparent");
           if ((r.kind === "model") !== (what === "model")) throw new CliError(`${shot.name}: ${ref} is a ${r.kind === "model" ? "model" : r.kind}, not a ${what}; use the "${r.kind === "model" ? "model" : "schematic"}" key`);

@@ -11,7 +11,7 @@ import { packCuboid } from "@nf3t/vs-schematic/chisel.js";
 import { outputName, parseArgs, sampleFrames, UsageError } from "../src/render/args.js";
 import { bodyCandidates, decodeText, loadInput, schematicBoxes } from "../src/render/inputs.js";
 import { appDir } from "../src/paths.js";
-import { renderFiles, type RenderedInput } from "../src/render/render.js";
+import { ENVIRONMENT_FILES, pageEnvironment, renderFiles, type RenderedInput } from "../src/render/render.js";
 import type { RenderOptions } from "../src/render/args.js";
 import { chromium } from "playwright-core";
 
@@ -35,6 +35,7 @@ test("parseArgs: defaults, options and errors", () => {
   assert.deepEqual(parseArgs(["s.json.gz", "--max-y", "4", "--show-filler", "--no-chisel", "--block-colors", "c.json", "--list"], "/out"), {
     ...DEFAULTS, files: ["s.json.gz"], maxY: 4, showFiller: true, noChisel: true, blockColors: "c.json", list: true,
   });
+  assert.deepEqual(parseArgs(["a.json", "--grass", "--sky"], "/out"), { ...DEFAULTS, files: ["a.json"], grass: true, sky: true });
   assert.equal(parseArgs(["--help"], "/out"), "help");
   assert.throws(() => parseArgs([], "/out"), UsageError);
   assert.throws(() => parseArgs(["a.json", "--views", "sideways"], "/out"), /unknown view sideways/);
@@ -282,6 +283,22 @@ test("renders animation frames and a contact sheet; --frame holds one pose", { s
   }
 });
 
+test("pageEnvironment reads the game's grass and sky images when there are any, and is off unless asked for", async () => {
+  assert.equal(await pageEnvironment({}, undefined), undefined);
+  assert.deepEqual(await pageEnvironment({ sky: true }, undefined), { grass: false, sky: true, images: {} });
+  const dir = mkdtempSync(path.join(tmpdir(), "vsdev-env-"));
+  try {
+    const sky = path.join(dir, ENVIRONMENT_FILES.sky);
+    mkdirSync(path.dirname(sky), { recursive: true });
+    writeFileSync(sky, Buffer.from([0x89, 0x50, 0x4e, 0x47]));
+    const env = await pageEnvironment({ grass: true }, dir.split(path.sep).join("/"));
+    assert.deepEqual(Object.keys(env!.images), ["sky"]);
+    assert.match(env!.images.sky, /^data:image\/png;base64,/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("renders a schematic in its block colors and a ChiselTools shape", { skip: noBrowser }, async () => {
   execFileSync("node", ["esbuild.mjs"], { cwd: appDir });
   const dir = mkdtempSync(path.join(tmpdir(), "vsdev-render-schem-"));
@@ -304,6 +321,11 @@ test("renders a schematic in its block colors and a ChiselTools shape", { skip: 
     assert.equal(chisel.kind, "chisel");
     const [cr, cg, cb] = chisel.centerPixels[0];
     assert.ok(cg > 120 && cr < 60 && cb < 60, `expected green planks, got ${cr},${cg},${cb}`);
+
+    // Outdoors (the game's grass and sky if a client is found, else built-in ones): the block is still drawn in its color.
+    const [outdoors] = await renderFiles(testOptions([schematicFile], out, { blockColors: colors, grass: true, sky: true, noTextures: true }));
+    const [or, og, ob] = outdoors.centerPixels[0];
+    assert.ok(or > 120 && og < 60 && ob < 60, `expected red granite outdoors, got ${or},${og},${ob}`);
 
     const [defaults] = await renderFiles({ ...testOptions([schematicFile], out, { blockColors: colors }), views: undefined });
     assert.deepEqual(defaults.images.map((i) => path.basename(i)), ["ruin-default.png", "ruin-top.png", "ruin-south.png", "ruin-east.png"]);

@@ -38,6 +38,18 @@ async function copy(html, text) {
     return true;
   } catch { try { await navigator.clipboard.writeText(text ?? html); return true; } catch { return false; } }
 }
+// For the rich-text copies only (the page files stay as written): a bare <pre> becomes the editor's own code-sample markup,
+// <pre class="language-plaintext"><code>...</code></pre> (an existing language-* class is kept), which pastes as a code block.
+function editorHtml(h) {
+  if (!h) return h;
+  const d = document.createElement('div'); d.innerHTML = h;
+  for (const pre of d.querySelectorAll('pre')) {
+    if (![...pre.classList].some(c => c.startsWith('language-'))) pre.classList.add('language-plaintext');
+    const only = pre.children.length === 1 && pre.firstElementChild.tagName === 'CODE' && !pre.textContent.replace(pre.firstElementChild.textContent, '').trim();
+    if (!only) { const code = document.createElement('code'); code.append(...pre.childNodes); pre.append(code); }
+  }
+  return d.innerHTML;
+}
 const stripTags = (h) => { const d = document.createElement('div'); d.innerHTML = h; return d.textContent; };
 
 
@@ -153,9 +165,10 @@ function renderMain() {
 
   // ---- description ----
   const [dc, dl] = sectionStatus(descF ? [descF] : [], hasSite);
-  copies.desc = [r.localDescription, stripTags(r.localDescription)]; copies.descsrc = [null, r.localDescription];
+  copies.desc = [editorHtml(r.localDescription), stripTags(r.localDescription)]; copies.descsrc = [null, r.localDescription];
   h.push(`<h3 id="sec-desc">Description ${chip(dc, dl)}</h3>
-    <div class="bar">${copyBtn('Copy description (rich text)', 'desc')}${copyBtn('Copy HTML source', 'descsrc')}</div>
+    <div class="bar">${copyBtn('Copy description (rich text)', 'desc')}${copyBtn('Copy HTML source', 'descsrc')}
+      <span class="hint">Exact route: "Copy HTML source", pasted into the editor's source-code view (<code>&lt;&gt;</code>).</span></div>
     ${htmlView('desc', r.localDescription, r.liveDescription, descF ? [descF] : [])}`);
 
   // ---- fields / tags ----
@@ -186,7 +199,7 @@ function renderMain() {
     const fs = ['releases/' + rel.version + '.html', 'releases/' + rel.version + '.json'].map(file).filter(Boolean);
     const onSite = rel.uploaded || rel.liveChangelog != null;
     const [rc, rl] = sectionStatus(fs, onSite);
-    copies['cl:' + rel.version] = [rel.localChangelog, stripTags(rel.localChangelog)];
+    copies['cl:' + rel.version] = [editorHtml(rel.localChangelog), stripTags(rel.localChangelog)];
     if (rel.zip) copies['zip:' + rel.version] = [null, rel.zip];
     copies['gv:' + rel.version] = [null, rel.gameVersions.join(', ')];
     h.push(`<div class="release" id="sec-rel-${esc(rel.version)}"><b>${esc(rel.version)}</b> ${rel.uploaded ? '<span class="badge uploaded">uploaded</span>' : rel.inZip ? '<span class="badge new-version">not uploaded</span>' : ''} ${chip(rc, rl)}
@@ -204,7 +217,7 @@ function renderMain() {
     <div class="hint">site</div>${i.liveUrl ? `<img src="${esc(i.liveUrl)}">` : '<span class="hint">not on site</span>'}</figure>`).join('') + '</div>');
 
   main.innerHTML = h.join(''); main.scrollTop = scroll;
-  $('#refresh').onclick = async () => { await api('/api/refresh', { method: 'POST' }); load(current); };
+  $('#refresh').onclick = async () => { await api('/api/refresh', { method: 'POST' }); await load(current); };
   $('#next').onclick = () => select(mods[(mods.indexOf(current) + 1) % mods.length]);
   main.querySelectorAll('[data-copy]').forEach(b => b.onclick = async () => {
     const [html, text] = copies[b.dataset.copy] || [];
@@ -227,4 +240,6 @@ document.addEventListener('keydown', e => {
   if (e.key === 'j') select(mods[Math.min(mods.length - 1, i + 1)]);
   if (e.key === 'k') select(mods[Math.max(0, i - 1)]);
 });
-init().then(() => { const h = decodeURIComponent(location.hash.slice(1)); if (mods.includes(h)) select(h); });
+init()
+  .then(() => { const h = decodeURIComponent(location.hash.slice(1)); if (mods.includes(h)) select(h); })
+  .catch((e) => { $('#list').textContent = 'Failed to load the mods: ' + e.message; });

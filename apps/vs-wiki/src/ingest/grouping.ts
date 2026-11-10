@@ -54,7 +54,7 @@ export function buildVariantGroups(candidates: GroupCandidate[], present: Readon
     if (list.length < 2) continue;
     list.sort((a, b) => a.code.localeCompare(b.code));
     const primary = list.find((c) => c.inCreative) ?? list[0];
-    const base = key.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "family";
+    const base = key.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "family";
     let id = base;
     for (let n = 2; ids.has(id); n++) id = `${base}-${n}`;
     ids.add(id);

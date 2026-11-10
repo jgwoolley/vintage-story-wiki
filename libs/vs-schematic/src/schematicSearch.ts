@@ -31,10 +31,22 @@ export interface SearchTarget {
 
 const bareCode = (code: string): string => code.replace(/^[^:]+:/, "");
 
+/** Every `{...}` placeholder turned into `*` (an unclosed `{` is left as is). */
+function placeholdersToStars(s: string): string {
+  let out = "", from = 0;
+  for (let open = s.indexOf("{"); open >= 0; open = s.indexOf("{", from)) {
+    const close = s.indexOf("}", open + 1);
+    if (close < 0) break;
+    out += `${s.slice(from, open)}*`;
+    from = close + 1;
+  }
+  return out + s.slice(from);
+}
+
 /** A case-insensitive matcher on the bare code; `*` (and `{...}`, a variant placeholder) match anything. */
 export function codeMatcher(pattern: string): (code: string) => boolean {
-  const source = bareCode(pattern.trim())
-    .split(/\*|\{[^}]*\}/)
+  const source = placeholdersToStars(bareCode(pattern.trim()))
+    .split("*")
     .map((part) => part.replace(/[.+?^$()|[\]\\]/g, "\\$&"))
     .join(".*");
   const re = new RegExp(`^${source}$`, "i");

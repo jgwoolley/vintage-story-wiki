@@ -16,7 +16,7 @@ export function versionWarnings(version: string, listed: string[]): string[] {
   if (!next) return [`version '${version}' is not MAJOR.MINOR.PATCH, so the numbering was not checked`];
   const known = listed.map((text) => ({ parsed: parseTriple(text), text })).filter((k): k is { parsed: [number, number, number]; text: string } => !!k.parsed);
   if (!known.length) return [];
-  const latest = known.reduce((a, b) => (compareTriple(b.parsed, a.parsed) > 0 ? b : a));
+  const latest = known.reduce((a, b) => (compareTriple(b.parsed, a.parsed) > 0 ? b : a), known[0]);
   if (compareTriple(next, latest.parsed) <= 0) return [`${version} is not newer than the newest listed version ${latest.text}`];
   const [x, y, z] = latest.parsed;
   const allowed = [[x, y, z + 1], [x, y + 1, 0], [x + 1, 0, 0]];
@@ -28,8 +28,12 @@ const ALLOWED_TAGS = new Set(["p", "ul", "ol", "li", "strong", "em", "code", "pr
 
 /** HtmlLint.Problems: tags outside the subset the site's editor keeps. */
 export function htmlLint(name: string, html: string): string[] {
-  const bad = [...new Set([...html.matchAll(/<\s*\/?\s*([a-zA-Z][a-zA-Z0-9]*)/g)].map((m) => m[1].toLowerCase()).filter((t) => !ALLOWED_TAGS.has(t)))].sort();
-  return bad.length ? [`${name}: uses tags outside the usual subset: ${bad.map((t) => `<${t}>`).join(", ")}`] : [];
+  const bad = [...new Set([...html.matchAll(/<\s*\/?\s*([a-zA-Z][a-zA-Z0-9]*)/g)].map((m) => m[1].toLowerCase()).filter((t) => !ALLOWED_TAGS.has(t)))].sort((a, b) => Number(a > b) - Number(a < b));
+  const out = bad.length ? [`${name}: uses tags outside the usual subset: ${bad.map((t) => `<${t}>`).join(", ")}`] : [];
+  // The editor's own code blocks are <pre class="language-x"><code>...</code></pre>; a bare <pre> loses its formatting when pasted.
+  const bare = [...html.matchAll(/<pre\b([^>]*)>\s*(<code\b)?/gi)].filter((m) => !/class\s*=\s*["'][^"']*\blanguage-/i.test(m[1]) || !m[2]);
+  if (bare.length) out.push(`${name}: ${bare.length} <pre> without a language-* class and a <code> inside; write code blocks as <pre class="language-json"><code>...</code></pre> (the editor's own markup), or they lose their formatting when pasted`);
+  return out;
 }
 
 export const IMAGE_LIMITS = { maxBytes: 2 * 1024 * 1024, maxWidth: 1920, maxHeight: 1080, logoSize: 480, iconSize: 128 };

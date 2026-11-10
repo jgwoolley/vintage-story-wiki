@@ -67,11 +67,11 @@ if (root) {
     const observer = new IntersectionObserver((entries) => {
       if (entries.some((e) => e.isIntersecting)) {
         observer.disconnect();
-        start();
+        void start();
       }
     });
     observer.observe(root);
   } else {
-    start();
+    void start();
   }
 }

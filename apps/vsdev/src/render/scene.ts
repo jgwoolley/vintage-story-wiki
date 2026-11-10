@@ -4,6 +4,8 @@
 //   { player: { wear, hold, ... }, at, rotationY }   the seraph body in an animation pose, dressed in worn items (their shapes hang on the
 //                                       body's bones, the body elements they disable are hidden) and holding items in its hands at the
 //                                       game's hand attachment points (`holdInHand`), standing with its feet at `at`.
+// Either kind takes `material`: one texture (`game:block/stone/rock/whitemarble1`) for every face of the part, worn and held items
+// included, the way a carved statue is drawn: each face keeps its UVs, only the image is swapped.
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import JSON5 from "json5";
@@ -12,7 +14,9 @@ import {
   type CompactShape, type ShapeBox, type ShapeElement,
 } from "@nf3t/vs-schematic/shapeBoxes.js";
 import { resolveTextures } from "@nf3t/vs-schematic/textureFiles.js";
-import { disabledElements, findCollectible, handTransform, shapeRef, textureRefs, type Collectible } from "./collectible.js";
+import { buildStatue, emptyStatueDesign, type StatueDesign } from "@nf3t/vs-schematic/statue.js";
+import { statueIo } from "./statues.js";
+import { findCollectible, hiddenElements, wornElements, handTransform, shapeRef, textureRefs, type Collectible } from "./collectible.js";
 
 
 type Vec3 = [number, number, number];
@@ -36,9 +40,64 @@ export interface PlayerSpec {
 export type Facing = "north" | "east" | "south" | "west";
 const FACING_DEGREES: Record<Facing, number> = { west: 0, south: 90, east: 180, north: 270 };
 
+/**
+ * A statue of the Player Statues mod (nf3tstatue), drawn the way the mod draws it (`@nf3t/vs-schematic/statue.js`). Fields are the
+ * block entity's (StatueAppearance); codes are item/block codes of the game's types (`armor-head-plate-tinbronze`).
+ */
+export interface StatueSpec {
+  /** The statue block: `nf3tstatue:statue-<small|large|bust>-<rock>` or `nf3tstatue:statuemetal-<size>-<metal>`. */
+  block: string;
+  /** `player` (default) or a special statue (`robot`). */
+  type?: string;
+  /** An emote of the seraph (`cheer`, `wave`...), `none` (standing) or `riding`. */
+  emote?: string;
+  /** The emote's frame; default (-1) is its most expressive keyframe, as in the mod. */
+  frame?: number;
+  /** Skin part shapes (hair, beard...), e.g. `game:entity/humanoid/seraphskinparts/hair-base/ponytail` (domain:path without shapes/ and .json). */
+  skin?: string[];
+  clothing?: string[];
+  armor?: string[];
+  hold?: string;
+  holdLeft?: string;
+  /** `elkcow` or `elkbull`: the player sits on a stone elk. */
+  mount?: string;
+  elkPose?: "stand" | "walk" | "gallop";
+  elkFrame?: number;
+  antlers?: number;
+  tack?: { bridle?: string; face?: string; saddle?: string; bags?: string };
+  noPedestal?: boolean;
+  /** Pieces of fire clay packed around it (a mold in progress). */
+  clay?: number;
+}
+
 export type ScenePartSpec =
-  | { model: string; at?: Vec3; rotationY?: number; scale?: number; animation?: string; frame?: number }
-  | { player: PlayerSpec; at?: Vec3; rotationY?: number; facing?: Facing };
+  | { model: string; at?: Vec3; rotationY?: number; scale?: number; animation?: string; frame?: number; material?: string }
+  | { player: PlayerSpec; at?: Vec3; rotationY?: number; facing?: Facing; scale?: number; material?: string }
+  | { statue: StatueSpec; at?: Vec3; rotationY?: number; facing?: Facing; scale?: number };
+
+/** A scene's statue spec as the block entity's design. */
+export function statueDesignOf(spec: StatueSpec): StatueDesign {
+  const code = (c: string) => (c.includes(":") ? c : `game:${c}`);
+  const d = emptyStatueDesign(spec.block);
+  return {
+    ...d,
+    type: spec.type ?? d.type,
+    emote: spec.emote ?? (spec.type && spec.type !== "player" ? "" : "none"),
+    frame: spec.frame ?? -1,
+    skinShapes: spec.skin ?? [],
+    clothing: (spec.clothing ?? []).map(code),
+    armor: (spec.armor ?? []).map(code),
+    ...(spec.hold ? { rightHand: code(spec.hold) } : {}),
+    ...(spec.holdLeft ? { leftHand: code(spec.holdLeft) } : {}),
+    mount: spec.mount ?? "",
+    elkPose: spec.elkPose ?? "stand",
+    elkFrame: spec.elkFrame ?? -1,
+    antlers: spec.antlers ?? d.antlers,
+    tack: [spec.tack?.bridle ?? "", spec.tack?.face ?? "", spec.tack?.saddle ?? "", spec.tack?.bags ?? ""],
+    noPedestal: !!spec.noPedestal,
+    clayLevel: spec.clay ?? 0,
+  };
+}
 
 export interface SceneIo {
   /** Absolute path of an asset by `domain:path` (the game's assets or a mod); `.json` may be missing. Undefined when not found. */
@@ -60,6 +119,10 @@ export interface SceneResult {
 }
 
 const BODY_SHAPE = "game:shapes/entity/humanoid/seraph.json";
+/** The player entity, whose `attributes.disableElements` are hidden unless a worn item keeps them. */
+const PLAYER_ENTITY = "game:entities/humanoid/player.json";
+/** player.json's `disableElements` (1.21), used when the entity file can't be read. */
+const PLAYER_DISABLED = ["hair-covered", "showshoeR", "showshoeL", "hoodtight"];
 
 /** A shape with its texture keys prefixed and its face UVs divided by the texture sizes, so shapes of different textures can share a tree. */
 function isolate(shape: CompactShape, prefix: string): CompactShape {
@@ -82,7 +145,8 @@ function isolate(shape: CompactShape, prefix: string): CompactShape {
 
 function removeNamed(elements: ShapeElement[], names: Set<string>): ShapeElement[] {
   return elements
-    .filter((e) => !(e.name && names.has(e.name.toLowerCase())))
+    // The game's Shape.RemoveElements also removes "skinpart-<name>".
+    .filter((e) => !(e.name && (names.has(e.name.toLowerCase()) || names.has(e.name.toLowerCase().replace(/^skinpart-/, "")))))
     .map((e) => (e.children ? { ...e, children: removeNamed(e.children, names) } : e));
 }
 
@@ -127,8 +191,11 @@ export async function buildScene(parts: ScenePartSpec[], io: SceneIo): Promise<S
   const out: SceneResult = { boxes: [], textures: {}, warnings: [] };
   let n = 0;
 
-  /** Loads a shape file and its textures (the shape's own, with `override` keys laid over them), prefixed so keys don't collide. */
-  async function load(ref: string, override: Record<string, string> = {}): Promise<{ shape: CompactShape; raw: Record<string, unknown> } | undefined> {
+  /**
+   * Loads a shape file and its textures (the shape's own, with `override` keys laid over them), prefixed so keys don't collide. With a
+   * `material`, every texture key the shape declares or its faces use is that one texture instead.
+   */
+  async function load(ref: string, override: Record<string, string> = {}, material?: string): Promise<{ shape: CompactShape; raw: Record<string, unknown> } | undefined> {
     const file = io.findFile(ref);
     if (!file) {
       out.warnings.push(`shape ${ref} not found`);
@@ -136,6 +203,7 @@ export async function buildScene(parts: ScenePartSpec[], io: SceneIo): Promise<S
     }
     const raw = JSON5.parse(Buffer.from(await readFile(file)).toString("utf8")) as Record<string, unknown>;
     raw.textures = { ...((raw.textures as Record<string, string>) ?? {}), ...override };
+    if (material) raw.textures = Object.fromEntries([...new Set([...Object.keys(raw.textures as object), ...faceTextureKeys(raw.elements)])].map((k) => [k, material]));
     const prefix = `p${n++}:`;
     const textured = !!io.gameAssets;
     const shape = isolate(compactShape(raw, { faces: textured }), prefix);
@@ -148,7 +216,7 @@ export async function buildScene(parts: ScenePartSpec[], io: SceneIo): Promise<S
   }
 
   /** Shape ref of a collectible: its own domain first, then the vanilla ones. */
-  async function loadCollectible(c: Collectible): Promise<{ shape: CompactShape; raw: Record<string, unknown> } | undefined> {
+  async function loadCollectible(c: Collectible, material?: string): Promise<{ shape: CompactShape; raw: Record<string, unknown> } | undefined> {
     const s = shapeRef(c);
     if (!s) {
       out.warnings.push(`${c.code} has no shape`);
@@ -156,7 +224,25 @@ export async function buildScene(parts: ScenePartSpec[], io: SceneIo): Promise<S
     }
     const refs = [...new Set([c.domain, "game", "survival", "creative"])].map((d) => `${d}:shapes/${s.path}`);
     const ref = refs.find((r) => io.findFile(r)) ?? refs[0];
-    return load(ref, textureRefs(c));
+    return load(ref, textureRefs(c), material);
+  }
+
+  let playerDefaults: string[] | undefined;
+  /** The player entity's default `disableElements`, read once. */
+  async function playerDisabled(): Promise<string[]> {
+    if (playerDefaults) return playerDefaults;
+    playerDefaults = PLAYER_DISABLED;
+    const file = io.findFile(PLAYER_ENTITY);
+    if (file) {
+      try {
+        const json = JSON5.parse(Buffer.from(await readFile(file)).toString("utf8")) as { attributes?: { disableElements?: unknown } };
+        const list = json.attributes?.disableElements;
+        if (Array.isArray(list)) playerDefaults = list.map(String);
+      } catch {
+        // unreadable: keep the built-in list
+      }
+    }
+    return playerDefaults;
   }
 
   const lookup = (code: string): Collectible | undefined => {
@@ -165,15 +251,32 @@ export async function buildScene(parts: ScenePartSpec[], io: SceneIo): Promise<S
     return c;
   };
 
+  // Turns and scales about `pivot` (a model's block bottom center, a player's feet), then moves to `at`, like the game scales block meshes.
   const place = (boxes: ShapeBox[], at: Vec3 = [0, 0, 0], rotationY = 0, pivot: Vec3, scale = 1) => {
     const r = rotationMatrix(0, rotationY, 0);
-    const rp = [0, 1, 2].map((i) => r[i * 3] * pivot[0] + r[i * 3 + 1] * pivot[1] + r[i * 3 + 2] * pivot[2]);
+    const rp = [0, 1, 2].map((i) => scale * (r[i * 3] * pivot[0] + r[i * 3 + 1] * pivot[1] + r[i * 3 + 2] * pivot[2]));
     return transformBoxes(boxes, r, [pivot[0] - rp[0] + at[0] * 16, pivot[1] - rp[1] + at[1] * 16, pivot[2] - rp[2] + at[2] * 16], scale);
   };
 
   for (const part of parts) {
+    if ("statue" in part) {
+      // Turned by the part's own rotationY/facing (about the block's bottom center, as the mod turns it), not the design's angle.
+      const statue = await buildStatue(statueDesignOf(part.statue), statueIo(io.findFile, io.typesAssets), { rotate: false });
+      out.warnings.push(...new Set(statue.warnings));
+      const prefix = `p${n++}:`;
+      if (io.gameAssets) {
+        const resolved = await resolveTextures({ textures: statue.textures }, "", io.gameAssets, io.read);
+        for (const [key, url] of Object.entries(resolved.images)) out.textures[`${prefix}${key}`] = url;
+        for (const m of resolved.missing) out.warnings.push(`texture ${m.ref} not found (statue)`);
+      }
+      const boxes = statue.boxes.map((b) => ({
+        ...b, texture: `${prefix}${b.texture ?? "stone"}`, ...(b.faces ? { faces: b.faces.map((f) => ({ ...f, texture: `${prefix}${f.texture}` })) } : {}),
+      }));
+      out.boxes.push(...place(boxes, part.at, part.rotationY ?? (part.facing ? FACING_DEGREES[part.facing] : 0), [8, 0, 8], part.scale));
+      continue;
+    }
     if ("model" in part) {
-      const loaded = await load(part.model);
+      const loaded = await load(part.model, {}, part.material);
       if (!loaded) continue;
       const animation = loaded.shape.animations?.find((a) => a.code === part.animation);
       const boxes = shapeToBoxes(loaded.shape, animation ? samplePose(animation, part.frame ?? 0) : undefined);
@@ -185,17 +288,17 @@ export async function buildScene(parts: ScenePartSpec[], io: SceneIo): Promise<S
     const spec = part.player;
     const worn = (spec.wear ?? []).map(lookup);
     const hair: Record<string, string> = spec.hair ? { hair: `game:entity/humanoid/seraphskinparts/hair/${spec.hair}` } : {};
-    const body = await load(BODY_SHAPE, hair);
+    const body = await load(BODY_SHAPE, hair, part.material);
     if (!body) continue;
     const pieces: CompactShape[] = [];
-    const hidden = new Set<string>();
     for (const c of worn) {
       if (!c) continue;
-      const piece = await loadCollectible(c);
+      const piece = await loadCollectible(c, part.material);
       if (piece) pieces.push(piece.shape);
-      for (const name of disabledElements(c)) hidden.add(name);
     }
-    const dressed = dress({ ...body.shape, elements: removeNamed(body.shape.elements, hidden) }, pieces);
+    const hidden = hiddenElements(await playerDisabled(), worn.filter((c): c is Collectible => !!c).map(wornElements));
+    const clothed = dress(body.shape, pieces);
+    const dressed = { ...clothed, elements: removeNamed(clothed.elements, hidden) };
     const animation = body.shape.animations?.find((a) => a.code === spec.animation);
     if (spec.animation && !animation) out.warnings.push(`the player body has no animation ${spec.animation}; it has ${(body.shape.animations ?? []).map((a) => a.code).join(", ")}`);
     const pose = animation ? samplePose(animation, spec.frame ?? 0) : undefined;
@@ -213,7 +316,7 @@ export async function buildScene(parts: ScenePartSpec[], io: SceneIo): Promise<S
       if (!code) continue;
       const c = lookup(code);
       const anchor = elementFrame(dressed, anchorName, pose);
-      const item = c && anchor ? await loadCollectible(c) : undefined;
+      const item = c && anchor ? await loadCollectible(c, part.material) : undefined;
       if (!c || !item) continue;
       if (!anchor) {
         out.warnings.push(`the player body has no ${anchorName}`);
@@ -227,7 +330,18 @@ export async function buildScene(parts: ScenePartSpec[], io: SceneIo): Promise<S
       const itemBoxes = k === 1 ? shapeToBoxes(item.shape) : transformBoxes(shapeToBoxes(item.shape), rotationMatrix(0, 0, 0), [o[0] * (1 - k), o[1] * (1 - k), o[2] * (1 - k)], k);
       boxes.push(...toFeet(holdInHand(itemBoxes, anchor, attach, hand)));
     }
-    out.boxes.push(...place(boxes, part.at, part.rotationY ?? (part.facing ? FACING_DEGREES[part.facing] : 0), [0, 0, 0]));
+    out.boxes.push(...place(boxes, part.at, part.rotationY ?? (part.facing ? FACING_DEGREES[part.facing] : 0), [0, 0, 0], part.scale));
+  }
+  return out;
+}
+
+/** Every texture key (without its `#`) the faces of a raw shape's elements use, children included. */
+function faceTextureKeys(elements: unknown, out = new Set<string>()): Set<string> {
+  for (const el of (Array.isArray(elements) ? elements : []) as Record<string, unknown>[]) {
+    for (const face of Object.values((el.faces as Record<string, { texture?: unknown }> | undefined) ?? {})) {
+      if (typeof face?.texture === "string") out.add(face.texture.replace(/^#/, ""));
+    }
+    faceTextureKeys(el.children, out);
   }
   return out;
 }

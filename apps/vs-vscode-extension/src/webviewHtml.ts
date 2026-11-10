@@ -38,18 +38,18 @@ export function buildWebviewHtml({ cspSource, nonce, scriptUri, styleUri, title 
 <body>
   <div id="toolbar">
     <button id="resetView" type="button">Reset view</button>
-    <label class="check"><input id="showFiller" type="checkbox"> Show meta-filler</label>
-    <label class="slider">Up to Y <input id="maxY" type="range" min="0" max="0" value="0" disabled> <output id="maxYValue"></output></label>
+    <label class="check" id="fillerBox" hidden><input id="showFiller" type="checkbox"> Show meta-filler</label>
+    <label class="slider" id="maxYBox" hidden>Up to Y <input id="maxY" type="range" min="0" max="0" value="0" disabled> <output id="maxYValue"></output></label>
     <label class="slider" id="animBox" hidden>Animation <select id="anim"></select></label>
     <label class="check" id="floorBox" hidden><input id="floor" type="checkbox"> Show floor</label>
     <span id="summary"></span>
   </div>
   <div id="error" role="alert" hidden></div>
   <div id="main">
-    <div id="viewport" aria-label="Schematic 3D view"></div>
+    <div id="viewport" aria-label="3D view"></div>
     <aside id="side">
-      <input id="search" type="search" placeholder="Filter blocks" aria-label="Filter blocks">
-      <div class="side-actions">
+      <input id="search" type="search" placeholder="Filter blocks" aria-label="Filter blocks" hidden>
+      <div class="side-actions" id="sideActions" hidden>
         <button id="showAll" type="button">Show all</button>
         <button id="hideAll" type="button">Hide all</button>
       </div>

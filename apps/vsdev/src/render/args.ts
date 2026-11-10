@@ -1,6 +1,6 @@
 // Command-line parsing for the renderer, kept free of I/O so it can be tested on its own.
 import { UsageError } from "../errors.js";
-import { DEFAULT_VIEWS, VIEWS, type Vec3 } from "./views.js";
+import { DEFAULT_VIEWS, SHEET_VIEWS, VIEWS, type Vec3 } from "./views.js";
 
 export { UsageError };
 
@@ -41,6 +41,10 @@ export interface RenderOptions {
   views?: string[];
   /** Draw the one-block floor grid under the model. */
   floor: boolean;
+  /** Draw grass to the horizon at ground level instead of the floor grid (the game's grass texture when a client is found). */
+  grass?: boolean;
+  /** Draw a sky behind the model (the game's sky colours when a client is found). */
+  sky?: boolean;
   /** --game-dir: the game client install (or its assets folder) to read textures from; the model's own assets tree is searched first. */
   game?: string;
   /** Draw untextured (one color per texture key), as the wiki does. */
@@ -61,6 +65,8 @@ export interface RenderOptions {
   maxY?: number;
   /** Draw a schematic's chiseled blocks as whole cubes instead of their cuboids. */
   noChisel: boolean;
+  /** Where a schematic's statues (Player Statues mod) find their shapes and item types; without it they are drawn as their block. */
+  statueIo?: import("@nf3t/vs-schematic/statue.js").StatueIo;
   /** Print what each file is, render nothing. */
   list: boolean;
   /** Print results as JSON on stdout. */
@@ -77,6 +83,24 @@ export interface RenderOptions {
   fileName?: string;
   /** The working directory the game location rule starts from (./vintagestory, vs-manifest.json). */
   cwd?: string;
+  /** Models: report what is wrong with the shape (src/shape/check.ts) instead of rendering; with --sheet or --compare, as well as. */
+  check?: boolean;
+  /** With `check`: warnings fail too (the caller exits non-zero). */
+  strict?: boolean;
+  /** Models: draw the x/y/z axes from the block's origin with their compass names, the outline of the block (0..16) and the floor grid. */
+  grid?: boolean;
+  /** Models: draw without perspective, the four side views square on (true elevations and plans). */
+  ortho?: boolean;
+  /** Models: "element" draws untextured, one color per element name, with the names as the legend. */
+  colorBy?: "element";
+  /** Models: element names (a "*" matches any run of characters) to draw solid while the rest is ghosted. A name also matches its children. */
+  highlight?: string[];
+  /** Models: element names (as `highlight`) left out, to see what is behind or inside them. */
+  hide?: string[];
+  /** Models: write one <name>-sheet.png with every view (SHEET_VIEWS, or `views`) instead of a PNG per view. */
+  sheet?: boolean;
+  /** Models: an older version of the (one) file; writes <name>-compare.png, before over after, and reports which elements changed. */
+  compare?: string;
 }
 
 /** Views for schematics and chisel shapes, which have no front: three-quarter, plan and two elevations. */
@@ -87,7 +111,8 @@ export const USAGE = `Usage: vsdev render <file>... [options]   (in the repo: np
 Renders Vintage Story files to <out>/<name>-<view>.png, headless:
   model (shape) files      with their real textures when found (in the model's own assets/<domain>/ tree or the --game install),
                            otherwise one color per texture key; worn items are placed on the player body; animations on request
-  schematics (.json/.gz)   one cell per block in its block color; chiseled blocks drawn as their cuboids; meta-filler hidden
+  schematics (.json/.gz)   one cell per block in its block color; chiseled blocks drawn as their cuboids; meta-filler hidden;
+                           Player Statues statues drawn as their figure (shapes from the game and the mod in Mods/)
   ChiselTools shapes (.pf) the chiseled block, in its materials' block colors
 The kind is worked out from the file's content.
 
@@ -96,6 +121,9 @@ Options:
   --size <px>          image width and height (default: 640)
   --views <a,b,...>    views to render (default: models ${DEFAULT_VIEWS.join(",")}, others ${SCHEMATIC_VIEWS.join(",")}; available: ${Object.keys(VIEWS).join(", ")})
   --floor              draw a one-block grid at ground level
+  --grass              draw grass out to the horizon at ground level (instead of --floor)
+  --sky                draw a sky behind it
+                       (both use the game client's own textures when one is found, built-in colors otherwise; also for schematics)
   --list               print what each file is (boxes, animations, blocks...) without rendering
   --json               print the results as JSON
 
@@ -108,6 +136,22 @@ Models:
   --frames <n>         frames sampled evenly over each animation (default: 8)
   --frame <n>          instead of a sheet, render frame n of the one --animation in every view
   --columns <n>        contact sheet columns (default: up to 4)
+
+Models, to check your own work (see also \`vsdev shape\`, which builds models from a spec):
+  --check              no picture: report what a picture hides. Errors: a part that touches nothing and isn't on the ground. Warnings:
+                       faces in one plane in different textures (they flicker in game), a flat element lying in a face, UVs outside
+                       the texture. Then the bounds in units and blocks, where it leaves the block (0..16), and every element's box
+                       by name. Exits 1 on errors (--strict: on warnings too). With --sheet or --compare the picture is made as well
+  --sheet              one PNG, <name>-sheet.png, with every view (${SHEET_VIEWS.join(", ")}; or --views), the sides
+                       drawn flat and each cell saying which way is right: one image to read instead of five
+  --grid               draw the axes from the block's origin (x east red, y up green, z south blue), the outline of the block
+                       (0..16, for scale) and the floor grid
+  --ortho              no perspective, side views square on (a sheet's side views always are)
+  --color-by element   untextured, one color per element name, the names as the legend: which box is which
+  --highlight <a,b>    draw these elements (names; "*" allowed; children included) solid and ghost the rest
+  --hide <a,b>         leave these elements out (to look inside or behind)
+  --compare <old>      <name>-compare.png: the old file above the new one in the same views, and the elements added, removed
+                       and moved
 
 Schematics and ChiselTools shapes:
   --block-colors <f>   BlockColorMod JSON with the block colors (default: the wiki's apps/vs-wiki/site/assets/Nf3tBlockColors.json)
@@ -156,6 +200,12 @@ export function parseArgs(argv: string[], defaultOut: string): RenderOptions | "
       case "--floor":
         options.floor = true;
         break;
+      case "--grass":
+        options.grass = true;
+        break;
+      case "--sky":
+        options.sky = true;
+        break;
       case "--game":
       case "--game-dir":
         options.game = value();
@@ -199,6 +249,37 @@ export function parseArgs(argv: string[], defaultOut: string): RenderOptions | "
       case "--json":
         options.json = true;
         break;
+      case "--check":
+        options.check = true;
+        break;
+      case "--strict":
+        options.strict = true;
+        break;
+      case "--grid":
+        options.grid = true;
+        break;
+      case "--ortho":
+        options.ortho = true;
+        break;
+      case "--sheet":
+        options.sheet = true;
+        break;
+      case "--color-by": {
+        const by = value();
+        if (by !== "element") throw new UsageError(`--color-by takes "element"`);
+        options.colorBy = by;
+        break;
+      }
+      case "--highlight":
+      case "--hide": {
+        const names = value().split(",").map((v) => v.trim()).filter(Boolean);
+        if (!names.length) throw new UsageError(`${arg} needs at least one element name`);
+        options[arg === "--hide" ? "hide" : "highlight"] = names;
+        break;
+      }
+      case "--compare":
+        options.compare = value();
+        break;
       default:
         if (arg.startsWith("--")) throw new UsageError(`unknown option ${arg}`);
         options.files.push(arg);
@@ -208,6 +289,10 @@ export function parseArgs(argv: string[], defaultOut: string): RenderOptions | "
   if (options.frame !== undefined && (options.animations === "all" || options.animations.length !== 1)) {
     throw new UsageError("--frame needs exactly one --animation code");
   }
+  if (options.strict && !options.check) throw new UsageError("--strict goes with --check");
+  if (options.compare && options.files.length !== 1) throw new UsageError("--compare takes one file to compare with the old one");
+  const animated = options.animations === "all" || options.animations.length > 0;
+  if (animated && (options.sheet || options.compare)) throw new UsageError("--sheet and --compare draw the rest pose; drop --animation");
   return options;
 }
 

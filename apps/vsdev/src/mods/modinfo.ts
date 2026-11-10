@@ -104,6 +104,11 @@ export function modInfoFromZip(zip: string | Buffer): ZipModInfo {
   return { nestedAt: named.sort((a, b) => a.entryName.split("/").length - b.entryName.split("/").length)[0]?.entryName, hasDll };
 }
 
+/** The root modicon.png of a mod zip (the icon the game shows in its mod list), matched case-insensitively. */
+export function modIconFromZip(zip: string | Buffer): Buffer | undefined {
+  return new AdmZip(zip).getEntries().find((e) => !e.isDirectory && e.entryName.toLowerCase() === "modicon.png")?.getData();
+}
+
 /** The root modinfo.json text of an unpacked mod folder, matched case-insensitively. */
 export function modInfoFromDir(dir: string): string | undefined {
   const name = readdirSync(dir).find((n) => n.toLowerCase() === "modinfo.json");

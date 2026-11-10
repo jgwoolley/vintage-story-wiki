@@ -416,14 +416,14 @@ const loadFile = (file) => {
 $("fileInput").addEventListener("change", (e) => {
   const file = e.target.files[0];
   e.target.value = ""; // allow re-selecting the same file
-  if (file) loadFile(file);
+  if (file) void loadFile(file);
 });
 // Dropping a file on the upload box is handled for every page by dropzone.js (it triggers the input's change event).
 $("fileSelect").addEventListener("change", (e) => {
   if (!e.target.value) return;
   sourceSchematic = null;
   updateUrl({ schematic: null, sample: e.target.value });
-  withLoading(async () => {
+  void withLoading(async () => {
     const response = await fetch(samplesBase + e.target.value);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return parsed({ text: await response.text(), name: e.target.value });
@@ -551,7 +551,7 @@ if (requested && /^[\w.-]+(\/[\w. +()-]+)+$/.test(requested) && !requested.inclu
   $("downloadGz").download = `${relPath.split("/").pop()}.json.gz`;
   $("downloadGz").hidden = false;
   sourceSchematic = requested;
-  withLoading(() => fetchWorldSchematic(requested));
+  void withLoading(() => fetchWorldSchematic(requested));
 } else {
   // `?sample=<file>` reopens a bundled sample; anything else starts on the default one.
   const sample = new URLSearchParams(location.search).get("sample");

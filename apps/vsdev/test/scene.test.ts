@@ -1,12 +1,13 @@
 // The pure parts of scenes (`vsdev screenshots` "scene"): moving boxes, the hand placement, element frames, and the type lookup helpers.
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { compactShape, elementFrame, holdInHand, rotationMatrix, shapeToBoxes, transformBoxes, ITEM_HAND_TRANSFORM } from "@nf3t/vs-schematic/shapeBoxes.js";
-import { byType, disabledElements, fill, findCollectible, handTransform, shapeRef, textureRefs } from "../src/render/collectible.js";
+import { byType, disabledElements, fill, findCollectible, handTransform, hiddenElements, shapeRef, textureRefs, wornElements } from "../src/render/collectible.js";
 import { readShots } from "../src/commands/screenshots.js";
+import { buildScene } from "../src/render/scene.js";
 
 const near = (a: number, b: number, eps = 1e-6) => assert.ok(Math.abs(a - b) < eps, `${a} != ${b}`);
 
@@ -79,4 +80,81 @@ test("screenshots: scene entries are checked", () => {
   assert.throws(() => readShots({ screenshots: [{ name: "s", scene: [{ model: "m", at: [0, 0] }] }] }, "m.json"), /\.at/);
   assert.throws(() => readShots({ screenshots: [{ name: "s", scene: [{ player: {}, facing: "up" }] }] }, "m.json"), /facing/);
   assert.throws(() => readShots({ screenshots: [{ name: "s", model: "m", scene: [{ model: "m" }] }] }, "m.json"), /exactly one/);
+  assert.throws(() => readShots({ screenshots: [{ name: "s", scene: [{ statue: { block: "game:rock-granite" } }] }] }, "m.json"), /statue block/);
+  assert.throws(() => readShots({ screenshots: [{ name: "s", scene: [{ statue: { block: "nf3tstatue:statue-small-granite", mount: "horse" } }] }] }, "m.json"), /elkcow/);
+  assert.equal(readShots({ screenshots: [{ name: "s", scene: [{ statue: { block: "nf3tstatue:statue-small-granite", emote: "wave" }, facing: "south" }] }] }, "m.json").length, 1);
+});
+
+test("buildScene: a part's material replaces every texture, declared or only used by a face", async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "vsdev-scene-material-"));
+  try {
+    const assets = path.join(dir, "assets");
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+    for (const domain of ["game", "survival"]) {
+      mkdirSync(path.join(assets, domain, "textures", "block"), { recursive: true });
+      writeFileSync(path.join(assets, domain, "textures", "block", "marble.png"), png);
+    }
+    const shapeFile = path.join(dir, "thing.json");
+    writeFileSync(shapeFile, JSON.stringify({
+      textures: { a: "block/missing-a" },
+      elements: [{ name: "x", from: [0, 0, 0], to: [1, 1, 1], faces: { north: { texture: "#a", uv: [0, 0, 1, 1] }, south: { texture: "#b", uv: [0, 0, 1, 1] } } }],
+    }));
+    const io = {
+      findFile: (ref: string) => (ref === shapeFile ? shapeFile : undefined),
+      gameAssets: assets,
+      read: async (file: string) => { try { return new Uint8Array(readFileSync(file)); } catch { return undefined; } },
+    };
+    const plain = await buildScene([{ model: shapeFile }], io);
+    assert.ok(plain.warnings.some((w) => w.includes("missing-a")), "without a material the shape's own texture is looked up");
+    const statue = await buildScene([{ model: shapeFile, material: "game:block/marble" }], io);
+    assert.deepEqual(statue.warnings, []);
+    const urls = Object.values(statue.textures);
+    assert.equal(urls.length, 2, "both keys, also #b that only a face names");
+    assert.equal(new Set(urls).size, 1, "all the same image");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("worn items: armor's attachableToEntity.disableElements(ByType) hide body parts, keepElements un-hide the player's defaults", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "vsdev-scene-armor-"));
+  try {
+    mkdirSync(path.join(dir, "survival/itemtypes/wearable"), { recursive: true });
+    // Shaped like survival/itemtypes/wearable/seraph/armor.json.
+    writeFileSync(path.join(dir, "survival/itemtypes/wearable/armor.json"), `{
+      code: "armor", variantgroups: [{ code: "bodypart", states: ["head", "body"] }, { code: "construction", states: ["plate", "sewn"] }],
+      attributes: { attachableToEntity: {
+        disableElementsByType: { "armor-head-plate": ["Hair", "Hair tile upper part"], "armor-head-*": ["bangs"] },
+        keepElementsByType: { "armor-head-*": ["hair-covered"] },
+      } },
+    }`);
+    const helmet = findCollectible(dir, "armor-head-plate")!;
+    assert.deepEqual(wornElements(helmet), { disable: ["hair", "hair tile upper part"], keep: ["hair-covered"] });
+    assert.deepEqual(wornElements(findCollectible(dir, "armor-head-sewn")!).disable, ["bangs"]);
+    assert.deepEqual(wornElements(findCollectible(dir, "armor-body-plate")!), { disable: [], keep: [] });
+
+    const defaults = ["hair-covered", "showshoeR", "hoodtight"];
+    assert.deepEqual([...hiddenElements(defaults, [])].sort(), ["hair-covered", "hoodtight", "showshoer"]);
+    // The helmet hides the hair and keeps hair-covered, which the player hides by default.
+    assert.deepEqual([...hiddenElements(defaults, [wornElements(helmet)])].sort(), ["hair", "hair tile upper part", "hoodtight", "showshoer"]);
+    // A keep never brings back what an item disables itself.
+    assert.ok(hiddenElements([], [{ disable: ["hair"], keep: [] }, { disable: [], keep: ["hair"] }]).has("hair"));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("buildScene: scale is about a model's block bottom center, so a scaled block stays centered on its spot", async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "vsdev-scene-scale-"));
+  try {
+    const shapeFile = path.join(dir, "cube.json");
+    writeFileSync(shapeFile, JSON.stringify({ elements: [{ name: "c", from: [0, 0, 0], to: [16, 16, 16], faces: { north: { texture: "#a" } } }] }));
+    const io = { findFile: (ref: string) => (ref === shapeFile ? shapeFile : undefined), read: async () => undefined };
+    const { boxes: [b] } = await buildScene([{ model: shapeFile, scale: 0.5 }], io);
+    near(b.x, 8); near(b.z, 8); near(b.y, 4);
+    near(b.sx, 8);
+    assert.throws(() => readShots({ screenshots: [{ name: "s", scene: [{ player: {}, scale: 0 }] }] }, "m.json"), /scale/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

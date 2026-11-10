@@ -67,7 +67,7 @@ $("csFile").addEventListener("change", async (event) => {
 const params = new URLSearchParams(location.search);
 if (params.get("shape")) {
   try {
-    show(shapeFromParams(params.get("shape"), params.get("mats") || ""), params.get("name") || "");
+    await show(shapeFromParams(params.get("shape"), params.get("mats") || ""), params.get("name") || "");
   } catch (err) {
     $("csError").textContent = `Couldn't read the shape in the link: ${err.message}`;
     $("csError").hidden = false;

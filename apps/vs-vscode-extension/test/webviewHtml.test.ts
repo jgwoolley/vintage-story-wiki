@@ -29,7 +29,16 @@ test("the file name is HTML-escaped in the title", () => {
 
 test("every element id the webview script looks up exists in the shell", () => {
   const html = buildWebviewHtml(options);
-  for (const id of ["viewport", "legend", "summary", "error", "search", "showFiller", "maxY", "maxYValue", "inspector", "traits", "resetView", "showAll", "hideAll", "closeInspector"]) {
+  for (const id of ["viewport", "legend", "summary", "error", "search", "showFiller", "fillerBox", "maxY", "maxYBox", "maxYValue", "sideActions", "inspector", "traits", "resetView", "showAll", "hideAll", "closeInspector", "animBox", "floorBox"]) {
     assert.match(html, new RegExp(`id="${id}"`), id);
   }
+});
+
+test("the controls that only mean something for some kinds of file start hidden, until the script knows what was opened", () => {
+  const html = buildWebviewHtml(options);
+  // schematic-only: meta-filler, the Y slider, the block filter and show/hide all; model-only: the animation picker and the floor switch
+  for (const id of ["fillerBox", "maxYBox", "search", "sideActions", "animBox", "floorBox"]) {
+    assert.match(html, new RegExp(`<[^>]*id="${id}"[^>]*\\shidden`), `${id} starts hidden`);
+  }
+  assert.doesNotMatch(html, /<[^>]*id="resetView"[^>]*hidden/);
 });

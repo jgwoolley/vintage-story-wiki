@@ -126,7 +126,7 @@
           "view": {
             "description": "Camera angle: a view name, or a direction [x, y, z] from the center (y up, +z south, +x east). Default \"default\".",
             "oneOf": [
-              { "enum": ["default", "south", "east", "north", "top", "back"] },
+              { "enum": ["default", "south", "east", "north", "west", "top", "bottom", "back"] },
               { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 }
             ]
           },
@@ -154,12 +154,40 @@
                     "frame": { "type": "number", "minimum": 0, "description": "The animation frame to show (30 per second)." }
                   }
                 },
+                "statue": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["block"],
+                  "description": "A statue of the Player Statues mod (nf3tstatue), drawn as the mod draws it: the seraph in one stone, posed, dressed, optionally riding an elk. Placed like a block, with its block corner at `at`.",
+                  "properties": {
+                    "block": { "type": "string", "pattern": "^nf3tstatue:statue(metal)?-(small|large|bust)-[a-z0-9]+$", "description": "The statue block, e.g. \"nf3tstatue:statue-small-whitemarble\" or \"nf3tstatue:statuemetal-large-gold\"." },
+                    "type": { "type": "string", "description": "\"player\" (default) or a special statue (\"robot\")." },
+                    "emote": { "type": "string", "description": "An emote of the seraph (cheer, wave, rage...), \"none\" (standing) or \"riding\"." },
+                    "frame": { "type": "integer", "minimum": -1, "description": "The emote's frame; -1 (default) is its most expressive keyframe." },
+                    "skin": { "type": "array", "items": { "type": "string" }, "description": "Skin part shapes (hair, beard...): domain:path without shapes/ and .json." },
+                    "clothing": { "type": "array", "items": { "type": "string" }, "description": "Worn clothing codes (inner layer)." },
+                    "armor": { "type": "array", "items": { "type": "string" }, "description": "Worn armor codes (outer layer)." },
+                    "hold": { "type": "string", "description": "Item or block code in the right hand." },
+                    "holdLeft": { "type": "string", "description": "Item or block code in the left hand." },
+                    "mount": { "enum": ["elkcow", "elkbull"], "description": "The player sits on a stone elk." },
+                    "elkPose": { "enum": ["stand", "walk", "gallop"] },
+                    "elkFrame": { "type": "integer", "minimum": -1, "description": "Frame of the elk's stride; -1 picks the best one." },
+                    "antlers": { "type": "integer", "minimum": 0, "maximum": 8, "description": "A bull's antlers, 0 (none) to 8 (default 4)." },
+                    "tack": {
+                      "type": "object", "additionalProperties": false,
+                      "properties": { "bridle": { "enum": ["bridle1", "bridle2"] }, "face": { "type": "string", "pattern": "^face([1-9]|1[0-6])$" }, "saddle": { "enum": ["saddle1"] }, "bags": { "enum": ["saddlebags1", "saddlebags2"] } }
+                    },
+                    "noPedestal": { "type": "boolean", "description": "Stand on the ground, without the pedestal (or, with an elk, its platform)." },
+                    "clay": { "type": "integer", "minimum": 0, "description": "Pieces of fire clay packed around it, as for a mold." }
+                  }
+                },
                 "at": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3, "description": "Position in blocks [x, y, z]: a model's block corner, a player's feet." },
-                "facing": { "enum": ["north", "east", "south", "west"], "description": "Player only: the direction it looks." },
+                "facing": { "enum": ["north", "east", "south", "west"], "description": "Player or statue: the direction it looks." },
                 "rotationY": { "type": "number", "description": "Turn about the vertical axis in degrees, counter-clockwise seen from above (a player at 0 looks west)." },
-                "scale": { "type": "number", "exclusiveMinimum": 0, "description": "Model only: uniform scale." },
+                "scale": { "type": "number", "exclusiveMinimum": 0, "description": "Uniform scale, about a model's block bottom center ([8, 0, 8]) or a player's feet." },
                 "animation": { "type": "string", "description": "Model only: an animation of the model, held at `frame`." },
-                "frame": { "type": "number", "minimum": 0 }
+                "frame": { "type": "number", "minimum": 0 },
+                "material": { "type": "string", "description": "One texture for every face of this part, worn and held items included, e.g. \"game:block/stone/rock/whitemarble1\" for a marble statue. Faces keep their UVs; only the image changes." }
               }
             }
           },
@@ -177,6 +205,8 @@
           "safe": { "type": "object", "additionalProperties": false, "description": "Fractions (0 to under 0.9) of the image to keep clear on each side; the model is framed in the rest, and a logo-only icon fills it.", "properties": { "top": { "type": "number", "minimum": 0, "exclusiveMaximum": 0.9 }, "right": { "type": "number", "minimum": 0, "exclusiveMaximum": 0.9 }, "bottom": { "type": "number", "minimum": 0, "exclusiveMaximum": 0.9 }, "left": { "type": "number", "minimum": 0, "exclusiveMaximum": 0.9 } } },
           "size": { "type": "integer", "minimum": 64, "maximum": 4096, "description": "Width and height in pixels. Default 1280." },
           "floor": { "type": "boolean", "description": "Draw a one-block grid at ground level." },
+          "grass": { "type": "boolean", "description": "Draw grass out to the horizon at ground level instead of the floor grid (the game client's grass texture and plant tint when found, built-in colors otherwise)." },
+          "sky": { "type": "boolean", "description": "Draw a sky behind the subject (the game client's sky.png and sunlight.png when found, a built-in gradient otherwise)." },
           "maxY": { "type": "integer", "minimum": 0, "description": "Leave out blocks above this y (a cutaway)." },
           "showFiller": { "type": "boolean", "description": "Draw meta-filler blocks (hidden by default)." }
         }

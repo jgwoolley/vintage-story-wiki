@@ -3,7 +3,7 @@
 // the export, --source installs and the location rule are new. ModDB is a fake fetch.
 import AdmZip from "adm-zip";
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, unlinkSync, writeFileSync, appendFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, unlinkSync, writeFileSync, appendFileSync } from "node:fs";
 import { request } from "node:http";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -228,7 +228,10 @@ test("image checks and HTML lint (ImageChecksTests, HtmlLintTests)", () => {
   assert.deepEqual(imageChecks("icon", "modicon.png", png(128, 128)), []);
   assert.equal(imageChecks("screenshot", "a.jpg", jpeg(2560, 1440)).length, 1);
   assert.equal(imageChecks("screenshot", "a.png", Buffer.from([1, 2, 3])).length, 1);
-  assert.deepEqual(htmlLint("d.html", "<p>a <strong>b</strong></p><ul><li>c</li></ul><pre><code>x</code></pre>"), []);
+  assert.deepEqual(htmlLint("d.html", '<p>a <strong>b</strong></p><ul><li>c</li></ul><pre class="language-json"><code>x</code></pre>'), []);
+  for (const pre of ["<pre>x</pre>", "<pre><code>x</code></pre>", '<pre class="language-json">x</pre>']) {
+    assert.ok(htmlLint("d.html", pre).some((w) => w.includes("language-") && w.includes("<code>")), pre);
+  }
   const bad = htmlLint("d.html", "<h1>x</h1><p>y</p><script>1</script>");
   assert.equal(bad.length, 1);
   assert.ok(bad[0].includes("<h1>"));
@@ -388,15 +391,44 @@ test("export: a public site with the zips and mods.json, no dev information, saf
     assert.equal(rel.sha256, sha256(readFileSync(path.join(releases, "sample_1.22.7_1.0.2.zip"))));
     assert.equal(rel.onModDb, false);
 
-    // Re-exporting replaces its own output; anything else is refused.
+    // Re-exporting replaces its own output, in the same folder (a bind mount keeps working); anything else is refused.
+    const inode = statSync(out).ino;
     await exportSite({ pagesDir: pages, outDir: out, modids: ["sample"], zips: localMods(releases), client: null });
     assert.ok(!existsSync(path.join(out, "draft")));
+    assert.equal(statSync(out).ino, inode, "the folder itself is kept");
     assert.ok(!JSON.parse(readFileSync(path.join(out, "mods.json"), "utf8")).mods[0].releases[0].onModDb, "offline: no on-ModDB claim");
     await assert.rejects(exportSite({ pagesDir: pages, outDir: dir, modids: ["sample"], zips: localMods(releases), client: null }), /contains/);
     mkdirSync(path.join(dir, "other"));
     writeFileSync(path.join(dir, "other", "keep.txt"), "x");
     await assert.rejects(exportSite({ pagesDir: pages, outDir: path.join(dir, "other"), modids: ["sample"], zips: localMods(releases), client: null }), /refusing/);
     assert.ok(existsSync(path.join(dir, "other", "keep.txt")));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("export: Releases/ is the truth for the mod itself (side, icon, description fallback); moddb/ for what the page manages", async () => {
+  const dir = tmp("export-zip");
+  try {
+    const releases = path.join(dir, "Releases"), pages = path.join(dir, "moddb");
+    modZip(releases, "srv_1.22.7_1.0.0.zip", '{"modid":"srv","version":"1.0.0","name":"Srv","side":"Server","description":"Logs <things>"}', { "modicon.png": "ICON" });
+    modZip(releases, "paged_1.22.7_1.0.0.zip", '{"modid":"paged","version":"1.0.0","name":"P","side":"Client"}', { "modicon.png": "ICON" });
+    seed(path.join(pages, "paged"));
+    const pagedJson = path.join(pages, "paged", "page.json");
+    writeFileSync(pagedJson, JSON.stringify({ ...JSON.parse(readFileSync(pagedJson, "utf8")), side: "both" }));
+    const out = path.join(dir, "site");
+    const result = await exportSite({ pagesDir: pages, outDir: out, modids: ["paged", "srv"], zips: localMods(releases), client: null });
+
+    // No moddb/srv/ at all: name, side, description and logo all come from the zip.
+    assert.equal(readFileSync(path.join(out, "srv", "images", "modicon.png"), "utf8"), "ICON");
+    const srv = readFileSync(path.join(out, "srv", "index.html"), "utf8");
+    assert.ok(srv.includes("<h1>Srv</h1>") && srv.includes("Server only") && srv.includes("<p>Logs &lt;things&gt;</p>") && srv.includes('src="images/modicon.png"'));
+
+    // A page with its own logo keeps it; the side still follows the zip, with a warning about the disagreement.
+    assert.ok(!existsSync(path.join(out, "paged", "images", "modicon.png")), "page.json's logo wins over the zip icon");
+    assert.ok(readFileSync(path.join(out, "paged", "index.html"), "utf8").includes("Client only"));
+    assert.ok(result.warnings.some((w) => w.startsWith("paged:") && w.includes('side "both"') && w.includes('"Client"')));
+    assert.ok(readFileSync(path.join(out, "index.html"), "utf8").includes('src="srv/images/modicon.png"'), "the card uses the zip icon");
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

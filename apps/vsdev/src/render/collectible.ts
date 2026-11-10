@@ -6,6 +6,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import JSON5 from "json5";
 import { BLOCK_HAND_TRANSFORM, ITEM_HAND_TRANSFORM, type HandTransform } from "@nf3t/vs-schematic/shapeBoxes.js";
+import { shapeFileRef, type StatueCollectible } from "@nf3t/vs-schematic/statue.js";
 
 type Json = Record<string, unknown>;
 
@@ -118,17 +119,44 @@ export function textureRefs(c: Collectible): Record<string, string> {
   return out;
 }
 
-/** Names of player-body elements this worn item hides (`attributes.disableElements`), lower-cased. */
-export function disabledElements(c: Collectible): string[] {
+/**
+ * The body elements a worn item hides and keeps, lower-cased. The game reads them from `attributes.attachableToEntity` (armor), or for older
+ * clothing from `attributes.disableElements` / `keepElements` (`AttributeAttachableToEntity.FromAttributes`); `*ByType` resolved for the code.
+ */
+export function wornElements(c: Collectible): { disable: string[]; keep: string[] } {
   const attributes = prop<Json>(c.json, "attributes", c.code);
-  const list = attributes ? prop<string[]>(attributes, "disableElements", c.code) : undefined;
-  return (list ?? []).map((n) => n.toLowerCase());
+  const attachable = attributes ? prop<Json>(attributes, "attachableToEntity", c.code) : undefined;
+  const from = attachable ?? attributes;
+  const list = (name: string) => ((from ? prop<string[]>(from, name, c.code) : undefined) ?? []).map((n) => n.toLowerCase());
+  return { disable: list("disableElements"), keep: list("keepElements") };
+}
+
+/** Names of player-body elements this worn item hides, lower-cased (`wornElements(c).disable`). */
+export function disabledElements(c: Collectible): string[] {
+  return wornElements(c).disable;
+}
+
+/**
+ * The element names to remove from a dressed entity, the way the game does it (`BehaviorContainer.addGearToShape`, `Entity.OnTesselation`):
+ * every item's disabled elements, plus the entity's own default `disableElements` that no item keeps. Lower-cased.
+ */
+export function hiddenElements(entityDefaults: string[], worn: { disable: string[]; keep: string[] }[]): Set<string> {
+  const pending = new Set(entityDefaults.map((n) => n.toLowerCase()));
+  const removed = new Set<string>();
+  for (const w of worn) {
+    for (const n of w.disable) {
+      removed.add(n);
+      pending.add(n);
+    }
+    for (const n of w.keep) pending.delete(n);
+  }
+  return new Set([...removed, ...pending]);
 }
 
 /** The hand transform for third person: the game's default for an item/block, with the type's own `tpHandTransform` values laid over it. */
-export function handTransform(c: Collectible): HandTransform {
+export function handTransform(c: Collectible, field_ = "tpHandTransform"): HandTransform {
   const base = c.kind === "item" ? ITEM_HAND_TRANSFORM : BLOCK_HAND_TRANSFORM;
-  const t = prop<Json>(c.json, "tpHandTransform", c.code);
+  const t = prop<Json>(c.json, field_, c.code);
   if (!t) return base;
   const vec = (v: unknown, d: [number, number, number]): [number, number, number] => {
     const o = (v ?? {}) as Record<string, number>;
@@ -142,5 +170,38 @@ export function handTransform(c: Collectible): HandTransform {
     rotation: vec(field("rotation"), base.rotation),
     origin: vec(field("origin"), base.origin),
     scale: typeof scale === "number" ? scale : base.scale,
+  };
+}
+
+/**
+ * What a statue (`@nf3t/vs-schematic/statue.js`) needs of a worn or held type: its shape, how it is worn (the game's
+ * `IAttachableToEntity.FromAttributes`: `attributes.attachableToEntity`, or old clothing's `attributes.wearableAttachment`) and its hand
+ * transforms. Shape refs keep the type's own domain folder (`survival:`), which is where the game's files are.
+ */
+export function statueCollectible(c: Collectible): StatueCollectible {
+  const own = shapeRef(c);
+  const shape = prop<{ base?: string; rotateX?: number; rotateY?: number; rotateZ?: number }>(c.json, "shape", c.code);
+  const attributes = prop<Json>(c.json, "attributes", c.code);
+  const attachable = attributes ? prop<Json>(attributes, "attachableToEntity", c.code) : undefined;
+  let worn: StatueCollectible["worn"];
+  if (attachable || (attributes && prop(attributes, "wearableAttachment", c.code))) {
+    const from = attachable ?? attributes!;
+    const list = (name: string) => (prop<string[]>(from, name, c.code) ?? []).map(String);
+    // GetAttachedShape: attachedShape, else the "default" slot's entry of attachedShapeBySlotCode, else the item's own shape.
+    const bySlot = attachable ? prop<Record<string, { base?: string }>>(attachable, "attachedShapeBySlotCode", c.code) : undefined;
+    const attached = (attachable ? prop<{ base?: string }>(attachable, "attachedShape", c.code) : undefined) ?? byType(bySlot, "default");
+    worn = {
+      ...(attached?.base ? { shape: shapeFileRef(fill(attached.base, c.groupValues), c.domain) } : {}),
+      disable: list("disableElements"),
+      keep: list("keepElements"),
+    };
+  }
+  const offHand = prop<Json>(c.json, "tpOffHandTransform", c.code) ? handTransform(c, "tpOffHandTransform") : undefined;
+  return {
+    ...(own ? { shape: shapeFileRef(own.path, own.domain) } : {}),
+    ...(shape && (shape.rotateX || shape.rotateY || shape.rotateZ) ? { shapeRotation: [shape.rotateX ?? 0, shape.rotateY ?? 0, shape.rotateZ ?? 0] as [number, number, number] } : {}),
+    ...(worn ? { worn } : {}),
+    hand: handTransform(c),
+    ...(offHand ? { offHand } : {}),
   };
 }

@@ -8,7 +8,8 @@
 //
 // Headless: Electron runs with --ozone-platform=headless, so no X server is needed. Modelled on ../nifi-flowfile-extension's script.
 import { existsSync } from "node:fs";
-import { copyFile, mkdir, rm } from "node:fs/promises";
+import { copyFile, mkdir, rm, writeFile } from "node:fs/promises";
+import { deflateSync, crc32 } from "node:zlib";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { downloadAndUnzipVSCode } from "@vscode/test-electron";
@@ -38,6 +39,38 @@ const SAMPLES = [
   [`${gameDir}/assets/game/shapes/entity/humanoid/seraph-faceless.json`, "assets/game/shapes/entity/humanoid/seraph-faceless.json"],
 ];
 
+/** A 16 x 16 red and blue checkerboard PNG (no dependencies), the texture of the sample model below. */
+function checkerPng() {
+  const raw = Buffer.alloc(16 * (1 + 16 * 3));
+  for (let y = 0; y < 16; y++) {
+    const row = y * (1 + 16 * 3);
+    for (let x = 0; x < 16; x++) raw.set((x >> 2) % 2 === (y >> 2) % 2 ? [255, 0, 0] : [0, 0, 255], row + 1 + x * 3);
+  }
+  const chunk = (type, data) => {
+    const body = Buffer.concat([Buffer.from(type), data]);
+    const out = Buffer.alloc(body.length + 8);
+    out.writeUInt32BE(data.length, 0);
+    body.copy(out, 4);
+    out.writeUInt32BE(crc32(body), body.length + 4);
+    return out;
+  };
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(16, 0);
+  header.writeUInt32BE(16, 4);
+  header.set([8, 2, 0, 0, 0], 8); // 8 bits, RGB
+  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk("IHDR", header), chunk("IDAT", deflateSync(raw)), chunk("IEND", Buffer.alloc(0))]);
+}
+
+/** A model with its own texture in its own assets tree, written into the sample workspace: the preview must draw it textured. */
+const TEXTURED_MODEL = {
+  file: "assets/shot/shapes/block/checker.json",
+  texture: "assets/shot/textures/block/checker.png",
+  shape: {
+    textures: { checker: "shot:block/checker" },
+    elements: [{ name: "cube", from: [2, 0, 2], to: [14, 12, 14], faces: Object.fromEntries(["north", "east", "south", "west", "up", "down"].map((f) => [f, { texture: "#checker", uv: [0, 0, 16, 16] }])) }],
+  },
+};
+
 // [file to open, text the summary must show, screenshot name]
 const CASES = [
   ["small_shrine.json", /blocks/, "schematic"],
@@ -45,6 +78,7 @@ const CASES = [
   ["admin.json", /model, \d+ boxes/, "model-sword"],
   ["eurasian-adult.json", /model, \d+ boxes/, "model-wolf", "walk"],
   ["body.json", /placed on the player body/, "model-armor"],
+  ["checker.json", /model, 1 boxes/, "model-textured"],
   ["wayshrine-noext", /chiseled block/, "chisel-noext"],
 ];
 
@@ -57,13 +91,16 @@ async function main() {
     await mkdir(path.dirname(path.join(samplesDir, to)), { recursive: true });
     await copyFile(path.join(repo, from), path.join(samplesDir, to));
   }
+  await mkdir(path.dirname(path.join(samplesDir, TEXTURED_MODEL.texture)), { recursive: true });
+  await mkdir(path.dirname(path.join(samplesDir, TEXTURED_MODEL.file)), { recursive: true });
+  await writeFile(path.join(samplesDir, TEXTURED_MODEL.texture), checkerPng());
+  await writeFile(path.join(samplesDir, TEXTURED_MODEL.file), JSON.stringify(TEXTURED_MODEL.shape));
   const executablePath = await downloadAndUnzipVSCode({ version: VSCODE_VERSION, cachePath: process.env.VSCODE_TEST_CACHE ?? path.join(root, ".vscode-test") });
 
   const userDataDir = path.join(tmpDir, "user-data");
   const extensionsDir = path.join(tmpDir, "extensions");
   await mkdir(path.join(userDataDir, "User"), { recursive: true });
   await mkdir(extensionsDir, { recursive: true });
-  const { writeFile } = await import("node:fs/promises");
   await writeFile(
     path.join(userDataDir, "User", "settings.json"),
     JSON.stringify({
@@ -84,7 +121,7 @@ async function main() {
     args: [
       samplesDir,
       // Every case file opens as a tab at launch (quick open's file search is unreliable in a fresh headless profile).
-      ...CASES.map(([file]) => path.join(samplesDir, SAMPLES.find(([, to]) => to.endsWith(file))[1])),
+      ...CASES.map(([file]) => path.join(samplesDir, file === "checker.json" ? TEXTURED_MODEL.file : SAMPLES.find(([, to]) => to.endsWith(file))[1])),
       `--extensionDevelopmentPath=${root}`,
       `--user-data-dir=${userDataDir}`,
       `--extensions-dir=${extensionsDir}`,
@@ -118,8 +155,11 @@ async function main() {
     const results = [];
     for (const [file, summary, name, animation] of CASES) {
       await page.locator(".tabs-container .tab", { hasText: file }).first().click({ timeout: TIMEOUT }).catch((e) => fail(`tab ${file}`, e));
-      // The editor title-bar button the extension contributes (the same command as the palette entry).
-      await page.locator('.editor-actions a.action-label[aria-label^="Preview Schematic, Model"]').first().click({ timeout: TIMEOUT }).catch((e) => fail("title-bar preview button", e));
+      // The command palette entry (the same command as the Explorer's right-click item; the extension has no title-bar button).
+      await page.keyboard.press("F1");
+      await page.keyboard.type(">Vintage Story: Preview Schematic, Model");
+      await waitFor("command palette entry", page.locator(".quick-input-list .monaco-list-row", { hasText: "Preview Schematic, Model or Chisel Shape" }));
+      await page.keyboard.press("Enter");
       const view = webview();
       await waitFor(`${file} summary`, view.locator("#summary", { hasText: summary }));
       await waitFor(`${file} 3D canvas`, view.locator("#viewport canvas"));
@@ -128,6 +168,33 @@ async function main() {
       const error = await view.locator("#error").isVisible();
       if (error) await fail(`${file} shows an error: ${await view.locator("#error").innerText()}`);
       await page.locator(".part.editor").screenshot({ path: path.join(outDir, `${name}.png`) });
+      // Meta-filler, the Y slider and the block filter are a schematic's; a model or a chiseled block has no use for them.
+      for (const id of ["#fillerBox", "#maxYBox", "#search", "#sideActions"]) {
+        if ((await view.locator(id).isVisible()) !== (name === "schematic")) await fail(`${file}: ${id} should be ${name === "schematic" ? "shown" : "hidden"}`);
+      }
+      if (name === "model-textured") {
+        // The 3D view alone (the legend swatch has the same two colors): its cube must show the texture's red and blue squares.
+        const png = await view.locator("#viewport").screenshot({ path: path.join(outDir, `${name}-view.png`) });
+        const { red, blue } = await page.evaluate(async (b64) => {
+          const image = new Image();
+          image.src = `data:image/png;base64,${b64}`;
+          await image.decode();
+          const canvas = document.createElement("canvas");
+          canvas.width = image.width;
+          canvas.height = image.height;
+          const context = canvas.getContext("2d");
+          context.drawImage(image, 0, 0);
+          const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+          let red = 0, blue = 0;
+          for (let i = 0; i < pixels.length; i += 4) {
+            if (pixels[i] > 150 && pixels[i + 1] < 80 && pixels[i + 2] < 80) red++;
+            if (pixels[i + 2] > 150 && pixels[i] < 80 && pixels[i + 1] < 80) blue++;
+          }
+          return { red, blue };
+        }, png.toString("base64"));
+        if (red < 300 || blue < 300) await fail(`${file} isn't drawn with its texture (${red} red and ${blue} blue pixels in the 3D view)`);
+        results.push(`${file}: drawn textured (${red} red, ${blue} blue pixels)`);
+      }
       if (animation) {
         // Pick an animation from the toolbar: the model must start moving (two frames a moment apart differ).
         await view.locator("#anim").selectOption(animation);

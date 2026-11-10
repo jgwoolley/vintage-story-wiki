@@ -37,8 +37,13 @@ installed or Chromium is missing, see the `vsdev-game-setup` and `vsdev-render` 
   the body's bones and hide the hair etc. they disable) and holding `hold` / `holdLeft` in a hand (`holdScale` enlarges it: the game draws most
   items small in the hand). Example: a player in `armor-*-antique-forlorn-pristine` holding `rod-cupronickel` beside
   `survival:shapes/block/machine/statictranslocator/broken.json`. Item types come from the game install only; no face is painted on the body.
-- **Camera:** `view` is `default`, `south`, `east`, `north`, `top`, `back`, or `[x, y, z]` from the model's center (y up, +z south, +x east).
-  Also `floor`, `maxY` (cutaway), `showFiller`.
+  Any part also takes `scale` (about a model's block bottom center or a player's feet) and `material`, one texture for all its faces, worn
+  and held items included: `"material": "game:block/stone/rock/whitemarble1"` on a player draws a marble statue.
+  A `statue` part draws a real Player Statues (`nf3tstatue`) statue the way the mod does (single-tile stone, pose, armor, held items, elk and
+  tack, pedestal): `{ "statue": { "block": "nf3tstatue:statue-small-whitemarble", "emote": "cheer", "armor": [...] }, "facing": "south" }`
+  (needs the mod's zip in `Mods/`). `vsdev render` also draws statues inside schematics as their figure.
+- **Camera:** `view` is `default`, `south`, `east`, `north`, `west`, `top`, `bottom`, `back`, or `[x, y, z]` from the model's center (y up, +z south, +x east).
+  Also `floor`, `grass` + `sky` (outdoors: grass to the horizon and a sky, from the game client's textures when found), `maxY` (cutaway), `showFiller`.
 - **Size and place:** `size` (width) and `height` in pixels (default 1280 square; `1920` x `1080` suits a banner), `output` (the PNG's path;
   default `<screenshotsDir or ./screenshots>/<name>.png`).
 - **Text and logo:** `title`, `subtitle`, `titleSize` (fraction of the shorter side, default 0.075), `logo` (PNG/JPEG/SVG/WebP), `textAt` /

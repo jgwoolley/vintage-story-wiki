@@ -95,13 +95,6 @@
           "when": "resourceFilename =~ /\\.(json(\\.gz)?|pf)$/ || resourcePath =~ /chiselportfolio/",
           "group": "navigation"
         }
-      ],
-      "editor/title": [
-        {
-          "command": "vsSchematic.openPreview",
-          "when": "resourceFilename =~ /\\.(json(\\.gz)?|pf)$/ || resourcePath =~ /chiselportfolio/",
-          "group": "navigation"
-        }
       ]
     }
   },

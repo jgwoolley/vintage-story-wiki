@@ -18,7 +18,7 @@ case "${1:-}" in
   *) echo "unknown option '$1' (try --help)" >&2; exit 2 ;;
 esac
 
-if [ -t 1 ]; then bold=$'\e[1m'; dim=$'\e[2m'; green=$'\e[32m'; yellow=$'\e[33m'; reset=$'\e[0m'; else bold=; dim=; green=; yellow=; reset=; fi
+if [[ -t 1 ]]; then bold=$'\e[1m'; dim=$'\e[2m'; green=$'\e[32m'; yellow=$'\e[33m'; reset=$'\e[0m'; else bold=; dim=; green=; yellow=; reset=; fi
 step() { printf '%s==>%s %s\n' "$bold" "$reset" "$*"; }
 note() { printf '    %s%s%s\n' "$dim" "$*" "$reset"; }
 
@@ -29,7 +29,7 @@ command -v npm >/dev/null || { echo "npm not found" >&2; exit 1; }
 step "Removing old copies of vsdev"
 declare -A prefixes=()
 while IFS= read -r bin; do
-  [ -n "$bin" ] || continue
+  [[ -n "$bin" ]] || continue
   real="$(readlink -f "$bin" 2>/dev/null || true)"
   # Direct package folder (npm link points it at a checkout), so look at the link the bin goes through as well.
   target="$(readlink "$bin" 2>/dev/null || true)"
@@ -37,7 +37,7 @@ while IFS= read -r bin; do
     */lib/node_modules/@nf3t/vsdev/*) pkg="$(cd "$(dirname "$bin")" && cd "$(dirname "$target")/.." && pwd)" ;;
     *) pkg="" ;;
   esac
-  if [ -n "$pkg" ]; then prefixes["$(dirname "$(dirname "$(dirname "$(dirname "$pkg")")")")"]=1; fi
+  if [[ -n "$pkg" ]]; then prefixes["$(dirname "$(dirname "$(dirname "$(dirname "$pkg")")")")"]=1; fi
   note "found $bin${real:+ -> $real}"
 done < <(type -ap vsdev 2>/dev/null | awk '!seen[$0]++')
 # The current npm prefix too, in case its bin isn't on PATH.
@@ -45,9 +45,9 @@ prefixes["$(npm prefix -g)"]=1
 
 removed=0
 for prefix in "${!prefixes[@]}"; do
-  if [ -e "$prefix/lib/node_modules/@nf3t/vsdev" ] || [ -L "$prefix/lib/node_modules/@nf3t/vsdev" ] || [ -e "$prefix/bin/vsdev" ] || [ -L "$prefix/bin/vsdev" ]; then
+  if [[ -e "$prefix/lib/node_modules/@nf3t/vsdev" ]] || [[ -L "$prefix/lib/node_modules/@nf3t/vsdev" ]] || [[ -e "$prefix/bin/vsdev" ]] || [[ -L "$prefix/bin/vsdev" ]]; then
     sudo=
-    if [ ! -w "$prefix/lib/node_modules" ] || [ ! -w "$prefix/bin" ]; then
+    if [[ ! -w "$prefix/lib/node_modules" ]] || [[ ! -w "$prefix/bin" ]]; then
       sudo=sudo
       printf '    %s%s is not writable by you: using sudo%s\n' "$yellow" "$prefix" "$reset"
     fi
@@ -58,17 +58,17 @@ for prefix in "${!prefixes[@]}"; do
     removed=$((removed + 1))
   fi
 done
-[ "$removed" -gt 0 ] && echo "    removed $removed old install(s)" || echo "    none found"
+[[ "$removed" -gt 0 ]] && echo "    removed $removed old install(s)" || echo "    none found"
 
-[ "$mode" = remove ] && { hash -r 2>/dev/null || true; echo "${green}done${reset}"; exit 0; }
+[[ "$mode" = remove ]] && { hash -r 2>/dev/null || true; echo "${green}done${reset}"; exit 0; }
 
 # 2. Build and install the one in this checkout (into your own npm prefix; no sudo).
 cd "$repo"
 step "Installing dependencies and building"
-npm install --silent --no-audit --no-fund
+npm install --ignore-scripts --silent --no-audit --no-fund  # no dependency needs its install scripts
 npm run build -w @nf3t/vsdev --silent
 
-if [ "$mode" = link ]; then
+if [[ "$mode" = link ]]; then
   step "Linking this checkout globally"
   npm link -w @nf3t/vsdev --silent
 else
@@ -88,5 +88,5 @@ if ! command -v vsdev >/dev/null; then
 fi
 others="$(type -ap vsdev | awk '!seen[$0]++' | wc -l)"
 note "$(command -v vsdev)"
-[ "$others" -gt 1 ] && echo "${yellow}more than one vsdev is still on PATH (type -a vsdev); the first one wins${reset}"
+[[ "$others" -gt 1 ]] && echo "${yellow}more than one vsdev is still on PATH (type -a vsdev); the first one wins${reset}"
 echo "${green}done${reset}: run \`vsdev --help\`"

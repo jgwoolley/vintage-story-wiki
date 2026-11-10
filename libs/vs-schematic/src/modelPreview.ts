@@ -16,6 +16,12 @@ export interface ModelPreviewOptions {
   viewDirection?: [number, number, number];
   /** Texture key -> image. Needs a shape from `compactShape(raw, { faces: true })`; keys not given stay colored. */
   textures?: Record<string, TextureImage>;
+  /** Give every box its element's `name` and `path` (see `shapeToBoxes`), for a style that colors or hides by element. */
+  names?: boolean;
+  /** Boxes drawn with the model in every pose and counted in its framing (reference guides: axes, a block outline). */
+  extraBoxes?: ShapeBox[];
+  /** The camera's field of view in degrees (default 35); a small one is as good as an orthographic view. */
+  fov?: number;
 }
 
 export interface ModelPreview extends VoxelViewer<ShapeBox> {
@@ -36,11 +42,12 @@ export function createModelPreview(
   shape: CompactShape,
   label: string,
   settings?: ViewerSettings,
-  { viewDirection, textures }: ModelPreviewOptions = {},
+  { viewDirection, textures, names, extraBoxes = [], fov }: ModelPreviewOptions = {},
 ): ModelPreview | null {
-  const boxes = shapeToBoxes(shape);
-  if (!boxes.length) return null;
-  const viewer = createVoxelViewer(container, { voxels: boxes, label, viewDirection, cellsCenteredOnIntegers: false, settings, textures });
+  const posed = (pose?: Parameters<typeof shapeToBoxes>[1]) => [...shapeToBoxes(shape, pose, { names }), ...extraBoxes];
+  const boxes = posed();
+  if (boxes.length === extraBoxes.length) return null;
+  const viewer = createVoxelViewer(container, { voxels: boxes, label, viewDirection, cellsCenteredOnIntegers: false, settings, textures, fov });
   if (!viewer) return null;
   viewer.setStyle((box) => ({ color: stringToColor(box.texture ?? "") }));
 
@@ -53,12 +60,13 @@ export function createModelPreview(
   const pose = (code: string | null, frame: number) => {
     const animation = animations.find((a) => a.code === code);
     // The game holds some animations at their last pose; for a preview every one loops, so there is always something to watch.
-    viewer.setVoxels(animation ? shapeToBoxes(shape, samplePose({ ...animation, loop: true }, frame)) : boxes);
+    viewer.setVoxels(animation ? posed(samplePose({ ...animation, loop: true }, frame)) : boxes);
   };
   return {
     ...viewer,
     // A model's grid cell is one block: 16 of its units.
     setFloor: (visible) => viewer.setFloor(visible, 16),
+    setEnvironment: (environment) => viewer.setEnvironment(environment, 16),
     animations: animations.map((a) => ({ code: a.code, name: a.name ?? a.code, frames: a.frames })),
     playAnimation(code) {
       stop();

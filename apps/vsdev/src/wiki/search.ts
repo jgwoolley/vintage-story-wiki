@@ -66,4 +66,4 @@ export function searchWiki(rows: WikiRow[], query: string, base: string, { kind,
 }
 
 /** The distinct kinds in an index, for the "no such kind" message. */
-export const kindsOf = (rows: WikiRow[]): string[] => [...new Set(rows.map((r) => r.kind))].sort();
+export const kindsOf = (rows: WikiRow[]): string[] => [...new Set(rows.map((r) => r.kind))].sort((a, b) => Number(a > b) - Number(a < b));

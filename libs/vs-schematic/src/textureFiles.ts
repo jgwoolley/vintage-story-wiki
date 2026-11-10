@@ -43,7 +43,9 @@ export function textureCandidates(ref: string, model: ModelLocation | undefined,
 
 /** The `assets` folder of a chosen game folder: the install folder itself (with `assets/` inside) or its `assets` folder. */
 export function gameAssetsCandidates(folder: string): string[] {
-  const trimmed = folder.replace(/[\\/]+$/, "");
+  let end = folder.length;
+  while (end > 0 && (folder[end - 1] === "/" || folder[end - 1] === "\\")) end--;
+  const trimmed = folder.slice(0, end);
   return [`${trimmed}/assets`, trimmed];
 }
 

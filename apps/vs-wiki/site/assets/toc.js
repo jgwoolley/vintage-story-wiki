@@ -10,7 +10,7 @@
     const used = new Set([...document.querySelectorAll("[id]")].map((el) => el.id));
     for (const h of headings) {
       if (h.id) continue;
-      const base = h.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "section";
+      const base = h.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "section";
       let id = base, n = 2;
       while (used.has(id)) id = `${base}-${n++}`;
       used.add(id);

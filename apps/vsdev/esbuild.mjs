@@ -5,7 +5,7 @@
 //   install can't import it); the published packages it needs (playwright-core, tar, adm-zip, json5) stay real dependencies;
 // - dist/blockColors.json: the wiki's block colors (BlockColorMod output), the renderer's default for schematics and .pf shapes;
 // - dist/web/: the `vsdev moddb serve` review page (src/moddb/web), dist/page.schema.json (moddb/<modid>/page.json's schema) and
-//   dist/vs-manifest.schema.json (the repo root's, describing vs-manifest.json).
+//   dist/vs-manifest.schema.json (copied from src/, describing vs-manifest.json).
 import { copyFileSync, cpSync, mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
@@ -54,4 +54,4 @@ mkdirSync(join(here, "dist"), { recursive: true });
 copyFileSync(join(here, "../vs-wiki/site/assets/Nf3tBlockColors.json"), join(here, "dist/blockColors.json"));
 cpSync(join(here, "src/moddb/web"), join(here, "dist/web"), { recursive: true });
 copyFileSync(join(here, "src/moddb/page.schema.json"), join(here, "dist/page.schema.json"));
-copyFileSync(join(here, "../../vs-manifest.schema.json"), join(here, "dist/vs-manifest.schema.json"));
+copyFileSync(join(here, "src/vs-manifest.schema.json"), join(here, "dist/vs-manifest.schema.json"));

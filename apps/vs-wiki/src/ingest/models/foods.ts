@@ -28,7 +28,7 @@ export function extractFoods(index: AssetIndex, lang: LangResolver): FoodEntry[]
     for (const variant of expandVariants(index, [prefix])) {
       const code = variant.code;
       // A mushroom block has a variant per facing and per picked state; only one standing, north-facing row is the food.
-      if (kind === "block" && /-harvested(-|$)|-(east|south|west)$/.test(code)) continue;
+      if (kind === "block" && /(?:-harvested(?:-|$))|(?:-(?:east|south|west)$)/.test(code)) continue;
       const props = record(prop(variant.json, "nutritionProps", code));
       const satiety = num(props?.satiety);
       if (!props || satiety === undefined || typeof props.foodcategory !== "string" || props.foodcategory === "NoNutrition") continue;

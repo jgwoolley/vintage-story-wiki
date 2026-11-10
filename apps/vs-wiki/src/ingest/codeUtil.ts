@@ -63,6 +63,23 @@ export function rewriteHandbookLinks(html: string, guideDomains?: ReadonlyMap<st
 export const handbookItemRefs = new Map<string, "item" | "block">();
 
 /**
+ * `s.replace(/<[^>]+>/g, replacement)` without the regex, which backtracks quadratically on a `<`
+ * that is never closed: every non-empty `<...>` becomes `replacement`; an unclosed `<` is kept.
+ */
+export function replaceTags(s: string, replacement: string): string {
+  let out = "", from = 0;
+  for (let open = s.indexOf("<"); open >= 0; open = s.indexOf("<", open + 1)) {
+    const close = s.indexOf(">", open + 1);
+    if (close < 0) break;
+    if (close === open + 1) continue; // "<>" is not a tag
+    out += s.slice(from, open) + replacement;
+    from = close + 1;
+    open = close;
+  }
+  return out + s.slice(from);
+}
+
+/**
  * Strips HTML tags from a lang value that was authored for the game's own in-game rich-text
  * renderer (e.g. trait names: `<font color="#84ff84">• Soldier </font>`) rather than for a web
  * page -- also strips the leading "• " bullet those specific strings carry, since it's a
@@ -70,8 +87,18 @@ export const handbookItemRefs = new Map<string, "item" | "block">();
  * `models/classes.ts` for trait display names.
  */
 export function stripGameRichText(value: string): string {
-  return value
-    .replace(/<[^>]+>/g, "")
+  return replaceTags(value, "")
     .replace(/^\s*[••]\s*/, "")
     .trim();
+}
+
+/**
+ * `name.replace(/\s*\([^)]*\)\s*$/, "")` without the regex (quadratic backtracking): drops a final
+ * "(...)" and the whitespace around it, e.g. "Trader (agriculture)" -> "Trader".
+ */
+export function withoutTrailingParenthetical(name: string): string {
+  const t = name.trimEnd();
+  if (!t.endsWith(")")) return name;
+  const open = t.indexOf("(", t.lastIndexOf(")", t.length - 2) + 1);
+  return open < 0 ? name : t.slice(0, open).trimEnd();
 }

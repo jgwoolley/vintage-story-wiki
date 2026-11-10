@@ -10,6 +10,7 @@
 // Frames are rendered on demand (camera change / resize / restyle), never in a continuous loop.
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/OrbitControls.js";
+import { createEnvironment, type Environment, type ViewerEnvironment } from "./environment.js";
 import { buildFaceBuffers, quadIndices, type ViewerFace } from "./texturedFaces.js";
 import { watchViewerSettings, type ViewerSettings } from "./viewerSettings.js";
 
@@ -60,6 +61,8 @@ export interface VoxelViewerOptions<V extends ViewerVoxel> {
    * is missing here is drawn plain in the voxel's color. Without it every voxel is a colored cube, as on the wiki.
    */
   textures?: Record<string, TextureImage>;
+  /** The camera's vertical field of view in degrees (default 35). A small one (2) is as good as an orthographic view: parallel edges stay parallel. */
+  fov?: number;
 }
 
 export interface VoxelViewer<V extends ViewerVoxel> {
@@ -75,8 +78,15 @@ export interface VoxelViewer<V extends ViewerVoxel> {
    * big enough to leave room around the model. Unlike the settings-driven grid it is per viewer and meant for judging where a model sits.
    */
   setFloor(visible: boolean, cell?: number): void;
+  /**
+   * Draw the model outdoors (environment.ts): grass to the horizon at the y = 0 plane (one tile per `cell` data units, lined up with the
+   * blocks) and/or a sky dome, from the game's images when given. Null (or neither) removes it. Use it instead of `setFloor`, not with it.
+   */
+  setEnvironment(environment: ViewerEnvironment | null, cell?: number): void;
   /** The voxel under a viewport point (e.g. a click), or null. Only opaque voxels are pickable. */
   pick(clientX: number, clientY: number): { voxel: V; index: number } | null;
+  /** Where a point in the voxels' own coordinates is drawn, in CSS pixels from the canvas's top-left; null behind the camera. For labels laid over the canvas. */
+  project(x: number, y: number, z: number): { x: number; y: number } | null;
   dispose(): void;
   render(): void;
 }
@@ -107,7 +117,7 @@ function edgeTexture(): THREE.CanvasTexture {
  */
 export function createVoxelViewer<V extends ViewerVoxel>(
   container: HTMLElement,
-  { voxels, label = "3D voxel view", viewDirection = [1, 1.1, 1.4], cellsCenteredOnIntegers = true, settings, textures }: VoxelViewerOptions<V>,
+  { voxels, label = "3D voxel view", viewDirection = [1, 1.1, 1.4], cellsCenteredOnIntegers = true, settings, textures, fov = 35 }: VoxelViewerOptions<V>,
 ): VoxelViewer<V> | null {
   let renderer: THREE.WebGLRenderer;
   try {
@@ -155,7 +165,7 @@ export function createVoxelViewer<V extends ViewerVoxel>(
   const extent = new THREE.Vector3().subVectors(max, min);
   const offset = new THREE.Vector3().addVectors(min, max).multiplyScalar(0.5);
 
-  const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 1000);
+  const camera = new THREE.PerspectiveCamera(fov, 1, 0.1, 1000);
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.addEventListener("change", render);
 
@@ -180,7 +190,9 @@ export function createVoxelViewer<V extends ViewerVoxel>(
   const quaternion = new THREE.Quaternion();
   const scale = new THREE.Vector3();
 
+  let environment: Environment | undefined;
   function render(): void {
+    environment?.update({ camera, target: controls.target });
     renderer.render(scene, camera);
   }
 
@@ -247,6 +259,24 @@ export function createVoxelViewer<V extends ViewerVoxel>(
       (grid.material as THREE.Material).transparent = true;
       (grid.material as THREE.Material).opacity = 0.7;
       floor.add(slab, grid);
+    }
+    render();
+  }
+
+  // ---- the outdoor backdrop (setEnvironment) ----
+  function setEnvironment(next: ViewerEnvironment | null, cell = 1): void {
+    environment?.dispose();
+    environment = undefined;
+    if (next && (next.grass || next.sky)) {
+      environment = createEnvironment(scene, next, {
+        groundY: -edgePhase - offset.y,
+        cell,
+        edgeX: edgePhase - offset.x,
+        edgeZ: edgePhase - offset.z,
+        radius: extent.length() / 2,
+        sun: sun.position,
+        renderer,
+      });
     }
     render();
   }
@@ -381,6 +411,13 @@ export function createVoxelViewer<V extends ViewerVoxel>(
     return { voxel: current[index], index };
   }
 
+  function project(x: number, y: number, z: number): { x: number; y: number } | null {
+    camera.updateMatrixWorld();
+    const p = new THREE.Vector3(x - offset.x, y - offset.y, z - offset.z).project(camera);
+    if (p.z > 1) return null;
+    return { x: ((p.x + 1) / 2) * renderer.domElement.clientWidth, y: ((1 - p.y) / 2) * renderer.domElement.clientHeight };
+  }
+
   const stopWatching = settings ? undefined : watchViewerSettings(applySettings);
   if (settings) applySettings(settings);
 
@@ -391,6 +428,7 @@ export function createVoxelViewer<V extends ViewerVoxel>(
     stopWatching?.();
     clearAids();
     setFloor(false);
+    environment?.dispose();
     resizeObserver.disconnect();
     controls.dispose();
     for (const mesh of meshes) mesh.material.dispose();
@@ -409,5 +447,5 @@ export function createVoxelViewer<V extends ViewerVoxel>(
   resize();
   resetView();
 
-  return { setStyle, setVoxels, resetView, setSettings: applySettings, setFloor, pick, dispose, render };
+  return { setStyle, setVoxels, resetView, setSettings: applySettings, setFloor, setEnvironment, pick, project, dispose, render };
 }

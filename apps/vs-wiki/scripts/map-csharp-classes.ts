@@ -15,7 +15,7 @@
 // Names registered elsewhere (VSEssentials, the closed-source engine, mod DLLs) simply aren't in
 // the map -- the site lists those without a link.
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
-import { join, relative, sep } from "node:path";
+import { join, relative, resolve, sep } from "node:path";
 import type { CSharpClassMap, CSharpRegistrationKind } from "../src/ingest/types.js";
 
 const REPO = "anegostudios/vssurvivalmod";
@@ -45,22 +45,37 @@ function listCsFiles(dir: string): string[] {
 
 // The clone's checked-out commit, read straight from .git (no `git` binary needed -- keeps every
 // script pure Node, per CLAUDE.md). Handles a detached HEAD, a loose ref, and packed-refs.
+// Only a well-formed ref name is followed and only a commit hash is returned, so nothing read here can point
+// the script outside the clone's .git or end up unchecked in the committed JSON or the log.
 function headCommit(root: string): string {
+  const commitHash = (value: string): string => {
+    if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(value)) throw new Error(`${root}/.git doesn't name a commit hash`);
+    return value;
+  };
   const head = readFileSync(join(root, ".git", "HEAD"), "utf8").trim();
-  if (!head.startsWith("ref: ")) return head;
+  if (!head.startsWith("ref: ")) return commitHash(head);
   const ref = head.slice(5);
+  if (!/^refs\/[\w./-]+$/.test(ref) || ref.includes("..")) throw new Error(`${root}/.git/HEAD names an unexpected ref`);
   const loose = join(root, ".git", ref);
-  if (existsSync(loose)) return readFileSync(loose, "utf8").trim();
+  if (existsSync(loose)) return commitHash(readFileSync(loose, "utf8").trim());
   const packed = readFileSync(join(root, ".git", "packed-refs"), "utf8");
   const line = packed.split("\n").find((l) => l.endsWith(` ${ref}`));
   if (!line) throw new Error(`Can't resolve ${ref} in ${root}/.git`);
-  return line.split(" ")[0];
+  return commitHash(line.split(" ")[0]);
+}
+
+// The clone is expected inside the repo (vssurvivalmod/ at its root); refuse a path that leads elsewhere.
+function cloneRoot(arg: string | undefined): string {
+  const cwd = process.cwd();
+  const root = resolve(cwd, arg ?? "vssurvivalmod");
+  if (!root.startsWith(cwd + sep)) throw new Error(`the vssurvivalmod clone must be inside ${cwd}`);
+  return root;
 }
 
 function main(): void {
-  const root = process.argv[2] ?? "vssurvivalmod";
+  const root = cloneRoot(process.argv[2]);
   const commit = headCommit(root);
-  const files = listCsFiles(root).sort();
+  const files = listCsFiles(root).sort((a, b) => Number(a > b) - Number(a < b));
   const sources = files.map((file) => ({ path: relative(root, file).split(sep).join("/"), text: readFileSync(file, "utf8") }));
 
   // TypeName -> first declaring file + 1-based line (files sorted, so deterministic; for a

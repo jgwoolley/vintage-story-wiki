@@ -306,7 +306,7 @@ async function serve(argv: string[]): Promise<number> {
   if (!ctx.modids.length && existsSync(ctx.pagesDir)) {
     // Pages without a zip (a retired mod, or not built yet) are listed too.
     const pageOnly = readdirSync(ctx.pagesDir).filter((d) => !d.startsWith(".") && statSync(path.join(ctx.pagesDir, d)).isDirectory() && !modids.includes(d));
-    modids = [...modids, ...pageOnly].sort();
+    modids = [...modids, ...pageOnly].sort((a, b) => Number(a > b) - Number(a < b));
   }
   const builder = new ReportBuilder(ctx.releasesDir, ctx.pagesDir, () => new LiveClient(ctx.offline ? null : new ModDb()));
   let server;
@@ -341,7 +341,7 @@ async function exportCmd(argv: string[]): Promise<number> {
   if (values.help) return usage("export");
   const ctx = context(values, positionals, { needReleases: false });
   const zips = existsSync(ctx.releasesDir) ? localMods(ctx.releasesDir) : new Map();
-  const pageDirs = existsSync(ctx.pagesDir) ? readdirSync(ctx.pagesDir).filter((d) => existsSync(path.join(ctx.pagesDir, d, "page.json"))).sort() : [];
+  const pageDirs = existsSync(ctx.pagesDir) ? readdirSync(ctx.pagesDir).filter((d) => existsSync(path.join(ctx.pagesDir, d, "page.json"))).sort((a, b) => Number(a > b) - Number(a < b)) : [];
   const unknown = ctx.modids.filter((m) => !pageDirs.includes(m));
   if (unknown.length) throw new UsageError(`no page for ${unknown.join(", ")} in ${ctx.pagesDir} (run vsdev moddb scaffold or pull first)`);
   const modids = ctx.modids.length ? ctx.modids : pageDirs;

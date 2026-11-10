@@ -57,5 +57,5 @@ async function loadMapFile(file) {
 $("wmFile").addEventListener("change", (e) => {
   const file = e.target.files[0];
   e.target.value = "";
-  if (file) loadMapFile(file);
+  if (file) void loadMapFile(file);
 });

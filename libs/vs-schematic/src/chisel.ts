@@ -109,7 +109,7 @@ const bareBlock = (code: string): string => code.replace(/^[^:]+:/, "");
  */
 export function shapeKey(shape: ChiselShape, materials: "same" | "any", transform: (x: number, z: number) => [number, number] = (x, z) => [x, z]): string | null {
   const grid = voxelGrid(shape);
-  const used = materials === "any" ? [] : [...new Set(Array.from(grid).filter((m) => m >= 0).map((m) => bareBlock(shape.materials[m] ?? "unknown")))].sort();
+  const used = materials === "any" ? [] : [...new Set(Array.from(grid).filter((m) => m >= 0).map((m) => bareBlock(shape.materials[m] ?? "unknown")))].sort((a, b) => Number(a > b) - Number(a < b));
   let key = "";
   let run = 0, last = -2, filled = 0;
   for (let y = 0; y < 16; y++) {
@@ -155,7 +155,7 @@ export function queryKeys(shape: ChiselShape, options: ShapeMatchOptions): Map<s
   return keys;
 }
 
-const toBase64Url = (bytes: Uint8Array): string => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const toBase64Url = (bytes: Uint8Array): string => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 const fromBase64Url = (s: string): Uint8Array => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
 
 /** URL query values describing a shape (`shape`: packed cuboids as little-endian uint32, base64url; `mats`: block codes, comma-separated). */

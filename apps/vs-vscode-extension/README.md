@@ -4,20 +4,20 @@ Preview Vintage Story worldgen schematics (`.json` and the wiki's `.json.gz` cop
 voxel model, without leaving VS Code.
 
 - Orbit, pan and zoom; click a block to see its code, position and decoded block-entity data.
-- A block list with counts: click to hide/show a kind, filter by name, show/hide all.
-- `meta-filler` (a worldgen marker) starts hidden, like on the wiki; tick **Show meta-filler** to see it.
-- An **Up to Y** slider peels the structure away from the top.
-- Also opens Vintage Story **model (shape) files** (`assets/<domain>/shapes/**.json`: items, creatures, blocks, armor, clothes) as an untextured 3D model of boxes, with a legend of the model's texture names. Armor and clothing models only name a bone of the player body; they are placed on it when `shapes/entity/humanoid/seraph-faceless.json` can be found in the same `assets/<domain>/` tree (or the sibling `game` / `survival` one). A model with animations gets an **Animation** picker in the toolbar that plays them in a loop (worn items stay in their rest pose). **Show floor** draws a grid of one-block squares at ground level, to judge where a model sits.
-- **Model textures**: run **Vintage Story: Select Game Folder** (or click **Choose game folder** under a model's legend) and pick the game *client* install (the dedicated server has almost no textures; the folder is checked). The setting is `vsSchematic.gameFolder`. A model's legend then shows each texture key's real texture and says which ones couldn't be found; textures in the model's own `assets/<domain>/` tree are found without the setting. The 3D view itself is still drawn in per-key colors for now.
+- A block list with counts: click to hide/show a kind, filter by name, show/hide all (schematics only: a model's textures and a chiseled block's materials are just listed).
+- `meta-filler` (a worldgen marker) starts hidden, like on the wiki; tick **Show meta-filler** to see it (schematics only).
+- An **Up to Y** slider peels the structure away from the top (schematics only).
+- Also opens Vintage Story **model (shape) files** (`assets/<domain>/shapes/**.json`: items, creatures, blocks, armor, clothes) as a 3D model of boxes drawn with its real textures when they are found (see below; a texture that isn't found is drawn in a color), with a legend of the model's texture names. Armor and clothing models only name a bone of the player body; they are placed on it when `shapes/entity/humanoid/seraph-faceless.json` can be found in the same `assets/<domain>/` tree (or the sibling `game` / `survival` one). A model with animations gets an **Animation** picker in the toolbar that plays them in a loop (worn items stay in their rest pose). **Show floor** draws a grid of one-block squares at ground level, to judge where a model sits.
+- **Model textures**: run **Vintage Story: Select Game Folder** (or click **Choose game folder** under a model's legend) and pick the game *client* install (the dedicated server has almost no textures; the folder is checked). The setting is `vsSchematic.gameFolder`. The model is then drawn with those textures (each face's own UV), and its legend shows each texture key's texture and says which ones couldn't be found; textures in the model's own `assets/<domain>/` tree are found without the setting. Like the game's, the preview has no lighting or transparency.
 - Also opens QPTech ChiselTools shape files (saved with `.pf save`, in the `chiselportfolio` folder, or named `*.pf`): the chiseled block's shape in 3D plus its materials.
 - Settings (**File > Preferences > Settings**, search "Nf3t's Vintage Story Tools"): `vsSchematic.showCenterMarker` draws a marker at the middle of the shape (the camera's orbit point) and `vsSchematic.showGrid` draws a grid on the y = 0 plane. Both apply to open previews immediately.
 - Reloads when the file changes on disk.
 
 ## Using it
 
-The preview never replaces VS Code's normal JSON editor. Right-click a schematic in the Explorer and choose
-**Preview Schematic**, use the button in the editor title bar, run **Vintage Story: Preview Schematic** from the
-Command Palette, or pick **Open With... > Nf3t's Vintage Story Tools**. A JSON file that is neither a schematic nor a model
+The preview never replaces VS Code's normal JSON editor. Right-click a file in the Explorer and choose
+**Preview Schematic, Model or Chisel Shape**, run **Vintage Story: Preview Schematic, Model or Chisel Shape** from the
+Command Palette, or pick **Open With... > Nf3t's Vintage Story Tools**. (There is deliberately no button in the editor title bar.) A JSON file that is neither a schematic nor a model
 shows an error instead of a preview.
 
 ## Developing

@@ -3,6 +3,11 @@
 // no checklist, diffs, warnings, local paths or progress, only what a ModDB page shows (description, screenshots, tags, side, links,
 // releases with changelogs and game versions) plus a Download button and the `vsdev mod install <id> --source <site>` command.
 //
+// Where each part comes from: what the ModDB page manages (name, description, tags, links, logo, screenshots, changelogs) from
+// moddb/<modid>/; everything else from the newest zip in Releases/, the source of truth for the mod itself: its version, game version,
+// dependencies, side (modinfo.json, what the game enforces) and download. The zip also fills what the page leaves empty: its modicon.png
+// is the logo when page.json names none, and its modinfo.json description stands in for a missing description.html.
+//
 // Output (all links relative, so it works under a Pages subpath like https://you.github.io/repo/):
 //   index.html                 every mod, as cards
 //   <modid>/index.html         the mod's page
@@ -13,12 +18,13 @@
 // The game's own one-click install (vintagestorymodinstall://) only installs what ModDB knows, so it can't be offered for these.
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { modInfoFromZip, parseModInfo } from "../mods/modinfo.js";
+import { modIconFromZip, modInfoFromZip, parseModInfo } from "../mods/modinfo.js";
 import { sha256, type SourceIndexFile, type SourceMod, type SourceRelease } from "../mods/source.js";
 import { compareTriple, parseTriple } from "./checks.js";
 import { DESCRIPTION, IMAGES_DIR, PAGE_JSON, PLACEHOLDER, readLocal, releaseHtmlPath } from "./files.js";
 import type { LiveClient, LiveMod } from "./live.js";
 import type { ReleaseZip } from "./releases.js";
+import { sideOf } from "./scaffold.js";
 
 export interface ExportOptions {
   pagesDir: string;
@@ -55,6 +61,8 @@ interface PageData {
   checked: boolean;
 }
 
+/** The file name the zip's modicon.png gets in <modid>/images/ (distinct from page.json's logo.<ext>). */
+const ZIP_ICON = "modicon.png";
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 const sideLabel: Record<string, string> = { both: "Client and server", client: "Client only", server: "Server only" };
 const size = (n: number) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
@@ -110,12 +118,20 @@ export async function exportSite(o: ExportOptions): Promise<ExportResult> {
       copyFileSync(from, path.join(outMod, IMAGES_DIR, path.basename(name)));
       return path.basename(name);
     };
-    const logo = copyImage(typeof page.logo === "string" ? page.logo : null);
+    const zip = o.zips.get(modid);
+    // No logo on the page: the zip's own icon.
+    const zipIcon = () => {
+      const icon = zip ? modIconFromZip(zip.path) : undefined;
+      if (!icon) return null;
+      mkdirSync(path.join(outMod, IMAGES_DIR), { recursive: true });
+      writeFileSync(path.join(outMod, IMAGES_DIR, ZIP_ICON), icon);
+      return ZIP_ICON;
+    };
+    const logo = copyImage(typeof page.logo === "string" ? page.logo : null) ?? zipIcon();
     const screenshots = (Array.isArray(page.screenshots) ? page.screenshots : []).map((s) => copyImage(String(s))).filter((s): s is string => !!s);
 
     // Releases: every releases/<v>.json, plus the zip's version; newest first.
     const versions = new Set(Object.keys(local).filter((k) => k.startsWith("releases/") && k.endsWith(".json")).map((k) => path.posix.basename(k, ".json")));
-    const zip = o.zips.get(modid);
     if (zip) versions.add(zip.version);
     else warn("no zip in Releases/: the page has nothing to download");
     const key = (v: string) => parseTriple(v) ?? [0, 0, 0];
@@ -154,11 +170,15 @@ export async function exportSite(o: ExportOptions): Promise<ExportResult> {
     for (const [k, label] of [["homepageurl", "Homepage"], ["sourcecodeurl", "Source code"], ["issuetrackerurl", "Issue tracker"], ["wikiurl", "Wiki"], ["trailervideourl", "Trailer"]] as const) {
       if (isUrl(page[k])) links.push({ label, url: page[k] as string });
     }
+    const pageSide = typeof page.side === "string" ? page.side : undefined;
+    const side = zip?.side ? sideOf(zip.side) : pageSide ?? "both";
+    if (pageSide && pageSide !== side) warn(`page.json says side "${pageSide}" but ${zip!.file}'s modinfo.json says "${zip!.side}"; exported as ${side}`);
+    const description = local[DESCRIPTION] ?? (zip?.description?.trim() ? `<p>${esc(zip.description.trim())}</p>` : "");
     const data: PageData = {
       modid, name: typeof page.name === "string" && page.name ? page.name : zip?.name ?? modid,
-      side: typeof page.side === "string" ? page.side : "both", type: typeof page.type === "string" ? page.type : "mod",
+      side, type: typeof page.type === "string" ? page.type : "mod",
       links, tags: Array.isArray(page.tags) ? page.tags.map(String) : [], logo, screenshots,
-      description: local[DESCRIPTION] ?? "", releases, modDbUrl, checked: asked,
+      description, releases, modDbUrl, checked: asked,
     };
     pages.push(data);
     writeFileSync(path.join(outMod, "index.html"), modPage(data, o.title));
@@ -175,7 +195,7 @@ export async function exportSite(o: ExportOptions): Promise<ExportResult> {
 }
 
 /**
- * Empties the output folder, but only when that is safe: it doesn't exist, is empty, or holds a previous export (a mods.json written by
+ * Empties the output folder (keeping the folder itself), but only when that is safe: it doesn't exist, is empty, or holds a previous export (a mods.json written by
  * this command). It must not contain the pages folder or a zip it reads. Anything else is refused rather than deleted.
  */
 function clearOutDir(outDir: string, inputs: string[]): void {
@@ -192,7 +212,8 @@ function clearOutDir(outDir: string, inputs: string[]): void {
       // no readable mods.json: not a previous export
     }
     if (!ours) throw new Error(`--out ${outDir} isn't empty and isn't a previous vsdev export; refusing to delete it (pick another folder)`);
-    rmSync(out, { recursive: true, force: true });
+    // Its contents, not the folder itself: a web server that bind-mounts it (Docker) would keep serving the deleted directory.
+    for (const name of readdirSync(out)) rmSync(path.join(out, name), { recursive: true, force: true });
   }
   mkdirSync(out, { recursive: true });
 }

@@ -122,6 +122,8 @@ const resultTable = () => tableWithHeaders(["Schematic", "Placed", "Chiseled fro
 // download + scan of the candidate schematics, smallest first. `scan(schematic)` returns a table row or null.
 async function runScan({ params, prefilter, table, scan, describeNone }) {
   const mine = ++run;
+  // `run` changes under us (a new search or Cancel) while this scan awaits downloads.
+  const isCurrent = () => mine === run;
   els.error.hidden = true;
   els.results.replaceChildren();
   els.go.disabled = true;
@@ -150,7 +152,7 @@ async function runScan({ params, prefilter, table, scan, describeNone }) {
     progress();
     const queue = [...candidates];
     const worker = async () => {
-      for (let s = queue.shift(); s && mine === run; s = queue.shift()) {
+      for (let s = queue.shift(); s && isCurrent(); s = queue.shift()) {
         try {
           const schematic = JSON.parse(await fetchGzipText(`${root.dataset.worldBase}${s.domain}/${s.relPath}.json.gz`));
           const { row, skippedEntities } = scan(s, schematic, pools);
@@ -304,7 +306,7 @@ function searchShape(shape, name, origin = null) {
   }
   const metadata = document.createElement("div");
   details.append(...materialsSection(shape, { colorOf: (code) => blockColor(code, blockColors), nameOf: displayName, itemsUrl: root.dataset.itemsUrl }), metadata);
-  if (origin?.schematic && origin.at) showOriginMetadata(metadata, origin, shape);
+  if (origin?.schematic && origin.at) void showOriginMetadata(metadata, origin, shape);
   shapePreview?.dispose();
   shapePreview = createChiselPreview($("ssShapePreview"), shape, (code) => blockColor(code, blockColors));
   const query = { shape, options };
@@ -370,7 +372,7 @@ function searchName(pattern) {
 
 $("ssNameForm").addEventListener("submit", () => {
   const pattern = $("ssChiselName").value.trim();
-  if (pattern) searchName(pattern);
+  if (pattern) void searchName(pattern);
 });
 
 $("ssShapeFile").addEventListener("change", async (event) => {
@@ -379,7 +381,7 @@ $("ssShapeFile").addEventListener("change", async (event) => {
   if (!file) return;
   try {
     const { name, shape } = parsePortfolioXml(await file.text());
-    searchShape(shape, name || file.name, null);
+    void searchShape(shape, name || file.name, null);
   } catch (err) {
     els.error.textContent = `Couldn't read ${file.name}: ${err.message}`;
     els.error.hidden = false;
@@ -388,7 +390,7 @@ $("ssShapeFile").addEventListener("change", async (event) => {
 
 els.form.addEventListener("submit", () => {
   const code = els.code.value.trim();
-  if (code) search(code, els.kind.value);
+  if (code) void search(code, els.kind.value);
 });
 els.cancel.addEventListener("click", () => {
   run++;
@@ -406,16 +408,16 @@ if (params.get("shape")) {
     shape.name = params.get("name") || undefined;
     const schematic = params.get("schematic");
     const validSchematic = schematic && /^[\w.-]+(\/[\w. +()-]+)+$/.test(schematic) && !schematic.includes("..") ? schematic : null;
-    searchShape(shape, shape.name || "from the schematic viewer", { block: params.get("block"), at: /^\d+,\d+,\d+$/.test(params.get("at") || "") ? params.get("at") : null, schematic: validSchematic });
+    void searchShape(shape, shape.name || "from the schematic viewer", { block: params.get("block"), at: /^\d+,\d+,\d+$/.test(params.get("at") || "") ? params.get("at") : null, schematic: validSchematic });
   } catch (err) {
     els.error.textContent = `Couldn't read the shape in the link: ${err.message}`;
     els.error.hidden = false;
   }
 } else if (params.get("chiselname")) {
   $("ssChiselName").value = params.get("chiselname");
-  searchName(params.get("chiselname"));
+  void searchName(params.get("chiselname"));
 } else if (params.get("code")) {
   els.code.value = params.get("code");
   els.kind.value = ["block", "item", "any"].includes(params.get("kind")) ? params.get("kind") : "any";
-  search(els.code.value.trim(), els.kind.value);
+  void search(els.code.value.trim(), els.kind.value);
 }
