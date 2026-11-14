@@ -671,6 +671,7 @@ function main(): void {
       type: m.type,
       website: m.website,
       assetid: m.assetid,
+      urlalias: m.urlalias,
       logoUrl: m.logoUrl,
       description: m.description,
       authors: m.authors,

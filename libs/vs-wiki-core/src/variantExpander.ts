@@ -24,8 +24,16 @@ export function globToRegExp(pattern: string): RegExp {
 }
 
 function worldProperty(index: AssetIndex, domain: string, propPath: string): { code?: string; variants: Record<string, unknown>[] } | undefined {
-  // propPath is like "block/wood" -- try the variant's own domain first, then vanilla survival as fallback.
-  for (const d of [domain, "survival", "game"]) {
+  // propPath is like "block/wood" -- try the variant's own domain first, then vanilla survival as fallback. A mod may name the domain
+  // ("game:abstract/horizontalorientation", an AssetLocation like any other); vanilla's "game" files live in game or survival.
+  let domains = [domain, "survival", "game"];
+  const colon = propPath.indexOf(":");
+  if (colon >= 0) {
+    const named = propPath.slice(0, colon).toLowerCase();
+    propPath = propPath.slice(colon + 1);
+    domains = named === "game" ? ["game", "survival"] : [named];
+  }
+  for (const d of domains) {
     const asset = index.get(`${d}:worldproperties/${propPath}.json`);
     if (!asset) continue;
     const json = asset.json as { code?: string; variants?: Record<string, unknown>[] };

@@ -2,7 +2,8 @@
 # you can look at a local build behind the devbox Traefik. Nothing is built here, and it is not how the wiki is deployed
 # (that is GitHub Pages, .github/workflows/build-deploy.yml).
 #
-#   SITE_URL=http://vintagestory-wiki.localhost npx tsx apps/vs-wiki/scripts/build-site.ts   # after the CI steps; _site/
+#   npm run build              # _site/ (no SITE_URL needed: it only adds canonical/og URLs and sitemap.xml, so leave it unset
+#                              # locally rather than defaulting it, or a production build that forgets it points at localhost)
 #   docker compose up -d       # docker compose down to stop
 #
 # Joins the shared devbox Traefik (devbox_network); no host ports. The mounts are read-only and must exist already:
@@ -30,7 +31,6 @@ services:
       - traefik.http.routers.vintagestory-wiki.rule=Host(`${VINTAGESTORY_WIKI_HOST:-vintagestory-wiki.localhost}`)
       - traefik.http.routers.vintagestory-wiki.entrypoints=web
       - traefik.http.services.vintagestory-wiki.loadbalancer.server.port=80
-    restart: unless-stopped
 
 networks:
   proxy:

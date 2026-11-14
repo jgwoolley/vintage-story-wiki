@@ -14,15 +14,18 @@ export interface Manifest {
   serverVersion: string;
   /** "modid" or "modid@version". */
   mods: string[];
+  /** modid (lower case) -> direct download link, for the entries that give a `url` (a draft mod the API doesn't list). */
+  urls: Map<string, string>;
 }
 
 /** Reads a manifest; missing fields get the defaults (stable, 1.22.7, no mods). `gameVersion` and `serverVersion` mean the same. */
 export function readManifest(file: string): Manifest {
-  const raw = JSON.parse(readFileSync(file, "utf8")) as { serverBranch?: string; serverVersion?: string; gameVersion?: string; mods?: { modid: string; version?: string }[] };
+  const raw = JSON.parse(readFileSync(file, "utf8")) as { serverBranch?: string; serverVersion?: string; gameVersion?: string; mods?: { modid: string; version?: string; url?: string }[] };
   return {
     serverBranch: raw.serverBranch ?? "stable",
     serverVersion: raw.gameVersion ?? raw.serverVersion ?? "1.22.7",
     mods: (raw.mods ?? []).map((m) => formatSpec(m.modid, m.version)),
+    urls: new Map((raw.mods ?? []).filter((m) => m.url).map((m) => [m.modid.toLowerCase(), m.url!])),
   };
 }
 
@@ -40,13 +43,15 @@ export interface ManifestModResult {
 
 /**
  * Installs one pinned (or unpinned) mod into `modsDir` without dependency resolution: the exact release asked for, or (unpinned) ModDB's
- * pick for `gameVersion`, else the newest release. A file already there under the release's name is kept unless `force`.
+ * pick for `gameVersion`, else the newest release. A file already there under the release's name is kept unless `force`. With `url` (the
+ * manifest entry's direct download link) the API isn't asked at all: a draft mod's page and files are public, but the API 404s on it.
  */
 export async function installManifestMod(
   spec: string,
-  { db, modsDir, force = false, gameVersion, log = console.log }: { db: ModDb; modsDir: string; force?: boolean; gameVersion?: string; log?: (line: string) => void },
+  { db, modsDir, force = false, gameVersion, url, log = console.log }: { db: ModDb; modsDir: string; force?: boolean; gameVersion?: string; url?: string; log?: (line: string) => void },
 ): Promise<ManifestModResult> {
   const { id, version } = parseModSpec(spec);
+  if (url) return installFromUrl(id, version, url, { db, modsDir, force, log });
   log(`==> Looking up mod '${id}'${version ? ` version ${version}` : ""}`);
   const mod = await db.mod(id);
   if (!mod) return { action: "failed", error: `Could not find mod '${id}' on mods.vintagestory.at` };
@@ -70,6 +75,40 @@ export async function installManifestMod(
   await db.download(release.mainfile, dest);
   log(`✔ Mod saved to ${dest}`);
   return { action: "downloaded", mod, release, file: dest, removed: removeOtherCopies(modsDir, dest, log) };
+}
+
+/** The file name a direct link saves under: ModDB's `?dl=` name (its CDN links carry one), else the link's last path segment. */
+export function urlFileName(url: string): string {
+  const u = new URL(url);
+  return path.basename(u.searchParams.get("dl") || decodeURIComponent(u.pathname));
+}
+
+async function installFromUrl(
+  id: string,
+  version: string | undefined,
+  url: string,
+  { db, modsDir, force, log }: { db: ModDb; modsDir: string; force: boolean; log: (line: string) => void },
+): Promise<ManifestModResult> {
+  const name = urlFileName(url);
+  if (!/\.zip$/i.test(name)) return { action: "failed", error: `${id}: ${url} doesn't name a .zip file` };
+  const dest = path.join(modsDir, name);
+  const check = (): string | undefined => {
+    const info = readLocalMod(modsDir, name)?.info;
+    if (info?.modid?.toLowerCase() !== id.toLowerCase()) return `${name} is mod '${info?.modid ?? "?"}', not '${id}'`;
+    if (version && info.version !== version) return `${name} is ${id} version ${info.version}, not the pinned ${version}`;
+    return undefined;
+  };
+  const present = !force && existsSync(dest);
+  if (present) {
+    log(`- Mod already present: ${dest} (use --force to re-download)`);
+  } else {
+    log(`==> Downloading mod ${id} from ${url}`);
+    await db.download(url, dest);
+    log(`✔ Mod saved to ${dest}`);
+  }
+  const wrong = check();
+  if (wrong) return { action: "failed", file: dest, error: wrong };
+  return { action: present ? "skipped-present" : "downloaded", file: dest, removed: removeOtherCopies(modsDir, dest, log) };
 }
 
 /**

@@ -16,7 +16,7 @@ permalink: "{{ lang }}/mods/index.html"
     <tr>
       <td>
         {% if mod.logoUrl %}<img src="{{ mod.logoUrl }}" alt="" class="mod-icon" width="96" height="96" loading="lazy">{% endif %}
-        {% if mod.assetid %}<a href="https://mods.vintagestory.at/show/mod/{{ mod.assetid }}" target="_blank" rel="noopener noreferrer">{{ mod.name }}</a>{% else %}{{ mod.name }}{% endif %}
+        {% if mod.assetid %}<a href="https://mods.vintagestory.at/show/mod/{{ mod.assetid }}" target="_blank" rel="noopener noreferrer">{{ mod.name }}</a>{% elif mod.urlalias %}<a href="https://mods.vintagestory.at/{{ mod.urlalias }}" target="_blank" rel="noopener noreferrer">{{ mod.name }}</a>{% else %}{{ mod.name }}{% endif %}
         <span class="tag">{{ mod.modid }}</span>
         {% if mod.website %}&middot; <a href="{{ mod.website }}" target="_blank" rel="noopener noreferrer">source</a>{% endif %}
       </td>

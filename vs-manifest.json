@@ -1,5 +1,5 @@
 {
-  "$schema": "./vs-manifest.schema.json",
+  "$schema": "./apps/vsdev/src/vs-manifest.schema.json",
   "serverBranch": "stable",
   "serverVersion": "1.22.7",
   "gameKind": "server",
@@ -15,15 +15,15 @@
     },
     {
       "modid": "nf3ttranslocatorrepair",
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     {
       "modid": "nf3ttranslocatorfindercmd",
-      "version": "2.0.0"
+      "version": "2.0.1"
     },
     {
       "modid": "nf3ttranslocatornavigator",
-      "version": "2.0.0"
+      "version": "2.1.0"
     },
     {
       "modid": "nf3tblueprintcopy",
@@ -31,14 +31,41 @@
     },
     {
       "modid": "nf3tsponge",
-      "version": "2.0.0"
+      "version": "2.0.2"
+    },
+    {
+      "modid": "nf3tcentermap",
+      "version": "1.0.1"
+    },
+    {
+      "modid": "nf3tstatue",
+      "version": "1.0.1"
+    },
+    {
+      "modid": "nf3ttapestryrepair",
+      "version": "1.1.0"
     },
     {
       "modid": "chiseltools",
       "version": "1.17.9"
-    }, {
+    },
+    {
       "modid": "treetapredux",
       "version": "1.2.7"
+    },
+    {
+      "modid": "fantasystructures",
+      "version": "0.2.1-dev.26"
+    },
+    {
+      "modid": "nf3treliquiarum",
+      "version": "0.1.0",
+      "url": "https://mods.vintagestory.at/download/138961/nf3treliquiarum_1.22.7_0.1.0.zip"
+    },
+    {
+      "modid": "nf3tentropyrift",
+      "version": "1.0.0",
+      "url": "https://mods.vintagestory.at/download/138958/nf3tentropyrift_1.22.7_1.0.0.zip"
     }
   ],
   "wikiIncludeItems": [
@@ -48,6 +75,7 @@
     "survival:*chest-*",
     "survival:trunk-*",
     "survival:stationarybasket-*",
-    "survival:clutteredbookshelf*"
+    "survival:clutteredbookshelf*",
+    "nf3treliquiarum:relic-*"
   ]
 }

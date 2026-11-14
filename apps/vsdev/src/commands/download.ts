@@ -6,7 +6,7 @@ import { CliError, UsageError } from "../errors.js";
 import { CLIENT_NOT_DOWNLOADED, installServer, type GameKind } from "../game/download.js";
 import { installManifestMod, readManifest } from "../download/manifest.js";
 import { CONFIG_FILE, defaultLocationEnv, findConfig, resolveGameDir, resolveModsDir } from "../locations.js";
-import { ModDb } from "../mods/moddb.js";
+import { ModDb, parseModSpec } from "../mods/moddb.js";
 import { userCwd } from "../paths.js";
 
 export const DOWNLOAD_USAGE = `Usage: vsdev download [options]
@@ -75,7 +75,7 @@ export async function runDownload(argv: string[]): Promise<number> {
   let failed = 0;
   for (const spec of manifest.mods) {
     try {
-      const result = await installManifestMod(spec, { db, modsDir: mods.path!, force: !!values.force, gameVersion: manifest.serverVersion });
+      const result = await installManifestMod(spec, { db, modsDir: mods.path!, force: !!values.force, gameVersion: manifest.serverVersion, url: manifest.urls.get(parseModSpec(spec).id.toLowerCase()) });
       if (result.error) {
         console.error(red(`✘ ${result.error}`));
         failed++;

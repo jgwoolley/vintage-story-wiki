@@ -22,6 +22,7 @@
     "ingest": "tsx apps/vs-wiki/src/ingest/index.ts",
     "build": "npm run build:libs && npm run ingest && tsx apps/vs-wiki/scripts/build-site.ts",
     "rebuild": "npm run build:libs && tsx apps/vs-wiki/scripts/build-site.ts",
+    "build:site": "tsx apps/vs-wiki/scripts/build-site.ts",
     "serve": "npm run build:libs && npm run ingest && eleventy --serve --config=apps/vs-wiki/eleventy.config.js",
     "clean": "rm -rf .scratch _site libs/*/dist apps/vs-wiki/site/_data/generated",
     "typecheck": "tsc --noEmit && tsc --noEmit -p libs/vs-schematic/tsconfig.json && npm run typecheck -w vs-vscode-extension && npm run typecheck -w @nf3t/vsdev",
@@ -29,7 +30,8 @@
     "check-links": "tsx apps/vs-wiki/scripts/check-links.ts",
     "decode-stats": "tsx apps/vs-wiki/scripts/decode-stats.ts",
     "build:libs": "npm run build -w @nf3t/vs-schematic",
-    "build:extension": "npm run package -w vs-vscode-extension"
+    "build:extension": "npm run package -w vs-vscode-extension",
+    "install-chromium": "playwright-core install --with-deps chromium"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.5",

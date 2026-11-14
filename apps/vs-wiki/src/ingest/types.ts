@@ -3,6 +3,7 @@ export interface ModManifestEntry {
   modid: string; // mods.vintagestory.at mod id, e.g. "betterruins"
   version?: string; // pinned release version; omitted means "latest" when downloading
   src?: string; // your own mod: its source folder (with modinfo.json), relative to vs-manifest.json -- maps modid <-> folder name (vsdev `modSourceDirs`)
+  url?: string; // direct download link of the pinned zip, for a draft mod the ModDB API doesn't list (no API lookup; its page is taken to be mods.vintagestory.at/<modid>)
 }
 
 /** The whole contents of `vs-manifest.json`. */
@@ -598,6 +599,7 @@ export interface ModSummary {
   type?: string; // modinfo.json's own "type" field, e.g. "Code" | "content"
   website?: string; // modinfo.json's own "website" field, when the author set one
   assetid?: number; // links to https://mods.vintagestory.at/show/mod/<assetid> -- see ModInfo for why this, not modid, is used
+  urlalias?: string; // see ModInfo.urlalias; the link falls back to https://mods.vintagestory.at/<urlalias> when there's no assetid (a draft mod installed from a manifest `url`)
   logoUrl?: string; // see ModInfo.logoUrl
   description?: string;
   authors?: string[];

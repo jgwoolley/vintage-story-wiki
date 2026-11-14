@@ -4,6 +4,30 @@ What changed in this wiki, newest first, grouped by day; only things a visitor o
 There are no version numbers or tags: the site is rebuilt and deployed from `main`, and the footer of every page shows the build time.
 (The VS Code extension has its own version, 0.1.0, in `apps/vs-vscode-extension/package.json`.) Older detail is in `git log`.
 
+## 2026-11-14
+
+- **Three more mods on the wiki**: Sirayne's Fantasy Structures (19 structures and their schematics), GildedChronicles - Reliquiarum
+  (its shrines, plus a page for every relic) and GildedChronicles - Entropy Rift (the rift and the storm siphon).
+- **Draft mods in `vs-manifest.json`**: a mod entry can give a direct `url` to download from, for a mod that is still a draft on ModDB.
+- Fixed: blocks whose variants come from a domain-prefixed `loadFromProperties` (`"game:block/rock"`) were silently left out; this
+  also brings in the Player Statues stone statue blocks.
+
+## 2026-11-10
+
+- **Model checking and render aids in `vsdev`**, made because models built from renders alone came out with floating parts and flickering faces.
+  `vsdev render model.json --check` lints a model as text (floating parts, faces in one plane, parts outside the block, every element's real
+  bounds) and every `vsdev shape` build runs it. `vsdev render` also gets `--sheet` (eight labelled views in one image), `--grid`, `--ortho`,
+  `--color-by element`, `--highlight`/`--hide` and `--compare old.json`, plus `west` and `bottom` views.
+- **`vsdev texture` and `vsdev shape`** generate a mod's PNG textures and model JSON from a spec file (replacing hand-written generator scripts).
+  Shapes can be placed by what they touch (`on`, `under`, `against`, `band`, `corners`, `taper`) and given poses (a lid open and closed);
+  `vsdev find` looks up the game's texture and shape codes. The `vsdev-generate` and `vsdev-render` skills teach the loop and the model conventions.
+- **Statues and outdoor scenes in `vsdev`**: Player Statues statues in screenshot scenes and rendered schematics, and `--grass`/`--sky` backdrops.
+- **`vs-manifest.schema.json` moved** to `apps/vsdev/src/` and vsdev now keeps a copy in the folder you run it from up to date
+  (`--no-schema-update` turns that off).
+- **VS Code extension**: models are now drawn with their real textures (not just listed), the schematic-only controls (meta-filler,
+  Up to Y, block filter) show only for schematics, and the editor title-bar button is gone (use the Explorer right-click or the command palette).
+- CI action versions updated and SonarQube findings fixed.
+
 ## 2026-11-07
 
 - **vsdev page** (`/vsdev/`, under About, below Game file locations): the vsdev command line tool's documentation on the wiki. The tool's

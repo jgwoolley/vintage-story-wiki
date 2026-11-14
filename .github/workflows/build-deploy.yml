@@ -6,10 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Least privilege: read-only by default; only the deploy job gets the Pages write permissions it needs.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -19,13 +18,13 @@ jobs:
   build:
     # The whole pipeline (download/ingest/build) is pure Node/npm now -- no system package is
     # ever shelled out to (the old `tar` CLI dependency of the downloader, now apps/vsdev/src/game/download.ts, was
-    # replaced with the pure-JS `tar` npm package). `ubuntu-latest` here is just GitHub Actions' standard
+    # replaced with the pure-JS `tar` npm package). `ubuntu-26.04` is pinned (not `ubuntu-latest`) so an image migration is a deliberate change. It is just a standard
     # GitHub-hosted runner choice, not an actual OS-level requirement of this project.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -35,7 +34,7 @@ jobs:
         run: echo "hash=${{ hashFiles('vs-manifest.json') }}" >> "$GITHUB_OUTPUT"
 
       - name: Cache downloaded game server + mods
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           # ./vintagestory: the game install location every tool here uses (vsdev src/locations.ts); it holds the server here.
           path: |
@@ -43,12 +42,13 @@ jobs:
             Mods
           key: vs-data-${{ steps.manifest.outputs.hash }}
 
+      # No dependency needs its install scripts (esbuild finds its platform package without its postinstall), so none run.
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       # vsdev's render tests draw in Playwright's headless Chromium (software WebGL); the version matches the pinned playwright-core.
       - name: Install Chromium for the render tests
-        run: npx playwright-core install --with-deps chromium
+        run: npm run install-chromium
 
       - name: Typecheck and unit tests
         run: |
@@ -73,7 +73,7 @@ jobs:
       # it (the file is gitignored and nothing else persists it between runs). Cache entries are
       # immutable, so each run saves under a unique key and restores the newest by prefix.
       - name: Restore previous Eleventy build timing
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: apps/vs-wiki/site/_data/generated/eleventyBuildTiming.json
           key: eleventy-timing-${{ github.run_id }}
@@ -92,28 +92,32 @@ jobs:
         env:
           PATH_PREFIX: /
           SITE_URL: https://vintagestory-wiki.nf3t.com
-        run: npx tsx apps/vs-wiki/scripts/build-site.ts
+        run: npm run build:site
 
       - name: Save Eleventy build timing for the next run
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: apps/vs-wiki/site/_data/generated/eleventyBuildTiming.json
           key: eleventy-timing-${{ github.run_id }}
 
       - name: Upload Pages artifact
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: _site
 
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

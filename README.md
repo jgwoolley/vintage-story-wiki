@@ -16,14 +16,15 @@ document aimed at visitors; `CLAUDE.md` is for a future AI coding session pickin
    (`domain:code` globs, e.g. `"survival:statictranslocator-*"`) forces items/blocks into the item
    index that no recipe/drop/worldgen/trade/dialogue rule reaches (`includeManifestItems` in
    `crossref.ts`; ingest warns about patterns that match nothing). The file's shape is described
-   by `vs-manifest.schema.json` (JSON Schema draft-07), referenced from the manifest's own
+   by `apps/vsdev/src/vs-manifest.schema.json` (JSON Schema draft-07), referenced from the manifest's own
    `"$schema"` key so VS Code validates and autocompletes it with no extra setup. Keep the schema
    in sync with `VsManifest` in `apps/vs-wiki/src/ingest/types.ts` when adding a field.
 2. **`npm run download`** (`apps/vs-wiki/scripts/download.ts`) reads that manifest, downloading the vanilla
    dedicated server into `vintagestory/` (vsdev's one game folder, client or server; an old `vs_server/` is still read) and mod `.zip` files into `Mods/` (both gitignored). The downloading is
    `apps/vsdev`' (`installGame`, `installManifestMod`: Node's built-in `fetch`, the mods.vintagestory.at API, and the
    pure-JS `tar` package for extraction — the whole pipeline is plain Node/npm, no OS-provided tool is ever shelled out to);
-   the wiki's script is a thin wrapper that adds the wiki-only files below.
+   the wiki's script is a thin wrapper that adds the wiki-only files below. Bumping a pin removes that mod's other zips from
+   `Mods/` (`installManifestMod`), and ingest also skips any zip whose version isn't the pin.
    Alongside each mod zip it caches `Mods/<modid>.meta.json` (`assetid`, `urlalias`, `logoUrl`)
    from the API response, since `assetid` is the only reliable way to link to a mod's
    mods.vintagestory.at listing (a mod's own `modid` isn't reliably the same as that listing's
@@ -103,7 +104,9 @@ TypeScript source, which `tsx` and `esbuild` consume directly). Libs never impor
   `createVoxelViewer` and `createChiselPreview`; `src/render.ts` finds model textures in a game client folder
   (`libs/vs-schematic/src/textureFiles.ts`), drives Playwright's headless Chromium with software WebGL and screenshots each view.
   The textured mode is part of the shared viewer: `compactShape(raw, { faces: true })`
-  keeps face UVs and `texturedFaces.ts` builds the quads. See its README.
+  keeps face UVs and `texturedFaces.ts` builds the quads. See its README. `libs/vs-schematic/src/statue.ts` is a port of the
+  Player Statues mod's statue meshing (the user's own mod, `../translocator-locator-cmd/StatueMod`; keep the two in sync), used for
+  `screenshots` scene parts and statues inside rendered schematics.
 
 ## Ingestion pipeline (`apps/vs-wiki/src/ingest/`)
 
@@ -650,7 +653,8 @@ animal variants).
 files: in `libs/vs-schematic/test`, `schematicDecode` (the decoder, below), `schematicVoxels` (packed-index
 voxels, `meta-filler` hidden by default, gzip fetch), `chisel` (cuboid decode and the ChiselTools export bytes, whose expected protobuf bytes were captured from the game's own `SerializerUtil`), `schematicSearch` (code matching, prefilter, scan of hand-built blobs), `textureFiles` (texture path lookup by domain, the
 game domain's three folders, model tree before game folder) and `texturedFaces` (kept face UVs and texture sizes, face corners,
-UV orientation and rotation, winding, plain fallback); in `apps/vs-vscode-extension/test`, `webviewHtml` (CSP and
+UV orientation and rotation, winding, plain fallback), `statue` (the Player Statues port: design parsing, step-parenting, single-tile UVs,
+poses, scale/pedestal/turn, armor hiding, bust, special shapes, clay); in `apps/vs-vscode-extension/test`, `webviewHtml` (CSP and
 element ids of the preview shell); in `apps/vsdev/test`, `mods` (offline, with a fake ModDB fetch and hand-built zips: the
 game's version ordering and dependency minimums, lenient modinfo parsing, Mods-folder scanning, install/update plans with
 dependencies, retractions, the blocklist and no downgrades, pre-release dependencies, zip-slip, ModDbCli's version rules and

@@ -9,7 +9,7 @@ import { installManifestMod } from "@nf3t/vsdev/download/manifest.js";
 import { installServer } from "@nf3t/vsdev/game/download.js";
 import { defaultLocationEnv, resolveGameDir, resolveModsDir } from "@nf3t/vsdev/locations.js";
 import { formatSpec, ModDb, parseModSpec } from "@nf3t/vsdev/mods/moddb.js";
-import type { DownloadAction, DownloadTiming, ModDownloadResult } from "../src/ingest/types.js";
+import type { DownloadAction, DownloadTiming, ModDownloadResult, VsManifest } from "../src/ingest/types.js";
 
 // Written to the same `site/_data/generated/` directory the ingest pipeline writes to (see `src/ingest/write.ts`); surfaced on the
 // site's `/<lang>/build/` page alongside the ingest and Eleventy-build phase timings.
@@ -27,15 +27,17 @@ interface Options {
   modsDir: string;
   force: boolean;
   mods: string[]; // "modid" or "modid:version" / "modid@version"
+  urls: Map<string, string>; // modid (lower case) -> the manifest entry's direct download `url` (draft mods the API doesn't list)
 }
 
-function readManifestDefaults(): { serverBranch: string; serverVersion: string; mods: string[] } {
+function readManifestDefaults(): { serverBranch: string; serverVersion: string; mods: string[]; urls: Map<string, string> } {
   try {
-    const manifest = JSON.parse(readFileSync("vs-manifest.json", "utf8"));
-    const mods = (manifest.mods ?? []).map((m: { modid: string; version?: string }) => formatSpec(m.modid, m.version));
-    return { serverBranch: manifest.serverBranch ?? "stable", serverVersion: manifest.serverVersion ?? "1.22.7", mods };
+    const manifest = JSON.parse(readFileSync("vs-manifest.json", "utf8")) as Partial<VsManifest>;
+    const mods = (manifest.mods ?? []).map((m) => formatSpec(m.modid, m.version));
+    const urls = new Map((manifest.mods ?? []).filter((m) => m.url).map((m) => [m.modid.toLowerCase(), m.url!]));
+    return { serverBranch: manifest.serverBranch ?? "stable", serverVersion: manifest.serverVersion ?? "1.22.7", mods, urls };
   } catch {
-    return { serverBranch: "stable", serverVersion: "1.22.7", mods: [] };
+    return { serverBranch: "stable", serverVersion: "1.22.7", mods: [], urls: new Map() };
   }
 }
 
@@ -120,7 +122,8 @@ async function main(): Promise<void> {
     let action: DownloadAction;
     const modStartedAt = Date.now();
     try {
-      const result = await installManifestMod(spec, { db, modsDir: opts.modsDir, force: opts.force });
+      const url = opts.urls.get(modid.toLowerCase());
+      const result = await installManifestMod(spec, { db, modsDir: opts.modsDir, force: opts.force, url });
       // The local modid (from the mod's own modinfo.json) is NOT reliably the listing's slug (urlalias was null for at least one real
       // mod), but `assetid` is always there and https://mods.vintagestory.at/show/mod/<assetid> always resolves, so that is what the
       // wiki links to. `logofile` is an absolute CDN image URL, cached as-is rather than downloading the image.
@@ -130,6 +133,10 @@ async function main(): Promise<void> {
           join(opts.modsDir, `${modid.toLowerCase()}.meta.json`),
           JSON.stringify({ assetid: result.mod.assetid, urlalias: result.mod.urlalias ?? undefined, logoUrl: result.mod.logofile ?? undefined }, null, 2),
         );
+      } else if (url && result.file) {
+        // A draft mod (installed from its direct link): no API listing, so no assetid or logo. Its page is public by direct link at
+        // mods.vintagestory.at/<alias>, and the drafts this is for use their modid as the alias.
+        writeFileSync(join(opts.modsDir, `${modid.toLowerCase()}.meta.json`), JSON.stringify({ urlalias: modid.toLowerCase() }, null, 2));
       }
       if (result.error) {
         console.error(`✘ ${result.error}`);

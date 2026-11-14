@@ -88,6 +88,11 @@
             "type": "string",
             "description": "For a mod you develop yourself: the folder holding its source (the one with modinfo.json), relative to this file, e.g. \"TranslocatorLocatorCmdMod\". Maps the modid to its folder name; vsdev reads it with `modSourceDirs`. The mod is still downloaded from ModDB like any other entry unless you leave it out of the downloads yourself.",
             "minLength": 1
+          },
+          "url": {
+            "type": "string",
+            "description": "Direct download link of the pinned release's zip, for a mod the ModDB API doesn't list (a draft mod: its page and files are public by direct link, but `api/mod/<modid>` returns 404), e.g. \"https://mods.vintagestory.at/download/138961/nf3treliquiarum_1.22.7_0.1.0.zip\". The zip is downloaded from it with no API lookup, and its modinfo.json must name this modid and the pinned version. Remove it once the mod is published.",
+            "pattern": "^https://"
           }
         }
       },

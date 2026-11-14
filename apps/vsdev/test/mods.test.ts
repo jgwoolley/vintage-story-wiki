@@ -19,7 +19,7 @@ import { gameInfo, readGameMarker, type LocationEnv } from "../src/locations.js"
 import { extractZip } from "../src/mods/extract.js";
 import { applyInstallPlan, checkUpdates, resolveInstallPlan } from "../src/mods/install.js";
 import { installedIndex, scanLocalMods } from "../src/mods/local.js";
-import { installManifestMod } from "../src/download/manifest.js";
+import { installManifestMod, urlFileName } from "../src/download/manifest.js";
 import { blockReason, latestStableGameVersion, ModDb, parseModSpec, rankSearch, type InstallInfo, type ModDbMod } from "../src/mods/moddb.js";
 import { modDependencies, modInfoFromZip, parseModInfo, toModId } from "../src/mods/modinfo.js";
 import { compareGameVersions, satisfiesMinimum, splitGameVersion } from "../src/mods/versions.js";
@@ -172,6 +172,31 @@ test("manifest install: a bumped pin replaces the other zips of its modid, and o
     const failed = await installManifestMod("lib@9.9.9", { db, modsDir: dir, log });
     assert.equal(failed.action, "failed");
     assert.ok(readdirSync(dir).includes("lib_1.22.7_1.5.0.zip"), "a failed lookup removes nothing");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("manifest install from a direct url: no API lookup (a draft mod), the zip must be the pinned mod", async () => {
+  const { db, calls } = fakeModDb({
+    install: {},
+    files: { "/download/7/draft_1.22.7_0.1.0.zip": modZip({ modid: "draft", version: "0.1.0" }), "/other.zip": modZip({ modid: "other", version: "1.0.0" }) },
+  });
+  const dir = tmp("manifest-url");
+  const log = () => {};
+  try {
+    assert.equal(urlFileName("https://moddbcdn.vintagestory.at/x_1.22_abc.zip?dl=x_1.22.7_1.0.0.zip"), "x_1.22.7_1.0.0.zip");
+    writeFileSync(path.join(dir, "draft_0.0.9.zip"), modZip({ modid: "draft", version: "0.0.9" }));
+    const url = "https://mods.vintagestory.at/download/7/draft_1.22.7_0.1.0.zip";
+    const first = await installManifestMod("draft@0.1.0", { db, modsDir: dir, url, log });
+    assert.equal(first.action, "downloaded");
+    assert.deepEqual(first.removed, ["draft_0.0.9.zip"]);
+    assert.ok(!calls.some((c) => c.startsWith("/api/")), "the API isn't asked");
+    assert.equal((await installManifestMod("draft@0.1.0", { db, modsDir: dir, url, log })).action, "skipped-present");
+    const wrongVersion = await installManifestMod("draft@0.2.0", { db, modsDir: dir, url, log });
+    assert.equal(wrongVersion.action, "failed");
+    const wrongMod = await installManifestMod("draft", { db, modsDir: dir, url: "https://mods.vintagestory.at/other.zip", log });
+    assert.match(wrongMod.error!, /is mod 'other'/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

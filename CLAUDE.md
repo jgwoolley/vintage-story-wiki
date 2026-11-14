@@ -18,7 +18,7 @@ npm run build       # ingest + eleventy build into _site/
 npm run serve       # same, with live reload
 npm run typecheck   # tsc --noEmit over libs/ + apps/
 npm run clean        # rm -rf .scratch _site apps/vs-wiki/site/_data/generated
-docker compose up -d  # dev only: serves _site/ at http://vintagestory-wiki.localhost (compose.yml; build with SITE_URL set first)
+docker compose up -d  # dev only: serves _site/ at http://vintagestory-wiki.localhost (compose.yml; any `npm run build` works, SITE_URL is optional: it only adds canonical/og URLs and the sitemap)
 ```
 
 `vssurvivalmod/` at the repo root (gitignored) is a clone of the game's C# source
@@ -52,12 +52,44 @@ shared viewer to its textured mode (`texturedFaces.ts` quads, one mesh per textu
 wiki itself stays untextured (the server download has no textures, and game art shouldn't be published). Its browser half
 (`src/render/page/`) has its own DOM tsconfig and is excluded from the root one.
 
+`vsdev texture <spec>` / `vsdev shape <spec>` (`src/texture/paint.ts`, `src/shape/build.ts`, shared spec loading in `src/gen/`) generate a mod's
+PNG textures (seeded layers; noise is tiling and rank-equalized so `coverage` is an exact pixel share; any layer can take a `mask`, and a
+`custom` layer runs a JS spec's `draw(ctx)`) and shape JSON (boxes with UVs filled in, joints, reliefs, mirror, repeat, `ground` to rest a
+piece on y = 0; `src/shape/bounds.ts` computes the printed bounds with the renderer's own rotation matrix) from a JSON or `.mjs` spec, for
+agents making mods without an artist; skill `vsdev-generate`. A `.mjs` spec also gets the helpers in `src/shape/helpers.ts` (`bar`, `prism`,
+`scaled`, `texturesFor`), `src/shape/game.ts` (`gameShape`, `statue`: a game shape posed by its own keyframe in one material, the Player
+Statues mod's method) and `src/shape/project.ts` (`project`: a model seen straight on, as pixel rows for a texture); a spec's `prune` drops
+unused texture keys and its `gui` writes each shape's icon transform into a blocktype (`src/shape/gui.ts`, line-based, keeps rotation and
+with `keepScale` the scale). They replaced the per-mod Python generators: `../translocator-locator-cmd/CreateImages/reliquiarum-*.{shapes,textures}.*`
+make all of that mod's relics (`reliquiarum-relics.*` is the port of its old `reliquiarum_*.py`, checked identical: shapes element for element,
+PNGs pixel for pixel, Python's `random.Random` ported in the spec), a worked example of every feature. Keep the PNG codec (`src/gen/png.ts`)
+dependency-free.
+
+**Schema self-update** (`apps/vsdev/src/schemaUpdate.ts`, hooked in `main.ts`): every vsdev command rewrites `<cwd>/vs-manifest.schema.json`
+to the shipped copy (`apps/vsdev/src/vs-manifest.schema.json` when running from the checkout, else `dist/`) when its content differs,
+`--no-schema-update` stripped in `main()` turns it off. **That `src/` file is the one source of the manifest schema** (esbuild copies it
+to `dist/`; there is no copy at the repo root, the root `vs-manifest.json` points `$schema` at it): edit it there. The three
+`skills/*/vs-manifest.schema.json` are copies that `schemaUpdate.test.ts` keeps honest; refresh them with `cp`.
+Tests that run `main()` in a scratch folder set `INIT_CWD`.
+
+**Model-making aids** (added because agents built poor models from renders alone: parts floating by fractions of a unit, trim flush with
+the face under it, children written in the wrong frame). `src/shape/check.ts` (`checkShape`, `formatCheck`) is a text lint on oriented
+boxes: `vsdev render <model> --check` (no browser; `--strict`, `--json`; exit 1) and every `vsdev shape` build run it. Errors are
+`floating`/`empty`, warnings `coplanar` (different textures only; same texture is a note)/`flat-in-face`/`no-size`/`uv`; it was tuned on
+the game's own shapes so vanilla models come out clean: keep it that quiet, a noisy check gets ignored. Render aids live in
+`src/render/aids.ts` + the page: `--grid`, `--ortho`, `--sheet` (one labelled image), `--color-by element`, `--highlight`, `--hide`,
+`--compare <old>`, views `west`/`bottom`; all optional, so output for the older flags is unchanged (keep it so). The builder's relative
+placement is `src/shape/place.ts` (`size` + `on`/`under`/`against`/`center`/`base`, `band`, `taper`), with `corners`, `poses` and
+frame-aware `mirror` (about 8 at top level, 0 in a joint) in `build.ts`. `vsdev find` (`commands/find.ts`) lists texture and shape codes.
+The conventions (axes, child frames, turn signs: a north-hinged lid opens with a negative x) are written once in the `vsdev-render`
+skill and summarized in `vsdev-generate` and the README; change them together.
+
 The rest of `vsdev` (`apps/vsdev/README.md`, package `@nf3t/vsdev`: the user owns the `@nf3t` npm scope, prefer it for
 packages; every workspace package is `@nf3t/`-scoped except `vs-vscode-extension`, which `vsce` rejects when scoped, see `NAMING.md`): `vsdev game` downloads the dedicated server by default. **The client is only downloaded on `vsdev game --client --accept-client-terms`** (also
 `vsdev download`); `--client` alone just explains where it comes from. It's the paid game and the ToS frame its download as part of an account, so
 the acknowledgement is the user's own statement that they checked the terms / the developers: never default it, read it from env/config, or pass it
 in CI or a script on their behalf. Otherwise vsdev uses the user's installed game (`render` finds it in the default install location or via `$VINTAGE_STORY`).
-`vsdev screenshots [name...]` renders the `screenshots` list of `vs-manifest.json` (schematic, model or a `scene` of models plus a dressed player holding items (`render/scene.ts`, `render/collectible.ts`) + camera angle, `domain:path` read from the game or `Mods/` zips; `commands/screenshots.ts`; wiki-only keys are prefixed `wiki`, e.g. `wikiIncludeItems`). `vsdev search <text>` searches the deployed wiki's `assets/searchIndex.json` (address: `--wiki`, `$VSDEV_WIKI_URL`, `prodWikiUrl` in `vs-manifest.json`, else the project's own; `resolveWikiUrl` in `locations.ts`), and `vsdev manifest freeze|install` treats `vs-manifest.json` like a requirements file (`freeze` writes the mods of a Mods/Releases folder into `mods`, `install` = `download --mods-only`). The repo is also an agent-skills marketplace (`skills/`, `.claude-plugin/` and `.omp-plugin/marketplace.json`, regenerated with `npx @nf3t/skills-pages repo-files . --yes`; `vs-manifest.schema.json` is symlinked into three skills). `vsdev mod search|info|install|update|extract` installs other people's mods (`--source <site>` installs from a
+`vsdev screenshots [name...]` renders the `screenshots` list of `vs-manifest.json` (schematic, model or a `scene` of models plus a dressed player holding items (`render/scene.ts`, `render/collectible.ts`) + camera angle, `domain:path` read from the game or `Mods/` zips; `commands/screenshots.ts`; wiki-only keys are prefixed `wiki`, e.g. `wikiIncludeItems`). `vsdev search <text>` searches the deployed wiki's `assets/searchIndex.json` (address: `--wiki`, `$VSDEV_WIKI_URL`, `prodWikiUrl` in `vs-manifest.json`, else the project's own; `resolveWikiUrl` in `locations.ts`), and `vsdev manifest freeze|install` treats `vs-manifest.json` like a requirements file (`freeze` writes the mods of a Mods/Releases folder into `mods`, `install` = `download --mods-only`). The repo is also an agent-skills marketplace (`skills/`, `.claude-plugin/` and `.omp-plugin/marketplace.json`, regenerated with `npx @nf3t/skills-pages repo-files . --yes`; `apps/vsdev/src/vs-manifest.schema.json` is copied into three skills (a test checks they match)). `vsdev mod search|info|install|update|extract` installs other people's mods (`--source <site>` installs from a
 `vsdev moddb export` site's `mods.json`), and `vsdev moddb check|status|scaffold|pull|diff|serve|export` is the port of the user's C#
 ModDbCli (their mods' pages kept in `./moddb/<modid>/`, a local review page, and a static GitHub Pages site with the unpublished zips;
 `diff` output is byte-identical to the C# tool's on translocator-locator-cmd's pages, keep it that way).
@@ -89,7 +121,7 @@ package name (`@nf3t/vs-wiki-core/lang.js`, `@nf3t/vs-schematic/schematicDecode.
 `build:libs`.** `libs/vs-schematic` has its own tsconfig (with DOM); the root one has none, so DOM use can't leak
 into `schematicDecode.ts`, which the ingest imports. `npm run typecheck` runs all of them (root, vs-schematic, the
 extension). The extension (`apps/vs-vscode-extension`) bundles the lib with esbuild and `npm run build:extension` produces the `.vsix` (bundle only: `npm run build -w vs-vscode-extension`);
-it type-checks, bundles and packages, and `npm run screenshots -w vs-vscode-extension` launches it in a real VS Code (headless Electron + Playwright, software WebGL; needs the libs `apt` list in its README and `vintagestory/`) and screenshots a schematic, a chisel shape and model files, so its runtime behaviour *is* verified for those. Don't claim more than that (e.g. Open With... for arbitrary files is only the `*` selector). Libs must
+it type-checks, bundles and packages, and `npm run screenshots -w vs-vscode-extension` launches it in a real VS Code (headless Electron + Playwright, software WebGL; needs the libs `apt` list in its README and `vintagestory/`) and screenshots a schematic, a chisel shape and model files (one with its own texture, checked to be drawn textured; the meta-filler/Y-slider/block-filter controls must show only for a schematic), so its runtime behaviour *is* verified for those. Models are drawn textured from the host's `resolveTextures` images (`webview/main.ts` `loadModel`); the preview has no editor-title-bar button on purpose (Explorer right-click and the palette only). Don't claim more than that (e.g. Open With... for arbitrary files is only the `*` selector). Libs must
 not import from apps; tests that need wiki files (the sample schematic, ingest's `DecodeStats`) live in
 `apps/vs-wiki/test/`. Path references elsewhere in this file that don't say `libs/` or `apps/` are relative
 to the app that owns them.
@@ -135,7 +167,7 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   `ensureSpawnTarget(domain, code, kind)` in `apps/vs-wiki/src/ingest/index.ts` for things with no recipe and
   (for the first three) no drop table. For one-off things no rule reaches at all (static
   translocators, teleporters), don't write a new carve-out: add a `domain:code` glob to
-  `vs-manifest.json`'s `wikiIncludeItems` (validated by `vs-manifest.schema.json`, which must stay in
+  `vs-manifest.json`'s `wikiIncludeItems` (validated by `apps/vsdev/src/vs-manifest.schema.json`, which must stay in
   sync with `VsManifest` in `types.ts`). Paintings/tapestries/clothing (`models/decor.ts`) are a
   separate, parallel carve-out that never joins the item index at all — they get their own
   dedicated top-level pages (`/paintings/`, `/tapestries/`, `/clothing/`) instead, each backed by
@@ -314,6 +346,14 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   opening the one that was just clicked — clicking an already-open panel's toggle just closes it. (The header no longer has dropdowns; see the
   next item.) If you add another click-to-open panel anywhere, follow this close-others-then-open-this pattern rather
   than a bare `hidden = !hidden` toggle, which lets multiple panels stack open simultaneously.
+- **Statues are a port of the user's Player Statues mod and must stay in sync with it.** `libs/vs-schematic/src/statue.ts`
+  reproduces how `../translocator-locator-cmd/StatueMod` (modid `nf3tstatue`, C#) meshes a statue in code: `StatueMesh.cs`,
+  `StatuePose.cs` (pose baking, `UseSingleTile`, hand/seat matrices), `StatueAppearance.cs` + `BlockEntityStatue.cs` (the block entity's
+  attribute names, scales), `StatueTypes.cs`, `StatueTack.cs`, `StatuePoses.cs`, `StatuePlatform.cs`, `StatueMolding.cs` and the
+  `statue*.json` blocktypes' textures. Any change there (a new pose rule, scale, special type, tack, attribute name) needs the same
+  change in `statue.ts` and its test (`libs/vs-schematic/test/statue.test.ts`), and vice versa; that repo's CLAUDE.md says the same. Its
+  consumers are vsdev's `screenshots` scene `statue` part (`render/scene.ts`) and statues in rendered schematics (`render/statues.ts`,
+  `render/inputs.ts`). Ported faithfully, quirks included (the elk is posed at the player's emote frame, as `SeatOnElk` does); fix them in the mod first.
 - **The page is laid out like a wiki** (modelled on the official Vintage Story wiki, with its own colors and no copied assets): `base.njk` has a green
   title bar with the site-wide search box (`assets/wikiSearch.js` over `assets/searchIndex.json.njk`, rows `[title, path, kind, code]`; add a content
   type there when it gets detail pages), a left sidebar of navigation panels (`nav.js` marks the current page and turns the sidebar into a menu under 860 px) and the
@@ -327,7 +367,8 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   CDN). It's generic: callers pass `{x,y,z,color}` voxels and restyle via `setStyle(fn)`.
   `recipeVoxels.js` is the recipe adapter. The schematic viewer (`schematicViewer.js`, and the VS Code extension's webview) is the schematic adapter (decoded
   `Indices`/`BlockIds` → voxels, packed index `x = i & 0x3FF, z = (i >> 10) & 0x3FF, y = (i >> 20) & 0x3FF`)
-  on this core. Don't reintroduce the old project's one-`Mesh`-per-block Three.js r136 renderer
+  on this core. Its optional outdoor backdrop (`setEnvironment`, `environment.ts`: grass to the horizon + a sky dome ported from the game's
+  `skycolor.fsh`) is used by vsdev's `--grass`/`--sky` with the client's textures; the wiki doesn't use it. Don't reintroduce the old project's one-`Mesh`-per-block Three.js r136 renderer
   as a second 3D code path. Smithing patterns are NOT always 1 layer (22 of 48 have 2–5); don't
   special-case by category, branch on `pattern.length`.
 - **Recipe voxel-pattern layers (smithing/clayforming/knapping) show one layer at a time**,
@@ -414,11 +455,12 @@ new `{% set x = dict[loopVar] %}` + `{% if x %}` combo anywhere, test it before 
   (`schematicPreview.js`); anything interactive (legend, layers, picking) belongs only in the full viewer.
   `meta-filler` starts hidden everywhere via `isHiddenByDefault` in `schematicVoxels.ts`; extend that one
   helper if more marker blocks should be hidden by default.
-- **Git is read-only for Claude.** Read operations (`git status`, `log`, `diff`, `show`, `blame`,
-  ...) are fine. Never run anything that writes to the repo's git state: no `commit`, `add`,
-  `stash`, `checkout`/`switch`, `reset`, `restore`, `rebase`, `merge`, `branch`, `tag`, `push`, and so on.
-  The user does all git writes themselves, between sessions. Leave changes as uncommitted edits in
-  the working tree.
+- **Never `git commit` or `git push`** (that includes `--amend`, `tag` and anything else that records history or publishes it); the
+  user does those themselves, between sessions. Leave changes as uncommitted edits in the working tree. That is the whole
+  prohibition. Read operations (`git status`, `log`, `diff`, `show`, `blame`, ...) are fine, and **`git mv` is an explicit
+  exception: use it (not a plain `mv`) to move or rename tracked files** so the rename is staged and history follows. Other
+  working-tree and index commands (`add`, `rm`, ...) are allowed when the task needs them; just don't run anything that throws
+  away uncommitted work (`reset --hard`, `checkout -- <path>`, `restore`, `stash`, `clean`) without asking first.
 
 ## Where things are
 

@@ -259,6 +259,11 @@ dependencies (pin them, or use `vsdev mod install`).
 
 A mod entry can also carry `"src": "MyModFolder"`, the folder with your own mod's source (where its `modinfo.json` is, relative to `vs-manifest.json`), which maps the modid to its folder name. `freeze` keeps it, and `modSourceDirs` (`src/manifest/edit.ts`) reads it. Nothing else uses it yet.
 
+A mod that is still a **draft** on ModDB has a public page and download link, but the API doesn't list it, so a plain entry can't be
+downloaded. Give that entry `"url"`, the release's download link (e.g. `"https://mods.vintagestory.at/download/138961/nf3treliquiarum_1.22.7_0.1.0.zip"`):
+`vsdev download` then fetches the zip from it without asking the API and checks its `modinfo.json` names the entry's modid and version.
+`freeze` drops the `url` when it changes the version. Remove it once the mod is published.
+
 ## `vsdev screenshots`
 
 Renders the schematics you list in `vs-manifest.json` from the camera angles you pick, one PNG each: "create all of these screenshots".

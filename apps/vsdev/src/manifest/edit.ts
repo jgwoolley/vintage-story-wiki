@@ -17,6 +17,8 @@ export interface ManifestMod {
   version?: string;
   /** The mod's own source folder (with modinfo.json), relative to the manifest. */
   src?: string;
+  /** Direct download link of the pinned release, for a draft mod the ModDB API doesn't list. */
+  url?: string;
 }
 
 export interface Skipped {
@@ -74,7 +76,9 @@ export function mergePins(existing: ManifestMod[], pins: Pin[], prune = false): 
       else mods.push(entry);
       continue;
     }
-    mods.push({ ...entry, version: pin.version });
+    // A direct `url` belongs to the old version's file: a new pin drops it (back to the API, or add the new link by hand).
+    const { url, ...rest } = entry;
+    mods.push(url && entry.version !== pin.version ? { ...rest, version: pin.version } : { ...entry, version: pin.version });
     changes.push(entry.version === pin.version ? { action: "same", modid: entry.modid, to: pin.version } : { action: "update", modid: entry.modid, from: entry.version, to: pin.version });
   }
   for (const pin of pins) {
